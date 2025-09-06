@@ -29,6 +29,7 @@ struct pagosAppApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(authenticationManager)
+                .tint(Color("AppPrimary")) // Added global tint here
         }
         // Configuramos el contenedor de SwiftData para el modelo Payment.
         // Esto inyecta el modelContext en el entorno de la app.

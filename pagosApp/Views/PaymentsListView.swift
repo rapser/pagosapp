@@ -66,6 +66,7 @@ struct PaymentsListView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingAddPaymentSheet = true }) {
                         Image(systemName: "plus")
+                            .foregroundColor(Color("AppPrimary")) // Themed color
                     }
                 }
             }

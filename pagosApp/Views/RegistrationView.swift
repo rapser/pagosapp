@@ -17,31 +17,32 @@ struct RegistrationView: View {
                 
                 Text("Crear Cuenta")
                     .font(.largeTitle).bold()
+                    .foregroundColor(Color("AppTextPrimary")) // Themed color
                 
                 TextField("Correo electrónico", text: $email)
                     .keyboardType(.emailAddress)
                     .textContentType(.emailAddress)
                     .autocapitalization(.none)
-                    .autocorrectionDisabled() // Added this line
+                    .autocorrectionDisabled()
                     .padding()
-                    .background(Color(.secondarySystemBackground))
+                    .background(Color("AppBackground")) // Themed color
                     .cornerRadius(10)
                 
                 SecureField("Contraseña", text: $password)
                     .textContentType(.newPassword)
                     .padding()
-                    .background(Color(.secondarySystemBackground))
+                    .background(Color("AppBackground")) // Themed color
                     .cornerRadius(10)
                 
                 SecureField("Confirmar Contraseña", text: $confirmPassword)
                     .textContentType(.newPassword)
                     .padding()
-                    .background(Color(.secondarySystemBackground))
+                    .background(Color("AppBackground")) // Themed color
                     .cornerRadius(10)
                 
                 if let errorMessage = errorMessage {
                     Text(errorMessage)
-                        .foregroundColor(.red)
+                        .foregroundColor(.red) // Keeping red for error messages
                         .font(.caption)
                 }
                 
@@ -65,10 +66,10 @@ struct RegistrationView: View {
                 }) {
                     Text("Registrarse")
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundColor(.white) // Keeping white for text on primary button
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.green)
+                        .background(Color("AppSuccess")) // Themed color
                         .cornerRadius(10)
                 }
                 

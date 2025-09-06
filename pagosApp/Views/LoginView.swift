@@ -19,20 +19,23 @@ struct LoginView: View {
                 if !isBiometricLoginEnabled || showEmailPasswordLogin {
                     Text("Bienvenido")
                         .font(.largeTitle).bold()
+                        .foregroundColor(Color("AppTextPrimary")) // Themed color
                 }
                 
                 Image(systemName: "lock.shield.fill")
                     .font(.system(size: 80))
-                    .foregroundStyle(.secondary)
+                    .foregroundColor(Color("AppTextSecondary")) // Themed color
                 
                 if isBiometricLoginEnabled && !showEmailPasswordLogin {
                     Button(action: { Task { await onBiometricLogin() } }) {
                         Label("Iniciar con Face ID", systemImage: "faceid")
+                            .foregroundColor(Color("AppPrimary")) // Themed color
                     }
                     .padding(.top)
                     
                     Button(action: { showEmailPasswordLogin = true }) {
                         Text("Iniciar con Correo")
+                            .foregroundColor(Color("AppTextSecondary")) // Themed color
                     }
                     .padding(.top)
                 } else {
@@ -40,20 +43,20 @@ struct LoginView: View {
                         .keyboardType(.emailAddress)
                         .textContentType(.emailAddress)
                         .autocapitalization(.none)
-                        .autocorrectionDisabled() // Added this line
+                        .autocorrectionDisabled()
                         .padding()
-                        .background(Color(.secondarySystemBackground))
+                        .background(Color("AppBackground")) // Themed color
                         .cornerRadius(10)
                     
                     SecureField("Contraseña", text: $password)
-                        .textContentType(.newPassword) // Changed to newPassword for registration
+                        .textContentType(.newPassword)
                         .padding()
-                        .background(Color(.secondarySystemBackground))
+                        .background(Color("AppBackground")) // Themed color
                         .cornerRadius(10)
                     
                     if let errorMessage = errorMessage {
                         Text(errorMessage)
-                            .foregroundColor(.red)
+                            .foregroundColor(.red) // Keeping red for error messages
                             .font(.caption)
                     }
                     
@@ -62,10 +65,10 @@ struct LoginView: View {
                     }) {
                         Text("Iniciar Sesión")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(.white) // Keeping white for text on primary button
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.blue)
+                            .background(Color("AppPrimary")) // Themed color
                             .cornerRadius(10)
                     }
                     
@@ -74,6 +77,7 @@ struct LoginView: View {
                         Text("¿No tienes cuenta? Regístrate aquí")
                             .font(.callout)
                             .padding(.top)
+                            .foregroundColor(Color("AppPrimary")) // Themed color
                     }
                 }
                 

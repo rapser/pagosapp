@@ -9,16 +9,18 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Seguridad")) {
+                Section(header: Text("Seguridad").foregroundColor(Color("AppTextPrimary"))) { // Themed color
                     Toggle("Proteger con Face ID / Touch ID", isOn: $settingsManager.isBiometricLockEnabled)
+                        .tint(Color("AppPrimary")) // Themed color
                 }
                 
-                Section(header: Text("Acerca de")) {
+                Section(header: Text("Acerca de").foregroundColor(Color("AppTextPrimary"))) { // Themed color
                     HStack {
                         Text("Versión")
+                            .foregroundColor(Color("AppTextPrimary")) // Themed color
                         Spacer()
                         Text("1.0.0")
-                            .foregroundStyle(.secondary)
+                            .foregroundColor(Color("AppTextSecondary")) // Themed color
                     }
                 }
                 

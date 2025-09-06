@@ -79,8 +79,8 @@ struct StatisticsView: View {
         }
 
         // Filter relevant payments within the 6-month period, up to the end of the previous month
-        let relevantPayments = payments.filter {
-            let paymentStartOfDay = calendar.startOfDay(for: $0.dueDate)
+        let relevantPayments = payments.filter { payment in
+            let paymentStartOfDay = calendar.startOfDay(for: payment.dueDate)
             let isRelevant = paymentStartOfDay >= startOfPeriod && paymentStartOfDay <= endOfPreviousMonth
             return isRelevant
         }
@@ -117,16 +117,18 @@ struct StatisticsView: View {
                     
                     if payments.isEmpty {
                         ContentUnavailableView("Sin Datos", systemImage: "chart.pie", description: Text("Añade algunos pagos para ver las estadísticas."))
+                            .foregroundColor(Color("AppTextSecondary")) // Themed color
                     } else {
                         // --- SECCIÓN GRÁFICO DE TORTA ---
                         Text("Gastos por Categoría")
                             .font(.title2).bold()
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding([.top, .horizontal])
+                            .foregroundColor(Color("AppTextPrimary")) // Themed color
                         
                         if categoryData.isEmpty {
                             Text("No hay datos para \"\(selectedFilter.rawValue)\"")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color("AppTextSecondary")) // Themed color
                                 .frame(height: 300)
                         } else {
                             Chart(categoryData) { data in
@@ -145,8 +147,10 @@ struct StatisticsView: View {
                             List(categoryData) { data in
                                 HStack {
                                     Text(data.category.rawValue)
+                                        .foregroundColor(Color("AppTextPrimary")) // Themed color
                                     Spacer()
                                     Text(data.totalAmount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                                        .foregroundColor(Color("AppTextPrimary")) // Themed color
                                 }.padding(.horizontal)
                             }
                             .frame(height: CGFloat(categoryData.count) * 50)
@@ -159,13 +163,14 @@ struct StatisticsView: View {
                             .font(.title2).bold()
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal)
+                            .foregroundColor(Color("AppTextPrimary")) // Themed color
                         
                         Chart(monthlySpendingData) { data in
                             BarMark(
                                 x: .value("Mes", data.month, unit: .month),
                                 y: .value("Total", data.totalAmount)
                             )
-                            .foregroundStyle(.blue.gradient)
+                            .foregroundStyle(Color("AppPrimary").gradient) // Themed color
                             .cornerRadius(6)
                         }
                         .chartXAxis {

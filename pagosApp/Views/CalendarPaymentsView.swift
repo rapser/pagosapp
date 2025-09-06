@@ -29,20 +29,23 @@ struct CalendarPaymentsView: View {
                 VStack(alignment: .leading) {
                     Text("Pagos para \(selectedDate, formatter: longDateFormatter)")
                         .font(.headline)
+                        .foregroundColor(Color("AppTextPrimary")) // Themed color
                         .padding([.top, .horizontal])
 
                     if paymentsForSelectedDate.isEmpty {
                         ContentUnavailableView("Sin Pagos", systemImage: "calendar.badge.exclamationmark", description: Text("No hay pagos programados para este día."))
+                            .foregroundColor(Color("AppTextSecondary")) // Themed color
                     } else {
                         List(paymentsForSelectedDate) {
                             payment in
                             HStack {
                                 VStack(alignment: .leading) {
                                     Text(payment.name).fontWeight(.semibold)
-                                    Text(payment.category.rawValue).font(.caption).foregroundStyle(.secondary)
+                                    Text(payment.category.rawValue).font(.caption).foregroundColor(Color("AppTextSecondary")) // Themed color
                                 }
                                 Spacer()
                                 Text(payment.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                                    .foregroundColor(Color("AppTextPrimary")) // Themed color
                             }
                         }
                     }
@@ -54,6 +57,7 @@ struct CalendarPaymentsView: View {
                     Button("Sincronizar") {
                         syncPaymentsWithCalendar()
                     }
+                    .foregroundColor(Color("AppPrimary")) // Themed color
                 }
             }
         }
