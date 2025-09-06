@@ -38,9 +38,6 @@ struct ContentView: View {
                             Label("Ajustes", systemImage: "gear")
                         }
                 }
-                .onAppear { // Apply appearance changes when TabView appears
-                    UITabBar.appearance().backgroundColor = .white
-                }
             } else {
                 LoginView(
                     onLogin: { email, password in

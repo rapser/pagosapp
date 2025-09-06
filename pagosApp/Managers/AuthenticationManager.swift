@@ -122,6 +122,9 @@ class AuthenticationManager: ObservableObject {
     
     @MainActor
     func logout(inactivity: Bool = false) async {
+        isLoading = true // Set loading to true
+        defer { isLoading = false } // Ensure loading is set to false when function exits
+
         print("AuthManager: Attempting logout (inactivity: \(inactivity))")
         do {
             try await authService.signOut()
