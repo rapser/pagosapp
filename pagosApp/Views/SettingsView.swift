@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct SettingsView: View {
     @EnvironmentObject var authManager: AuthenticationManager
@@ -37,7 +38,7 @@ struct SettingsView: View {
             message: Text("¿Estás seguro de que quieres cerrar la sesión?"),
             buttons: [
                 AlertButton(title: Text("Aceptar"), role: .destructive) {
-                    authManager.logout()
+                    Task { await authManager.logout() }
                 },
                 AlertButton(title: Text("Cancelar"), role: .cancel) { }
             ]
@@ -46,7 +47,20 @@ struct SettingsView: View {
 }
 
 #Preview {
-    SettingsView()
-        .environmentObject(AuthenticationManager())
+    // Dummy AuthenticationService for preview
+    class MockAuthService: AuthenticationService {
+        func signUp(email: String, password: String) async throws {
+            
+        }
+        
+        var isAuthenticatedPublisher: AnyPublisher<Bool, Never> { Just(true).eraseToAnyPublisher() }
+        var isAuthenticated: Bool = true
+        func signIn(email: String, password: String) async throws { }
+        func signOut() async throws { }
+        func getCurrentUser() async throws -> String? { return "preview@example.com" }
+    }
+
+    return SettingsView()
+        .environmentObject(AuthenticationManager(authService: MockAuthService()))
         .environmentObject(AlertManager())
 }
