@@ -152,6 +152,12 @@ class AuthenticationManager: ObservableObject {
     }
     
     func checkSession() {
+        #if DEBUG
+        // Inactivity timeout is disabled in DEBUG mode
+        print("AuthManager: checkSession() called. Inactivity timeout is DISABLED in DEBUG mode.")
+        return
+        #endif
+
         print("AuthManager: checkSession() called.")
         if let lastActiveTimestamp = UserDefaults.standard.object(forKey: lastActiveTimestampKey) as? Date {
             let elapsedTime = Date().timeIntervalSince(lastActiveTimestamp)

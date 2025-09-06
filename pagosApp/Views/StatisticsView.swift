@@ -79,8 +79,8 @@ struct StatisticsView: View {
         }
 
         // Filter relevant payments within the 6-month period, up to the end of the previous month
-        let relevantPayments = payments.filter { payment in
-            let paymentStartOfDay = calendar.startOfDay(for: payment.dueDate)
+        let relevantPayments = payments.filter {
+            let paymentStartOfDay = calendar.startOfDay(for: $0.dueDate)
             let isRelevant = paymentStartOfDay >= startOfPeriod && paymentStartOfDay <= endOfPreviousMonth
             return isRelevant
         }
