@@ -2,7 +2,7 @@ import Foundation
 import LocalAuthentication
 import Combine
 
-@MainActor // Added @MainActor
+@MainActor
 class AuthenticationManager: ObservableObject {
     private let authService: AuthenticationService
     private var cancellables = Set<AnyCancellable>()
@@ -15,7 +15,7 @@ class AuthenticationManager: ObservableObject {
     @Published var canUseBiometrics = false
     @Published var showInactivityAlert = false
     @Published var hasLoggedInWithCredentials = false
-    @Published var isLoading: Bool = false // Added isLoading property
+    @Published var isLoading: Bool = false
     
     init(authService: AuthenticationService) {
         self.authService = authService
@@ -101,8 +101,7 @@ class AuthenticationManager: ObservableObject {
     func authenticateWithBiometrics() async {
         guard canUseBiometrics else { return }
         
-        isLoading = true // Set loading to true
-        // defer { isLoading = false } // Removed defer here, handled in DispatchQueue.main.async
+        isLoading = true
 
         let context = LAContext()
         let reason = "Inicia sesión con Face ID para acceder a tus pagos."
@@ -115,15 +114,15 @@ class AuthenticationManager: ObservableObject {
                 } else {
                     print("AuthManager: Biometric authentication failed: \(authenticationError?.localizedDescription ?? "Unknown error")")
                 }
-                self.isLoading = false // Set loading to false after biometric evaluation
+                self.isLoading = false
             }
         }
     }
     
     @MainActor
     func logout(inactivity: Bool = false) async {
-        isLoading = true // Set loading to true
-        defer { isLoading = false } // Ensure loading is set to false when function exits
+        isLoading = true
+        defer { isLoading = false }
 
         print("AuthManager: Attempting logout (inactivity: \(inactivity))")
         do {
@@ -153,11 +152,9 @@ class AuthenticationManager: ObservableObject {
     
     func checkSession() {
         #if DEBUG
-        // Inactivity timeout is disabled in DEBUG mode
         print("AuthManager: checkSession() called. Inactivity timeout is DISABLED in DEBUG mode.")
         return
-        #endif
-
+        #else
         print("AuthManager: checkSession() called.")
         if let lastActiveTimestamp = UserDefaults.standard.object(forKey: lastActiveTimestampKey) as? Date {
             let elapsedTime = Date().timeIntervalSince(lastActiveTimestamp)
@@ -165,11 +162,12 @@ class AuthenticationManager: ObservableObject {
             if elapsedTime > sessionTimeoutInSeconds {
                 print("AuthManager: Inactivity timeout reached. Logging out.")
                 Task { await logout(inactivity: true) }
-            } 
+            }
         } else {
             print("AuthManager: No lastActiveTimestamp found. Starting inactivity timer.")
             startInactivityTimer()
         }
+        #endif
     }
     
     func startInactivityTimer() {

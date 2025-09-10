@@ -9,7 +9,6 @@ import SwiftUI
 import SwiftData
 import Supabase
 
-// Initialize Supabase client globally or as a static property
 let supabaseClient = SupabaseClient(
     supabaseURL: URL(string: "https://jmkzwdacjwjezkalpfbl.supabase.co")!,
     supabaseKey: "sb_publishable_q-Hns6a3-nBszokYo5euLQ_u0uyqN53"
@@ -17,7 +16,6 @@ let supabaseClient = SupabaseClient(
 
 @main
 struct pagosAppApp: App {
-    // Initialize SupabaseAuthService and AuthenticationManager
     private let supabaseAuthService = SupabaseAuthService(client: supabaseClient)
     private let authenticationManager: AuthenticationManager
 
@@ -29,10 +27,8 @@ struct pagosAppApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(authenticationManager)
-                .tint(Color("AppPrimary")) // Added global tint here
+                .tint(Color("AppPrimary"))
         }
-        // Configuramos el contenedor de SwiftData para el modelo Payment.
-        // Esto inyecta el modelContext en el entorno de la app.
         .modelContainer(for: Payment.self)
     }
 }

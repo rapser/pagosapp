@@ -98,7 +98,7 @@ class EventKitManager: ObservableObject {
 
         // Set alarm for 8:00 AM on the due date
         var dateComponents = Calendar.current.dateComponents([.year, .month, .day], from: dueDate)
-        dateComponents.hour = 8 // Changed from 9 to 8
+        dateComponents.hour = 8
         dateComponents.minute = 0
         dateComponents.second = 0
 

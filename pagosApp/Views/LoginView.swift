@@ -12,30 +12,30 @@ struct LoginView: View {
     var isBiometricLoginEnabled: Bool
     
     var body: some View {
-        NavigationView { // Added NavigationView for navigation
+        NavigationView {
             VStack(spacing: 20) {
                 Spacer()
                 
                 if !isBiometricLoginEnabled || showEmailPasswordLogin {
                     Text("Bienvenido")
                         .font(.largeTitle).bold()
-                        .foregroundColor(Color("AppTextPrimary")) // Themed color
+                        .foregroundColor(Color("AppTextPrimary"))
                 }
                 
                 Image(systemName: "lock.shield.fill")
                     .font(.system(size: 80))
-                    .foregroundColor(Color("AppTextSecondary")) // Themed color
+                    .foregroundColor(Color("AppTextSecondary"))
                 
                 if isBiometricLoginEnabled && !showEmailPasswordLogin {
                     Button(action: { Task { await onBiometricLogin() } }) {
                         Label("Iniciar con Face ID", systemImage: "faceid")
-                            .foregroundColor(Color("AppPrimary")) // Themed color
+                            .foregroundColor(Color("AppPrimary"))
                     }
                     .padding(.top)
                     
                     Button(action: { showEmailPasswordLogin = true }) {
                         Text("Iniciar con Correo")
-                            .foregroundColor(Color("AppTextSecondary")) // Themed color
+                            .foregroundColor(Color("AppTextSecondary"))
                     }
                     .padding(.top)
                 } else {
@@ -45,13 +45,13 @@ struct LoginView: View {
                         .autocapitalization(.none)
                         .autocorrectionDisabled()
                         .padding()
-                        .background(Color("AppBackground")) // Themed color
+                        .background(Color("AppBackground"))
                         .cornerRadius(10)
                     
                     SecureField("Contraseña", text: $password)
                         .textContentType(.newPassword)
                         .padding()
-                        .background(Color("AppBackground")) // Themed color
+                        .background(Color("AppBackground"))
                         .cornerRadius(10)
                     
                     if let errorMessage = errorMessage {
@@ -68,7 +68,7 @@ struct LoginView: View {
                             .foregroundColor(.white) // Keeping white for text on primary button
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color("AppPrimary")) // Themed color
+                            .background(Color("AppPrimary"))
                             .cornerRadius(10)
                     }
                     
@@ -77,7 +77,7 @@ struct LoginView: View {
                         Text("¿No tienes cuenta? Regístrate aquí")
                             .font(.callout)
                             .padding(.top)
-                            .foregroundColor(Color("AppPrimary")) // Themed color
+                            .foregroundColor(Color("AppPrimary"))
                     }
                 }
                 

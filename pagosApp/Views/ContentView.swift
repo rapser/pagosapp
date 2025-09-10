@@ -38,10 +38,10 @@ struct ContentView: View {
                             Label("Ajustes", systemImage: "gear")
                         }
                 }
-                .onAppear { // Apply appearance changes when TabView appears
-                    UITabBar.appearance().backgroundColor = UIColor(named: "AppBackground") // Themed color
-                    UITabBar.appearance().unselectedItemTintColor = UIColor(named: "AppTextSecondary") // Themed color
-                    UITabBar.appearance().tintColor = UIColor(named: "AppPrimary") // Themed color
+                .onAppear {
+                    UITabBar.appearance().backgroundColor = UIColor(named: "AppBackground")
+                    UITabBar.appearance().unselectedItemTintColor = UIColor(named: "AppTextSecondary")
+                    UITabBar.appearance().tintColor = UIColor(named: "AppPrimary")
                 }
             } else {
                 LoginView(

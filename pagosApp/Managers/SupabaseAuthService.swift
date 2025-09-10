@@ -2,7 +2,7 @@ import Foundation
 import Supabase
 import Combine
 
-@MainActor // Added @MainActor
+@MainActor
 class SupabaseAuthService: @preconcurrency AuthenticationService {
     private let client: SupabaseClient
     private let _isAuthenticated = CurrentValueSubject<Bool, Never>(false)
@@ -73,7 +73,7 @@ class SupabaseAuthService: @preconcurrency AuthenticationService {
             print("SupabaseAuthService: signIn successful.")
         } catch let error as AuthError {
             print("SupabaseAuthService: signIn failed with AuthError: \(error.localizedDescription)")
-            print("SupabaseAuthService: Full AuthError: \(error)") // Print full error object
+            print("SupabaseAuthService: Full AuthError: \(error)")
             if error.message.contains("invalid login credentials") {
                 throw AuthenticationError.wrongCredentials
             } else {
@@ -81,7 +81,7 @@ class SupabaseAuthService: @preconcurrency AuthenticationService {
             }
         } catch {
             print("SupabaseAuthService: signIn failed with unknown error: \(error.localizedDescription)")
-            print("SupabaseAuthService: Full unknown error: \(error)") // Print full error object
+            print("SupabaseAuthService: Full unknown error: \(error)")
             throw AuthenticationError.unknown(error)
         }
     }
@@ -93,7 +93,7 @@ class SupabaseAuthService: @preconcurrency AuthenticationService {
             print("SupabaseAuthService: signOut successful.")
         } catch {
             print("SupabaseAuthService: signOut failed with error: \(error.localizedDescription)")
-            print("SupabaseAuthService: Full signOut error: \(error)") // Print full error object
+            print("SupabaseAuthService: Full signOut error: \(error)")
             throw AuthenticationError.unknown(error)
         }
     }

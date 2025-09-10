@@ -46,7 +46,7 @@ struct AddPaymentView: View {
                         EventKitManager.shared.addEvent(for: newPayment) { eventID in
                             newPayment.eventIdentifier = eventID
                         }
-                        dismiss() // Cerramos la vista
+                        dismiss()
                     }
                     .disabled(name.isEmpty || amount.isEmpty) // El botón se deshabilita si faltan datos.
                 }

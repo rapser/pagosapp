@@ -17,7 +17,7 @@ struct RegistrationView: View {
                 
                 Text("Crear Cuenta")
                     .font(.largeTitle).bold()
-                    .foregroundColor(Color("AppTextPrimary")) // Themed color
+                    .foregroundColor(Color("AppTextPrimary"))
                 
                 TextField("Correo electrónico", text: $email)
                     .keyboardType(.emailAddress)
@@ -25,19 +25,19 @@ struct RegistrationView: View {
                     .autocapitalization(.none)
                     .autocorrectionDisabled()
                     .padding()
-                    .background(Color("AppBackground")) // Themed color
+                    .background(Color("AppBackground"))
                     .cornerRadius(10)
                 
                 SecureField("Contraseña", text: $password)
                     .textContentType(.newPassword)
                     .padding()
-                    .background(Color("AppBackground")) // Themed color
+                    .background(Color("AppBackground"))
                     .cornerRadius(10)
                 
                 SecureField("Confirmar Contraseña", text: $confirmPassword)
                     .textContentType(.newPassword)
                     .padding()
-                    .background(Color("AppBackground")) // Themed color
+                    .background(Color("AppBackground"))
                     .cornerRadius(10)
                 
                 if let errorMessage = errorMessage {
@@ -69,7 +69,7 @@ struct RegistrationView: View {
                         .foregroundColor(.white) // Keeping white for text on primary button
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color("AppSuccess")) // Themed color
+                        .background(Color("AppSuccess"))
                         .cornerRadius(10)
                 }
                 
@@ -77,7 +77,7 @@ struct RegistrationView: View {
             }
             .padding()
             .navigationTitle("") // Hide default navigation title
-            .navigationBarHidden(true) // Hide navigation bar
+            .navigationBarHidden(true)
         }
     }
 }
