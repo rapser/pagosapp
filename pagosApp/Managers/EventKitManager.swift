@@ -1,24 +1,39 @@
 import Foundation
 import EventKit
+import OSLog
 
 class EventKitManager: ObservableObject {
     static let shared = EventKitManager()
     private let eventStore = EKEventStore()
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "EventKit")
 
     /// Solicita permiso al usuario para acceder al calendario.
     func requestAccess(completion: @escaping (Bool) -> Void) {
         if #available(iOS 17.0, *) {
-            eventStore.requestFullAccessToEvents {
-                granted, _ in
+            eventStore.requestFullAccessToEvents { [weak self] granted, error in
                 DispatchQueue.main.async {
-                    // Error al solicitar acceso al calendario
+                    if let error = error {
+                        self?.logger.error("❌ Error requesting calendar access: \(error.localizedDescription)")
+                    }
+                    if granted {
+                        self?.logger.info("✅ Calendar access granted")
+                    } else {
+                        self?.logger.info("⚠️ Calendar access denied")
+                    }
                     completion(granted)
                 }
             }
         } else {
-            eventStore.requestAccess(to: .event) { granted, _ in
+            eventStore.requestAccess(to: .event) { [weak self] granted, error in
                 DispatchQueue.main.async {
-                    // Error al solicitar acceso al calendario
+                    if let error = error {
+                        self?.logger.error("❌ Error requesting calendar access: \(error.localizedDescription)")
+                    }
+                    if granted {
+                        self?.logger.info("✅ Calendar access granted")
+                    } else {
+                        self?.logger.info("⚠️ Calendar access denied")
+                    }
                     completion(granted)
                 }
             }
@@ -38,8 +53,13 @@ class EventKitManager: ObservableObject {
 
         do {
             try eventStore.save(event, span: .thisEvent)
+            logger.info("✅ Calendar event created for payment: \(payment.name)")
             completion(event.eventIdentifier)
-        } catch _ as NSError {
+        } catch {
+            logger.error("❌ Failed to save calendar event: \(error.localizedDescription)")
+            Task { @MainActor in
+                ErrorHandler.shared.handle(PaymentError.calendarSyncFailed(error))
+            }
             completion(nil)
         }
     }
@@ -49,10 +69,12 @@ class EventKitManager: ObservableObject {
         guard let eventIdentifier = payment.eventIdentifier,
               let event = eventStore.event(withIdentifier: eventIdentifier) else {
             // Si no hay evento (p.ej. se borró manualmente), lo creamos de nuevo si no está pagado.
+            logger.warning("⚠️ Event not found for payment: \(payment.name)")
             if !payment.isPaid {
-                 addEvent(for: payment) { newIdentifier in
-                     payment.eventIdentifier = newIdentifier
-                 }
+                logger.info("Creating new calendar event for unpaid payment: \(payment.name)")
+                addEvent(for: payment) { newIdentifier in
+                    payment.eventIdentifier = newIdentifier
+                }
             }
             return
         }
@@ -60,7 +82,7 @@ class EventKitManager: ObservableObject {
         event.title = payment.isPaid ? "✅ Pago: \(payment.name)" : "Pago: \(payment.name)"
         event.startDate = payment.dueDate
         event.endDate = payment.dueDate
-        
+
         // Remove existing alarms and reconfigure
         if let existingAlarms = event.alarms {
             for alarm in existingAlarms {
@@ -71,20 +93,31 @@ class EventKitManager: ObservableObject {
 
         do {
             try eventStore.save(event, span: .thisEvent)
-        } catch _ {
-            // Error al actualizar evento
+            logger.info("✅ Calendar event updated for payment: \(payment.name)")
+        } catch {
+            logger.error("❌ Failed to update calendar event: \(error.localizedDescription)")
+            Task { @MainActor in
+                ErrorHandler.shared.handle(PaymentError.calendarSyncFailed(error))
+            }
         }
     }
 
     /// Elimina un evento del calendario.
     func removeEvent(for payment: Payment) {
         guard let eventIdentifier = payment.eventIdentifier,
-              let event = eventStore.event(withIdentifier: eventIdentifier) else { return }
+              let event = eventStore.event(withIdentifier: eventIdentifier) else {
+            logger.warning("⚠️ No event to remove for payment: \(payment.name)")
+            return
+        }
 
         do {
             try eventStore.remove(event, span: .thisEvent)
-        } catch _ {
-            // Error al eliminar evento
+            logger.info("✅ Calendar event removed for payment: \(payment.name)")
+        } catch {
+            logger.error("❌ Failed to remove calendar event: \(error.localizedDescription)")
+            Task { @MainActor in
+                ErrorHandler.shared.handle(PaymentError.calendarSyncFailed(error))
+            }
         }
     }
     
@@ -98,7 +131,7 @@ class EventKitManager: ObservableObject {
 
         // Set alarm for 8:00 AM on the due date
         var dateComponents = Calendar.current.dateComponents([.year, .month, .day], from: dueDate)
-        dateComponents.hour = 8 // Changed from 9 to 8
+        dateComponents.hour = 8
         dateComponents.minute = 0
         dateComponents.second = 0
 

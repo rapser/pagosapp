@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		464D59D12E6C769900DE10FF /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 464D59D02E6C769900DE10FF /* Auth */; };
+		464D59D32E6C769900DE10FF /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 464D59D22E6C769900DE10FF /* Supabase */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		464D59812E6B405A00DE10FF /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +57,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				464D59D32E6C769900DE10FF /* Supabase in Frameworks */,
+				464D59D12E6C769900DE10FF /* Auth in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -103,6 +110,8 @@
 			);
 			name = pagosApp;
 			packageProductDependencies = (
+				464D59D02E6C769900DE10FF /* Auth */,
+				464D59D22E6C769900DE10FF /* Supabase */,
 			);
 			productName = pagosApp;
 			productReference = 464D59312E6B336D00DE10FF /* pagosApp.app */;
@@ -159,6 +168,9 @@
 			);
 			mainGroup = 464D59282E6B336D00DE10FF;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				464D59CF2E6C769900DE10FF /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 464D59322E6B336D00DE10FF /* Products */;
 			projectDirPath = "";
@@ -215,6 +227,8 @@
 /* Begin XCBuildConfiguration section */
 		464D593C2E6B337000DE10FF /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 464D59332E6B336D00DE10FF /* pagosApp */;
+			baseConfigurationReferenceRelativePath = Config/Secrets.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -279,6 +293,8 @@
 		};
 		464D593D2E6B337000DE10FF /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 464D59332E6B336D00DE10FF /* pagosApp */;
+			baseConfigurationReferenceRelativePath = Config/Secrets.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -463,6 +479,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		464D59CF2E6C769900DE10FF /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		464D59D02E6C769900DE10FF /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 464D59CF2E6C769900DE10FF /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
+		};
+		464D59D22E6C769900DE10FF /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 464D59CF2E6C769900DE10FF /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 464D59292E6B336D00DE10FF /* Project object */;
 }
