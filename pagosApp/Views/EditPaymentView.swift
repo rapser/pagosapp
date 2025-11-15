@@ -2,26 +2,76 @@ import SwiftUI
 
 struct EditPaymentView: View {
     @Environment(\.dismiss) var dismiss
-    // @Bindable nos permite enlazar los campos del formulario directamente
-    // a las propiedades del objeto 'payment'. Los cambios se guardan automáticamente.
+    @Environment(\.modelContext) private var modelContext
     @Bindable var payment: Payment
+
+    @State private var name: String
+    @State private var amount: String
+    @State private var dueDate: Date
+    @State private var category: PaymentCategory
+    @State private var isPaid: Bool
+    @State private var isLoading = false
+
+    private var paymentOperations: PaymentOperationsService {
+        let syncService = SupabasePaymentSyncService(client: supabaseClient)
+        let notificationService = NotificationManagerAdapter()
+        let calendarService = EventKitManagerAdapter()
+        return DefaultPaymentOperationsService(
+            modelContext: modelContext,
+            syncService: syncService,
+            notificationService: notificationService,
+            calendarService: calendarService
+        )
+    }
+
+    init(payment: Payment) {
+        self.payment = payment
+        _name = State(initialValue: payment.name)
+        _amount = State(initialValue: String(format: "%.2f", payment.amount))
+        _dueDate = State(initialValue: payment.dueDate)
+        _category = State(initialValue: payment.category)
+        _isPaid = State(initialValue: payment.isPaid)
+    }
+
+    private var isValid: Bool {
+        !name.isEmpty && !amount.isEmpty && (Double(amount) ?? 0) > 0
+    }
+
+    private var amountValue: Double? {
+        Double(amount)
+    }
+
+    private var hasChanges: Bool {
+        name != payment.name ||
+        amountValue != payment.amount ||
+        !Calendar.current.isDate(dueDate, inSameDayAs: payment.dueDate) ||
+        category != payment.category ||
+        isPaid != payment.isPaid
+    }
 
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("Detalles del Pago")) {
-                    TextField("Nombre del pago", text: $payment.name)
-                    // Para el monto, necesitamos un formateador que convierta entre Double y String.
-                    TextField("Monto", value: $payment.amount, format: .number)
+                    TextField("Nombre del pago", text: $name)
+                    TextField("Monto", text: $amount)
                         .keyboardType(.decimalPad)
-                    DatePicker("Fecha de Vencimiento", selection: $payment.dueDate, displayedComponents: .date)
-                    Picker("Categoría", selection: $payment.category) {
+                    DatePicker("Fecha de Vencimiento", selection: $dueDate, displayedComponents: .date)
+                    Picker("Categoría", selection: $category) {
                         ForEach(PaymentCategory.allCases) { category in
                             Text(category.rawValue).tag(category)
                         }
                     }
-                    Toggle(isOn: $payment.isPaid) {
+                    Toggle(isOn: $isPaid) {
                         Text("Pagado")
+                    }
+                }
+
+                if hasChanges {
+                    Section {
+                        Button("Descartar Cambios", role: .destructive) {
+                            resetChanges()
+                        }
                     }
                 }
             }
@@ -29,16 +79,58 @@ struct EditPaymentView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Hecho") {
-                        // Al editar, re-programamos la notificación por si la fecha cambió.
-                        NotificationManager.shared.scheduleNotification(for: payment)
-                        // Y también actualizamos el evento en el calendario.
-                        EventKitManager.shared.updateEvent(for: payment)
-                        dismiss()
+                    Button("Guardar") {
+                        saveChanges()
                     }
+                    .disabled(!isValid || !hasChanges)
+                }
+            }
+            .disabled(isLoading)
+            .overlay {
+                if isLoading {
+                    ProgressView("Guardando...")
+                        .padding()
+                        .background(Color(UIColor.systemBackground))
+                        .cornerRadius(10)
+                        .shadow(radius: 10)
                 }
             }
         }
+    }
+
+    private func saveChanges() {
+        guard isValid, let amountValue = amountValue, hasChanges else { return }
+
+        isLoading = true
+
+        payment.name = name
+        payment.amount = amountValue
+        payment.dueDate = dueDate
+        payment.category = category
+        payment.isPaid = isPaid
+
+        Task {
+            do {
+                try await paymentOperations.updatePayment(payment)
+                await MainActor.run {
+                    isLoading = false
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                    ErrorHandler.shared.handle(PaymentError.updateFailed(error))
+                }
+            }
+        }
+    }
+
+    private func resetChanges() {
+        name = payment.name
+        amount = String(format: "%.2f", payment.amount)
+        dueDate = payment.dueDate
+        category = payment.category
+        isPaid = payment.isPaid
     }
 }
 
