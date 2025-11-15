@@ -1,17 +1,35 @@
 import SwiftUI
 
 struct AddPaymentView: View {
-    // Entorno para poder cerrar la vista modal.
     @Environment(\.dismiss) private var dismiss
-    // El modelContext nos permite interactuar con la base de datos de SwiftData.
     @Environment(\.modelContext) private var modelContext
 
-    // Estados locales para los campos del formulario.
     @State private var name: String = ""
     @State private var amount: String = ""
     @State private var dueDate: Date = Date()
     @State private var category: PaymentCategory = .recibo
-    
+    @State private var isLoading = false
+
+    private var paymentOperations: PaymentOperationsService {
+        let syncService = SupabasePaymentSyncService(client: supabaseClient)
+        let notificationService = NotificationManagerAdapter()
+        let calendarService = EventKitManagerAdapter()
+        return DefaultPaymentOperationsService(
+            modelContext: modelContext,
+            syncService: syncService,
+            notificationService: notificationService,
+            calendarService: calendarService
+        )
+    }
+
+    private var isValid: Bool {
+        !name.isEmpty && !amount.isEmpty && (Double(amount) ?? 0) > 0
+    }
+
+    private var amountValue: Double? {
+        Double(amount)
+    }
+
     var body: some View {
         NavigationView {
             Form {
@@ -34,24 +52,59 @@ struct AddPaymentView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Guardar") {
-                        guard let amountDouble = Double(amount) else { return }
-
-                        let newPayment = Payment(name: name, amount: amountDouble, dueDate: dueDate, category: category)
-                        
-                        // 1. Insertar en SwiftData
-                        modelContext.insert(newPayment)
-                        // 2. Programar notificación
-                        NotificationManager.shared.scheduleNotification(for: newPayment)
-                        // 3. Añadir al calendario y guardar su ID
-                        EventKitManager.shared.addEvent(for: newPayment) { eventID in
-                            newPayment.eventIdentifier = eventID
-                        }
-                        dismiss() // Cerramos la vista
+                        savePayment()
                     }
-                    .disabled(name.isEmpty || amount.isEmpty) // El botón se deshabilita si faltan datos.
+                    .disabled(!isValid)
+                }
+            }
+            .disabled(isLoading)
+            .overlay {
+                if isLoading {
+                    ProgressView("Guardando...")
+                        .padding()
+                        .background(Color(UIColor.systemBackground))
+                        .cornerRadius(10)
+                        .shadow(radius: 10)
                 }
             }
         }
+    }
+
+    private func savePayment() {
+        guard isValid, let amountValue = amountValue else { return }
+
+        isLoading = true
+
+        let payment = Payment(
+            name: name,
+            amount: amountValue,
+            dueDate: dueDate,
+            isPaid: false,
+            category: category
+        )
+
+        Task {
+            do {
+                try await paymentOperations.createPayment(payment)
+                await MainActor.run {
+                    clearForm()
+                    isLoading = false
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    isLoading = false
+                    ErrorHandler.shared.handle(PaymentError.saveFailed(error))
+                }
+            }
+        }
+    }
+
+    private func clearForm() {
+        name = ""
+        amount = ""
+        dueDate = Date()
+        category = .recibo
     }
 }
 

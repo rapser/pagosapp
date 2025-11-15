@@ -10,7 +10,7 @@ struct PaymentRowView: View {
         HStack {
             // Checkbox para marcar como pagado
             Image(systemName: payment.isPaid ? "checkmark.circle.fill" : "circle")
-                .foregroundColor(payment.isPaid ? .green : .gray)
+                .foregroundColor(payment.isPaid ? Color("AppSuccess") : Color("AppTextSecondary")) // Themed colors
                 .font(.title2)
                 .onTapGesture {
                     // Al tocar el check, cambiamos el estado.
@@ -24,19 +24,21 @@ struct PaymentRowView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(payment.name)
                     .fontWeight(.bold)
-                    .strikethrough(payment.isPaid, color: .gray)
+                    .strikethrough(payment.isPaid, color: Color("AppTextSecondary")) // Themed color
+                    .foregroundColor(Color("AppTextPrimary")) // Themed color
                 Text(payment.category.rawValue)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color("AppTextSecondary")) // Themed color
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 4) {
                 Text(payment.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
                     .fontWeight(.semibold)
-                    .strikethrough(payment.isPaid, color: .gray)
+                    .strikethrough(payment.isPaid, color: Color("AppTextSecondary")) // Themed color
+                    .foregroundColor(Color("AppTextPrimary")) // Themed color
                 Text(payment.dueDate, style: .date)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color("AppTextSecondary")) // Themed color
             }
         }
     }

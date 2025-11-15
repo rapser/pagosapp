@@ -1,10 +1,14 @@
 import SwiftUI
 import Combine
+import Supabase
+import OSLog
 
 struct ContentView: View {
-    @StateObject private var authManager = AuthenticationManager()
+    @EnvironmentObject private var authManager: AuthenticationManager
     @StateObject private var alertManager = AlertManager()
     @Environment(\.scenePhase) private var scenePhase
+
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ContentView")
     
     // Timer for foreground session checking
     @State private var foregroundCheckTimer: AnyCancellable?
@@ -37,36 +41,60 @@ struct ContentView: View {
                             Label("Ajustes", systemImage: "gear")
                         }
                 }
-                .onAppear { // Apply appearance changes when TabView appears
-                    UITabBar.appearance().backgroundColor = .white
+                .onAppear {
+                    UITabBar.appearance().backgroundColor = UIColor(named: "AppBackground")
+                    UITabBar.appearance().unselectedItemTintColor = UIColor(named: "AppTextSecondary")
+                    UITabBar.appearance().tintColor = UIColor(named: "AppPrimary")
                 }
             } else {
                 LoginView(
                     onLogin: { email, password in
-                        return authManager.login(email: email, password: password)
+                        await authManager.login(email: email, password: password)
                     },
                     onBiometricLogin: {
-                        authManager.authenticateWithBiometrics()
+                        await authManager.authenticateWithBiometrics()
                     },
                     isBiometricLoginEnabled: authManager.canUseBiometrics && SettingsManager.shared.isBiometricLockEnabled && authManager.hasLoggedInWithCredentials
                 )
+                .environmentObject(authManager) // Inject authManager into LoginView and its hierarchy
+            }
+            
+            // Show loading view if authManager.isLoading is true
+            if authManager.isLoading {
+                LoadingView()
             }
         }
         .onAppear {
             // Solicitamos permisos al iniciar la app
             NotificationManager.shared.requestAuthorization()
             EventKitManager.shared.requestAccess { _ in }
-            authManager.checkSession() // Comprobamos la sesión al iniciar
+            // authManager.checkSession() is now called by onChange(of: isAuthenticated) or scenePhase .active
+        }
+        .onChange(of: authManager.isAuthenticated) { oldValue, newValue in
+            if newValue { // User just became authenticated
+                authManager.startInactivityTimer() // Start the timer
+                startForegroundCheckTimer() // Start foreground check
+            } else { // User just became unauthenticated (logged out)
+                stopForegroundCheckTimer() // Stop foreground check
+            }
         }
         .onChange(of: scenePhase) { oldValue, newPhase in
             if newPhase == .active {
-                authManager.checkSession()
-                startForegroundCheckTimer() // Start timer when app becomes active
-            } else if newPhase == .inactive || newPhase == .background {
+                // Only check session if already authenticated, otherwise it's handled by login/registration
+                if authManager.isAuthenticated {
+                    authManager.checkSession()
+                    startForegroundCheckTimer() // Start timer when app becomes active
+                }
+            } else if newPhase == .background {
+                // Logout when app goes to background (as per user's strict request)
+                Task { await authManager.logout() }
+                stopForegroundCheckTimer() // Stop timer when app goes to background
+            } else if newPhase == .inactive {
+                // For inactive, just update timestamp for inactivity timer
                 if authManager.isAuthenticated {
                     authManager.updateLastActiveTimestamp()
                 }
-                stopForegroundCheckTimer() // Stop timer when app goes to background/inactive
+                stopForegroundCheckTimer() // Stop timer when app goes inactive
             }
         }
         .alert(isPresented: $alertManager.isPresented) {
@@ -101,6 +129,7 @@ struct ContentView: View {
         } message: {
             Text("Tu sesión ha sido cerrada automáticamente debido a 5 minutos de inactividad.")
         }
+        .withErrorHandling() // Global error handling
     }
     
     private func startForegroundCheckTimer() {
@@ -123,4 +152,6 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environmentObject(AuthenticationManager(authService: SupabaseAuthService(client: SupabaseClient(supabaseURL: URL(string: "https://example.com")!, supabaseKey: "dummy_key"))))
+        .environmentObject(AlertManager())
 }

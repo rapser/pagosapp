@@ -17,7 +17,7 @@ enum PaymentCategory: String, Codable, CaseIterable, Identifiable {
 
 // @Model macro transforma esta clase en un modelo de SwiftData.
 @Model
-final class Payment {
+final class Payment: @unchecked Sendable {
     // Usamos un UUID para identificar de forma única cada pago, útil para notificaciones.
     @Attribute(.unique) var id: UUID
     var name: String
@@ -36,5 +36,16 @@ final class Payment {
         self.isPaid = isPaid
         self.category = category
         self.eventIdentifier = nil
+    }
+
+    /// Full initializer for syncing with backend
+    init(id: UUID, name: String, amount: Double, dueDate: Date, isPaid: Bool, category: PaymentCategory, eventIdentifier: String?) {
+        self.id = id
+        self.name = name
+        self.amount = amount
+        self.dueDate = dueDate
+        self.isPaid = isPaid
+        self.category = category
+        self.eventIdentifier = eventIdentifier
     }
 }

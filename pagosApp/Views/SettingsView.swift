@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 struct SettingsView: View {
     @EnvironmentObject var authManager: AuthenticationManager
@@ -8,16 +9,18 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Seguridad")) {
+                Section(header: Text("Seguridad").foregroundColor(Color("AppTextPrimary"))) {
                     Toggle("Proteger con Face ID / Touch ID", isOn: $settingsManager.isBiometricLockEnabled)
+                        .tint(Color("AppPrimary"))
                 }
                 
-                Section(header: Text("Acerca de")) {
+                Section(header: Text("Acerca de").foregroundColor(Color("AppTextPrimary"))) {
                     HStack {
                         Text("Versión")
+                            .foregroundColor(Color("AppTextPrimary"))
                         Spacer()
                         Text("1.0.0")
-                            .foregroundStyle(.secondary)
+                            .foregroundColor(Color("AppTextSecondary"))
                     }
                 }
                 
@@ -37,7 +40,7 @@ struct SettingsView: View {
             message: Text("¿Estás seguro de que quieres cerrar la sesión?"),
             buttons: [
                 AlertButton(title: Text("Aceptar"), role: .destructive) {
-                    authManager.logout()
+                    Task { await authManager.logout() }
                 },
                 AlertButton(title: Text("Cancelar"), role: .cancel) { }
             ]
@@ -46,7 +49,20 @@ struct SettingsView: View {
 }
 
 #Preview {
-    SettingsView()
-        .environmentObject(AuthenticationManager())
+    // Dummy AuthenticationService for preview
+    class MockAuthService: AuthenticationService {
+        func signUp(email: String, password: String) async throws {
+            
+        }
+        
+        var isAuthenticatedPublisher: AnyPublisher<Bool, Never> { Just(true).eraseToAnyPublisher() }
+        var isAuthenticated: Bool = true
+        func signIn(email: String, password: String) async throws { }
+        func signOut() async throws { }
+        func getCurrentUser() async throws -> String? { return "preview@example.com" }
+    }
+
+    return SettingsView()
+        .environmentObject(AuthenticationManager(authService: MockAuthService()))
         .environmentObject(AlertManager())
 }
