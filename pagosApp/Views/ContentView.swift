@@ -1,11 +1,14 @@
 import SwiftUI
 import Combine
 import Supabase
+import OSLog
 
 struct ContentView: View {
     @EnvironmentObject private var authManager: AuthenticationManager
     @StateObject private var alertManager = AlertManager()
     @Environment(\.scenePhase) private var scenePhase
+
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ContentView")
     
     // Timer for foreground session checking
     @State private var foregroundCheckTimer: AnyCancellable?
@@ -126,6 +129,7 @@ struct ContentView: View {
         } message: {
             Text("Tu sesión ha sido cerrada automáticamente debido a 5 minutos de inactividad.")
         }
+        .withErrorHandling() // Global error handling
     }
     
     private func startForegroundCheckTimer() {
