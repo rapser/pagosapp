@@ -126,24 +126,13 @@ class PaymentsListViewModel: ObservableObject {
         }
     }
 
-    /// Sync with server (delegate to sync service)
+    /// Sync with server - DEPRECATED in Phase 2
+    /// Use PaymentSyncManager.performManualSync() from Settings instead
+    @available(*, deprecated, message: "Use PaymentSyncManager.performManualSync() from Settings for offline-first behavior")
     func syncWithServer() async {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            // Fetch remote payments
-            let remoteDTOs = try await syncService.fetchAllPayments()
-
-            // Upload local payments
-            try await syncService.syncAllLocalPayments(payments)
-
-            logger.info("✅ Sync completed: \(remoteDTOs.count) remote, \(self.payments.count) local")
-            fetchPayments()
-        } catch {
-            logger.error("❌ Sync failed: \(error.localizedDescription)")
-            ErrorHandler.shared.handle(error)
-        }
+        logger.warning("⚠️ syncWithServer() is deprecated. Use manual sync from Settings.")
+        // Just refresh local data
+        fetchPayments()
     }
 
     /// Refresh data

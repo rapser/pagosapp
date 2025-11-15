@@ -19,6 +19,8 @@ class PaymentSyncManager: ObservableObject {
 
     @Published var isSyncing = false
     @Published var lastSyncDate: Date?
+    @Published var pendingSyncCount = 0
+    @Published var syncError: Error?
 
     private let lastSyncKey = "lastPaymentSyncDate"
 
@@ -49,80 +51,158 @@ class PaymentSyncManager: ObservableObject {
         }
     }
 
-    /// Full sync: Upload local payments and download remote payments
-    func performFullSync(modelContext: ModelContext) async {
+    /// Update count of payments pending synchronization
+    func updatePendingSyncCount(modelContext: ModelContext) {
+        do {
+            let allPayments = try fetchAllPayments(from: modelContext)
+            let pendingPayments = filterPendingPayments(allPayments)
+            pendingSyncCount = pendingPayments.count
+        } catch {
+            pendingSyncCount = 0
+        }
+    }
+
+    /// Manual sync: Upload pending local changes and download remote changes
+    /// - Parameter isAuthenticated: Whether user is logged in
+    func performManualSync(modelContext: ModelContext, isAuthenticated: Bool) async throws {
+        guard isAuthenticated else {
+            let error = NSError(
+                domain: "PaymentSyncManager",
+                code: 401,
+                userInfo: [NSLocalizedDescriptionKey: "Debes iniciar sesión para sincronizar"]
+            )
+            syncError = error
+            logger.warning("Sync attempted without authentication")
+            throw error
+        }
+
         guard !isSyncing else {
             logger.warning("⚠️ Sync already in progress")
             return
         }
 
         isSyncing = true
+        syncError = nil
         defer { isSyncing = false }
 
-        logger.info("Starting full sync...")
+        logger.info("🔄 Starting manual sync...")
 
         do {
-            // 1. Get all local payments
-            let descriptor = FetchDescriptor<Payment>()
-            let localPayments = try modelContext.fetch(descriptor)
-            logger.info("Found \(localPayments.count) local payments")
+            // 1. Upload local changes (only payments that need syncing)
+            try await uploadLocalChanges(modelContext: modelContext)
 
-            // 2. Upload all local payments to server
-            if !localPayments.isEmpty {
-                try await syncService.syncAllLocalPayments(localPayments)
-                logger.info("✅ Uploaded \(localPayments.count) payments to server")
-            }
+            // 2. Download remote changes
+            try await downloadRemoteChanges(modelContext: modelContext)
 
-            // 3. Fetch all remote payments
-            let remoteDTOs = try await syncService.fetchAllPayments()
-            logger.info("Fetched \(remoteDTOs.count) payments from server")
-
-            // 4. Merge remote payments into local database
-            await mergeRemotePayments(remoteDTOs, into: modelContext)
-
-            // 5. Update last sync date
+            // 3. Update counters and state
+            updatePendingSyncCount(modelContext: modelContext)
             lastSyncDate = Date()
             UserDefaults.standard.set(lastSyncDate, forKey: lastSyncKey)
 
-            logger.info("✅ Full sync completed successfully")
+            logger.info("✅ Manual sync completed successfully")
         } catch {
-            logger.error("❌ Full sync failed: \(error.localizedDescription)")
-            errorHandler.handle(error)
+            logger.error("❌ Manual sync failed: \(error.localizedDescription)")
+            syncError = error
+            throw error
         }
     }
 
-    /// Merge remote payments into local database (upsert logic)
-    private func mergeRemotePayments(_ remoteDTOs: [PaymentDTO], into modelContext: ModelContext) async {
-        for dto in remoteDTOs {
-            // Check if payment already exists locally
-            let predicate = #Predicate<Payment> { payment in
-                payment.id == dto.id
+    // MARK: - Private Helper Methods
+
+    /// Fetch all payments from modelContext
+    private func fetchAllPayments(from modelContext: ModelContext) throws -> [Payment] {
+        let descriptor = FetchDescriptor<Payment>()
+        return try modelContext.fetch(descriptor)
+    }
+
+    /// Filter payments that need syncing
+    private func filterPendingPayments(_ payments: [Payment]) -> [Payment] {
+        return payments.filter { payment in
+            payment.syncStatus == .local ||
+            payment.syncStatus == .modified ||
+            payment.syncStatus == .error
+        }
+    }
+
+    /// Find existing payment by ID
+    private func findPayment(byId id: UUID, in payments: [Payment]) -> Payment? {
+        return payments.first { $0.id == id }
+    }
+
+    /// Upload only payments that need syncing
+    private func uploadLocalChanges(modelContext: ModelContext) async throws {
+        let allPayments = try fetchAllPayments(from: modelContext)
+        let paymentsToSync = filterPendingPayments(allPayments)
+
+        logger.info("Found \(paymentsToSync.count) payments to upload")
+
+        guard !paymentsToSync.isEmpty else { return }
+
+        // Mark as syncing
+        for payment in paymentsToSync {
+            payment.syncStatus = .syncing
+        }
+        try modelContext.save()
+
+        // Upload to server
+        do {
+            try await syncService.syncAllLocalPayments(paymentsToSync)
+
+            // Mark as synced
+            for payment in paymentsToSync {
+                payment.syncStatus = .synced
+                payment.lastSyncedAt = Date()
             }
-            let descriptor = FetchDescriptor(predicate: predicate)
+            try modelContext.save()
 
-            do {
-                let existingPayments = try modelContext.fetch(descriptor)
+            logger.info("✅ Uploaded \(paymentsToSync.count) payments successfully")
+        } catch {
+            // Mark as error
+            for payment in paymentsToSync {
+                payment.syncStatus = .error
+            }
+            try? modelContext.save()
+            throw error
+        }
+    }
 
-                if let existingPayment = existingPayments.first {
-                    // Update existing payment if remote is newer
-                    // Since we don't have updatedAt locally, always update from remote
-                    if dto.updatedAt != nil {
-                        // Update local payment with remote data
-                        existingPayment.name = dto.name
-                        existingPayment.amount = dto.amount
-                        existingPayment.dueDate = dto.dueDate
-                        existingPayment.isPaid = dto.isPaid
-                        existingPayment.category = PaymentCategory(rawValue: dto.category) ?? .otro
-                        logger.info("Updated local payment: \(dto.name)")
-                    }
+    /// Download and merge remote changes
+    private func downloadRemoteChanges(modelContext: ModelContext) async throws {
+        let remoteDTOs = try await syncService.fetchAllPayments()
+        logger.info("Fetched \(remoteDTOs.count) payments from server")
+
+        try await mergeRemotePayments(remoteDTOs, into: modelContext)
+    }
+
+    /// Merge remote payments into local database (upsert logic)
+    private func mergeRemotePayments(_ remoteDTOs: [PaymentDTO], into modelContext: ModelContext) async throws {
+        // Fetch all local payments once
+        let localPayments = try fetchAllPayments(from: modelContext)
+
+        for dto in remoteDTOs {
+            // Find existing payment by ID
+            if let existingPayment = findPayment(byId: dto.id, in: localPayments) {
+                // Only update if not locally modified
+                if existingPayment.syncStatus != .modified && existingPayment.syncStatus != .local {
+                    // Update local payment with remote data
+                    existingPayment.name = dto.name
+                    existingPayment.amount = dto.amount
+                    existingPayment.dueDate = dto.dueDate
+                    existingPayment.isPaid = dto.isPaid
+                    existingPayment.category = PaymentCategory(rawValue: dto.category) ?? .otro
+                    existingPayment.syncStatus = .synced
+                    existingPayment.lastSyncedAt = Date()
+                    logger.info("Updated local payment from remote: \(dto.name)")
                 } else {
-                    // Insert new payment from remote
-                    let newPayment = dto.toPayment()
-                    modelContext.insert(newPayment)
-                    logger.info("Inserted new payment from remote: \(dto.name)")
+                    logger.info("Skipped updating \(dto.name) - has local modifications")
                 }
-            } catch {
-                logger.error("❌ Error merging payment \(dto.id): \(error.localizedDescription)")
+            } else {
+                // Insert new payment from remote
+                let newPayment = dto.toPayment()
+                newPayment.syncStatus = .synced
+                newPayment.lastSyncedAt = Date()
+                modelContext.insert(newPayment)
+                logger.info("Inserted new payment from remote: \(dto.name)")
             }
         }
 
@@ -133,25 +213,29 @@ class PaymentSyncManager: ObservableObject {
         } catch {
             logger.error("❌ Failed to save context: \(error.localizedDescription)")
             errorHandler.handle(PaymentError.saveFailed(error))
+            throw error
         }
     }
 
-    /// Auto-sync on app launch or login
-    func autoSyncIfNeeded(modelContext: ModelContext) async {
-        // Auto-sync if last sync was more than 1 hour ago or never synced
-        let shouldSync: Bool
-        if let lastSync = lastSyncDate {
-            let hoursSinceLastSync = Date().timeIntervalSince(lastSync) / 3600
-            shouldSync = hoursSinceLastSync >= 1
-        } else {
-            shouldSync = true
-        }
+    // MARK: - Deprecated Methods
 
-        if shouldSync {
-            logger.info("Auto-sync triggered (last sync: \(self.lastSyncDate?.description ?? "never"))")
-            await performFullSync(modelContext: modelContext)
-        } else {
-            logger.info("Skipping auto-sync (last sync was recent)")
+    /// Deprecated: Use performManualSync instead
+    @available(*, deprecated, message: "Use performManualSync for offline-first behavior")
+    func performFullSync(modelContext: ModelContext, isAuthenticated: Bool = false) async {
+        do {
+            try await performManualSync(modelContext: modelContext, isAuthenticated: isAuthenticated)
+        } catch {
+            logger.error("❌ Full sync failed: \(error.localizedDescription)")
+            errorHandler.handle(error)
         }
+    }
+
+    /// Auto-sync on app launch or login - DISABLED for offline-first mode
+    /// User must manually sync from Settings
+    @available(*, deprecated, message: "Auto-sync disabled for offline-first behavior. Use manual sync from Settings.")
+    func autoSyncIfNeeded(modelContext: ModelContext) async {
+        logger.info("⚠️ Auto-sync is disabled. User must manually sync from Settings.")
+        // Update pending count so user knows to sync
+        updatePendingSyncCount(modelContext: modelContext)
     }
 }

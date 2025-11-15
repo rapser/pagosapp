@@ -56,23 +56,18 @@ class DefaultPaymentOperationsService: PaymentOperationsService {
     func createPayment(_ payment: Payment) async throws {
         logger.info("Creating payment: \(payment.name)")
 
-        // 1. Save to local database
         modelContext.insert(payment)
+        payment.syncStatus = .local
         try modelContext.save()
 
-        // 2. Schedule notifications
         notificationService.scheduleNotifications(for: payment)
 
-        // 3. Add to calendar
         calendarService.addEvent(for: payment) { [weak self] eventId in
             payment.eventIdentifier = eventId
             try? self?.modelContext.save()
         }
 
-        // 4. Sync to server
-        try await syncService.syncPayment(payment)
-
-        logger.info("✅ Payment created successfully: \(payment.name)")
+        logger.info("✅ Payment created locally: \(payment.name)")
     }
 
     // MARK: - Update
@@ -80,22 +75,20 @@ class DefaultPaymentOperationsService: PaymentOperationsService {
     func updatePayment(_ payment: Payment) async throws {
         logger.info("Updating payment: \(payment.name)")
 
-        // 1. Save changes to local database
+        if payment.syncStatus == .synced {
+            payment.syncStatus = .modified
+        }
+
         try modelContext.save()
 
-        // 2. Update notifications
         notificationService.cancelNotifications(for: payment)
         if !payment.isPaid {
             notificationService.scheduleNotifications(for: payment)
         }
 
-        // 3. Update calendar event
         calendarService.updateEvent(for: payment)
 
-        // 4. Sync to server
-        try await syncService.syncPayment(payment)
-
-        logger.info("✅ Payment updated successfully: \(payment.name)")
+        logger.info("✅ Payment updated locally: \(payment.name)")
     }
 
     // MARK: - Delete
@@ -103,20 +96,21 @@ class DefaultPaymentOperationsService: PaymentOperationsService {
     func deletePayment(_ payment: Payment) async throws {
         logger.info("Deleting payment: \(payment.name)")
 
-        // 1. Remove from calendar
-        calendarService.removeEvent(for: payment)
+        let paymentId = payment.id
+        let wasSynced = payment.syncStatus == .synced || payment.syncStatus == .modified
 
-        // 2. Cancel notifications
+        calendarService.removeEvent(for: payment)
         notificationService.cancelNotifications(for: payment)
 
-        // 3. Delete from local database
         modelContext.delete(payment)
         try modelContext.save()
 
-        // 4. Sync deletion to server
-        try await syncService.syncDeletePayment(payment.id)
+        if wasSynced {
+            // TODO: Track deletion for server sync in Phase 3
+            logger.info("Payment \(paymentId) deletion pending sync")
+        }
 
-        logger.info("✅ Payment deleted successfully: \(payment.name)")
+        logger.info("✅ Payment deleted locally: \(payment.name)")
     }
 }
 

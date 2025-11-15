@@ -97,7 +97,9 @@ struct PaymentDTO: Codable, Identifiable {
             dueDate: dueDate,
             isPaid: isPaid,
             category: paymentCategory,
-            eventIdentifier: eventIdentifier
+            eventIdentifier: eventIdentifier,
+            syncStatus: .synced,
+            lastSyncedAt: Date()
         )
     }
 }
