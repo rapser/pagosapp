@@ -4,5 +4,9 @@
 <dict>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>Tu aplicación necesita enviar notificaciones para recordarte los pagos pendientes.</string>
+    <key>SUPABASE_URL</key>
+    <string>$(SUPABASE_URL)</string>
+    <key>SUPABASE_KEY</key>
+    <string>$(SUPABASE_KEY)</string>
 </dict>
 </plist>
