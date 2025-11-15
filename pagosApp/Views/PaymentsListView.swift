@@ -46,23 +46,12 @@ struct PaymentsListView: View {
                     }
                     .listStyle(.plain)
                     .refreshable {
-                        await viewModel.syncWithServer()
+                        viewModel.refresh()
                     }
                 }
             }
             .navigationTitle("Mis Pagos")
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: {
-                        Task {
-                            await viewModel.syncWithServer()
-                        }
-                    }) {
-                        Image(systemName: "arrow.clockwise")
-                            .foregroundColor(Color("AppPrimary"))
-                    }
-                }
-
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingAddPaymentSheet = true }) {
                         Image(systemName: "plus")
