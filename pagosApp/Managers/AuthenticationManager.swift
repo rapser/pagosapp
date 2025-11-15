@@ -1,11 +1,14 @@
 import Foundation
 import LocalAuthentication
 import Combine
+import OSLog
 
 @MainActor
 class AuthenticationManager: ObservableObject {
     private let authService: AuthenticationService
     private var cancellables = Set<AnyCancellable>()
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "Authentication")
+    private let errorHandler = ErrorHandler.shared
     
     private let hasLoggedInWithCredentialsKey = "hasLoggedInWithCredentials"
     private let lastActiveTimestampKey = "lastActiveTimestamp"
@@ -48,52 +51,60 @@ class AuthenticationManager: ObservableObject {
     @MainActor
     func login(email: String, password: String) async -> AuthenticationError? {
         guard EmailValidator.isValidEmail(email) else {
-            return .invalidEmailFormat
+            let error = AuthenticationError.invalidEmailFormat
+            errorHandler.handle(error)
+            return error
         }
-        
-        isLoading = true // Set loading to true
-        defer { isLoading = false } // Ensure loading is set to false when function exits
+
+        isLoading = true
+        defer { isLoading = false }
 
         do {
-            print("AuthManager: Attempting login for \(email)")
+            logger.info("Attempting login for \(email)")
             try await authService.signIn(email: email, password: password)
             self.hasLoggedInWithCredentials = true
             UserDefaults.standard.set(true, forKey: self.hasLoggedInWithCredentialsKey)
-            print("AuthManager: Login successful. hasLoggedInWithCredentials set to true.")
+            logger.info("✅ Login successful for \(email)")
             return nil
         } catch let authError as AuthenticationError {
-            print("AuthManager: Login failed with auth error: \(authError.localizedDescription)")
+            logger.error("❌ Login failed: \(authError.localizedDescription)")
+            errorHandler.handle(authError)
             return authError
         } catch {
-            print("AuthManager: Login failed with unknown error: \(error.localizedDescription)")
-            return .unknown(error)
+            logger.error("❌ Login failed with unknown error: \(error.localizedDescription)")
+            let authError = AuthenticationError.unknown(error)
+            errorHandler.handle(authError)
+            return authError
         }
     }
     
     @MainActor
     func register(email: String, password: String) async -> AuthenticationError? {
         guard EmailValidator.isValidEmail(email) else {
-            return .invalidEmailFormat
+            let error = AuthenticationError.invalidEmailFormat
+            errorHandler.handle(error)
+            return error
         }
-        
-        isLoading = true // Set loading to true
-        defer { isLoading = false } // Ensure loading is set to false when function exits
+
+        isLoading = true
+        defer { isLoading = false }
 
         do {
-            print("AuthManager: Attempting registration for \(email)")
+            logger.info("Attempting registration for \(email)")
             try await authService.signUp(email: email, password: password)
-            // After successful registration, user is usually signed in automatically by Supabase
-            // The isAuthenticatedPublisher will update self.isAuthenticated
             self.hasLoggedInWithCredentials = true
             UserDefaults.standard.set(true, forKey: self.hasLoggedInWithCredentialsKey)
-            print("AuthManager: Registration successful. hasLoggedInWithCredentials set to true.")
+            logger.info("✅ Registration successful for \(email)")
             return nil
         } catch let authError as AuthenticationError {
-            print("AuthManager: Registration failed with auth error: \(authError.localizedDescription)")
+            logger.error("❌ Registration failed: \(authError.localizedDescription)")
+            errorHandler.handle(authError)
             return authError
         } catch {
-            print("AuthManager: Registration failed with unknown error: \(error.localizedDescription)")
-            return .unknown(error)
+            logger.error("❌ Registration failed with unknown error: \(error.localizedDescription)")
+            let authError = AuthenticationError.unknown(error)
+            errorHandler.handle(authError)
+            return authError
         }
     }
     
