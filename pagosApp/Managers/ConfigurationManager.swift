@@ -45,7 +45,9 @@ enum ConfigurationManager {
     static var supabaseURL: URL {
         get throws {
             let urlString: String = try value(for: "SUPABASE_URL")
-            guard let url = URL(string: urlString) else {
+            let cleanedURLString = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
+
+            guard let url = URL(string: cleanedURLString) else {
                 throw ConfigurationError.invalidValue("SUPABASE_URL")
             }
             return url
