@@ -135,5 +135,5 @@ struct EditPaymentView: View {
 }
 
 #Preview {
-    EditPaymentView(payment: Payment(name: "Sample", amount: 100, dueDate: Date(), category: .recibo))
+    EditPaymentView(payment: Payment(name: "Sample", amount: 100, dueDate: Date(), category: .servicios))
 }

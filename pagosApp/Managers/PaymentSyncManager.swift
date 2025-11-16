@@ -62,6 +62,29 @@ class PaymentSyncManager: ObservableObject {
         }
     }
 
+    /// Perform initial sync after login if local database is empty
+    func performInitialSyncIfNeeded(modelContext: ModelContext, isAuthenticated: Bool) async {
+        guard isAuthenticated else { return }
+
+        do {
+            let allPayments = try fetchAllPayments(from: modelContext)
+
+            // Only sync if database is completely empty
+            guard allPayments.isEmpty else {
+                logger.info("Local database has \(allPayments.count) payments. Skipping initial sync.")
+                return
+            }
+
+            logger.info("Local database is empty. Performing initial sync...")
+            try await performManualSync(modelContext: modelContext, isAuthenticated: isAuthenticated)
+
+            // Post notification to refresh views
+            NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
+        } catch {
+            logger.error("Initial sync failed: \(error.localizedDescription)")
+        }
+    }
+
     /// Manual sync: Upload pending local changes and download remote changes
     /// - Parameter isAuthenticated: Whether user is logged in
     func performManualSync(modelContext: ModelContext, isAuthenticated: Bool) async throws {

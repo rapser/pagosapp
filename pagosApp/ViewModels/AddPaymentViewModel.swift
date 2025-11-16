@@ -17,7 +17,7 @@ class AddPaymentViewModel: ObservableObject {
     @Published var name: String = ""
     @Published var amount: String = ""
     @Published var dueDate: Date = Date()
-    @Published var category: PaymentCategory = .recibo
+    @Published var category: PaymentCategory = .servicios
     @Published var isLoading = false
 
     // MARK: - Dependencies (DIP: depend on abstractions)
@@ -107,6 +107,6 @@ class AddPaymentViewModel: ObservableObject {
         name = ""
         amount = ""
         dueDate = Date()
-        category = .recibo
+        category = .servicios
     }
 }

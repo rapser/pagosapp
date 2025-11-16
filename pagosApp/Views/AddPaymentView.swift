@@ -7,7 +7,7 @@ struct AddPaymentView: View {
     @State private var name: String = ""
     @State private var amount: String = ""
     @State private var dueDate: Date = Date()
-    @State private var category: PaymentCategory = .recibo
+    @State private var category: PaymentCategory = .servicios
     @State private var isLoading = false
 
     private var paymentOperations: PaymentOperationsService {
@@ -104,7 +104,7 @@ struct AddPaymentView: View {
         name = ""
         amount = ""
         dueDate = Date()
-        category = .recibo
+        category = .servicios
     }
 }
 
