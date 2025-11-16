@@ -44,6 +44,7 @@ struct ContentView: View {
                             Label("Ajustes", systemImage: "gear")
                         }
                 }
+                .pagosAppNavigationBarStyle()
                 .onAppear {
                     UITabBar.appearance().backgroundColor = UIColor(named: "AppBackground")
                     UITabBar.appearance().unselectedItemTintColor = UIColor(named: "AppTextSecondary")

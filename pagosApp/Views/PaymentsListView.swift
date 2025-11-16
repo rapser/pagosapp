@@ -50,12 +50,23 @@ struct PaymentsListView: View {
                     }
                 }
             }
+            .onAppear {
+                UISegmentedControl.appearance().backgroundColor = UIColor.pagosAppYellowPrimary
+                UISegmentedControl.appearance().selectedSegmentTintColor = .white
+                UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.pagosAppBluePrimary], for: .normal)
+                UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.pagosAppBluePrimary], for: .selected)
+            }
             .navigationTitle("Mis Pagos")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingAddPaymentSheet = true }) {
-                        Image(systemName: "plus")
-                            .foregroundColor(Color("AppPrimary"))
+                        ZStack {
+                            Circle()
+                                .fill(Color("AppPrimary"))
+                                .frame(width: 30, height: 30)
+                            Image(systemName: "plus")
+                                .foregroundColor(.white)
+                        }
                     }
                 }
             }
