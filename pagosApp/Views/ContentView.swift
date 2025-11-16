@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import Combine
 import Supabase
 import OSLog
@@ -6,10 +7,12 @@ import OSLog
 struct ContentView: View {
     @EnvironmentObject private var authManager: AuthenticationManager
     @StateObject private var alertManager = AlertManager()
+    @StateObject private var syncManager = PaymentSyncManager.shared
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.modelContext) private var modelContext
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ContentView")
-    
+
     // Timer for foreground session checking
     @State private var foregroundCheckTimer: AnyCancellable?
     private let foregroundCheckInterval: TimeInterval = 30 // Check every 30 seconds
@@ -74,6 +77,11 @@ struct ContentView: View {
             if newValue { // User just became authenticated
                 authManager.startInactivityTimer() // Start the timer
                 startForegroundCheckTimer() // Start foreground check
+
+                // Perform initial sync if database is empty
+                Task {
+                    await syncManager.performInitialSyncIfNeeded(modelContext: modelContext, isAuthenticated: true)
+                }
             } else { // User just became unauthenticated (logged out)
                 stopForegroundCheckTimer() // Stop foreground check
             }

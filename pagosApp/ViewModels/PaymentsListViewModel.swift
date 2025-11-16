@@ -26,6 +26,7 @@ class PaymentsListViewModel: ObservableObject {
     private let paymentOperations: PaymentOperationsService
     private let syncService: PaymentSyncService
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentsListViewModel")
+    private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Computed Properties
 
@@ -53,6 +54,15 @@ class PaymentsListViewModel: ObservableObject {
         self.paymentOperations = paymentOperations
         self.syncService = syncService
         fetchPayments()
+        setupNotificationObserver()
+    }
+
+    private func setupNotificationObserver() {
+        NotificationCenter.default.publisher(for: NSNotification.Name("PaymentsDidSync"))
+            .sink { [weak self] _ in
+                self?.fetchPayments()
+            }
+            .store(in: &cancellables)
     }
 
     /// Convenience initializer with default dependencies

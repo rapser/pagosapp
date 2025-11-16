@@ -6,9 +6,13 @@ import SwiftData
 // Identifiable es para que funcione bien en las vistas de SwiftUI.
 // Codable es necesario para que SwiftData pueda almacenarlo.
 enum PaymentCategory: String, Codable, CaseIterable, Identifiable {
-    case recibo = "Recibo"
+    case servicios = "Servicios"
     case tarjetaCredito = "Tarjeta de Crédito"
-    case ahorro = "Ahorro"
+    case vivienda = "Vivienda"
+    case prestamo = "Préstamo"
+    case seguro = "Seguro"
+    case educacion = "Educación"
+    case impuestos = "Impuestos"
     case suscripcion = "Suscripción"
     case otro = "Otro"
 
