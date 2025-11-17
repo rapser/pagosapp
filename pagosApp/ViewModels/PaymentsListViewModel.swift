@@ -37,9 +37,11 @@ class PaymentsListViewModel: ObservableObject {
         switch selectedFilter {
         case .currentMonth:
             return payments.filter { calendar.isDate($0.dueDate, equalTo: now, toGranularity: .month) }
-        case .previousMonths:
-            let startOfCurrentMonth = calendar.startOfDay(for: calendar.date(from: calendar.dateComponents([.year, .month], from: now))!)
-            return payments.filter { $0.dueDate < startOfCurrentMonth }
+        case .futureMonths:
+            // Get the first day of next month
+            let startOfCurrentMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
+            let startOfNextMonth = calendar.date(byAdding: DateComponents(month: 1), to: startOfCurrentMonth)!
+            return payments.filter { $0.dueDate >= startOfNextMonth }
         }
     }
 
@@ -155,7 +157,7 @@ class PaymentsListViewModel: ObservableObject {
 
 enum PaymentFilter: String, CaseIterable, Identifiable {
     case currentMonth = "Próximos"
-    case previousMonths = "Pasados"
+    case futureMonths = "Futuros"
 
     var id: String { self.rawValue }
 }
