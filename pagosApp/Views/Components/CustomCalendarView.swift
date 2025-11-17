@@ -188,8 +188,10 @@ struct CustomCalendarView: View {
 
     private func dayOfWeekString(for date: Date) -> String {
         let weekday = calendar.component(.weekday, from: date)
-        // weekday: 1 = Sunday, 2 = Monday, etc.
-        return daysOfWeek[(weekday - 1 + 6) % 7] // Adjust to start from Monday
+        // weekday: 1 = Sunday, 2 = Monday, 3 = Tuesday, etc.
+        // daysOfWeek array: ["D", "L", "M", "M", "J", "V", "S"] (0=D, 1=L, 2=M, etc.)
+        // We need to map: 1(Sun)->0, 2(Mon)->1, 3(Tue)->2, ..., 7(Sat)->6
+        return daysOfWeek[weekday - 1]
     }
 
     private func previousMonth() {
@@ -282,7 +284,7 @@ struct CompactDayCell: View {
             Text(dayOfWeek)
                 .font(.caption2)
                 .fontWeight(.medium)
-                .foregroundColor(isSelected ? .white : Color("AppTextSecondary"))
+                .foregroundColor(dayOfWeekTextColor)
 
             // Day number with background
             ZStack {
@@ -304,7 +306,7 @@ struct CompactDayCell: View {
 
             // Payment indicator dot
             Circle()
-                .fill(hasPayments ? (isSelected ? .white : Color("AppPrimary")) : Color.clear)
+                .fill(hasPayments ? paymentDotColor : Color.clear)
                 .frame(width: 5, height: 5)
         }
         .frame(width: 50)
@@ -318,6 +320,30 @@ struct CompactDayCell: View {
             return Color("AppPrimary")
         } else {
             return Color("AppTextPrimary")
+        }
+    }
+
+    private var dayOfWeekTextColor: Color {
+        if isSelected {
+            return Color("AppPrimary")
+        } else {
+            return Color("AppTextSecondary")
+        }
+    }
+
+    private var paymentDotColor: Color {
+        if isSelected {
+            // Cuando está seleccionado: amarillo en light mode, blanco en dark mode
+            return Color(uiColor: UIColor { traitCollection in
+                if traitCollection.userInterfaceStyle == .dark {
+                    return .white
+                } else {
+                    return UIColor(named: "AppWarning") ?? .systemOrange
+                }
+            })
+        } else {
+            // Cuando NO está seleccionado: siempre azul primario
+            return Color("AppPrimary")
         }
     }
 }
