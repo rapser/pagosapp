@@ -11,6 +11,33 @@ struct PaymentsListView: View {
         let container = try! ModelContainer(for: Payment.self)
         let context = ModelContext(container)
         _viewModel = StateObject(wrappedValue: PaymentsListViewModel(modelContext: context))
+
+        // Configurar segmented control con soporte para modo oscuro
+        // Fondo: azul en light mode, gris oscuro en dark mode
+        UISegmentedControl.appearance().backgroundColor = UIColor(named: "SegmentedBackground")
+
+        // Segmento seleccionado: blanco en light mode, azul primario en dark mode
+        UISegmentedControl.appearance().selectedSegmentTintColor = UIColor { traitCollection in
+            if traitCollection.userInterfaceStyle == .dark {
+                return UIColor(named: "AppPrimary") ?? .systemBlue
+            } else {
+                return .white
+            }
+        }
+
+        // Texto no seleccionado: blanco siempre
+        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.white], for: .normal)
+
+        // Texto seleccionado: azul en light mode, blanco en dark mode
+        UISegmentedControl.appearance().setTitleTextAttributes([
+            .foregroundColor: UIColor { traitCollection in
+                if traitCollection.userInterfaceStyle == .dark {
+                    return .white
+                } else {
+                    return UIColor(named: "AppPrimary") ?? .systemBlue
+                }
+            }
+        ], for: .selected)
     }
 
     var body: some View {
@@ -50,23 +77,18 @@ struct PaymentsListView: View {
                     }
                 }
             }
-            .onAppear {
-                UISegmentedControl.appearance().backgroundColor = UIColor.pagosAppYellowPrimary
-                UISegmentedControl.appearance().selectedSegmentTintColor = .white
-                UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.pagosAppBluePrimary], for: .normal)
-                UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.pagosAppBluePrimary], for: .selected)
-            }
             .navigationTitle("Mis Pagos")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingAddPaymentSheet = true }) {
-                        ZStack {
-                            Circle()
-                                .fill(Color("AppPrimary"))
-                                .frame(width: 30, height: 30)
-                            Image(systemName: "plus")
-                                .foregroundColor(.white)
-                        }
+                        Image(systemName: "plus")
+                            .foregroundColor(Color(uiColor: UIColor { traitCollection in
+                                if traitCollection.userInterfaceStyle == .dark {
+                                    return .white
+                                } else {
+                                    return UIColor(named: "AppPrimary") ?? .systemBlue
+                                }
+                            }))
                     }
                 }
             }

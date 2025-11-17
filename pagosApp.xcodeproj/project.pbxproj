@@ -24,7 +24,6 @@
 /* Begin PBXFileReference section */
 		464D59312E6B336D00DE10FF /* pagosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = pagosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		464D597D2E6B405A00DE10FF /* pagosAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = pagosAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		464D59E02E6C900000DE10FF /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Secrets.xcconfig; path = pagosApp/Config/Secrets.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -73,21 +72,12 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		461BB1A12EC83AC000DBE1AC /* Recovered References */ = {
-			isa = PBXGroup;
-			children = (
-				464D59E02E6C900000DE10FF /* Secrets.xcconfig */,
-			);
-			name = "Recovered References";
-			sourceTree = "<group>";
-		};
 		464D59282E6B336D00DE10FF = {
 			isa = PBXGroup;
 			children = (
 				464D59332E6B336D00DE10FF /* pagosApp */,
 				464D597E2E6B405A00DE10FF /* pagosAppTests */,
 				464D59322E6B336D00DE10FF /* Products */,
-				461BB1A12EC83AC000DBE1AC /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -237,7 +227,8 @@
 /* Begin XCBuildConfiguration section */
 		464D593C2E6B337000DE10FF /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 464D59E02E6C900000DE10FF /* Secrets.xcconfig */;
+			baseConfigurationReferenceAnchor = 464D59332E6B336D00DE10FF /* pagosApp */;
+			baseConfigurationReferenceRelativePath = Config/Secrets.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -302,7 +293,8 @@
 		};
 		464D593D2E6B337000DE10FF /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 464D59E02E6C900000DE10FF /* Secrets.xcconfig */;
+			baseConfigurationReferenceAnchor = 464D59332E6B336D00DE10FF /* pagosApp */;
+			baseConfigurationReferenceRelativePath = Config/Secrets.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -365,7 +357,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = P6FCYRT7JM;
+				DEVELOPMENT_TEAM = 654892RUAY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = pagosApp/Info.plist;
@@ -381,7 +373,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.rapser.pagosApp;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.rapser.payapp-";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -396,7 +388,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = P6FCYRT7JM;
+				DEVELOPMENT_TEAM = 654892RUAY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = pagosApp/Info.plist;
@@ -412,7 +404,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.rapser.pagosApp;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.rapser.payapp-";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
