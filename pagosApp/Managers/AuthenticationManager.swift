@@ -12,7 +12,7 @@ class AuthenticationManager: ObservableObject {
     
     private let hasLoggedInWithCredentialsKey = "hasLoggedInWithCredentials"
     private let lastActiveTimestampKey = "lastActiveTimestamp"
-    private let sessionTimeoutInSeconds: TimeInterval = 300
+    private let sessionTimeoutInSeconds: TimeInterval = 604800 // 1 semana (7 días * 24 horas * 60 minutos * 60 segundos)
     
     @Published var isAuthenticated = false
     @Published var canUseBiometrics = false

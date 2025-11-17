@@ -135,7 +135,7 @@ struct ContentView: View {
                 authManager.showInactivityAlert = false
             }
         } message: {
-            Text("Tu sesión ha sido cerrada automáticamente debido a 5 minutos de inactividad.")
+            Text("Tu sesión ha sido cerrada automáticamente debido a 1 semana de inactividad.")
         }
         .withErrorHandling() // Global error handling
     }
