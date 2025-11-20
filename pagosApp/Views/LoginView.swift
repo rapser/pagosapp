@@ -15,30 +15,38 @@ struct LoginView: View {
         NavigationView {
             VStack(spacing: 20) {
                 Spacer()
-                
-                if !isBiometricLoginEnabled || showEmailPasswordLogin {
-                    Text("Bienvenido")
-                        .font(.largeTitle).bold()
-                        .foregroundColor(Color("AppTextPrimary"))
-                }
-                
-                Image(systemName: "lock.shield.fill")
-                    .font(.system(size: 80))
-                    .foregroundColor(Color("AppTextSecondary"))
-                
+
+                Text("Bienvenido")
+                    .font(.largeTitle).bold()
+                    .foregroundColor(Color("AppTextPrimary"))
+
                 if isBiometricLoginEnabled && !showEmailPasswordLogin {
+                    Image(systemName: "faceid")
+                        .font(.system(size: 80))
+                        .foregroundColor(Color("AppPrimary"))
+
+                    Text("Usa Face ID para acceder")
+                        .font(.headline)
+                        .foregroundColor(Color("AppTextPrimary"))
+                        .padding(.top, 8)
+
                     Button(action: { Task { await onBiometricLogin() } }) {
-                        Label("Iniciar con Face ID", systemImage: "faceid")
-                            .foregroundColor(Color("AppPrimary"))
+                        HStack {
+                            Image(systemName: "faceid")
+                            Text("Ingresar con Face ID")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color("AppPrimary"))
+                        .cornerRadius(10)
                     }
-                    .padding(.top)
-                    
-                    Button(action: { showEmailPasswordLogin = true }) {
-                        Text("Iniciar con Correo")
-                            .foregroundColor(Color("AppTextSecondary"))
-                    }
-                    .padding(.top)
+                    .padding(.top, 20)
                 } else {
+                    Image(systemName: "lock.shield.fill")
+                        .font(.system(size: 80))
+                        .foregroundColor(Color("AppTextSecondary"))
                     TextField("Correo electrónico", text: $email)
                         .keyboardType(.emailAddress)
                         .textContentType(.emailAddress)

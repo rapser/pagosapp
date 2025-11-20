@@ -50,6 +50,8 @@ struct ContentView: View {
                     UITabBar.appearance().tintColor = UIColor(named: "AppPrimary")
                 }
             } else {
+                let biometricEnabled = authManager.canUseBiometrics && SettingsManager.shared.isBiometricLockEnabled && authManager.hasLoggedInWithCredentials
+
                 LoginView(
                     onLogin: { email, password in
                         await authManager.login(email: email, password: password)
@@ -57,7 +59,7 @@ struct ContentView: View {
                     onBiometricLogin: {
                         await authManager.authenticateWithBiometrics()
                     },
-                    isBiometricLoginEnabled: authManager.canUseBiometrics && SettingsManager.shared.isBiometricLockEnabled && authManager.hasLoggedInWithCredentials
+                    isBiometricLoginEnabled: biometricEnabled
                 )
                 .environmentObject(authManager) // Inject authManager into LoginView and its hierarchy
             }
@@ -94,8 +96,10 @@ struct ContentView: View {
                     startForegroundCheckTimer() // Start timer when app becomes active
                 }
             } else if newPhase == .background {
-                // Logout when app goes to background (as per user's strict request)
-                Task { await authManager.logout() }
+                // Update timestamp when going to background to track inactivity
+                if authManager.isAuthenticated {
+                    authManager.updateLastActiveTimestamp()
+                }
                 stopForegroundCheckTimer() // Stop timer when app goes to background
             } else if newPhase == .inactive {
                 // For inactive, just update timestamp for inactivity timer
