@@ -84,8 +84,14 @@ struct SettingsView: View {
                 }
 
                 Section(header: Text("Seguridad").foregroundColor(Color("AppTextPrimary"))) {
-                    Toggle("Proteger con Face ID / Touch ID", isOn: $settingsManager.isBiometricLockEnabled)
-                        .tint(Color("AppPrimary"))
+                    NavigationLink(destination: BiometricSettingsView().environmentObject(authManager)) {
+                        HStack {
+                            Image(systemName: "faceid")
+                                .foregroundColor(Color("AppPrimary"))
+                            Text("Autenticación Biométrica")
+                                .foregroundColor(Color("AppTextPrimary"))
+                        }
+                    }
                 }
 
                 Section(header: Text("Acerca de").foregroundColor(Color("AppTextPrimary"))) {
@@ -126,12 +132,16 @@ struct SettingsView: View {
     }
 
     private func showLogoutAlert() {
+        let hasFaceIDEnabled = settingsManager.isBiometricLockEnabled && authManager.canUseBiometrics
         alertManager.show(
             title: Text("Cerrar Sesión"),
             message: Text("¿Estás seguro de que quieres cerrar la sesión?"),
             buttons: [
                 AlertButton(title: Text("Aceptar"), role: .destructive) {
-                    Task { await authManager.logout() }
+                    Task {
+                        // If Face ID is enabled, keep the session so user can login with Face ID
+                        await authManager.logout(keepSession: hasFaceIDEnabled)
+                    }
                 },
                 AlertButton(title: Text("Cancelar"), role: .cancel) { }
             ]

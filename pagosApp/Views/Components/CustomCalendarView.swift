@@ -72,7 +72,6 @@ struct CustomCalendarView: View {
                                     isCompact: false,
                                     onTap: {
                                         let normalized = calendar.startOfDay(for: date)
-                                        print("🎯 Tap - Original date: \(date), Normalized: \(normalized)")
                                         selectedDate = normalized
                                         selectionToggle.toggle()
                                     }
