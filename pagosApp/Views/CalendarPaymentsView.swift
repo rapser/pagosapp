@@ -6,7 +6,7 @@ struct CalendarPaymentsView: View {
     @Environment(\.modelContext) private var modelContext
     // Obtenemos todos los pagos para poder filtrarlos por fecha.
     @Query private var payments: [Payment]
-    @State private var selectedDate: Date = Date()
+    @State private var selectedDate: Date = Calendar.current.startOfDay(for: Date())
 
     // Propiedad computada para obtener los pagos de la fecha seleccionada.
     private var paymentsForSelectedDate: [Payment] {
@@ -15,29 +15,25 @@ struct CalendarPaymentsView: View {
 
     var body: some View {
         NavigationView {
-            VStack {
-                // El DatePicker con estilo gráfico actúa como un calendario.
-                DatePicker(
-                    "Fecha de Vencimiento",
-                    selection: $selectedDate,
-                    displayedComponents: .date
-                )
-                .datePickerStyle(.graphical)
-                .padding(.horizontal)
+            VStack(spacing: 0) {
+                // Custom Calendar with payment indicators
+                CustomCalendarView(selectedDate: $selectedDate, payments: payments)
+                    .background(Color("AppBackground"))
+
+                Divider()
 
                 // Lista de pagos para la fecha seleccionada
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 0) {
                     Text("Pagos para \(selectedDate, formatter: longDateFormatter)")
                         .font(.headline)
                         .foregroundColor(Color("AppTextPrimary"))
-                        .padding([.top, .horizontal])
+                        .padding()
 
                     if paymentsForSelectedDate.isEmpty {
                         ContentUnavailableView("Sin Pagos", systemImage: "calendar.badge.exclamationmark", description: Text("No hay pagos programados para este día."))
                             .foregroundColor(Color("AppTextSecondary"))
                     } else {
-                        List(paymentsForSelectedDate) {
-                            payment in
+                        List(paymentsForSelectedDate) { payment in
                             HStack {
                                 VStack(alignment: .leading) {
                                     Text(payment.name).fontWeight(.semibold)
@@ -48,6 +44,7 @@ struct CalendarPaymentsView: View {
                                     .foregroundColor(Color("AppTextPrimary"))
                             }
                         }
+                        .listStyle(.plain)
                     }
                 }
             }

@@ -26,6 +26,7 @@ class PaymentsListViewModel: ObservableObject {
     private let paymentOperations: PaymentOperationsService
     private let syncService: PaymentSyncService
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentsListViewModel")
+    private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Computed Properties
 
@@ -36,9 +37,14 @@ class PaymentsListViewModel: ObservableObject {
         switch selectedFilter {
         case .currentMonth:
             return payments.filter { calendar.isDate($0.dueDate, equalTo: now, toGranularity: .month) }
-        case .previousMonths:
-            let startOfCurrentMonth = calendar.startOfDay(for: calendar.date(from: calendar.dateComponents([.year, .month], from: now))!)
-            return payments.filter { $0.dueDate < startOfCurrentMonth }
+        case .futureMonths:
+            // Get the first day of next month
+            guard let startOfCurrentMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now)),
+                  let startOfNextMonth = calendar.date(byAdding: DateComponents(month: 1), to: startOfCurrentMonth) else {
+                logger.error("❌ Failed to calculate next month date")
+                return []
+            }
+            return payments.filter { $0.dueDate >= startOfNextMonth }
         }
     }
 
@@ -53,6 +59,15 @@ class PaymentsListViewModel: ObservableObject {
         self.paymentOperations = paymentOperations
         self.syncService = syncService
         fetchPayments()
+        setupNotificationObserver()
+    }
+
+    private func setupNotificationObserver() {
+        NotificationCenter.default.publisher(for: NSNotification.Name("PaymentsDidSync"))
+            .sink { [weak self] _ in
+                self?.fetchPayments()
+            }
+            .store(in: &cancellables)
     }
 
     /// Convenience initializer with default dependencies
@@ -126,24 +141,13 @@ class PaymentsListViewModel: ObservableObject {
         }
     }
 
-    /// Sync with server (delegate to sync service)
+    /// Sync with server - DEPRECATED in Phase 2
+    /// Use PaymentSyncManager.performManualSync() from Settings instead
+    @available(*, deprecated, message: "Use PaymentSyncManager.performManualSync() from Settings for offline-first behavior")
     func syncWithServer() async {
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            // Fetch remote payments
-            let remoteDTOs = try await syncService.fetchAllPayments()
-
-            // Upload local payments
-            try await syncService.syncAllLocalPayments(payments)
-
-            logger.info("✅ Sync completed: \(remoteDTOs.count) remote, \(self.payments.count) local")
-            fetchPayments()
-        } catch {
-            logger.error("❌ Sync failed: \(error.localizedDescription)")
-            ErrorHandler.shared.handle(error)
-        }
+        logger.warning("⚠️ syncWithServer() is deprecated. Use manual sync from Settings.")
+        // Just refresh local data
+        fetchPayments()
     }
 
     /// Refresh data
@@ -156,7 +160,7 @@ class PaymentsListViewModel: ObservableObject {
 
 enum PaymentFilter: String, CaseIterable, Identifiable {
     case currentMonth = "Próximos"
-    case previousMonths = "Pasados"
+    case futureMonths = "Futuros"
 
     var id: String { self.rawValue }
 }

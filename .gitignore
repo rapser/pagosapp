@@ -23,7 +23,7 @@ fastlane/screenshots/**/*.png
 fastlane/test_output
 
 # Secrets and Configuration
-Config/Secrets.xcconfig
+pagosApp/Config/Secrets.xcconfig
 
 # macOS
 .DS_Store
@@ -38,4 +38,3 @@ playground.xcworkspace
 # Code coverage
 *.gcda
 *.gcno
-pagosApp/Config/Secrets.xcconfig
