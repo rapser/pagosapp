@@ -39,8 +39,11 @@ class PaymentsListViewModel: ObservableObject {
             return payments.filter { calendar.isDate($0.dueDate, equalTo: now, toGranularity: .month) }
         case .futureMonths:
             // Get the first day of next month
-            let startOfCurrentMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
-            let startOfNextMonth = calendar.date(byAdding: DateComponents(month: 1), to: startOfCurrentMonth)!
+            guard let startOfCurrentMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now)),
+                  let startOfNextMonth = calendar.date(byAdding: DateComponents(month: 1), to: startOfCurrentMonth) else {
+                logger.error("❌ Failed to calculate next month date")
+                return []
+            }
             return payments.filter { $0.dueDate >= startOfNextMonth }
         }
     }

@@ -24,8 +24,11 @@ private func createSupabaseClient() -> SupabaseClient {
         logger.error("❌ Failed to load Supabase configuration: \(error.localizedDescription)")
         logger.warning("⚠️ Using demo Supabase client for development")
         // Fallback for development/testing (e.g., SwiftUI Previews)
+        guard let demoURL = URL(string: "https://demo.supabase.co") else {
+            fatalError("Failed to create demo Supabase URL")
+        }
         return SupabaseClient(
-            supabaseURL: URL(string: "https://demo.supabase.co")!,
+            supabaseURL: demoURL,
             supabaseKey: "demo_key"
         )
     }

@@ -146,7 +146,7 @@ class AuthenticationManager: ObservableObject {
                 if success {
                     // Check if there's a Supabase session available
                     Task { @MainActor in
-                        let hasSession = await self.authService.isAuthenticated
+                        let hasSession = self.authService.isAuthenticated
                         if hasSession {
                             // Manually trigger authentication state update
                             self.isAuthenticated = true

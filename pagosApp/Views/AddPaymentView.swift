@@ -1,44 +1,31 @@
 import SwiftUI
+import SwiftData
 
 struct AddPaymentView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-
-    @State private var name: String = ""
-    @State private var amount: String = ""
-    @State private var dueDate: Date = Date()
-    @State private var category: PaymentCategory = .servicios
-    @State private var isLoading = false
-
-    private var paymentOperations: PaymentOperationsService {
-        let syncService = SupabasePaymentSyncService(client: supabaseClient)
-        let notificationService = NotificationManagerAdapter()
-        let calendarService = EventKitManagerAdapter()
-        return DefaultPaymentOperationsService(
-            modelContext: modelContext,
-            syncService: syncService,
-            notificationService: notificationService,
-            calendarService: calendarService
-        )
-    }
-
-    private var isValid: Bool {
-        !name.isEmpty && !amount.isEmpty && (Double(amount) ?? 0) > 0
-    }
-
-    private var amountValue: Double? {
-        Double(amount)
+    @StateObject private var viewModel: AddPaymentViewModel
+    
+    init(viewModel: AddPaymentViewModel? = nil) {
+        if let viewModel = viewModel {
+            _viewModel = StateObject(wrappedValue: viewModel)
+        } else {
+            // Temporary placeholder - will create proper one in onAppear
+            let container = try! ModelContainer(for: Payment.self)
+            let context = ModelContext(container)
+            _viewModel = StateObject(wrappedValue: AddPaymentViewModel(modelContext: context))
+        }
     }
 
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("Detalles del Pago")) {
-                    TextField("Nombre del pago", text: $name)
-                    TextField("Monto", text: $amount)
+                    TextField("Nombre del pago", text: $viewModel.name)
+                    TextField("Monto", text: $viewModel.amount)
                         .keyboardType(.decimalPad)
-                    DatePicker("Fecha de Vencimiento", selection: $dueDate, displayedComponents: .date)
-                    Picker("Categoría", selection: $category) {
+                    DatePicker("Fecha de Vencimiento", selection: $viewModel.dueDate, displayedComponents: .date)
+                    Picker("Categoría", selection: $viewModel.category) {
                         ForEach(PaymentCategory.allCases) { category in
                             Text(category.rawValue).tag(category)
                         }
@@ -52,14 +39,14 @@ struct AddPaymentView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Guardar") {
-                        savePayment()
+                        viewModel.savePayment(onSuccess: { dismiss() })
                     }
-                    .disabled(!isValid)
+                    .disabled(!viewModel.isValid)
                 }
             }
-            .disabled(isLoading)
+            .disabled(viewModel.isLoading)
             .overlay {
-                if isLoading {
+                if viewModel.isLoading {
                     ProgressView("Guardando...")
                         .padding()
                         .background(Color(UIColor.systemBackground))
@@ -68,43 +55,6 @@ struct AddPaymentView: View {
                 }
             }
         }
-    }
-
-    private func savePayment() {
-        guard isValid, let amountValue = amountValue else { return }
-
-        isLoading = true
-
-        let payment = Payment(
-            name: name,
-            amount: amountValue,
-            dueDate: dueDate,
-            isPaid: false,
-            category: category
-        )
-
-        Task {
-            do {
-                try await paymentOperations.createPayment(payment)
-                await MainActor.run {
-                    clearForm()
-                    isLoading = false
-                    dismiss()
-                }
-            } catch {
-                await MainActor.run {
-                    isLoading = false
-                    ErrorHandler.shared.handle(PaymentError.saveFailed(error))
-                }
-            }
-        }
-    }
-
-    private func clearForm() {
-        name = ""
-        amount = ""
-        dueDate = Date()
-        category = .servicios
     }
 }
 
