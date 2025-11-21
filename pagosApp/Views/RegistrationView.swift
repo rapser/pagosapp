@@ -46,21 +46,15 @@ struct RegistrationView: View {
                         .font(.caption)
                 }
                 
-                Button(action: { 
+                Button(action: {
                     Task {
-                        print("RegistrationView: Register button tapped.")
-                        print("RegistrationView: Email: \(email), Password: \(password), Confirm: \(confirmPassword)")
                         if password != confirmPassword {
                             errorMessage = "Las contraseñas no coinciden."
-                            print("RegistrationView: Passwords do not match.")
                             return
                         }
                         errorMessage = await authManager.register(email: email, password: password)?.localizedDescription
                         if errorMessage == nil {
-                            print("RegistrationView: Registration successful. Dismissing view.")
                             dismiss()
-                        } else {
-                            print("RegistrationView: Registration failed with error: \(errorMessage ?? "Unknown")")
                         }
                     }
                 }) {
@@ -84,5 +78,5 @@ struct RegistrationView: View {
 
 #Preview {
     RegistrationView()
-        .environmentObject(AuthenticationManager(authService: SupabaseAuthService(client: SupabaseClient(supabaseURL: URL(string: "https://example.com")!, supabaseKey: "dummy_key"))))
+        .environmentObject(AuthenticationManager(authService: SupabaseAuthService(client: SupabaseClient(supabaseURL: URL(string: "https://example.com") ?? URL(filePath: "/"), supabaseKey: "dummy_key"))))
 }

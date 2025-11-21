@@ -33,10 +33,10 @@ class PaymentsViewModel: ObservableObject {
 
     private func loadSampleData() {
         self.payments = [
-            Payment(name: "Recibo de Luz", amount: 55.70, dueDate: Date().addingTimeInterval(86400 * 2), category: .recibo),
+            Payment(name: "Recibo de Luz", amount: 55.70, dueDate: Date().addingTimeInterval(86400 * 2), category: .servicios),
             Payment(name: "Pago Tarjeta Visa", amount: 250.00, dueDate: Date().addingTimeInterval(86400 * 5), category: .tarjetaCredito),
             Payment(name: "Netflix", amount: 15.99, dueDate: Date().addingTimeInterval(86400 * 10), category: .suscripcion),
-            Payment(name: "Ahorro Mensual", amount: 300.00, dueDate: Date().addingTimeInterval(86400 * 1), category: .ahorro)
+            Payment(name: "Ahorro Mensual", amount: 300.00, dueDate: Date().addingTimeInterval(86400 * 1), category: .servicios)
         ]
         payments.sort { $0.dueDate < $1.dueDate }
     }

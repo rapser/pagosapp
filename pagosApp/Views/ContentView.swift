@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import Combine
 import Supabase
 import OSLog
@@ -6,10 +7,12 @@ import OSLog
 struct ContentView: View {
     @EnvironmentObject private var authManager: AuthenticationManager
     @StateObject private var alertManager = AlertManager()
+    @StateObject private var syncManager = PaymentSyncManager.shared
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.modelContext) private var modelContext
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ContentView")
-    
+
     // Timer for foreground session checking
     @State private var foregroundCheckTimer: AnyCancellable?
     private let foregroundCheckInterval: TimeInterval = 30 // Check every 30 seconds
@@ -47,6 +50,8 @@ struct ContentView: View {
                     UITabBar.appearance().tintColor = UIColor(named: "AppPrimary")
                 }
             } else {
+                let biometricEnabled = authManager.canUseBiometrics && SettingsManager.shared.isBiometricLockEnabled && authManager.hasLoggedInWithCredentials
+
                 LoginView(
                     onLogin: { email, password in
                         await authManager.login(email: email, password: password)
@@ -54,7 +59,7 @@ struct ContentView: View {
                     onBiometricLogin: {
                         await authManager.authenticateWithBiometrics()
                     },
-                    isBiometricLoginEnabled: authManager.canUseBiometrics && SettingsManager.shared.isBiometricLockEnabled && authManager.hasLoggedInWithCredentials
+                    isBiometricLoginEnabled: biometricEnabled
                 )
                 .environmentObject(authManager) // Inject authManager into LoginView and its hierarchy
             }
@@ -74,6 +79,11 @@ struct ContentView: View {
             if newValue { // User just became authenticated
                 authManager.startInactivityTimer() // Start the timer
                 startForegroundCheckTimer() // Start foreground check
+
+                // Perform initial sync if database is empty
+                Task {
+                    await syncManager.performInitialSyncIfNeeded(modelContext: modelContext, isAuthenticated: true)
+                }
             } else { // User just became unauthenticated (logged out)
                 stopForegroundCheckTimer() // Stop foreground check
             }
@@ -86,8 +96,10 @@ struct ContentView: View {
                     startForegroundCheckTimer() // Start timer when app becomes active
                 }
             } else if newPhase == .background {
-                // Logout when app goes to background (as per user's strict request)
-                Task { await authManager.logout() }
+                // Update timestamp when going to background to track inactivity
+                if authManager.isAuthenticated {
+                    authManager.updateLastActiveTimestamp()
+                }
                 stopForegroundCheckTimer() // Stop timer when app goes to background
             } else if newPhase == .inactive {
                 // For inactive, just update timestamp for inactivity timer
@@ -127,7 +139,7 @@ struct ContentView: View {
                 authManager.showInactivityAlert = false
             }
         } message: {
-            Text("Tu sesión ha sido cerrada automáticamente debido a 5 minutos de inactividad.")
+            Text("Tu sesión ha sido cerrada automáticamente debido a 1 semana de inactividad.")
         }
         .withErrorHandling() // Global error handling
     }
@@ -152,6 +164,6 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .environmentObject(AuthenticationManager(authService: SupabaseAuthService(client: SupabaseClient(supabaseURL: URL(string: "https://example.com")!, supabaseKey: "dummy_key"))))
+        .environmentObject(AuthenticationManager(authService: SupabaseAuthService(client: SupabaseClient(supabaseURL: URL(string: "https://example.com") ?? URL(filePath: "/"), supabaseKey: "dummy_key"))))
         .environmentObject(AlertManager())
 }

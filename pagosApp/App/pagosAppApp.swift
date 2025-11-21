@@ -23,9 +23,12 @@ private func createSupabaseClient() -> SupabaseClient {
     } catch {
         logger.error("❌ Failed to load Supabase configuration: \(error.localizedDescription)")
         logger.warning("⚠️ Using demo Supabase client for development")
-        // Fallback for development/testing
+        // Fallback for development/testing (e.g., SwiftUI Previews)
+        guard let demoURL = URL(string: "https://demo.supabase.co") else {
+            fatalError("Failed to create demo Supabase URL")
+        }
         return SupabaseClient(
-            supabaseURL: URL(string: "https://demo.supabase.co")!,
+            supabaseURL: demoURL,
             supabaseKey: "demo_key"
         )
     }
@@ -48,6 +51,41 @@ struct pagosAppApp: App {
                 .environmentObject(authenticationManager)
                 .tint(Color("AppPrimary"))
         }
-        .modelContainer(for: Payment.self)
+        .modelContainer(createModelContainer())
+    }
+
+    private func createModelContainer() -> ModelContainer {
+        let schema = Schema([Payment.self])
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+
+        // Clean database on app start
+//        cleanSwiftDataStore()
+
+        do {
+            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+        } catch {
+            if let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+                let storeURL = appSupportURL.appendingPathComponent("default.store")
+                try? FileManager.default.removeItem(at: storeURL)
+                try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("wal"))
+                try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("shm"))
+            }
+
+            do {
+                return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            } catch {
+                fatalError("Could not initialize SwiftData container: \(error)")
+            }
+        }
+    }
+
+    private func cleanSwiftDataStore() {
+        if let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            let storeURL = appSupportURL.appendingPathComponent("default.store")
+            try? FileManager.default.removeItem(at: storeURL)
+            try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("wal"))
+            try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("shm"))
+            logger.info("SwiftData store cleaned")
+        }
     }
 }
