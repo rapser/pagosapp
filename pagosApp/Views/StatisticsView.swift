@@ -87,14 +87,16 @@ struct StatisticsView: View {
 
         // Group payments by the start of their month
         let spendingByMonth = Dictionary(grouping: relevantPayments) { payment in
-            calendar.date(from: calendar.dateComponents([.year, .month], from: payment.dueDate))!
+            calendar.date(from: calendar.dateComponents([.year, .month], from: payment.dueDate)) ?? payment.dueDate
         }
 
         var monthlyTotals: [MonthlySpending] = []
         // Iterate through the last 6 completed months
         for i in 0..<6 {
-            guard let monthDate = calendar.date(byAdding: .month, value: -i, to: endOfPreviousMonth) else { continue }
-            let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: monthDate))!
+            guard let monthDate = calendar.date(byAdding: .month, value: -i, to: endOfPreviousMonth),
+                  let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: monthDate)) else { 
+                continue 
+            }
             let total = spendingByMonth[startOfMonth]?.reduce(0, { $0 + $1.amount }) ?? 0
             monthlyTotals.append(MonthlySpending(month: startOfMonth, totalAmount: total))
         }
