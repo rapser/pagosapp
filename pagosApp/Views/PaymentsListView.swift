@@ -57,10 +57,9 @@ struct PaymentsListView: View {
                     List {
                         ForEach(viewModel.filteredPayments) { payment in
                             NavigationLink(destination: EditPaymentView(payment: payment)) {
-                                PaymentRowView(payment: payment)
-                                    .onTapGesture {
-                                        viewModel.togglePaymentStatus(payment)
-                                    }
+                                PaymentRowView(payment: payment, onToggleStatus: {
+                                    viewModel.togglePaymentStatus(payment)
+                                })
                             }
                             .swipeActions {
                                 Button(role: .destructive) {

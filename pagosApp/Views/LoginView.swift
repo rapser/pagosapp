@@ -57,7 +57,7 @@ struct LoginView: View {
                         .cornerRadius(10)
                     
                     SecureField("Contraseña", text: $password)
-                        .textContentType(.newPassword)
+                        .textContentType(.password)
                         .padding()
                         .background(Color("AppBackground"))
                         .cornerRadius(10)

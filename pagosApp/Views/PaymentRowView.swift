@@ -3,23 +3,17 @@ import SwiftData
 
 struct PaymentRowView: View {
     @Bindable var payment: Payment
-    @EnvironmentObject var notificationManager: NotificationManager
-    @EnvironmentObject var eventKitManager: EventKitManager
+    var onToggleStatus: () -> Void
 
     var body: some View {
         HStack {
             // Checkbox para marcar como pagado
-            Image(systemName: payment.isPaid ? "checkmark.circle.fill" : "circle")
-                .foregroundColor(payment.isPaid ? Color("AppSuccess") : Color("AppTextSecondary")) // Themed colors
-                .font(.title2)
-                .onTapGesture {
-                    // Al tocar el check, cambiamos el estado.
-                    // SwiftData guarda el cambio automáticamente.
-                    payment.isPaid.toggle()
-                    // Actualizamos la notificación y el evento del calendario.
-                    notificationManager.scheduleNotification(for: payment)
-                    eventKitManager.updateEvent(for: payment)
-                }
+            Button(action: onToggleStatus) {
+                Image(systemName: payment.isPaid ? "checkmark.circle.fill" : "circle")
+                    .foregroundColor(payment.isPaid ? Color("AppSuccess") : Color("AppTextSecondary")) // Themed colors
+                    .font(.title2)
+            }
+            .buttonStyle(.plain)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(payment.name)
