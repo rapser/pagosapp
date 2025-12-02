@@ -37,12 +37,17 @@ struct ContentView: View {
                         .tabItem {
                             Label("Calendario", systemImage: "calendar")
                         }
-                    
+
+                    PaymentHistoryView()
+                        .tabItem {
+                            Label("Historial", systemImage: "clock.arrow.circlepath")
+                        }
+
                     StatisticsView()
                         .tabItem {
                             Label("Estadísticas", systemImage: "chart.pie.fill")
                         }
-                    
+
                     SettingsView()
                         .environmentObject(authManager)
                         .environmentObject(alertManager)
