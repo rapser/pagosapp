@@ -148,22 +148,3 @@ struct SettingsView: View {
         )
     }
 }
-
-#Preview {
-    // Dummy AuthenticationService for preview
-    class MockAuthService: AuthenticationService {
-        func signUp(email: String, password: String) async throws {
-            
-        }
-        
-        var isAuthenticatedPublisher: AnyPublisher<Bool, Never> { Just(true).eraseToAnyPublisher() }
-        var isAuthenticated: Bool = true
-        func signIn(email: String, password: String) async throws { }
-        func signOut() async throws { }
-        func getCurrentUser() async throws -> String? { return "preview@example.com" }
-    }
-
-    return SettingsView()
-        .environmentObject(AuthenticationManager(authService: MockAuthService()))
-        .environmentObject(AlertManager())
-}

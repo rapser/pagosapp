@@ -6,7 +6,7 @@ import KeychainSwift
 
 @MainActor
 class AuthenticationManager: ObservableObject {
-    private let authService: AuthenticationService
+    public let authService: AuthenticationService
     private var cancellables = Set<AnyCancellable>()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "Authentication")
     private let errorHandler = ErrorHandler.shared
@@ -125,6 +125,34 @@ class AuthenticationManager: ObservableObject {
             return authError
         } catch {
             logger.error("❌ Registration failed with unknown error: \(error.localizedDescription)")
+            let authError = AuthenticationError.unknown(error)
+            errorHandler.handle(authError)
+            return authError
+        }
+    }
+    
+    @MainActor
+    func sendPasswordReset(email: String) async -> AuthenticationError? {
+        guard EmailValidator.isValidEmail(email) else {
+            let error = AuthenticationError.invalidEmailFormat
+            errorHandler.handle(error)
+            return error
+        }
+        
+        isLoading = true
+        defer { isLoading = false }
+        
+        do {
+            logger.info("Attempting to send password reset for \(email)")
+            try await authService.sendPasswordReset(email: email)
+            logger.info("✅ Password reset email sent successfully for \(email)")
+            return nil
+        } catch let authError as AuthenticationError {
+            logger.error("❌ Password reset failed: \(authError.localizedDescription)")
+            errorHandler.handle(authError)
+            return authError
+        } catch {
+            logger.error("❌ Password reset failed with unknown error: \(error.localizedDescription)")
             let authError = AuthenticationError.unknown(error)
             errorHandler.handle(authError)
             return authError
