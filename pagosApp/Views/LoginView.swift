@@ -1,14 +1,15 @@
 import SwiftUI
 
 struct LoginView: View {
+    @EnvironmentObject private var passwordRecoveryUseCase: PasswordRecoveryUseCase
     @State private var email = ""
     @State private var password = ""
     @State private var errorMessage: String?
     @State private var showEmailPasswordLogin: Bool = false
-    
+
     var onLogin: (String, String) async -> AuthenticationError?
     var onBiometricLogin: () async -> Void
-    
+
     var isBiometricLoginEnabled: Bool
     
     var body: some View {
@@ -86,6 +87,13 @@ struct LoginView: View {
                             .font(.callout)
                             .padding(.top)
                             .foregroundColor(Color("AppPrimary"))
+                    }
+                    
+                    NavigationLink(destination: ForgotPasswordView(passwordRecoveryUseCase: passwordRecoveryUseCase)) {
+                        Text("¿Olvidaste tu contraseña?")
+                            .font(.callout)
+                            .padding(.top, 5)
+                            .foregroundColor(Color("AppTextSecondary"))
                     }
                 }
                 

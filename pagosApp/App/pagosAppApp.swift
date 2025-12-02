@@ -40,15 +40,21 @@ let supabaseClient = createSupabaseClient()
 struct pagosAppApp: App {
     private let supabaseAuthService = SupabaseAuthService(client: supabaseClient)
     private let authenticationManager: AuthenticationManager
+    private let passwordRecoveryRepository: PasswordRecoveryRepository
+    private let passwordRecoveryUseCase: PasswordRecoveryUseCase
 
     init() {
         authenticationManager = AuthenticationManager(authService: supabaseAuthService)
+        passwordRecoveryRepository = SupabasePasswordRecoveryRepository(authService: supabaseAuthService)
+        passwordRecoveryUseCase = PasswordRecoveryUseCase(repository: passwordRecoveryRepository)
     }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(authenticationManager)
+                .environmentObject(passwordRecoveryUseCase)
+                .environmentObject(AlertManager())
                 .tint(Color("AppPrimary"))
         }
         .modelContainer(createModelContainer())
