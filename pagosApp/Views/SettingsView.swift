@@ -140,7 +140,8 @@ struct SettingsView: View {
                 AlertButton(title: Text("Aceptar"), role: .destructive) {
                     Task {
                         // If Face ID is enabled, keep the session so user can login with Face ID
-                        await authManager.logout(keepSession: hasFaceIDEnabled)
+                        // Pass modelContext to clear local database when not keeping session
+                        await authManager.logout(keepSession: hasFaceIDEnabled, modelContext: hasFaceIDEnabled ? nil : modelContext)
                     }
                 },
                 AlertButton(title: Text("Cancelar"), role: .cancel) { }

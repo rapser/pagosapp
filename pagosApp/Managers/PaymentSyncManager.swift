@@ -85,6 +85,33 @@ class PaymentSyncManager: ObservableObject {
         }
     }
 
+    /// Clear all local payments from database (used on logout)
+    func clearLocalDatabase(modelContext: ModelContext) {
+        do {
+            let allPayments = try fetchAllPayments(from: modelContext)
+            logger.info("Clearing \(allPayments.count) payments from local database")
+            
+            for payment in allPayments {
+                modelContext.delete(payment)
+            }
+            
+            try modelContext.save()
+            
+            // Reset sync state
+            pendingSyncCount = 0
+            lastSyncDate = nil
+            UserDefaults.standard.removeObject(forKey: lastSyncKey)
+            
+            // Post notification to refresh views
+            NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
+            
+            logger.info("✅ Local database cleared successfully")
+        } catch {
+            logger.error("❌ Failed to clear local database: \(error.localizedDescription)")
+            errorHandler.handle(PaymentError.deleteFailed(error))
+        }
+    }
+
     /// Manual sync: Upload pending local changes and download remote changes
     /// - Parameter isAuthenticated: Whether user is logged in
     func performManualSync(modelContext: ModelContext, isAuthenticated: Bool) async throws {

@@ -47,6 +47,12 @@ struct pagosAppApp: App {
         authenticationManager = AuthenticationManager(authService: supabaseAuthService)
         passwordRecoveryRepository = SupabasePasswordRecoveryRepository(authService: supabaseAuthService)
         passwordRecoveryUseCase = PasswordRecoveryUseCase(repository: passwordRecoveryRepository)
+        
+        // Initialize NotificationManager to set up the delegate
+        _ = NotificationManager.shared
+        
+        // Request notification authorization at app launch
+        NotificationManager.shared.requestAuthorization()
     }
 
     var body: some Scene {

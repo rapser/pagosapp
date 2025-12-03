@@ -97,6 +97,10 @@ struct ContentView: View {
                 }
             } else { // User just became unauthenticated (logged out)
                 stopForegroundCheckTimer() // Stop foreground check
+                
+                // Clear local database when user logs out
+                // This ensures a clean state for the next user
+                syncManager.clearLocalDatabase(modelContext: modelContext)
             }
         }
         .onChange(of: scenePhase) { oldValue, newPhase in

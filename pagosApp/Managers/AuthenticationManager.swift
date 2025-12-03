@@ -189,7 +189,7 @@ class AuthenticationManager: ObservableObject {
     }
     
     @MainActor
-    func logout(inactivity: Bool = false, keepSession: Bool = false) async {
+    func logout(inactivity: Bool = false, keepSession: Bool = false, modelContext: ModelContext? = nil) async {
         isLoading = true
         defer { isLoading = false }
 
@@ -202,6 +202,12 @@ class AuthenticationManager: ObservableObject {
                 logger.error("Logout failed with auth error: \(authError.localizedDescription)")
             } catch {
                 logger.error("Unknown logout error: \(error.localizedDescription)")
+            }
+            
+            // Clear local database when fully logging out (not keeping session)
+            if let context = modelContext {
+                PaymentSyncManager.shared.clearLocalDatabase(modelContext: context)
+                logger.info("Local database cleared on logout")
             }
         }
 
@@ -250,13 +256,13 @@ class AuthenticationManager: ObservableObject {
 
     /// Clears the biometric login capability for this device
     /// This should be called when the user explicitly disables Face ID in settings
-    func clearBiometricCredentials() async {
+    func clearBiometricCredentials(modelContext: ModelContext? = nil) async {
         self.hasLoggedInWithCredentials = false
         keychain.delete(self.hasLoggedInWithCredentialsKey)
 
         // If user is currently logged in, force a full logout (including Supabase session)
         if self.isAuthenticated {
-            await logout(keepSession: false)
+            await logout(keepSession: false, modelContext: modelContext)
         }
     }
 }
