@@ -133,6 +133,14 @@ struct SettingsView: View {
             .onAppear {
                 syncManager.updatePendingSyncCount(modelContext: modelContext)
             }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PaymentsDidSync"))) { _ in
+                // Refresh pending count when payments are synced
+                syncManager.updatePendingSyncCount(modelContext: modelContext)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PaymentDidChange"))) { _ in
+                // Refresh pending count when a payment changes
+                syncManager.updatePendingSyncCount(modelContext: modelContext)
+            }
         }
     }
     

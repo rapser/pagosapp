@@ -67,20 +67,21 @@ struct pagosAppApp: App {
     }
 
     private func createModelContainer() -> ModelContainer {
-        let schema = Schema([Payment.self, PendingDeletion.self])
+        let schema = Schema([Payment.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        // Clean database on app start
-//        cleanSwiftDataStore()
 
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
+            logger.error("❌ Failed to create ModelContainer: \(error.localizedDescription)")
+            
+            // Try to recreate the database
             if let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
                 let storeURL = appSupportURL.appendingPathComponent("default.store")
                 try? FileManager.default.removeItem(at: storeURL)
                 try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("wal"))
                 try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("shm"))
+                logger.info("Database files removed, attempting to recreate...")
             }
 
             do {
