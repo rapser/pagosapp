@@ -40,15 +40,27 @@ let supabaseClient = createSupabaseClient()
 struct pagosAppApp: App {
     private let supabaseAuthService = SupabaseAuthService(client: supabaseClient)
     private let authenticationManager: AuthenticationManager
+    private let passwordRecoveryRepository: PasswordRecoveryRepository
+    private let passwordRecoveryUseCase: PasswordRecoveryUseCase
 
     init() {
         authenticationManager = AuthenticationManager(authService: supabaseAuthService)
+        passwordRecoveryRepository = SupabasePasswordRecoveryRepository(authService: supabaseAuthService)
+        passwordRecoveryUseCase = PasswordRecoveryUseCase(repository: passwordRecoveryRepository)
+        
+        // Initialize NotificationManager to set up the delegate
+        _ = NotificationManager.shared
+        
+        // Request notification authorization at app launch
+        NotificationManager.shared.requestAuthorization()
     }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(authenticationManager)
+                .environmentObject(passwordRecoveryUseCase)
+                .environmentObject(AlertManager())
                 .tint(Color("AppPrimary"))
         }
         .modelContainer(createModelContainer())
@@ -58,17 +70,18 @@ struct pagosAppApp: App {
         let schema = Schema([Payment.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
-        // Clean database on app start
-//        cleanSwiftDataStore()
-
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
+            logger.error("❌ Failed to create ModelContainer: \(error.localizedDescription)")
+            
+            // Try to recreate the database
             if let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
                 let storeURL = appSupportURL.appendingPathComponent("default.store")
                 try? FileManager.default.removeItem(at: storeURL)
                 try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("wal"))
                 try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("shm"))
+                logger.info("Database files removed, attempting to recreate...")
             }
 
             do {

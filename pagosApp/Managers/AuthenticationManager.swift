@@ -3,10 +3,11 @@ import LocalAuthentication
 import Combine
 import OSLog
 import KeychainSwift
+import SwiftData
 
 @MainActor
 class AuthenticationManager: ObservableObject {
-    private let authService: AuthenticationService
+    public let authService: AuthenticationService
     private var cancellables = Set<AnyCancellable>()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "Authentication")
     private let errorHandler = ErrorHandler.shared
@@ -132,6 +133,34 @@ class AuthenticationManager: ObservableObject {
     }
     
     @MainActor
+    func sendPasswordReset(email: String) async -> AuthenticationError? {
+        guard EmailValidator.isValidEmail(email) else {
+            let error = AuthenticationError.invalidEmailFormat
+            errorHandler.handle(error)
+            return error
+        }
+        
+        isLoading = true
+        defer { isLoading = false }
+        
+        do {
+            logger.info("Attempting to send password reset for \(email)")
+            try await authService.sendPasswordReset(email: email)
+            logger.info("✅ Password reset email sent successfully for \(email)")
+            return nil
+        } catch let authError as AuthenticationError {
+            logger.error("❌ Password reset failed: \(authError.localizedDescription)")
+            errorHandler.handle(authError)
+            return authError
+        } catch {
+            logger.error("❌ Password reset failed with unknown error: \(error.localizedDescription)")
+            let authError = AuthenticationError.unknown(error)
+            errorHandler.handle(authError)
+            return authError
+        }
+    }
+    
+    @MainActor
     func authenticateWithBiometrics() async {
         guard canUseBiometrics else { return }
 
@@ -161,7 +190,7 @@ class AuthenticationManager: ObservableObject {
     }
     
     @MainActor
-    func logout(inactivity: Bool = false, keepSession: Bool = false) async {
+    func logout(inactivity: Bool = false, keepSession: Bool = false, modelContext: ModelContext? = nil) async {
         isLoading = true
         defer { isLoading = false }
 
@@ -175,6 +204,11 @@ class AuthenticationManager: ObservableObject {
             } catch {
                 logger.error("Unknown logout error: \(error.localizedDescription)")
             }
+
+            // Clear local database when fully logging out (not keeping session)
+            // This ONLY clears SwiftData locally, NEVER touches Supabase
+            PaymentSyncManager.shared.clearLocalDatabase(modelContext: modelContext)
+            logger.info("Local SwiftData database cleared on logout (Supabase untouched)")
         }
 
         // Clear timestamp regardless
@@ -222,13 +256,14 @@ class AuthenticationManager: ObservableObject {
 
     /// Clears the biometric login capability for this device
     /// This should be called when the user explicitly disables Face ID in settings
-    func clearBiometricCredentials() async {
+    func clearBiometricCredentials(modelContext: ModelContext? = nil) async {
         self.hasLoggedInWithCredentials = false
         keychain.delete(self.hasLoggedInWithCredentialsKey)
 
         // If user is currently logged in, force a full logout (including Supabase session)
+        // This will clear local SwiftData but NOT touch Supabase
         if self.isAuthenticated {
-            await logout(keepSession: false)
+            await logout(keepSession: false, modelContext: modelContext)
         }
     }
 }
