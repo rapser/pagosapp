@@ -51,15 +51,18 @@ class PaymentSyncManager: ObservableObject {
         }
     }
 
-    /// Update count of payments pending synchronization (including deletions)
+    /// Update count of payments pending synchronization
     func updatePendingSyncCount(modelContext: ModelContext) {
         do {
             let allPayments = try fetchAllPayments(from: modelContext)
             let pendingPayments = filterPendingPayments(allPayments)
-            let pendingDeletions = try fetchPendingDeletions(from: modelContext)
-            pendingSyncCount = pendingPayments.count + pendingDeletions.count
+            
+            pendingSyncCount = pendingPayments.count
+            logger.info("📊 Pending sync count updated: \(self.pendingSyncCount) payments")
         } catch {
-            pendingSyncCount = 0
+            logger.error("❌ Failed to update pending sync count: \(error.localizedDescription)")
+            // Don't reset to 0 - keep the last known value to avoid hiding pending items
+            // Only log the error for debugging
         }
     }
 
@@ -100,14 +103,9 @@ class PaymentSyncManager: ObservableObject {
         if let context = modelContext {
             do {
                 let allPayments = try fetchAllPayments(from: context)
-                let pendingDeletions = try fetchPendingDeletions(from: context)
 
                 for payment in allPayments {
                     context.delete(payment)
-                }
-
-                for deletion in pendingDeletions {
-                    context.delete(deletion)
                 }
 
                 try context.save()
@@ -203,19 +201,19 @@ class PaymentSyncManager: ObservableObject {
         logger.info("🔄 Starting manual sync...")
 
         do {
-            // 1. Sync pending deletions first
-            try await syncPendingDeletions(modelContext: modelContext)
-
-            // 2. Upload local changes (only payments that need syncing)
+            // 1. Upload local changes (only payments that need syncing)
             try await uploadLocalChanges(modelContext: modelContext)
 
-            // 3. Download remote changes
+            // 2. Download remote changes
             try await downloadRemoteChanges(modelContext: modelContext)
 
             // 4. Update counters and state
             updatePendingSyncCount(modelContext: modelContext)
             lastSyncDate = Date()
             UserDefaults.standard.set(lastSyncDate, forKey: lastSyncKey)
+
+            // Notify that sync completed so views can refresh
+            NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
 
             logger.info("✅ Manual sync completed successfully")
         } catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == 256 {
@@ -248,45 +246,9 @@ class PaymentSyncManager: ObservableObject {
         }
     }
 
-    /// Fetch all pending deletions from modelContext
-    private func fetchPendingDeletions(from modelContext: ModelContext) throws -> [PendingDeletion] {
-        let descriptor = FetchDescriptor<PendingDeletion>()
-        return try modelContext.fetch(descriptor)
-    }
-    
     /// Find existing payment by ID
     private func findPayment(byId id: UUID, in payments: [Payment]) -> Payment? {
         return payments.first { $0.id == id }
-    }
-    
-    /// Sync pending deletions to server
-    private func syncPendingDeletions(modelContext: ModelContext) async throws {
-        let pendingDeletions = try fetchPendingDeletions(from: modelContext)
-        
-        guard !pendingDeletions.isEmpty else {
-            logger.info("No pending deletions to sync")
-            return
-        }
-        
-        logger.info("Found \(pendingDeletions.count) pending deletions to sync")
-        
-        let paymentIds = pendingDeletions.map { $0.paymentId }
-        
-        do {
-            // Sync deletions to server
-            try await syncService.syncDeletePayments(paymentIds)
-            
-            // Remove pending deletions after successful sync
-            for deletion in pendingDeletions {
-                modelContext.delete(deletion)
-            }
-            try modelContext.save()
-            
-            logger.info("✅ Synced \(pendingDeletions.count) deletions successfully")
-        } catch {
-            logger.error("❌ Failed to sync deletions: \(error.localizedDescription)")
-            throw error
-        }
     }
 
     /// Upload only payments that need syncing

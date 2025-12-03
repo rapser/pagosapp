@@ -8,7 +8,7 @@ struct PaymentsListView: View {
 
     init() {
         // Create with empty context - will be updated in onAppear
-        _viewModel = StateObject(wrappedValue: PaymentsListViewModel(modelContext: ModelContext(try! ModelContainer(for: Payment.self, PendingDeletion.self))))
+        _viewModel = StateObject(wrappedValue: PaymentsListViewModel(modelContext: ModelContext(try! ModelContainer(for: Payment.self))))
 
         // Configurar segmented control con soporte para modo oscuro
         // Fondo: azul en light mode, gris oscuro en dark mode
