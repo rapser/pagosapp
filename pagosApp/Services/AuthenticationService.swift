@@ -15,4 +15,7 @@ protocol AuthenticationService: AnyObject {
     func signOut() async throws
     func getCurrentUser() async throws -> String?
     func signUp(email: String, password: String) async throws
+    func sendPasswordReset(email: String) async throws
+    func setSession(accessToken: String, refreshToken: String) async throws
+    func updatePassword(newPassword: String) async throws
 }

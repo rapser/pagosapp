@@ -67,6 +67,9 @@ class DefaultPaymentOperationsService: PaymentOperationsService {
             try? self?.modelContext.save()
         }
 
+        // Notify that a payment changed so Settings can update pending count
+        NotificationCenter.default.post(name: NSNotification.Name("PaymentDidChange"), object: nil)
+
         logger.info("✅ Payment created locally: \(payment.name)")
     }
 
@@ -88,6 +91,9 @@ class DefaultPaymentOperationsService: PaymentOperationsService {
 
         calendarService.updateEvent(for: payment)
 
+        // Notify that a payment changed so Settings can update pending count
+        NotificationCenter.default.post(name: NSNotification.Name("PaymentDidChange"), object: nil)
+
         logger.info("✅ Payment updated locally: \(payment.name)")
     }
 
@@ -101,14 +107,19 @@ class DefaultPaymentOperationsService: PaymentOperationsService {
 
         calendarService.removeEvent(for: payment)
         notificationService.cancelNotifications(for: payment)
-
         modelContext.delete(payment)
+        
         try modelContext.save()
-
+        
+        // Sync deletion to server in background if payment was synced
         if wasSynced {
-            // TODO: Track deletion for server sync in Phase 3
-            logger.info("Payment \(paymentId) deletion pending sync")
+            Task {
+                await PaymentSyncManager.shared.syncDeletePayment(paymentId)
+            }
         }
+
+        // Notify that a payment changed so Settings can update pending count
+        NotificationCenter.default.post(name: NSNotification.Name("PaymentDidChange"), object: nil)
 
         logger.info("✅ Payment deleted locally: \(payment.name)")
     }
