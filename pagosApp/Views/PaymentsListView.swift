@@ -7,10 +7,8 @@ struct PaymentsListView: View {
     @State private var showingAddPaymentSheet = false
 
     init() {
-        // Create a temporary placeholder - will be replaced with actual context in body
-        let container = try! ModelContainer(for: Payment.self)
-        let context = ModelContext(container)
-        _viewModel = StateObject(wrappedValue: PaymentsListViewModel(modelContext: context))
+        // Create with empty context - will be updated in onAppear
+        _viewModel = StateObject(wrappedValue: PaymentsListViewModel(modelContext: ModelContext(try! ModelContainer(for: Payment.self, PendingDeletion.self))))
 
         // Configurar segmented control con soporte para modo oscuro
         // Fondo: azul en light mode, gris oscuro en dark mode
@@ -50,6 +48,10 @@ struct PaymentsListView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal)
+                .onAppear {
+                    // Update viewModel with the correct modelContext from environment
+                    viewModel.updateModelContext(modelContext)
+                }
 
                 if viewModel.isLoading {
                     ProgressView("Sincronizando...")

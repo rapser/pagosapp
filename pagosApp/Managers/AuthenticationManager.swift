@@ -3,6 +3,7 @@ import LocalAuthentication
 import Combine
 import OSLog
 import KeychainSwift
+import SwiftData
 
 @MainActor
 class AuthenticationManager: ObservableObject {
@@ -203,12 +204,11 @@ class AuthenticationManager: ObservableObject {
             } catch {
                 logger.error("Unknown logout error: \(error.localizedDescription)")
             }
-            
+
             // Clear local database when fully logging out (not keeping session)
-            if let context = modelContext {
-                PaymentSyncManager.shared.clearLocalDatabase(modelContext: context)
-                logger.info("Local database cleared on logout")
-            }
+            // This ONLY clears SwiftData locally, NEVER touches Supabase
+            PaymentSyncManager.shared.clearLocalDatabase(modelContext: modelContext)
+            logger.info("Local SwiftData database cleared on logout (Supabase untouched)")
         }
 
         // Clear timestamp regardless
@@ -261,6 +261,7 @@ class AuthenticationManager: ObservableObject {
         keychain.delete(self.hasLoggedInWithCredentialsKey)
 
         // If user is currently logged in, force a full logout (including Supabase session)
+        // This will clear local SwiftData but NOT touch Supabase
         if self.isAuthenticated {
             await logout(keepSession: false, modelContext: modelContext)
         }

@@ -67,7 +67,7 @@ struct pagosAppApp: App {
     }
 
     private func createModelContainer() -> ModelContainer {
-        let schema = Schema([Payment.self])
+        let schema = Schema([Payment.self, PendingDeletion.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         // Clean database on app start
