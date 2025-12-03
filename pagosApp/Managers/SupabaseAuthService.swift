@@ -82,4 +82,27 @@ class SupabaseAuthService: @preconcurrency AuthenticationService {
         }
     }
 
+    func sendPasswordReset(email: String) async throws {
+        do {
+            try await client.auth.resetPasswordForEmail(email, redirectTo: URL(string: "pagosapp://reset-password"))
+        } catch {
+            throw AuthenticationError.unknown(error)
+        }
+    }
+
+    func setSession(accessToken: String, refreshToken: String) async throws {
+        do {
+            _ = try await client.auth.setSession(accessToken: accessToken, refreshToken: refreshToken)
+        } catch {
+            throw AuthenticationError.unknown(error)
+        }
+    }
+
+    func updatePassword(newPassword: String) async throws {
+        do {
+            try await client.auth.update(user: .init(password: newPassword))
+        } catch {
+            throw AuthenticationError.unknown(error)
+        }
+    }
 }

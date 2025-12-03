@@ -81,6 +81,20 @@ struct SettingsView: View {
                         }
                     }
                     .disabled(syncManager.isSyncing || !authManager.isAuthenticated)
+
+                    // Database reset button (only show if there are sync errors)
+                    if syncManager.syncError != nil {
+                        Button {
+                            showDatabaseResetAlert()
+                        } label: {
+                            HStack {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.orange)
+                                Text("Reparar base de datos")
+                                    .foregroundColor(.orange)
+                            }
+                        }
+                    }
                 }
 
                 Section(header: Text("Seguridad").foregroundColor(Color("AppTextPrimary"))) {
@@ -119,6 +133,14 @@ struct SettingsView: View {
             .onAppear {
                 syncManager.updatePendingSyncCount(modelContext: modelContext)
             }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PaymentsDidSync"))) { _ in
+                // Refresh pending count when payments are synced
+                syncManager.updatePendingSyncCount(modelContext: modelContext)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PaymentDidChange"))) { _ in
+                // Refresh pending count when a payment changes
+                syncManager.updatePendingSyncCount(modelContext: modelContext)
+            }
         }
     }
     
@@ -131,6 +153,34 @@ struct SettingsView: View {
         }
     }
 
+    private func showDatabaseResetAlert() {
+        alertManager.show(
+            title: Text("Reparar Base de Datos"),
+            message: Text("Esto eliminará todos los datos LOCALES de SwiftData y los volverá a descargar desde Supabase. Tus datos en el servidor NO se verán afectados. ¿Estás seguro?"),
+            buttons: [
+                AlertButton(title: Text("Reparar"), role: .destructive) {
+                    if syncManager.forceDatabaseReset() {
+                        alertManager.show(
+                            title: Text("Base de Datos Reparada"),
+                            message: Text("La aplicación se cerrará. Vuelve a abrirla para completar la reparación."),
+                            buttons: [AlertButton(title: Text("OK"), role: .cancel) {
+                                // Force app restart by crashing (not ideal but effective)
+                                exit(0)
+                            }]
+                        )
+                    } else {
+                        alertManager.show(
+                            title: Text("Error"),
+                            message: Text("No se pudo reparar la base de datos. Intenta reinstalar la aplicación."),
+                            buttons: [AlertButton(title: Text("OK"), role: .cancel) { }]
+                        )
+                    }
+                },
+                AlertButton(title: Text("Cancelar"), role: .cancel) { }
+            ]
+        )
+    }
+
     private func showLogoutAlert() {
         let hasFaceIDEnabled = settingsManager.isBiometricLockEnabled && authManager.canUseBiometrics
         alertManager.show(
@@ -140,30 +190,12 @@ struct SettingsView: View {
                 AlertButton(title: Text("Aceptar"), role: .destructive) {
                     Task {
                         // If Face ID is enabled, keep the session so user can login with Face ID
-                        await authManager.logout(keepSession: hasFaceIDEnabled)
+                        // Pass modelContext to clear local database when not keeping session
+                        await authManager.logout(keepSession: hasFaceIDEnabled, modelContext: hasFaceIDEnabled ? nil : modelContext)
                     }
                 },
                 AlertButton(title: Text("Cancelar"), role: .cancel) { }
             ]
         )
     }
-}
-
-#Preview {
-    // Dummy AuthenticationService for preview
-    class MockAuthService: AuthenticationService {
-        func signUp(email: String, password: String) async throws {
-            
-        }
-        
-        var isAuthenticatedPublisher: AnyPublisher<Bool, Never> { Just(true).eraseToAnyPublisher() }
-        var isAuthenticated: Bool = true
-        func signIn(email: String, password: String) async throws { }
-        func signOut() async throws { }
-        func getCurrentUser() async throws -> String? { return "preview@example.com" }
-    }
-
-    return SettingsView()
-        .environmentObject(AuthenticationManager(authService: MockAuthService()))
-        .environmentObject(AlertManager())
 }
