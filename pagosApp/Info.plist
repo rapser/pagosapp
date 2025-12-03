@@ -4,6 +4,15 @@
 <dict>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>Tu aplicación necesita enviar notificaciones para recordarte los pagos pendientes.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>pagosapp</string>
+			</array>
+		</dict>
+	</array>
 	<key>SUPABASE_KEY</key>
 	<string>$(SUPABASE_KEY)</string>
 	<key>SUPABASE_URL</key>

@@ -6,6 +6,7 @@ import OSLog
 
 struct ContentView: View {
     @EnvironmentObject private var authManager: AuthenticationManager
+    @EnvironmentObject private var passwordRecoveryUseCase: PasswordRecoveryUseCase
     @StateObject private var alertManager = AlertManager()
     @StateObject private var syncManager = PaymentSyncManager.shared
     @Environment(\.scenePhase) private var scenePhase
@@ -16,6 +17,11 @@ struct ContentView: View {
     // Timer for foreground session checking
     @State private var foregroundCheckTimer: AnyCancellable?
     private let foregroundCheckInterval: TimeInterval = 30 // Check every 30 seconds
+
+    // Password reset
+    @State private var showResetPassword = false
+    @State private var resetAccessToken: String?
+    @State private var resetRefreshToken: String?
 
     var body: some View {
         ZStack {
@@ -31,12 +37,17 @@ struct ContentView: View {
                         .tabItem {
                             Label("Calendario", systemImage: "calendar")
                         }
-                    
+
+                    PaymentHistoryView()
+                        .tabItem {
+                            Label("Historial", systemImage: "clock.arrow.circlepath")
+                        }
+
                     StatisticsView()
                         .tabItem {
                             Label("Estadísticas", systemImage: "chart.pie.fill")
                         }
-                    
+
                     SettingsView()
                         .environmentObject(authManager)
                         .environmentObject(alertManager)
@@ -84,8 +95,12 @@ struct ContentView: View {
                 Task {
                     await syncManager.performInitialSyncIfNeeded(modelContext: modelContext, isAuthenticated: true)
                 }
-            } else { // User just became unauthenticated (logged out)
+            } else if oldValue == true && newValue == false { // User explicitly logged out (not initial state)
                 stopForegroundCheckTimer() // Stop foreground check
+
+                // Only clear database if user was previously authenticated
+                // This clears ONLY local SwiftData, NEVER touches Supabase
+                syncManager.clearLocalDatabase(modelContext: modelContext)
             }
         }
         .onChange(of: scenePhase) { oldValue, newPhase in
@@ -140,6 +155,66 @@ struct ContentView: View {
             }
         } message: {
             Text("Tu sesión ha sido cerrada automáticamente debido a 1 semana de inactividad.")
+        }
+        .sheet(isPresented: $showResetPassword) {
+            if let accessToken = resetAccessToken, let refreshToken = resetRefreshToken {
+                ResetPasswordView(accessToken: accessToken, refreshToken: refreshToken, passwordRecoveryUseCase: passwordRecoveryUseCase)
+                    .environmentObject(alertManager)
+            }
+        }
+        .onOpenURL { url in
+            logger.info("Deep link opened: \(url.absoluteString)")
+            if url.scheme == "pagosapp" && url.host == "reset-password" {
+                logger.info("Processing password reset deep link")
+                // Parse query parameters
+                if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+                   let queryItems = components.queryItems {
+                    // Check for code (PKCE flow) or direct tokens
+                    var code: String?
+                    var accessToken: String?
+                    var refreshToken: String?
+
+                    for item in queryItems {
+                        if item.name == "code" {
+                            code = item.value
+                            logger.info("Found code for PKCE flow")
+                        } else if item.name == "access_token" {
+                            accessToken = item.value
+                            logger.info("Found access token")
+                        } else if item.name == "refresh_token" {
+                            refreshToken = item.value
+                            logger.info("Found refresh token")
+                        }
+                    }
+
+                    if let authCode = code {
+                        // PKCE flow: exchange code for session
+                        Task {
+                            do {
+                                let session = try await supabaseClient.auth.exchangeCodeForSession(authCode: authCode)
+                                resetAccessToken = session.accessToken
+                                resetRefreshToken = session.refreshToken
+                                showResetPassword = true
+                                logger.info("Exchanged code for session, showing reset password view")
+                            } catch {
+                                logger.error("Failed to exchange code for session: \(error)")
+                            }
+                        }
+                    } else if let access = accessToken, let refresh = refreshToken {
+                        // Direct tokens flow
+                        resetAccessToken = access
+                        resetRefreshToken = refresh
+                        showResetPassword = true
+                        logger.info("Using direct tokens, showing reset password view")
+                    } else {
+                        logger.error("Missing code or tokens in URL")
+                    }
+                } else {
+                    logger.error("Failed to parse URL components")
+                }
+            } else {
+                logger.info("URL does not match expected scheme/host")
+            }
         }
         .withErrorHandling() // Global error handling
     }

@@ -13,6 +13,7 @@ import OSLog
 protocol PaymentSyncService {
     func syncPayment(_ payment: Payment) async throws
     func syncDeletePayment(_ paymentId: UUID) async throws
+    func syncDeletePayments(_ paymentIds: [UUID]) async throws
     func fetchAllPayments() async throws -> [PaymentDTO]
     func syncAllLocalPayments(_ payments: [Payment]) async throws
 }
@@ -69,6 +70,33 @@ class SupabasePaymentSyncService: PaymentSyncService {
             logger.info("✅ Payment deleted from server: \(paymentId)")
         } catch {
             logger.error("❌ Failed to delete payment from server: \(error.localizedDescription)")
+            throw PaymentSyncError.deleteFailed(error)
+        }
+    }
+    
+    /// Sync deletion of multiple payments
+    func syncDeletePayments(_ paymentIds: [UUID]) async throws {
+        guard !paymentIds.isEmpty else {
+            logger.info("No payments to delete")
+            return
+        }
+        
+        do {
+            logger.info("Deleting \(paymentIds.count) payments from server")
+            
+            // Delete each payment individually
+            // Supabase doesn't support bulk delete with IN clause easily, so we do it one by one
+            for paymentId in paymentIds {
+                try await client
+                    .from("payments")
+                    .delete()
+                    .eq("id", value: paymentId.uuidString)
+                    .execute()
+            }
+
+            logger.info("✅ Deleted \(paymentIds.count) payments from server")
+        } catch {
+            logger.error("❌ Failed to delete payments from server: \(error.localizedDescription)")
             throw PaymentSyncError.deleteFailed(error)
         }
     }

@@ -4,6 +4,7 @@ import Supabase
 struct BiometricSettingsView: View {
     @StateObject private var settingsManager = SettingsManager.shared
     @EnvironmentObject var authManager: AuthenticationManager
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         Form {
@@ -48,7 +49,7 @@ struct BiometricSettingsView: View {
                         // If user disables Face ID, clear biometric credentials
                         if !newValue {
                             Task {
-                                await authManager.clearBiometricCredentials()
+                                await authManager.clearBiometricCredentials(modelContext: modelContext)
                             }
                         }
                     }
