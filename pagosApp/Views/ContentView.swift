@@ -95,11 +95,11 @@ struct ContentView: View {
                 Task {
                     await syncManager.performInitialSyncIfNeeded(modelContext: modelContext, isAuthenticated: true)
                 }
-            } else { // User just became unauthenticated (logged out)
+            } else if oldValue == true && newValue == false { // User explicitly logged out (not initial state)
                 stopForegroundCheckTimer() // Stop foreground check
-                
-                // Clear local database when user logs out
-                // This ensures a clean state for the next user
+
+                // Only clear database if user was previously authenticated
+                // This clears ONLY local SwiftData, NEVER touches Supabase
                 syncManager.clearLocalDatabase(modelContext: modelContext)
             }
         }

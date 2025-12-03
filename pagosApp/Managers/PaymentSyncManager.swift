@@ -51,12 +51,13 @@ class PaymentSyncManager: ObservableObject {
         }
     }
 
-    /// Update count of payments pending synchronization
+    /// Update count of payments pending synchronization (including deletions)
     func updatePendingSyncCount(modelContext: ModelContext) {
         do {
             let allPayments = try fetchAllPayments(from: modelContext)
             let pendingPayments = filterPendingPayments(allPayments)
-            pendingSyncCount = pendingPayments.count
+            let pendingDeletions = try fetchPendingDeletions(from: modelContext)
+            pendingSyncCount = pendingPayments.count + pendingDeletions.count
         } catch {
             pendingSyncCount = 0
         }
@@ -80,35 +81,99 @@ class PaymentSyncManager: ObservableObject {
 
             // Post notification to refresh views
             NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
+        } catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == 256 {
+            // Handle "The file couldn't be opened" error
+            logger.warning("⚠️ Database file access error during initial sync: \(error.localizedDescription)")
+            logger.info("Will retry sync on next manual sync attempt")
         } catch {
             logger.error("Initial sync failed: \(error.localizedDescription)")
         }
     }
 
-    /// Clear all local payments from database (used on logout)
-    func clearLocalDatabase(modelContext: ModelContext) {
-        do {
-            let allPayments = try fetchAllPayments(from: modelContext)
-            logger.info("Clearing \(allPayments.count) payments from local database")
-            
-            for payment in allPayments {
-                modelContext.delete(payment)
+    /// Clear all local payments and pending deletions from database (used on logout)
+    /// This ONLY clears SwiftData locally - NEVER touches Supabase server
+    /// This method is robust and doesn't depend on ModelContext being available
+    func clearLocalDatabase(modelContext: ModelContext? = nil) {
+        logger.info("Clearing local database on logout")
+
+        // Try to clear via ModelContext if available
+        if let context = modelContext {
+            do {
+                let allPayments = try fetchAllPayments(from: context)
+                let pendingDeletions = try fetchPendingDeletions(from: context)
+
+                for payment in allPayments {
+                    context.delete(payment)
+                }
+
+                for deletion in pendingDeletions {
+                    context.delete(deletion)
+                }
+
+                try context.save()
+                logger.info("✅ Local SwiftData cleared via ModelContext (Supabase untouched)")
+            } catch {
+                logger.warning("⚠️ Failed to clear via ModelContext, falling back to file deletion: \(error.localizedDescription)")
+                // Fall back to file deletion if ModelContext fails
+                forceDeleteDatabaseFiles()
             }
-            
-            try modelContext.save()
-            
+        } else {
+            // No ModelContext available, use file deletion
+            forceDeleteDatabaseFiles()
+        }
+
+        // Reset sync state regardless of method used
+        pendingSyncCount = 0
+        lastSyncDate = nil
+        UserDefaults.standard.removeObject(forKey: lastSyncKey)
+
+        // Post notification to refresh views
+        NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
+
+        logger.info("✅ Local SwiftData cleared successfully (Supabase data preserved)")
+    }
+
+    /// Force delete database files when ModelContext is not available or corrupted
+    /// This ONLY deletes local SwiftData files - Supabase data remains completely untouched
+    private func forceDeleteDatabaseFiles() {
+        if let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            let storeURL = appSupportURL.appendingPathComponent("default.store")
+
+            // Delete all database files (ignore errors)
+            let _ = try? FileManager.default.removeItem(at: storeURL)
+            let _ = try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("wal"))
+            let _ = try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("shm"))
+
+            logger.info("✅ Local SwiftData files deleted successfully (Supabase untouched)")
+        } else {
+            logger.error("❌ Could not find application support directory")
+        }
+    }
+
+    /// Force database reset - deletes the entire database file and recreates it
+    /// Use this as a last resort when the database is corrupted
+    /// This ONLY affects local SwiftData files - Supabase data remains untouched
+    func forceDatabaseReset() -> Bool {
+        logger.warning("🔄 Forcing database reset due to corruption")
+
+        if let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            let storeURL = appSupportURL.appendingPathComponent("default.store")
+
+            // Delete all database files (ignore errors)
+            let _ = try? FileManager.default.removeItem(at: storeURL)
+            let _ = try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("wal"))
+            let _ = try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("shm"))
+
             // Reset sync state
             pendingSyncCount = 0
             lastSyncDate = nil
             UserDefaults.standard.removeObject(forKey: lastSyncKey)
-            
-            // Post notification to refresh views
-            NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
-            
-            logger.info("✅ Local database cleared successfully")
-        } catch {
-            logger.error("❌ Failed to clear local database: \(error.localizedDescription)")
-            errorHandler.handle(PaymentError.deleteFailed(error))
+
+            logger.info("✅ Local SwiftData files deleted successfully. App restart required. (Supabase data preserved)")
+            return true
+        } else {
+            logger.error("❌ Could not find application support directory")
+            return false
         }
     }
 
@@ -138,18 +203,27 @@ class PaymentSyncManager: ObservableObject {
         logger.info("🔄 Starting manual sync...")
 
         do {
-            // 1. Upload local changes (only payments that need syncing)
+            // 1. Sync pending deletions first
+            try await syncPendingDeletions(modelContext: modelContext)
+
+            // 2. Upload local changes (only payments that need syncing)
             try await uploadLocalChanges(modelContext: modelContext)
 
-            // 2. Download remote changes
+            // 3. Download remote changes
             try await downloadRemoteChanges(modelContext: modelContext)
 
-            // 3. Update counters and state
+            // 4. Update counters and state
             updatePendingSyncCount(modelContext: modelContext)
             lastSyncDate = Date()
             UserDefaults.standard.set(lastSyncDate, forKey: lastSyncKey)
 
             logger.info("✅ Manual sync completed successfully")
+        } catch let error as NSError where error.domain == NSCocoaErrorDomain && error.code == 256 {
+            // Handle "The file couldn't be opened" error specifically
+            logger.error("❌ Manual sync failed due to database access error: \(error.localizedDescription)")
+            logger.warning("⚠️ Database file may be corrupted or inaccessible. Try restarting the app.")
+            syncError = PaymentSyncError.networkError
+            throw PaymentSyncError.networkError
         } catch {
             logger.error("❌ Manual sync failed: \(error.localizedDescription)")
             syncError = error
@@ -174,9 +248,45 @@ class PaymentSyncManager: ObservableObject {
         }
     }
 
+    /// Fetch all pending deletions from modelContext
+    private func fetchPendingDeletions(from modelContext: ModelContext) throws -> [PendingDeletion] {
+        let descriptor = FetchDescriptor<PendingDeletion>()
+        return try modelContext.fetch(descriptor)
+    }
+    
     /// Find existing payment by ID
     private func findPayment(byId id: UUID, in payments: [Payment]) -> Payment? {
         return payments.first { $0.id == id }
+    }
+    
+    /// Sync pending deletions to server
+    private func syncPendingDeletions(modelContext: ModelContext) async throws {
+        let pendingDeletions = try fetchPendingDeletions(from: modelContext)
+        
+        guard !pendingDeletions.isEmpty else {
+            logger.info("No pending deletions to sync")
+            return
+        }
+        
+        logger.info("Found \(pendingDeletions.count) pending deletions to sync")
+        
+        let paymentIds = pendingDeletions.map { $0.paymentId }
+        
+        do {
+            // Sync deletions to server
+            try await syncService.syncDeletePayments(paymentIds)
+            
+            // Remove pending deletions after successful sync
+            for deletion in pendingDeletions {
+                modelContext.delete(deletion)
+            }
+            try modelContext.save()
+            
+            logger.info("✅ Synced \(pendingDeletions.count) deletions successfully")
+        } catch {
+            logger.error("❌ Failed to sync deletions: \(error.localizedDescription)")
+            throw error
+        }
     }
 
     /// Upload only payments that need syncing

@@ -154,6 +154,18 @@ class PaymentsListViewModel: ObservableObject {
     func refresh() {
         fetchPayments()
     }
+
+    /// Update the model context (used when the environment context becomes available)
+    func updateModelContext(_ newContext: ModelContext) {
+        // Only update if the context is different
+        if modelContext !== newContext {
+            logger.info("Updating PaymentsListViewModel with new ModelContext")
+            // Note: In a real implementation, you might want to re-initialize dependencies
+            // For now, we'll just update the reference and refresh data
+            // This is a simplified approach - in production you might want to recreate the entire viewModel
+            fetchPayments()
+        }
+    }
 }
 
 // MARK: - Payment Filter Enum

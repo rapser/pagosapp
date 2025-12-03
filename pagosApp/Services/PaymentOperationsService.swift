@@ -102,13 +102,17 @@ class DefaultPaymentOperationsService: PaymentOperationsService {
         calendarService.removeEvent(for: payment)
         notificationService.cancelNotifications(for: payment)
 
+        // Delete payment from local database
         modelContext.delete(payment)
-        try modelContext.save()
-
+        
+        // If payment was synced, track deletion for server sync
         if wasSynced {
-            // TODO: Track deletion for server sync in Phase 3
-            logger.info("Payment \(paymentId) deletion pending sync")
+            let pendingDeletion = PendingDeletion(paymentId: paymentId)
+            modelContext.insert(pendingDeletion)
+            logger.info("Payment \(paymentId) deletion tracked for sync")
         }
+        
+        try modelContext.save()
 
         logger.info("✅ Payment deleted locally: \(payment.name)")
     }

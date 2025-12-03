@@ -81,6 +81,20 @@ struct SettingsView: View {
                         }
                     }
                     .disabled(syncManager.isSyncing || !authManager.isAuthenticated)
+
+                    // Database reset button (only show if there are sync errors)
+                    if syncManager.syncError != nil {
+                        Button {
+                            showDatabaseResetAlert()
+                        } label: {
+                            HStack {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.orange)
+                                Text("Reparar base de datos")
+                                    .foregroundColor(.orange)
+                            }
+                        }
+                    }
                 }
 
                 Section(header: Text("Seguridad").foregroundColor(Color("AppTextPrimary"))) {
@@ -129,6 +143,34 @@ struct SettingsView: View {
             syncErrorMessage = error.localizedDescription
             showingSyncError = true
         }
+    }
+
+    private func showDatabaseResetAlert() {
+        alertManager.show(
+            title: Text("Reparar Base de Datos"),
+            message: Text("Esto eliminará todos los datos LOCALES de SwiftData y los volverá a descargar desde Supabase. Tus datos en el servidor NO se verán afectados. ¿Estás seguro?"),
+            buttons: [
+                AlertButton(title: Text("Reparar"), role: .destructive) {
+                    if syncManager.forceDatabaseReset() {
+                        alertManager.show(
+                            title: Text("Base de Datos Reparada"),
+                            message: Text("La aplicación se cerrará. Vuelve a abrirla para completar la reparación."),
+                            buttons: [AlertButton(title: Text("OK"), role: .cancel) {
+                                // Force app restart by crashing (not ideal but effective)
+                                exit(0)
+                            }]
+                        )
+                    } else {
+                        alertManager.show(
+                            title: Text("Error"),
+                            message: Text("No se pudo reparar la base de datos. Intenta reinstalar la aplicación."),
+                            buttons: [AlertButton(title: Text("OK"), role: .cancel) { }]
+                        )
+                    }
+                },
+                AlertButton(title: Text("Cancelar"), role: .cancel) { }
+            ]
+        )
     }
 
     private func showLogoutAlert() {
