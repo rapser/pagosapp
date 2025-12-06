@@ -59,6 +59,14 @@ class PaymentSyncManager: ObservableObject {
             
             pendingSyncCount = pendingPayments.count
             logger.info("📊 Pending sync count updated: \(self.pendingSyncCount) payments")
+            
+            // Log details for debugging
+            if pendingSyncCount > 0 {
+                logger.info("⚠️ Payments pending sync breakdown:")
+                for payment in pendingPayments {
+                    logger.info("  - \(payment.name): status=\(payment.syncStatus.rawValue)")
+                }
+            }
         } catch {
             logger.error("❌ Failed to update pending sync count: \(error.localizedDescription)")
             // Don't reset to 0 - keep the last known value to avoid hiding pending items
@@ -195,6 +203,7 @@ class PaymentSyncManager: ObservableObject {
         }
 
         isSyncing = true
+        // Clear previous errors at the start
         syncError = nil
         defer { isSyncing = false }
 
@@ -207,12 +216,15 @@ class PaymentSyncManager: ObservableObject {
             // 2. Download remote changes
             try await downloadRemoteChanges(modelContext: modelContext)
 
-            // 4. Update counters and state
+            // 3. Update counters and state
             updatePendingSyncCount(modelContext: modelContext)
             lastSyncDate = Date()
             UserDefaults.standard.set(lastSyncDate, forKey: lastSyncKey)
 
-            // Notify that sync completed so views can refresh
+            // 4. Clear any previous errors since sync completed successfully
+            syncError = nil
+
+            // 5. Notify that sync completed so views can refresh
             NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
 
             logger.info("✅ Manual sync completed successfully")
@@ -264,7 +276,13 @@ class PaymentSyncManager: ObservableObject {
         for payment in paymentsToSync {
             payment.syncStatus = .syncing
         }
-        try modelContext.save()
+        
+        do {
+            try modelContext.save()
+        } catch {
+            logger.error("❌ Failed to save 'syncing' status: \(error.localizedDescription)")
+            // Continue anyway - we'll try to sync even if we can't persist the status
+        }
 
         // Upload to server
         do {
@@ -275,15 +293,32 @@ class PaymentSyncManager: ObservableObject {
                 payment.syncStatus = .synced
                 payment.lastSyncedAt = Date()
             }
-            try modelContext.save()
-
-            logger.info("✅ Uploaded \(paymentsToSync.count) payments successfully")
+            
+            do {
+                try modelContext.save()
+                logger.info("✅ Uploaded \(paymentsToSync.count) payments successfully")
+            } catch {
+                logger.error("❌ Failed to save 'synced' status: \(error.localizedDescription)")
+                // This is critical - if we can't save synced status, revert to previous state
+                for payment in paymentsToSync {
+                    payment.syncStatus = .modified
+                }
+                throw error
+            }
         } catch {
             // Mark as error
+            logger.error("❌ Upload failed, marking payments as error: \(error.localizedDescription)")
             for payment in paymentsToSync {
                 payment.syncStatus = .error
             }
-            try? modelContext.save()
+            
+            do {
+                try modelContext.save()
+            } catch let saveError {
+                logger.error("❌ CRITICAL: Failed to save 'error' status: \(saveError.localizedDescription)")
+                // If we can't even save error status, database might be corrupted
+            }
+            
             throw error
         }
     }
