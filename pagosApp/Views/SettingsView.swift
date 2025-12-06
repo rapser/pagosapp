@@ -82,8 +82,20 @@ struct SettingsView: View {
                     }
                     .disabled(syncManager.isSyncing || !authManager.isAuthenticated)
 
-                    // Database reset button (only show if there are sync errors)
+                    // Clear sync error button (only show if there are sync errors)
                     if syncManager.syncError != nil {
+                        Button {
+                            clearSyncError()
+                        } label: {
+                            HStack {
+                                Image(systemName: "arrow.clockwise.circle.fill")
+                                    .foregroundColor(.blue)
+                                Text("Reintentar sincronización")
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                        
+                        // Database reset button (last resort)
                         Button {
                             showDatabaseResetAlert()
                         } label: {
@@ -150,6 +162,14 @@ struct SettingsView: View {
         } catch {
             syncErrorMessage = error.localizedDescription
             showingSyncError = true
+        }
+    }
+    
+    private func clearSyncError() {
+        // Clear the sync error and try again
+        syncManager.syncError = nil
+        Task {
+            await performSync()
         }
     }
 
