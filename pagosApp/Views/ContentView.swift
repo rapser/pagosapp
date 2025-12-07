@@ -81,6 +81,9 @@ struct ContentView: View {
             }
         }
         .onAppear {
+            // Configure PaymentSyncManager with modelContext
+            syncManager.configure(with: modelContext)
+            
             // Solicitamos permisos al iniciar la app
             NotificationManager.shared.requestAuthorization()
             EventKitManager.shared.requestAccess { _ in }

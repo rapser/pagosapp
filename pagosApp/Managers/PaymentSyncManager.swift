@@ -12,8 +12,8 @@ import OSLog
 @MainActor
 class PaymentSyncManager: ObservableObject {
     static let shared = PaymentSyncManager()
-
-    private let syncService: PaymentSyncService
+    
+    private var syncService: PaymentSyncService?
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentSyncManager")
     private let errorHandler = ErrorHandler.shared
 
@@ -24,15 +24,40 @@ class PaymentSyncManager: ObservableObject {
 
     private let lastSyncKey = "lastPaymentSyncDate"
 
-    init(syncService: PaymentSyncService = SupabasePaymentSyncService(client: supabaseClient)) {
-        self.syncService = syncService
+    private init() {
         self.lastSyncDate = UserDefaults.standard.object(forKey: lastSyncKey) as? Date
+    }
+    
+    /// Initialize with modelContext (call once at app startup)
+    func configure(with modelContext: ModelContext) {
+        guard syncService == nil else { return } // Only configure once
+        let repository = PaymentRepository(supabaseClient: supabaseClient, modelContext: modelContext)
+        self.syncService = DefaultPaymentSyncService(repository: repository)
+        logger.info("✅ PaymentSyncManager configured with repository")
+    }
+    
+    private func ensureConfigured() {
+        guard syncService != nil else {
+            logger.error("❌ PaymentSyncManager not configured! Call configure(with:) first")
+            fatalError("PaymentSyncManager must be configured with modelContext before use")
+        }
+    }
+    
+    /// Get current user ID from Supabase auth
+    private func getCurrentUserId() throws -> UUID {
+        guard let userId = supabaseClient.auth.currentUser?.id else {
+            throw PaymentSyncError.notAuthenticated
+        }
+        return userId
     }
 
     /// Sync a single payment to server
-    func syncPayment(_ payment: Payment) async {
+    func syncPayment(_ payment: Payment, userId: UUID) async {
+        ensureConfigured()
+        guard let service = syncService else { return }
+        
         do {
-            try await syncService.syncPayment(payment)
+            try await service.syncPayment(payment, userId: userId)
             logger.info("✅ Payment synced: \(payment.name)")
         } catch {
             logger.error("❌ Failed to sync payment: \(error.localizedDescription)")
@@ -42,8 +67,11 @@ class PaymentSyncManager: ObservableObject {
 
     /// Sync payment deletion to server
     func syncDeletePayment(_ paymentId: UUID) async {
+        ensureConfigured()
+        guard let service = syncService else { return }
+        
         do {
-            try await syncService.syncDeletePayment(paymentId)
+            try await service.syncDeletePayment(paymentId)
             logger.info("✅ Payment deletion synced: \(paymentId)")
         } catch {
             logger.error("❌ Failed to sync payment deletion: \(error.localizedDescription)")
@@ -286,7 +314,11 @@ class PaymentSyncManager: ObservableObject {
 
         // Upload to server
         do {
-            try await syncService.syncAllLocalPayments(paymentsToSync)
+            ensureConfigured()
+            guard let service = syncService else { return }
+            let userId = try getCurrentUserId()
+            
+            try await service.syncAllLocalPayments(paymentsToSync, userId: userId)
 
             // Mark as synced
             for payment in paymentsToSync {
@@ -325,7 +357,11 @@ class PaymentSyncManager: ObservableObject {
 
     /// Download and merge remote changes
     private func downloadRemoteChanges(modelContext: ModelContext) async throws {
-        let remoteDTOs = try await syncService.fetchAllPayments()
+        ensureConfigured()
+        guard let service = syncService else { return }
+        let userId = try getCurrentUserId()
+        
+        let remoteDTOs = try await service.fetchAllPayments(userId: userId)
         logger.info("Fetched \(remoteDTOs.count) payments from server")
 
         try await mergeRemotePayments(remoteDTOs, into: modelContext)
