@@ -105,7 +105,9 @@ struct ContentView: View {
                 stopForegroundCheckTimer() // Stop foreground check
 
                 // Clear user profile from local storage
-                UserProfileService.shared.clearLocalProfile(modelContext: modelContext)
+                Task {
+                    await UserProfileService.shared.clearLocalProfile(modelContext: modelContext)
+                }
 
                 // Only clear database if user was previously authenticated
                 // This clears ONLY local SwiftData, NEVER touches Supabase

@@ -21,6 +21,8 @@ class UserProfileService {
     /// Fetch profile from Supabase and save to SwiftData
     /// Should be called after successful login
     func fetchAndSaveProfile(supabaseClient: SupabaseClient, modelContext: ModelContext) async -> Bool {
+        let repository = UserProfileRepository(supabaseClient: supabaseClient, modelContext: modelContext)
+        
         // Retry logic for SwiftData initialization
         for attempt in 1...3 {
             do {
@@ -29,28 +31,16 @@ class UserProfileService {
                 
                 logger.info("Fetching profile from Supabase for user: \(userId) (attempt \(attempt))")
                 
-                // Query user_profiles table
-                let response: UserProfileDTO = try await supabaseClient
-                    .from("user_profiles")
-                    .select()
-                    .eq("user_id", value: userId.uuidString)
-                    .single()
-                    .execute()
-                    .value
+                // Fetch from remote
+                let profileDTO = try await repository.fetchProfile(userId: userId)
                 
                 logger.info("✅ Profile data fetched from Supabase")
                 
                 // Convert DTO to Model
-                let profileModel = response.toModel()
+                let profileModel = profileDTO.toModel()
                 
-                // Delete old profile if exists
-                let descriptor = FetchDescriptor<UserProfile>()
-                let existingProfiles = try modelContext.fetch(descriptor)
-                existingProfiles.forEach { modelContext.delete($0) }
-                
-                // Save new profile to SwiftData
-                modelContext.insert(profileModel)
-                try modelContext.save()
+                // Save to local storage
+                try await repository.saveProfile(profileModel)
                 
                 logger.info("✅ Profile fetched and saved to local storage")
                 return true
@@ -77,16 +67,15 @@ class UserProfileService {
     
     /// Clear local profile from SwiftData
     /// Should be called on logout
-    func clearLocalProfile(modelContext: ModelContext) {
+    func clearLocalProfile(modelContext: ModelContext) async {
+        let repository = UserProfileRepository(supabaseClient: SupabaseClient(supabaseURL: URL(string: "https://dummy.com")!, supabaseKey: "dummy"), modelContext: modelContext)
+        
         do {
-            let descriptor = FetchDescriptor<UserProfile>()
-            let profiles = try modelContext.fetch(descriptor)
-            profiles.forEach { modelContext.delete($0) }
-            try modelContext.save()
-            
+            try await repository.deleteLocalProfile()
             logger.info("✅ Local profile cleared")
         } catch {
             logger.error("❌ Error clearing local profile: \(error.localizedDescription)")
         }
     }
 }
+
