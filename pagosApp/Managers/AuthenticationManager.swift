@@ -189,8 +189,6 @@ class AuthenticationManager: ObservableObject {
             return
         }
 
-        isLoading = true
-
         let context = LAContext()
         let reason = "Inicia sesión con Face ID para acceder a tus pagos."
 
@@ -199,6 +197,9 @@ class AuthenticationManager: ObservableObject {
                 guard let self = self else { return }
                 
                 if success {
+                    // Face ID successful, now start loading and perform login
+                    self.isLoading = true
+                    
                     // Retrieve credentials from Keychain
                     guard let credentials = KeychainManager.retrieveCredentials() else {
                         self.logger.error("❌ Failed to retrieve credentials from Keychain")
@@ -215,14 +216,14 @@ class AuthenticationManager: ObservableObject {
                     } else {
                         self.logger.error("❌ Face ID login failed: \(error?.localizedDescription ?? "unknown")")
                     }
+                    
+                    self.isLoading = false
                 } else {
                     self.logger.warning("⚠️ Face ID authentication failed")
                     if let error = authenticationError {
                         self.logger.error("Face ID error: \(error.localizedDescription)")
                     }
                 }
-                
-                self.isLoading = false
             }
         }
     }

@@ -58,6 +58,7 @@ class PaymentsListViewModel: ObservableObject {
         self.modelContext = modelContext
         self.paymentOperations = paymentOperations
         self.syncService = syncService
+        self.isLoading = true // Start with loading state
         fetchPayments()
         setupNotificationObserver()
     }
@@ -93,6 +94,10 @@ class PaymentsListViewModel: ObservableObject {
 
     /// Fetch all payments from local database
     func fetchPayments() {
+        defer {
+            isLoading = false
+        }
+        
         do {
             let descriptor = FetchDescriptor<Payment>(sortBy: [SortDescriptor(\.dueDate, order: .forward)])
             payments = try modelContext.fetch(descriptor)
