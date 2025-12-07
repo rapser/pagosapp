@@ -66,7 +66,8 @@ class EditPaymentViewModel: ObservableObject {
 
     /// Convenience initializer with default dependencies
     convenience init(payment: Payment, modelContext: ModelContext) {
-        let syncService = SupabasePaymentSyncService(client: supabaseClient)
+        let repository = PaymentRepository(supabaseClient: supabaseClient, modelContext: modelContext)
+        let syncService = DefaultPaymentSyncService(repository: repository)
         let notificationService = NotificationManagerAdapter()
         let calendarService = EventKitManagerAdapter()
         let paymentOperations = DefaultPaymentOperationsService(
