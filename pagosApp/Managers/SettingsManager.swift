@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 class SettingsManager: ObservableObject {
     static let shared = SettingsManager()
 

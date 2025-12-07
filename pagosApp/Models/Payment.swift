@@ -50,7 +50,10 @@ enum SyncStatus: String, Codable {
     case error      // Falló al sincronizar
 }
 
-// @Model macro transforma esta clase en un modelo de SwiftData.
+/// SwiftData model representing a payment
+/// @unchecked Sendable: SwiftData @Model classes must be classes (not structs) and SwiftData
+/// manages thread-safety internally through ModelContext. All access should go through ModelContext.
+/// Direct property mutation outside ModelContext is prohibited.
 @Model
 final class Payment: @unchecked Sendable {
     // Usamos un UUID para identificar de forma única cada pago, útil para notificaciones.

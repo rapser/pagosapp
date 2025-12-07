@@ -6,6 +6,7 @@ struct AlertButton {
     let action: () -> Void
 }
 
+@MainActor
 class AlertManager: ObservableObject {
     @Published var isPresented = false
     
