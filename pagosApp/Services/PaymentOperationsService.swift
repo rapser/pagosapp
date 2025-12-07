@@ -127,7 +127,6 @@ class DefaultPaymentOperationsService: PaymentOperationsService {
 
 // MARK: - Adapter for NotificationManager
 
-@MainActor
 class NotificationManagerAdapter: NotificationService {
     private let manager: NotificationManager
 
@@ -135,11 +134,11 @@ class NotificationManagerAdapter: NotificationService {
         self.manager = manager
     }
 
-    func scheduleNotifications(for payment: Payment) {
+    func scheduleNotifications(for payment: Payment) async {
         manager.scheduleNotification(for: payment)  // Singular
     }
 
-    func cancelNotifications(for payment: Payment) {
+    func cancelNotifications(for payment: Payment) async {
         manager.cancelNotification(for: payment)    // Singular
     }
 }
