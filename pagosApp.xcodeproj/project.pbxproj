@@ -362,6 +362,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = pagosApp/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_NSCalendarsUsageDescription = "Tu aplicación necesita acceder a tu calendario para añadir y sincronizar los pagos registrados.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Usamos Face ID para que puedas iniciar sesión de forma rápida y segura.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -395,6 +396,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = pagosApp/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_NSCalendarsUsageDescription = "Tu aplicación necesita acceder a tu calendario para añadir y sincronizar los pagos registrados.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Usamos Face ID para que puedas iniciar sesión de forma rápida y segura.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
