@@ -1,10 +1,14 @@
 import SwiftUI
 import Supabase
+import LocalAuthentication
 
 struct BiometricSettingsView: View {
     @StateObject private var settingsManager = SettingsManager.shared
     @EnvironmentObject var authManager: AuthenticationManager
     @Environment(\.modelContext) private var modelContext
+    
+    @State private var showError = false
+    @State private var errorMessage = ""
 
     var body: some View {
         Form {
@@ -45,17 +49,12 @@ struct BiometricSettingsView: View {
                 Toggle("Habilitar Face ID / Touch ID", isOn: Binding(
                     get: { settingsManager.isBiometricLockEnabled },
                     set: { newValue in
-                        settingsManager.isBiometricLockEnabled = newValue
-                        
                         if newValue {
-                            // When enabling Face ID, credentials were already saved during login
-                            // Just verify they exist, otherwise user needs to login again
-                            if !KeychainManager.hasStoredCredentials() {
-                                // This shouldn't happen normally, but handle edge case
-                                print("⚠️ Warning: Face ID enabled but no credentials in Keychain")
-                            }
+                            // When enabling, authenticate with biometrics first
+                            authenticateToEnable()
                         } else {
-                            // When disabling Face ID, delete credentials from Keychain
+                            // When disabling, delete credentials from Keychain
+                            settingsManager.isBiometricLockEnabled = false
                             Task {
                                 await authManager.clearBiometricCredentials(modelContext: modelContext)
                             }
@@ -99,6 +98,41 @@ struct BiometricSettingsView: View {
         }
         .navigationTitle("Autenticación Biométrica")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Error", isPresented: $showError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage)
+        }
+    }
+    
+    private func authenticateToEnable() {
+        let context = LAContext()
+        var error: NSError?
+        
+        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
+            errorMessage = "Face ID / Touch ID no está disponible"
+            showError = true
+            return
+        }
+        
+        let reason = "Confirma tu identidad para habilitar Face ID"
+        
+        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, authenticationError in
+            DispatchQueue.main.async {
+                if success {
+                    // Authentication successful, enable Face ID
+                    settingsManager.isBiometricLockEnabled = true
+                } else {
+                    // Authentication failed
+                    if let error = authenticationError {
+                        errorMessage = "No se pudo verificar tu identidad: \(error.localizedDescription)"
+                    } else {
+                        errorMessage = "No se pudo verificar tu identidad"
+                    }
+                    showError = true
+                }
+            }
+        }
     }
 }
 
