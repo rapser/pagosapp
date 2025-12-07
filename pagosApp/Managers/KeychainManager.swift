@@ -8,6 +8,7 @@
 import Foundation
 import Security
 import OSLog
+import LocalAuthentication
 
 /// Manager for securely storing and retrieving user credentials in Keychain
 class KeychainManager {

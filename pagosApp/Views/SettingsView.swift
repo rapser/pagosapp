@@ -109,6 +109,30 @@ struct SettingsView: View {
                     }
                 }
 
+                Section(header: Text("Perfil").foregroundColor(Color("AppTextPrimary"))) {
+                    if authManager.isAuthenticated {
+                        NavigationLink(destination: UserProfileView(supabaseClient: authManager.authService.client, modelContext: modelContext)) {
+                            HStack {
+                                Image(systemName: "person.circle.fill")
+                                    .foregroundColor(Color("AppPrimary"))
+                                Text("Mi Perfil")
+                                    .foregroundColor(Color("AppTextPrimary"))
+                            }
+                        }
+                    } else {
+                        HStack {
+                            Image(systemName: "person.circle.fill")
+                                .foregroundColor(Color("AppTextSecondary"))
+                            Text("Mi Perfil")
+                                .foregroundColor(Color("AppTextSecondary"))
+                            Spacer()
+                            Text("Inicia sesión")
+                                .font(.caption)
+                                .foregroundColor(Color("AppTextSecondary"))
+                        }
+                    }
+                }
+
                 Section(header: Text("Seguridad").foregroundColor(Color("AppTextPrimary"))) {
                     NavigationLink(destination: BiometricSettingsView().environmentObject(authManager)) {
                         HStack {
