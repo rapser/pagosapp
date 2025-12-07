@@ -81,6 +81,14 @@ struct ContentView: View {
             }
         }
         .onAppear {
+            // Configure StorageFactory with current storage provider (Supabase + SwiftData)
+            let storageConfig = StorageConfiguration.supabase(
+                client: supabaseClient,
+                modelContext: modelContext
+            )
+            StorageFactory.shared.configure(storageConfig)
+            logger.info("✅ StorageFactory configured with Supabase + SwiftData")
+            
             // Configure PaymentSyncManager with modelContext
             syncManager.configure(with: modelContext)
             

@@ -54,7 +54,8 @@ final class UserProfile {
 }
 
 // DTO for Supabase communication
-struct UserProfileDTO: Codable {
+struct UserProfileDTO: Codable, RemoteTransferable {
+    var id: UUID { userId }  // RemoteTransferable requirement
     let userId: UUID
     let fullName: String
     let email: String

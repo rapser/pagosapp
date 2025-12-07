@@ -53,6 +53,9 @@ struct pagosAppApp: App {
         
         // Request notification authorization at app launch
         NotificationManager.shared.requestAuthorization()
+        
+        // Configure StorageFactory (will be configured properly in ContentView with modelContext)
+        logger.info("✅ App initialized - StorageFactory will be configured in ContentView")
     }
 
     var body: some Scene {

@@ -8,7 +8,7 @@
 import Foundation
 
 /// Payment Data Transfer Object for API communication
-struct PaymentDTO: Codable, Identifiable {
+struct PaymentDTO: Codable, Identifiable, RemoteTransferable {
     let id: UUID
     let userId: UUID
     let name: String
