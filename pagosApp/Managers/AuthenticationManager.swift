@@ -92,14 +92,12 @@ class AuthenticationManager: ObservableObject {
             self.hasLoggedInWithCredentials = true
             _ = KeychainManager.setHasLoggedIn(true)
 
-            // If Face ID is enabled, save credentials to Keychain
-            if SettingsManager.shared.isBiometricLockEnabled && canUseBiometrics {
-                let saved = KeychainManager.saveCredentials(email: email, password: password)
-                if saved {
-                    logger.info("✅ Credentials saved to Keychain for Face ID")
-                } else {
-                    logger.warning("⚠️ Failed to save credentials to Keychain")
-                }
+            // Always save credentials to Keychain on successful login
+            let saved = KeychainManager.saveCredentials(email: email, password: password)
+            if saved {
+                logger.info("✅ Credentials saved to Keychain")
+            } else {
+                logger.warning("⚠️ Failed to save credentials to Keychain")
             }
 
             // Manually set isAuthenticated to true after successful login
@@ -234,7 +232,7 @@ class AuthenticationManager: ObservableObject {
         isLoading = true
         defer { isLoading = false }
 
-        // Always sign out from Supabase (no more keepSession logic)
+        // Always sign out from Supabase
         do {
             try await authService.signOut()
             logger.info("✅ Supabase session closed on logout")
@@ -248,6 +246,14 @@ class AuthenticationManager: ObservableObject {
         // This ONLY clears SwiftData locally, NEVER touches Supabase
         PaymentSyncManager.shared.clearLocalDatabase(modelContext: modelContext)
         logger.info("Local SwiftData database cleared on logout (Supabase untouched)")
+
+        // If Face ID is NOT enabled, delete credentials from Keychain
+        if !SettingsManager.shared.isBiometricLockEnabled {
+            _ = KeychainManager.deleteCredentials()
+            logger.info("🗑️ Credentials deleted from Keychain (Face ID disabled)")
+        } else {
+            logger.info("🔐 Credentials kept in Keychain (Face ID enabled)")
+        }
 
         // Clear timestamp
         UserDefaults.standard.removeObject(forKey: self.lastActiveTimestampKey)
@@ -298,13 +304,8 @@ class AuthenticationManager: ObservableObject {
         self.hasLoggedInWithCredentials = false
         KeychainManager.deleteHasLoggedIn()
         
-        // Delete stored credentials from Keychain
+        // Delete stored credentials from Keychain when Face ID is disabled
         _ = KeychainManager.deleteCredentials()
-        logger.info("🔐 Credentials removed from Keychain")
-
-        // If user is currently logged in, force a full logout
-        if self.isAuthenticated {
-            await logout(modelContext: modelContext)
-        }
+        logger.info("🔐 Credentials removed from Keychain (Face ID disabled)")
     }
 }

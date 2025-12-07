@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Usamos Face ID para permitirte acceder de forma rápida y segura a tu información de pagos.</string>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>Tu aplicación necesita enviar notificaciones para recordarte los pagos pendientes.</string>
 	<key>CFBundleURLTypes</key>
