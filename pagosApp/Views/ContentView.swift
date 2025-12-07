@@ -91,12 +91,21 @@ struct ContentView: View {
                 authManager.startInactivityTimer() // Start the timer
                 startForegroundCheckTimer() // Start foreground check
 
-                // Perform initial sync if database is empty
-                Task {
+                // Perform initial sync and fetch profile in parallel (non-blocking)
+                // Use Task instead of Task.detached to stay in MainActor context
+                Task(priority: .utility) {
                     await syncManager.performInitialSyncIfNeeded(modelContext: modelContext, isAuthenticated: true)
+                }
+                
+                // Fetch and save user profile in background
+                Task(priority: .background) {
+                    _ = await UserProfileService.shared.fetchAndSaveProfile(supabaseClient: authManager.authService.client, modelContext: modelContext)
                 }
             } else if oldValue == true && newValue == false { // User explicitly logged out (not initial state)
                 stopForegroundCheckTimer() // Stop foreground check
+
+                // Clear user profile from local storage
+                UserProfileService.shared.clearLocalProfile(modelContext: modelContext)
 
                 // Only clear database if user was previously authenticated
                 // This clears ONLY local SwiftData, NEVER touches Supabase

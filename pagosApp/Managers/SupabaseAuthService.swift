@@ -4,7 +4,7 @@ import Combine
 
 @MainActor
 class SupabaseAuthService: @preconcurrency AuthenticationService {
-    private let client: SupabaseClient
+    let client: SupabaseClient
     private let _isAuthenticated = CurrentValueSubject<Bool, Never>(false)
     
     var isAuthenticatedPublisher: AnyPublisher<Bool, Never> {

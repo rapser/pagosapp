@@ -6,10 +6,12 @@
 //
 
 import Combine
+import Supabase
 
 protocol AuthenticationService: AnyObject {
     var isAuthenticatedPublisher: AnyPublisher<Bool, Never> { get }
     var isAuthenticated: Bool { get }
+    var client: SupabaseClient { get }
     
     func signIn(email: String, password: String) async throws
     func signOut() async throws
