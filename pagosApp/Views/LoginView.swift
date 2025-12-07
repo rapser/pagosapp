@@ -6,6 +6,7 @@ struct LoginView: View {
     @State private var password = ""
     @State private var errorMessage: String?
     @State private var showEmailPasswordLogin: Bool = false
+    @State private var isLoading = false
 
     var onLogin: (String, String) async -> AuthenticationError?
     var onBiometricLogin: () async -> Void
@@ -31,7 +32,11 @@ struct LoginView: View {
                         .foregroundColor(Color("AppTextPrimary"))
                         .padding(.top, 8)
 
-                    Button(action: { Task { await onBiometricLogin() } }) {
+                    Button(action: { 
+                        Task { 
+                            await onBiometricLogin()
+                        }
+                    }) {
                         HStack {
                             Image(systemName: "faceid")
                             Text("Ingresar con Face ID")
@@ -70,16 +75,28 @@ struct LoginView: View {
                     }
                     
                     Button(action: { 
-                        Task { errorMessage = await onLogin(email, password)?.localizedDescription }
+                        Task { 
+                            isLoading = true
+                            errorMessage = await onLogin(email, password)?.localizedDescription
+                            isLoading = false
+                        }
                     }) {
-                        Text("Iniciar Sesión")
-                            .font(.headline)
-                            .foregroundColor(.white) // Keeping white for text on primary button
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color("AppPrimary"))
-                            .cornerRadius(10)
+                        HStack {
+                            if isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(0.8)
+                            }
+                            Text(isLoading ? "Iniciando sesión..." : "Iniciar Sesión")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white) // Keeping white for text on primary button
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color("AppPrimary"))
+                        .cornerRadius(10)
                     }
+                    .disabled(isLoading)
                     
                     // Added Registration Link
                     NavigationLink(destination: RegistrationView()) {
