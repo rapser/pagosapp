@@ -18,9 +18,9 @@ protocol NotificationService {
 
 /// Protocol for calendar service (ISP + DIP)
 protocol CalendarService {
-    func addEvent(for payment: Payment, completion: @escaping (String?) -> Void)
-    func updateEvent(for payment: Payment)
-    func removeEvent(for payment: Payment)
+    func addEvent(for payment: Payment, completion: @escaping (String?) -> Void) async
+    func updateEvent(for payment: Payment) async
+    func removeEvent(for payment: Payment) async
 }
 
 /// Protocol for payment operations (ISP)
@@ -62,7 +62,7 @@ class DefaultPaymentOperationsService: PaymentOperationsService {
 
         notificationService.scheduleNotifications(for: payment)
 
-        calendarService.addEvent(for: payment) { [weak self] eventId in
+        await calendarService.addEvent(for: payment) { [weak self] eventId in
             payment.eventIdentifier = eventId
             try? self?.modelContext.save()
         }
@@ -89,7 +89,7 @@ class DefaultPaymentOperationsService: PaymentOperationsService {
             notificationService.scheduleNotifications(for: payment)
         }
 
-        calendarService.updateEvent(for: payment)
+        await calendarService.updateEvent(for: payment)
 
         // Notify that a payment changed so Settings can update pending count
         NotificationCenter.default.post(name: NSNotification.Name("PaymentDidChange"), object: nil)
@@ -105,7 +105,7 @@ class DefaultPaymentOperationsService: PaymentOperationsService {
         let paymentId = payment.id
         let wasSynced = payment.syncStatus == .synced || payment.syncStatus == .modified
 
-        calendarService.removeEvent(for: payment)
+        await calendarService.removeEvent(for: payment)
         notificationService.cancelNotifications(for: payment)
         modelContext.delete(payment)
         
@@ -145,11 +145,16 @@ class NotificationManagerAdapter: NotificationService {
 
 // MARK: - Adapter for EventKitManager
 
+@MainActor
 class EventKitManagerAdapter: CalendarService {
     private let manager: EventKitManager
 
-    init(manager: EventKitManager = .shared) {
+    init(manager: EventKitManager) {
         self.manager = manager
+    }
+    
+    convenience init() {
+        self.init(manager: EventKitManager.shared)
     }
 
     func addEvent(for payment: Payment, completion: @escaping (String?) -> Void) {

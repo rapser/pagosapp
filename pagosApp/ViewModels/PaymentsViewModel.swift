@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+@MainActor
 class PaymentsViewModel: ObservableObject {
     // @Published notifica a las vistas cuando la lista de pagos cambia.
     @Published var payments: [Payment] = []

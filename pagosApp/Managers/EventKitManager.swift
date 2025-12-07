@@ -2,6 +2,7 @@ import Foundation
 import EventKit
 import OSLog
 
+@MainActor
 class EventKitManager: ObservableObject {
     static let shared = EventKitManager()
     private let eventStore = EKEventStore()
@@ -11,7 +12,7 @@ class EventKitManager: ObservableObject {
     func requestAccess(completion: @escaping (Bool) -> Void) {
         if #available(iOS 17.0, *) {
             eventStore.requestFullAccessToEvents { [weak self] granted, error in
-                DispatchQueue.main.async {
+                Task { @MainActor [weak self] in
                     if let error = error {
                         self?.logger.error("❌ Error requesting calendar access: \(error.localizedDescription)")
                     }
@@ -25,7 +26,7 @@ class EventKitManager: ObservableObject {
             }
         } else {
             eventStore.requestAccess(to: .event) { [weak self] granted, error in
-                DispatchQueue.main.async {
+                Task { @MainActor [weak self] in
                     if let error = error {
                         self?.logger.error("❌ Error requesting calendar access: \(error.localizedDescription)")
                     }
