@@ -1,9 +1,11 @@
 import Foundation
 import EventKit
+import Observation
 import OSLog
 
 @MainActor
-class EventKitManager: ObservableObject {
+@Observable
+final class EventKitManager {
     static let shared = EventKitManager()
     private let eventStore = EKEventStore()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "EventKit")

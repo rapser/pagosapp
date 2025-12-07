@@ -3,7 +3,7 @@ import Supabase
 
 struct RegistrationView: View {
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var authManager: AuthenticationManager
+    @Environment(AuthenticationManager.self) private var authManager
     
     @State private var email = ""
     @State private var password = ""
@@ -86,5 +86,5 @@ struct RegistrationView: View {
     let authManager = AuthenticationManager(authRepository: repository)
     
     RegistrationView()
-        .environmentObject(authManager)
+        .environment(authManager)
 }

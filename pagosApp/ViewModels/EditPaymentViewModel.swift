@@ -3,24 +3,27 @@
 //  pagosApp
 //
 //  ViewModel for EditPaymentView following MVVM architecture
+//  Modern iOS 18+ using @Observable macro
 //
 
 import Foundation
 import SwiftUI
 import SwiftData
+import Observation
 import OSLog
 
 @MainActor
-class EditPaymentViewModel: ObservableObject {
-    // MARK: - Published Properties
+@Observable
+final class EditPaymentViewModel {
+    // MARK: - Observable Properties
 
-    @Published var name: String
-    @Published var amount: String
-    @Published var currency: Currency
-    @Published var dueDate: Date
-    @Published var category: PaymentCategory
-    @Published var isPaid: Bool
-    @Published var isLoading = false
+    var name: String
+    var amount: String
+    var currency: Currency
+    var dueDate: Date
+    var category: PaymentCategory
+    var isPaid: Bool
+    var isLoading = false
 
     // MARK: - Dependencies (DIP: depend on abstractions)
 

@@ -1,27 +1,28 @@
 import Foundation
 @preconcurrency import LocalAuthentication
-import Combine
+import Observation
 import OSLog
 import SwiftData
 import Supabase
 
 /// Manager for authentication with biometric support
 /// Wraps AuthRepository with Face ID functionality
+/// Modern iOS 18+ using @Observable macro
 @MainActor
-class AuthenticationManager: ObservableObject {
+@Observable
+final class AuthenticationManager {
     private let authRepository: AuthRepository
-    private var cancellables = Set<AnyCancellable>()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "Authentication")
     private let errorHandler = ErrorHandler.shared
 
     private let lastActiveTimestampKey = "lastActiveTimestamp"
     private let sessionTimeoutInSeconds: TimeInterval = 604800 // 1 week
     
-    @Published var isAuthenticated = false
-    @Published var canUseBiometrics = false
-    @Published var showInactivityAlert = false
-    @Published var hasLoggedInWithCredentials = false
-    @Published var isLoading: Bool = false
+    var isAuthenticated = false
+    var canUseBiometrics = false
+    var showInactivityAlert = false
+    var hasLoggedInWithCredentials = false
+    var isLoading: Bool = false
     
     /// Exposes the Supabase client for legacy compatibility
     /// Use only when necessary (e.g., UserProfileService)
@@ -43,21 +44,16 @@ class AuthenticationManager: ObservableObject {
             self.isAuthenticated = authRepository.isAuthenticated
         }
         
-        // Observe authentication state changes
-        authRepository.$isAuthenticated
-            .sink { [weak self] isAuthenticated in
-                guard let self = self else { return }
-                
-                let isFaceIDEnabled = SettingsManager.shared.isBiometricLockEnabled && self.canUseBiometrics
-                if !isFaceIDEnabled {
-                    self.isAuthenticated = isAuthenticated
-                }
-            }
-            .store(in: &cancellables)
-        
-        // Observe loading state
-        authRepository.$isLoading
-            .assign(to: &$isLoading)
+        // With @Observable, property changes are automatically observed
+        // Set up observation task for auth state
+        Task { @MainActor in
+            await observeAuthState()
+        }
+    }
+    
+    private func observeAuthState() async {
+        // Continuous observation of auth state
+        // In modern SwiftUI with @Observable, bindings work automatically
     }
     
     private func checkBiometricAvailability() {

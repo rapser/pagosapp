@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct CalendarPaymentsView: View {
-    @EnvironmentObject var alertManager: AlertManager
+    @Environment(AlertManager.self) private var alertManager
     @Environment(\.modelContext) private var modelContext
     // Obtenemos todos los pagos para poder filtrarlos por fecha.
     @Query private var payments: [Payment]
@@ -149,5 +149,5 @@ private let longDateFormatter: DateFormatter = {
 #Preview {
     CalendarPaymentsView()
         .modelContainer(for: [Payment.self], inMemory: true)
-        .environmentObject(AlertManager())
+        .environment(AlertManager())
 }

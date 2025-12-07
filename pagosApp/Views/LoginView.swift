@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct LoginView: View {
-    @EnvironmentObject private var passwordRecoveryUseCase: PasswordRecoveryUseCase
+    @Environment(PasswordRecoveryUseCase.self) private var passwordRecoveryUseCase
     @State private var email = ""
     @State private var password = ""
     @State private var errorMessage: String?

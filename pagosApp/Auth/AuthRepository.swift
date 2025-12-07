@@ -4,9 +4,11 @@
 //
 //  Repository that manages authentication through abstract AuthService (Repository Pattern)
 //  Business logic layer between ViewModels and AuthService implementations
+//  Modern iOS 18+ using @Observable macro
 //
 
 import Foundation
+import Observation
 import OSLog
 import Supabase
 
@@ -15,12 +17,13 @@ private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "AuthRep
 /// Repository for authentication operations
 /// Coordinates between UI and AuthService adapter
 @MainActor
-final class AuthRepository: ObservableObject {
-    // MARK: - Published Properties
+@Observable
+final class AuthRepository {
+    // MARK: - Observable Properties
     
-    @Published private(set) var currentUser: AuthUser?
-    @Published private(set) var isAuthenticated: Bool = false
-    @Published private(set) var isLoading: Bool = false
+    private(set) var currentUser: AuthUser?
+    private(set) var isAuthenticated: Bool = false
+    private(set) var isLoading: Bool = false
     
     // MARK: - Private Properties
     

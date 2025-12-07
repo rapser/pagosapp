@@ -1,77 +1,85 @@
 import SwiftUI
 import SwiftData
 
-struct EditPaymentView: View {
+struct EditPaymentView: View {    
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) private var modelContext
-    @StateObject private var viewModel: EditPaymentViewModel
+    @State private var viewModel: EditPaymentViewModel?
     @Bindable var payment: Payment
 
     init(payment: Payment) {
         self.payment = payment
-        // Defer initialization with correct modelContext to body
-        _viewModel = StateObject(wrappedValue: EditPaymentViewModel(
-            payment: payment,
-            modelContext: ModelContext(try! ModelContainer(for: Payment.self))
-        ))
     }
 
     var body: some View {
         NavigationView {
-            Form {
-                Section(header: Text("Detalles del Pago")) {
-                    TextField("Nombre del pago", text: $viewModel.name)
+            Group {
+                if let viewModel = viewModel {
+                    @Bindable var vm = viewModel
                     
-                    Picker("Moneda", selection: $viewModel.currency) {
-                        Text("Soles").tag(Currency.pen)
-                        Text("Dólares").tag(Currency.usd)
-                    }
-                    
-                    HStack {
-                        Text(viewModel.currency.symbol)
-                        TextField("Monto", text: $viewModel.amount)
-                            .keyboardType(.decimalPad)
-                    }
-                    
-                    DatePicker("Fecha de Vencimiento", selection: $viewModel.dueDate, displayedComponents: .date)
-                    
-                    Picker("Categoría", selection: $viewModel.category) {
-                        ForEach(PaymentCategory.allCases) { category in
-                            Text(category.rawValue).tag(category)
+                    Form {
+                        Section(header: Text("Detalles del Pago")) {
+                            TextField("Nombre del pago", text: $vm.name)
+                            
+                            Picker("Moneda", selection: $vm.currency) {
+                                Text("Soles").tag(Currency.pen)
+                                Text("Dólares").tag(Currency.usd)
+                            }
+                            
+                            HStack {
+                                Text(vm.currency.symbol)
+                                TextField("Monto", text: $vm.amount)
+                                    .keyboardType(.decimalPad)
+                            }
+                            
+                            DatePicker("Fecha de Vencimiento", selection: $vm.dueDate, displayedComponents: .date)
+                            
+                            Picker("Categoría", selection: $vm.category) {
+                                ForEach(PaymentCategory.allCases) { category in
+                                    Text(category.rawValue).tag(category)
+                                }
+                            }
+                            
+                            Toggle(isOn: $vm.isPaid) {
+                                Text("Pagado")
+                            }
+                        }
+                        
+                        if vm.hasChanges {
+                            Section {
+                                Button("Descartar Cambios", role: .destructive) {
+                                    vm.resetChanges()
+                                }
+                            }
                         }
                     }
-                    
-                    Toggle(isOn: $viewModel.isPaid) {
-                        Text("Pagado")
-                    }
-                }
-
-                if viewModel.hasChanges {
-                    Section {
-                        Button("Descartar Cambios", role: .destructive) {
-                            viewModel.resetChanges()
+                    .navigationTitle("Editar Pago")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Guardar") {
+                                vm.saveChanges(onSuccess: { dismiss() })
+                            }
+                            .disabled(!vm.isValid || !vm.hasChanges)
                         }
                     }
-                }
-            }
-            .navigationTitle("Editar Pago")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Guardar") {
-                        viewModel.saveChanges(onSuccess: { dismiss() })
+                    .disabled(vm.isLoading)
+                    .overlay {
+                        if vm.isLoading {
+                            ProgressView("Guardando...")
+                                .padding()
+                                .background(Color(UIColor.systemBackground))
+                                .cornerRadius(10)
+                                .shadow(radius: 10)
+                        }
                     }
-                    .disabled(!viewModel.isValid || !viewModel.hasChanges)
+                } else {
+                    ProgressView()
                 }
             }
-            .disabled(viewModel.isLoading)
-            .overlay {
-                if viewModel.isLoading {
-                    ProgressView("Guardando...")
-                        .padding()
-                        .background(Color(UIColor.systemBackground))
-                        .cornerRadius(10)
-                        .shadow(radius: 10)
+            .onAppear {
+                if viewModel == nil {
+                    viewModel = EditPaymentViewModel(payment: payment, modelContext: modelContext)
                 }
             }
         }

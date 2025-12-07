@@ -42,6 +42,7 @@ struct pagosAppApp: App {
     private let authenticationManager: AuthenticationManager
     private let passwordRecoveryRepository: PasswordRecoveryRepository
     private let passwordRecoveryUseCase: PasswordRecoveryUseCase
+    private let errorHandler = ErrorHandler.shared
 
     init() {
         // Create auth adapter and repository
@@ -65,9 +66,9 @@ struct pagosAppApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(authenticationManager)
-                .environmentObject(passwordRecoveryUseCase)
-                .environmentObject(AlertManager())
+                .environment(authenticationManager)
+                .environment(passwordRecoveryUseCase)
+                .environment(errorHandler)
                 .tint(Color("AppPrimary"))
         }
         .modelContainer(createModelContainer())

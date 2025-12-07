@@ -3,24 +3,27 @@
 //  pagosApp
 //
 //  Manages synchronization between local SwiftData and Supabase backend
+//  Modern iOS 18+ using @Observable macro
 //
 
 import Foundation
 import SwiftData
+import Observation
 import OSLog
 
 @MainActor
-class PaymentSyncManager: ObservableObject {
+@Observable
+final class PaymentSyncManager {
     static let shared = PaymentSyncManager()
     
     private var syncService: PaymentSyncService?
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentSyncManager")
     private let errorHandler = ErrorHandler.shared
 
-    @Published var isSyncing = false
-    @Published var lastSyncDate: Date?
-    @Published var pendingSyncCount = 0
-    @Published var syncError: Error?
+    var isSyncing = false
+    var lastSyncDate: Date?
+    var pendingSyncCount = 0
+    var syncError: Error?
 
     private let lastSyncKey = "lastPaymentSyncDate"
 
