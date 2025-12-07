@@ -3,7 +3,6 @@ import UserNotifications
 import Observation
 
 @Observable
-@MainActor
 final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     static let shared = NotificationManager()
     
@@ -13,7 +12,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     }
 
     /// Añade la presentación de la notificación en primer plano.
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
+    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         completionHandler([.banner, .sound])
