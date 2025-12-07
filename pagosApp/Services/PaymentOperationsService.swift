@@ -12,8 +12,8 @@ import OSLog
 
 /// Protocol for notification service (ISP + DIP)
 protocol NotificationService {
-    func scheduleNotifications(for payment: Payment)
-    func cancelNotifications(for payment: Payment)
+    func scheduleNotifications(for payment: Payment) async
+    func cancelNotifications(for payment: Payment) async
 }
 
 /// Protocol for calendar service (ISP + DIP)
@@ -60,7 +60,7 @@ class DefaultPaymentOperationsService: PaymentOperationsService {
         payment.syncStatus = .local
         try modelContext.save()
 
-        notificationService.scheduleNotifications(for: payment)
+        await notificationService.scheduleNotifications(for: payment)
 
         await calendarService.addEvent(for: payment) { [weak self] eventId in
             payment.eventIdentifier = eventId
@@ -84,9 +84,9 @@ class DefaultPaymentOperationsService: PaymentOperationsService {
 
         try modelContext.save()
 
-        notificationService.cancelNotifications(for: payment)
+        await notificationService.cancelNotifications(for: payment)
         if !payment.isPaid {
-            notificationService.scheduleNotifications(for: payment)
+            await notificationService.scheduleNotifications(for: payment)
         }
 
         await calendarService.updateEvent(for: payment)
@@ -106,7 +106,7 @@ class DefaultPaymentOperationsService: PaymentOperationsService {
         let wasSynced = payment.syncStatus == .synced || payment.syncStatus == .modified
 
         await calendarService.removeEvent(for: payment)
-        notificationService.cancelNotifications(for: payment)
+        await notificationService.cancelNotifications(for: payment)
         modelContext.delete(payment)
         
         try modelContext.save()
@@ -127,6 +127,7 @@ class DefaultPaymentOperationsService: PaymentOperationsService {
 
 // MARK: - Adapter for NotificationManager
 
+@MainActor
 class NotificationManagerAdapter: NotificationService {
     private let manager: NotificationManager
 

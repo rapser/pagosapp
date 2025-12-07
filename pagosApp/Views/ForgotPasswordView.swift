@@ -10,12 +10,12 @@ import Supabase
 
 struct ForgotPasswordView: View {
 
-    @StateObject private var viewModel: ForgotPasswordViewModel
-    @EnvironmentObject private var alertManager: AlertManager
+    @State private var viewModel: ForgotPasswordViewModel
+    @Environment(AlertManager.self) private var alertManager
     @Environment(\.dismiss) var dismiss
 
     init(passwordRecoveryUseCase: PasswordRecoveryUseCase) {
-        _viewModel = StateObject(wrappedValue: ForgotPasswordViewModel(passwordRecoveryUseCase: passwordRecoveryUseCase))
+        _viewModel = State(wrappedValue: ForgotPasswordViewModel(passwordRecoveryUseCase: passwordRecoveryUseCase))
     }
     
     var body: some View {

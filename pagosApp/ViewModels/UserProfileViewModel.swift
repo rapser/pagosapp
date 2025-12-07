@@ -3,11 +3,13 @@
 //  pagosApp
 //
 //  Created by miguel tomairo on 7/12/25.
+//  Modern iOS 18+ using @Observable macro
 //
 
 import Foundation
 import SwiftData
 import Supabase
+import Observation
 import OSLog
 
 // DTO for profile updates
@@ -34,11 +36,12 @@ struct ProfileUpdateDTO: Encodable {
 }
 
 @MainActor
-final class UserProfileViewModel: ObservableObject {
-    @Published var profile: UserProfile?
-    @Published var isLoading = false
-    @Published var errorMessage: String?
-    @Published var isSaving = false
+@Observable
+final class UserProfileViewModel {
+    var profile: UserProfile?
+    var isLoading = false
+    var errorMessage: String?
+    var isSaving = false
     
     private let repository: UserProfileRepositoryProtocol
     private let supabaseClient: SupabaseClient

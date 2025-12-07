@@ -1,12 +1,11 @@
 import SwiftUI
-import Combine
 import SwiftData
 
 struct SettingsView: View {
-    @EnvironmentObject var authManager: AuthenticationManager
-    @EnvironmentObject var alertManager: AlertManager
-    @StateObject private var settingsManager = SettingsManager.shared
-    @StateObject private var syncManager = PaymentSyncManager.shared
+    @Environment(AuthenticationManager.self) private var authManager
+    @Environment(AlertManager.self) private var alertManager
+    @State private var settingsManager = SettingsManager.shared
+    @State private var syncManager = PaymentSyncManager.shared
     @Environment(\.modelContext) private var modelContext
 
     @State private var showingSyncError = false
@@ -134,7 +133,7 @@ struct SettingsView: View {
                 }
 
                 Section(header: Text("Seguridad").foregroundColor(Color("AppTextPrimary"))) {
-                    NavigationLink(destination: BiometricSettingsView().environmentObject(authManager)) {
+                    NavigationLink(destination: BiometricSettingsView().environment(authManager)) {
                         HStack {
                             Image(systemName: "faceid")
                                 .foregroundColor(Color("AppPrimary"))

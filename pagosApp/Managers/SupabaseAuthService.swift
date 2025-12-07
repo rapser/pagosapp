@@ -1,37 +1,36 @@
 import Foundation
 import Supabase
-import Combine
 
 @MainActor
-class SupabaseAuthService: @preconcurrency AuthenticationService {
-    let client: SupabaseClient
-    private let _isAuthenticated = CurrentValueSubject<Bool, Never>(false)
+final class SupabaseAuthService: AuthenticationService {
+    nonisolated let client: SupabaseClient
     
-    var isAuthenticatedPublisher: AnyPublisher<Bool, Never> {
-        _isAuthenticated.eraseToAnyPublisher()
-    }
-    
-    var isAuthenticated: Bool {
-        _isAuthenticated.value
+    nonisolated var isAuthenticated: Bool {
+        get async {
+            await MainActor.run { client.auth.currentUser != nil }
+        }
     }
     
     init(client: SupabaseClient) {
         self.client = client
-        // Initial check
-        let initialAuthStatus = (client.auth.currentUser != nil)
-        _isAuthenticated.value = initialAuthStatus
-
-        Task {
-            for await state in client.auth.authStateChanges {
-                switch state.event {
-                case .signedIn, .signedOut, .tokenRefreshed, .userUpdated, .passwordRecovery:
-                    self._isAuthenticated.value = (self.client.auth.currentUser != nil)
-                case .initialSession:
-                    self._isAuthenticated.value = (self.client.auth.currentUser != nil)
-                case .userDeleted:
-                    self._isAuthenticated.value = false
-                case .mfaChallengeVerified:
-                    self._isAuthenticated.value = (self.client.auth.currentUser != nil)
+    }
+    
+    nonisolated func observeAuthState() async throws -> AsyncStream<Bool> {
+        AsyncStream { continuation in
+            Task { @MainActor in
+                // Send initial state
+                continuation.yield(client.auth.currentUser != nil)
+                
+                // Observe changes
+                for await state in client.auth.authStateChanges {
+                    switch state.event {
+                    case .signedIn, .signedOut, .tokenRefreshed, .userUpdated, .passwordRecovery, .initialSession:
+                        continuation.yield(client.auth.currentUser != nil)
+                    case .userDeleted:
+                        continuation.yield(false)
+                    case .mfaChallengeVerified:
+                        continuation.yield(client.auth.currentUser != nil)
+                    }
                 }
             }
         }

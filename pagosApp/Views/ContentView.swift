@@ -1,29 +1,29 @@
 import SwiftUI
 import SwiftData
-import Combine
 import Supabase
 import OSLog
 
 struct ContentView: View {
-    @EnvironmentObject private var authManager: AuthenticationManager
-    @EnvironmentObject private var passwordRecoveryUseCase: PasswordRecoveryUseCase
-    @StateObject private var alertManager = AlertManager()
-    @StateObject private var syncManager = PaymentSyncManager.shared
+    @Environment(AuthenticationManager.self) private var authManager
+    @Environment(PasswordRecoveryUseCase.self) private var passwordRecoveryUseCase
+    @State private var alertManager = AlertManager()
+    @State private var syncManager = PaymentSyncManager.shared
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.modelContext) private var modelContext
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ContentView")
-
-    // Timer for foreground session checking
-    @State private var foregroundCheckTimer: AnyCancellable?
     private let foregroundCheckInterval: TimeInterval = 30 // Check every 30 seconds
 
     // Password reset
     @State private var showResetPassword = false
     @State private var resetAccessToken: String?
     @State private var resetRefreshToken: String?
+    
+    // Foreground check task
+    @State private var foregroundCheckTask: Task<Void, Never>?
 
     var body: some View {
+        @Bindable var auth = authManager
         ZStack {
             if authManager.isAuthenticated {
                 TabView {
@@ -33,7 +33,7 @@ struct ContentView: View {
                         }
 
                     CalendarPaymentsView()
-                        .environmentObject(alertManager)
+                        .environment(alertManager)
                         .tabItem {
                             Label("Calendario", systemImage: "calendar")
                         }
@@ -49,8 +49,8 @@ struct ContentView: View {
                         }
 
                     SettingsView()
-                        .environmentObject(authManager)
-                        .environmentObject(alertManager)
+                        .environment(authManager)
+                        .environment(alertManager)
                         .tabItem {
                             Label("Ajustes", systemImage: "gear")
                         }
@@ -72,7 +72,6 @@ struct ContentView: View {
                     },
                     isBiometricLoginEnabled: biometricEnabled
                 )
-                .environmentObject(authManager) // Inject authManager into LoginView and its hierarchy
             }
             
             // Show loading view if authManager.isLoading is true
@@ -173,9 +172,9 @@ struct ContentView: View {
                 return Alert(title: alertManager.title, message: alertManager.message)
             }
         }
-        .alert("Sesión Cerrada por Inactividad", isPresented: $authManager.showInactivityAlert) {
+        .alert("Sesión Cerrada por Inactividad", isPresented: $auth.showInactivityAlert) {
             Button("Aceptar") {
-                authManager.showInactivityAlert = false
+                auth.showInactivityAlert = false
             }
         } message: {
             Text("Tu sesión ha sido cerrada automáticamente debido a 1 semana de inactividad.")
@@ -183,7 +182,7 @@ struct ContentView: View {
         .sheet(isPresented: $showResetPassword) {
             if let accessToken = resetAccessToken, let refreshToken = resetRefreshToken {
                 ResetPasswordView(accessToken: accessToken, refreshToken: refreshToken, passwordRecoveryUseCase: passwordRecoveryUseCase)
-                    .environmentObject(alertManager)
+                    .environment(alertManager)
             }
         }
         .onOpenURL { url in
@@ -244,20 +243,22 @@ struct ContentView: View {
     }
     
     private func startForegroundCheckTimer() {
-        // Ensure only one timer is active
+        // Ensure only one task is active
         stopForegroundCheckTimer()
-        foregroundCheckTimer = Timer.publish(every: foregroundCheckInterval, on: .main, in: .common)
-            .autoconnect()
-            .sink { _ in
-                if authManager.isAuthenticated {
+        
+        foregroundCheckTask = Task { @MainActor in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(foregroundCheckInterval))
+                if !Task.isCancelled && authManager.isAuthenticated {
                     authManager.checkSession()
                 }
             }
+        }
     }
     
     private func stopForegroundCheckTimer() {
-        foregroundCheckTimer?.cancel()
-        foregroundCheckTimer = nil
+        foregroundCheckTask?.cancel()
+        foregroundCheckTask = nil
     }
 }
 
@@ -271,6 +272,6 @@ struct ContentView: View {
     let authManager = AuthenticationManager(authRepository: repository)
     
     ContentView()
-        .environmentObject(authManager)
-        .environmentObject(AlertManager())
+        .environment(authManager)
+        .environment(AlertManager())
 }

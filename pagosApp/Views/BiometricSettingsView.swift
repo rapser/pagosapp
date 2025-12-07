@@ -3,8 +3,8 @@ import Supabase
 import LocalAuthentication
 
 struct BiometricSettingsView: View {
-    @StateObject private var settingsManager = SettingsManager.shared
-    @EnvironmentObject var authManager: AuthenticationManager
+    @State private var settingsManager = SettingsManager.shared
+    @Environment(AuthenticationManager.self) private var authManager
     @Environment(\.modelContext) private var modelContext
     
     @State private var showError = false
@@ -141,6 +141,6 @@ struct BenefitRow: View {
     
     NavigationView {
         BiometricSettingsView()
-            .environmentObject(authManager)
+            .environment(authManager)
     }
 }

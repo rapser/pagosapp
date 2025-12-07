@@ -10,7 +10,7 @@ import Supabase
 import SwiftData
 
 struct UserProfileView: View {
-    @StateObject private var viewModel: UserProfileViewModel
+    @State private var viewModel: UserProfileViewModel
     @Environment(\.dismiss) var dismiss
     @State private var isEditing = false
     @State private var showSuccessAlert = false
@@ -20,7 +20,7 @@ struct UserProfileView: View {
     @State private var editableProfile: EditableProfile?
     
     init(supabaseClient: SupabaseClient, modelContext: ModelContext) {
-        _viewModel = StateObject(wrappedValue: UserProfileViewModel(supabaseClient: supabaseClient, modelContext: modelContext))
+        _viewModel = State(wrappedValue: UserProfileViewModel(supabaseClient: supabaseClient, modelContext: modelContext))
     }
     
     var body: some View {

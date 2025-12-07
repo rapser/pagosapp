@@ -1,7 +1,10 @@
 import Foundation
 import UserNotifications
+import Observation
 
-class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
+@Observable
+@MainActor
+final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     static let shared = NotificationManager()
     
     override private init() {

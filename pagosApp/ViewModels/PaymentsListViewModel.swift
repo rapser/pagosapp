@@ -3,22 +3,24 @@
 //  pagosApp
 //
 //  ViewModel for PaymentsListView following MVVM architecture
+//  Modern iOS 18+ using @Observable macro
 //
 
 import Foundation
 import SwiftUI
 import SwiftData
-import Combine
+import Observation
 import OSLog
 
 @MainActor
-class PaymentsListViewModel: ObservableObject {
-    // MARK: - Published Properties
+@Observable
+final class PaymentsListViewModel {
+    // MARK: - Observable Properties (no @Published needed)
 
-    @Published var payments: [Payment] = []
-    @Published var selectedFilter: PaymentFilter = .currentMonth
-    @Published var isLoading = false
-    @Published var error: Error?
+    var payments: [Payment] = []
+    var selectedFilter: PaymentFilter = .currentMonth
+    var isLoading = false
+    var error: Error?
 
     // MARK: - Dependencies (DIP: depend on abstractions)
 
@@ -26,7 +28,6 @@ class PaymentsListViewModel: ObservableObject {
     private let paymentOperations: PaymentOperationsService
     private let syncService: PaymentSyncService
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentsListViewModel")
-    private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Computed Properties
 
@@ -64,11 +65,11 @@ class PaymentsListViewModel: ObservableObject {
     }
 
     private func setupNotificationObserver() {
-        NotificationCenter.default.publisher(for: NSNotification.Name("PaymentsDidSync"))
-            .sink { [weak self] _ in
-                self?.fetchPayments()
+        Task { @MainActor in
+            for await _ in NotificationCenter.default.notifications(named: NSNotification.Name("PaymentsDidSync")) {
+                fetchPayments()
             }
-            .store(in: &cancellables)
+        }
     }
 
     /// Convenience initializer with default dependencies
