@@ -202,16 +202,14 @@ struct SettingsView: View {
     }
 
     private func showLogoutAlert() {
-        let hasFaceIDEnabled = settingsManager.isBiometricLockEnabled && authManager.canUseBiometrics
         alertManager.show(
             title: Text("Cerrar Sesión"),
             message: Text("¿Estás seguro de que quieres cerrar la sesión?"),
             buttons: [
                 AlertButton(title: Text("Aceptar"), role: .destructive) {
                     Task {
-                        // If Face ID is enabled, keep the session so user can login with Face ID
-                        // Pass modelContext to clear local database when not keeping session
-                        await authManager.logout(keepSession: hasFaceIDEnabled, modelContext: hasFaceIDEnabled ? nil : modelContext)
+                        // Always close Supabase session and clear local data
+                        await authManager.logout(modelContext: modelContext)
                     }
                 },
                 AlertButton(title: Text("Cancelar"), role: .cancel) { }

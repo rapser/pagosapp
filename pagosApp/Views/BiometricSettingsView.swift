@@ -46,8 +46,16 @@ struct BiometricSettingsView: View {
                     get: { settingsManager.isBiometricLockEnabled },
                     set: { newValue in
                         settingsManager.isBiometricLockEnabled = newValue
-                        // If user disables Face ID, clear biometric credentials
-                        if !newValue {
+                        
+                        if newValue {
+                            // When enabling Face ID, credentials were already saved during login
+                            // Just verify they exist, otherwise user needs to login again
+                            if !KeychainManager.hasStoredCredentials() {
+                                // This shouldn't happen normally, but handle edge case
+                                print("⚠️ Warning: Face ID enabled but no credentials in Keychain")
+                            }
+                        } else {
+                            // When disabling Face ID, delete credentials from Keychain
                             Task {
                                 await authManager.clearBiometricCredentials(modelContext: modelContext)
                             }
