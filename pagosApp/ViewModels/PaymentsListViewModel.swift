@@ -147,15 +147,6 @@ class PaymentsListViewModel: ObservableObject {
         }
     }
 
-    /// Sync with server - DEPRECATED in Phase 2
-    /// Use PaymentSyncManager.performManualSync() from Settings instead
-    @available(*, deprecated, message: "Use PaymentSyncManager.performManualSync() from Settings for offline-first behavior")
-    func syncWithServer() async {
-        logger.warning("⚠️ syncWithServer() is deprecated. Use manual sync from Settings.")
-        // Just refresh local data
-        fetchPayments()
-    }
-
     /// Refresh data
     func refresh() {
         fetchPayments()

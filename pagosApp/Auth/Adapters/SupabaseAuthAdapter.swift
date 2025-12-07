@@ -16,6 +16,11 @@ private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "Supabas
 final class SupabaseAuthAdapter: AuthService {
     private let client: SupabaseClient
     
+    /// Public access to Supabase client for legacy compatibility
+    var supabaseClient: SupabaseClient {
+        return client
+    }
+    
     init(client: SupabaseClient) {
         self.client = client
     }
@@ -140,7 +145,7 @@ final class SupabaseAuthAdapter: AuthService {
         do {
             logger.info("🔑 Actualizando contraseña")
             
-            let user = try await client.auth.update(user: UserAttributes(password: newPassword))
+            _ = try await client.auth.update(user: UserAttributes(password: newPassword))
             
             logger.info("✅ Contraseña actualizada exitosamente")
             
@@ -156,7 +161,7 @@ final class SupabaseAuthAdapter: AuthService {
         do {
             logger.info("📧 Actualizando email a: \(newEmail)")
             
-            let user = try await client.auth.update(user: UserAttributes(email: newEmail))
+            _ = try await client.auth.update(user: UserAttributes(email: newEmail))
             
             logger.info("✅ Email actualizado exitosamente")
             
@@ -170,7 +175,7 @@ final class SupabaseAuthAdapter: AuthService {
         do {
             logger.info("🔑 Actualizando contraseña")
             
-            let user = try await client.auth.update(user: UserAttributes(password: newPassword))
+            _ = try await client.auth.update(user: UserAttributes(password: newPassword))
             
             logger.info("✅ Contraseña actualizada exitosamente")
             
@@ -202,18 +207,29 @@ final class SupabaseAuthAdapter: AuthService {
     // MARK: - Private Helpers
     
     private func mapToAuthSession(_ session: Session) -> AuthSession {
+        // Convert userMetadata from [String: AnyJSON] to [String: String]
+        // AnyJSON values are converted to their string representation
+        let metadata: [String: String] = session.user.userMetadata.compactMapValues { value in
+            // Extract string value from AnyJSON
+            if case .string(let str) = value {
+                return str
+            }
+            // For other types, convert to string description
+            return "\(value)"
+        }
+        
         let user = AuthUser(
             id: session.user.id,
             email: session.user.email ?? "",
             emailConfirmed: session.user.emailConfirmedAt != nil,
             createdAt: session.user.createdAt,
-            metadata: session.user.userMetadata
+            metadata: metadata.isEmpty ? nil : metadata
         )
         
         return AuthSession(
             accessToken: session.accessToken,
             refreshToken: session.refreshToken,
-            expiresAt: Date(timeIntervalSince1970: TimeInterval(session.expiresAt ?? 0)),
+            expiresAt: Date(timeIntervalSince1970: TimeInterval(session.expiresAt)),
             user: user
         )
     }

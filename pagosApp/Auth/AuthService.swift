@@ -14,9 +14,9 @@ struct AuthUser: Sendable {
     let email: String
     let emailConfirmed: Bool
     let createdAt: Date
-    let metadata: [String: Any]?
+    let metadata: [String: String]?
     
-    init(id: UUID, email: String, emailConfirmed: Bool = false, createdAt: Date = Date(), metadata: [String: Any]? = nil) {
+    init(id: UUID, email: String, emailConfirmed: Bool = false, createdAt: Date = Date(), metadata: [String: String]? = nil) {
         self.id = id
         self.email = email
         self.emailConfirmed = emailConfirmed

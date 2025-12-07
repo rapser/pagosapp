@@ -77,6 +77,14 @@ struct RegistrationView: View {
 }
 
 #Preview {
+    let client = SupabaseClient(
+        supabaseURL: URL(string: "https://example.com")!,
+        supabaseKey: "dummy_key"
+    )
+    let adapter = SupabaseAuthAdapter(client: client)
+    let repository = AuthRepository(authService: adapter)
+    let authManager = AuthenticationManager(authRepository: repository)
+    
     RegistrationView()
-        .environmentObject(AuthenticationManager(authService: SupabaseAuthService(client: SupabaseClient(supabaseURL: URL(string: "https://example.com") ?? URL(filePath: "/"), supabaseKey: "dummy_key"))))
+        .environmentObject(authManager)
 }

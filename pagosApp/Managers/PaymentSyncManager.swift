@@ -410,26 +410,4 @@ class PaymentSyncManager: ObservableObject {
             throw error
         }
     }
-
-    // MARK: - Deprecated Methods
-
-    /// Deprecated: Use performManualSync instead
-    @available(*, deprecated, message: "Use performManualSync for offline-first behavior")
-    func performFullSync(modelContext: ModelContext, isAuthenticated: Bool = false) async {
-        do {
-            try await performManualSync(modelContext: modelContext, isAuthenticated: isAuthenticated)
-        } catch {
-            logger.error("❌ Full sync failed: \(error.localizedDescription)")
-            errorHandler.handle(error)
-        }
-    }
-
-    /// Auto-sync on app launch or login - DISABLED for offline-first mode
-    /// User must manually sync from Settings
-    @available(*, deprecated, message: "Auto-sync disabled for offline-first behavior. Use manual sync from Settings.")
-    func autoSyncIfNeeded(modelContext: ModelContext) async {
-        logger.info("⚠️ Auto-sync is disabled. User must manually sync from Settings.")
-        // Update pending count so user knows to sync
-        updatePendingSyncCount(modelContext: modelContext)
-    }
 }

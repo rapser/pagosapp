@@ -110,8 +110,8 @@ struct SettingsView: View {
                 }
 
                 Section(header: Text("Perfil").foregroundColor(Color("AppTextPrimary"))) {
-                    if authManager.isAuthenticated {
-                        NavigationLink(destination: UserProfileView(supabaseClient: authManager.authService.client, modelContext: modelContext)) {
+                    if authManager.isAuthenticated, let client = authManager.supabaseClient {
+                        NavigationLink(destination: UserProfileView(supabaseClient: client, modelContext: modelContext)) {
                             HStack {
                                 Image(systemName: "person.circle.fill")
                                     .foregroundColor(Color("AppPrimary"))

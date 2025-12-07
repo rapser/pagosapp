@@ -110,7 +110,9 @@ struct ContentView: View {
                 
                 // Fetch and save user profile in background
                 Task(priority: .background) {
-                    _ = await UserProfileService.shared.fetchAndSaveProfile(supabaseClient: authManager.authService.client, modelContext: modelContext)
+                    if let client = authManager.supabaseClient {
+                        _ = await UserProfileService.shared.fetchAndSaveProfile(supabaseClient: client, modelContext: modelContext)
+                    }
                 }
             } else if oldValue == true && newValue == false { // User explicitly logged out (not initial state)
                 stopForegroundCheckTimer() // Stop foreground check
@@ -260,7 +262,15 @@ struct ContentView: View {
 }
 
 #Preview {
+    let client = SupabaseClient(
+        supabaseURL: URL(string: "https://example.com")!,
+        supabaseKey: "dummy_key"
+    )
+    let adapter = SupabaseAuthAdapter(client: client)
+    let repository = AuthRepository(authService: adapter)
+    let authManager = AuthenticationManager(authRepository: repository)
+    
     ContentView()
-        .environmentObject(AuthenticationManager(authService: SupabaseAuthService(client: SupabaseClient(supabaseURL: URL(string: "https://example.com") ?? URL(filePath: "/"), supabaseKey: "dummy_key"))))
+        .environmentObject(authManager)
         .environmentObject(AlertManager())
 }
