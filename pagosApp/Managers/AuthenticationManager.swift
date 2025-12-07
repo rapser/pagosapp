@@ -200,8 +200,8 @@ class AuthenticationManager: ObservableObject {
                     // Face ID successful, now start loading and perform login
                     self.isLoading = true
                     
-                    // Retrieve credentials from Keychain
-                    guard let credentials = KeychainManager.retrieveCredentials() else {
+                    // Retrieve credentials from Keychain using the same context (avoids second Face ID prompt)
+                    guard let credentials = KeychainManager.retrieveCredentials(context: context) else {
                         self.logger.error("❌ Failed to retrieve credentials from Keychain")
                         self.isLoading = false
                         return

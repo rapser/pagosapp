@@ -91,18 +91,19 @@ class KeychainManager {
     // MARK: - Retrieve Credentials
     
     /// Retrieve user credentials from Keychain
+    /// - Parameter context: Optional LAContext for biometric authentication (reuses existing authentication)
     /// - Returns: Tuple with email and password if found, nil otherwise
-    static func retrieveCredentials() -> (email: String, password: String)? {
+    static func retrieveCredentials(context: LAContext? = nil) -> (email: String, password: String)? {
         logger.info("Attempting to retrieve credentials from Keychain")
         
         // Retrieve email
-        guard let email = retrieveEmail() else {
+        guard let email = retrieveEmail(context: context) else {
             logger.warning("No email found in Keychain")
             return nil
         }
         
         // Retrieve password
-        guard let password = retrievePassword() else {
+        guard let password = retrievePassword(context: context) else {
             logger.warning("No password found in Keychain")
             return nil
         }
@@ -111,14 +112,19 @@ class KeychainManager {
         return (email, password)
     }
     
-    private static func retrieveEmail() -> String? {
-        let query: [String: Any] = [
+    private static func retrieveEmail(context: LAContext? = nil) -> String? {
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: emailKey,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
+        
+        // Use provided context to avoid re-authentication
+        if let context = context {
+            query[kSecUseAuthenticationContext as String] = context
+        }
         
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
@@ -132,14 +138,19 @@ class KeychainManager {
         return email
     }
     
-    private static func retrievePassword() -> String? {
-        let query: [String: Any] = [
+    private static func retrievePassword(context: LAContext? = nil) -> String? {
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: passwordKey,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
+        
+        // Use provided context to avoid re-authentication
+        if let context = context {
+            query[kSecUseAuthenticationContext as String] = context
+        }
         
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
