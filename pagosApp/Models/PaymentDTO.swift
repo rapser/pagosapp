@@ -13,6 +13,7 @@ struct PaymentDTO: Codable, Identifiable {
     let userId: UUID
     let name: String
     let amount: Double
+    let currency: String
     let dueDate: Date
     let isPaid: Bool
     let category: String
@@ -25,6 +26,7 @@ struct PaymentDTO: Codable, Identifiable {
         case userId = "user_id"
         case name
         case amount
+        case currency
         case dueDate = "due_date"
         case isPaid = "is_paid"
         case category
@@ -39,6 +41,7 @@ struct PaymentDTO: Codable, Identifiable {
         self.userId = userId
         self.name = payment.name
         self.amount = payment.amount
+        self.currency = payment.currency.rawValue
         self.dueDate = payment.dueDate
         self.isPaid = payment.isPaid
         self.category = payment.category.rawValue
@@ -54,6 +57,7 @@ struct PaymentDTO: Codable, Identifiable {
         userId = try container.decode(UUID.self, forKey: .userId)
         name = try container.decode(String.self, forKey: .name)
         amount = try container.decode(Double.self, forKey: .amount)
+        currency = try container.decodeIfPresent(String.self, forKey: .currency) ?? "PEN" // Default to PEN for backward compatibility
 
         // Handle date decoding with ISO8601 format
         let dueDateString = try container.decode(String.self, forKey: .dueDate)
@@ -90,10 +94,12 @@ struct PaymentDTO: Codable, Identifiable {
     /// Convert to local Payment model
     func toPayment() -> Payment {
         let paymentCategory = PaymentCategory(rawValue: category) ?? .otro
+        let paymentCurrency = Currency(rawValue: currency) ?? .pen
         return Payment(
             id: id,
             name: name,
             amount: amount,
+            currency: paymentCurrency,
             dueDate: dueDate,
             isPaid: isPaid,
             category: paymentCategory,

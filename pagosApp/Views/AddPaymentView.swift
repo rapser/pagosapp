@@ -22,9 +22,20 @@ struct AddPaymentView: View {
             Form {
                 Section(header: Text("Detalles del Pago")) {
                     TextField("Nombre del pago", text: $viewModel.name)
-                    TextField("Monto", text: $viewModel.amount)
-                        .keyboardType(.decimalPad)
+                    
+                    Picker("Moneda", selection: $viewModel.currency) {
+                        Text("Soles").tag(Currency.pen)
+                        Text("Dólares").tag(Currency.usd)
+                    }
+                    
+                    HStack {
+                        Text(viewModel.currency.symbol)
+                        TextField("Monto", text: $viewModel.amount)
+                            .keyboardType(.decimalPad)
+                    }
+                    
                     DatePicker("Fecha de Vencimiento", selection: $viewModel.dueDate, displayedComponents: .date)
+                    
                     Picker("Categoría", selection: $viewModel.category) {
                         ForEach(PaymentCategory.allCases) { category in
                             Text(category.rawValue).tag(category)

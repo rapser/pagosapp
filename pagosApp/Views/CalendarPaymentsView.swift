@@ -40,7 +40,7 @@ struct CalendarPaymentsView: View {
                                     Text(payment.category.rawValue).font(.caption).foregroundColor(Color("AppTextSecondary"))
                                 }
                                 Spacer()
-                                Text(payment.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                                Text("\(payment.currency.symbol) \(payment.amount, format: .number.precision(.fractionLength(2)))")
                                     .foregroundColor(Color("AppTextPrimary"))
                             }
                         }
