@@ -1,13 +1,12 @@
 import Foundation
 import Supabase
 
-@MainActor
 final class SupabaseAuthService: AuthenticationService {
-    nonisolated let client: SupabaseClient
+    let client: SupabaseClient
     
-    nonisolated var isAuthenticated: Bool {
+    var isAuthenticated: Bool {
         get async {
-            await MainActor.run { client.auth.currentUser != nil }
+            client.auth.currentUser != nil
         }
     }
     
@@ -15,9 +14,9 @@ final class SupabaseAuthService: AuthenticationService {
         self.client = client
     }
     
-    nonisolated func observeAuthState() async throws -> AsyncStream<Bool> {
+    func observeAuthState() async throws -> AsyncStream<Bool> {
         AsyncStream { continuation in
-            Task { @MainActor in
+            Task {
                 // Send initial state
                 continuation.yield(client.auth.currentUser != nil)
                 

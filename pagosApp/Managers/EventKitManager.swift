@@ -3,7 +3,6 @@ import EventKit
 import Observation
 import OSLog
 
-@MainActor
 @Observable
 final class EventKitManager {
     static let shared = EventKitManager()
