@@ -41,7 +41,8 @@ class SupabaseAuthService: @preconcurrency AuthenticationService {
         do {
             _ = try await client.auth.signIn(email: email, password: password)
         } catch let error as AuthError {
-            if error.message.contains("invalid login credentials") {
+            let errorMessage = error.localizedDescription.lowercased()
+            if errorMessage.contains("invalid login credentials") || errorMessage.contains("invalid email or password") {
                 throw AuthenticationError.wrongCredentials
             } else {
                 throw AuthenticationError.unknown(error)
@@ -70,9 +71,10 @@ class SupabaseAuthService: @preconcurrency AuthenticationService {
                 password: password
             )
         } catch let error as AuthError {
-            if error.message.contains("User already registered") || error.message.contains("User already exists") {
+            let errorMessage = error.localizedDescription.lowercased()
+            if errorMessage.contains("user already registered") || errorMessage.contains("user already exists") || errorMessage.contains("already registered") {
                 throw AuthenticationError.wrongCredentials
-            } else if error.message.contains("invalid email") {
+            } else if errorMessage.contains("invalid email") {
                 throw AuthenticationError.invalidEmailFormat
             } else {
                 throw AuthenticationError.unknown(error)

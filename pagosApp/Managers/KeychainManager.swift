@@ -306,4 +306,147 @@ class KeychainManager {
     static func deleteHasLoggedIn() -> Bool {
         return deleteBool(forKey: hasLoggedInKey)
     }
+    
+    // MARK: - Token Management (for Auth Module)
+    
+    private static let accessTokenKey = "accessToken"
+    private static let refreshTokenKey = "refreshToken"
+    private static let userIdKey = "userId"
+    
+    /// Save access token securely
+    static func saveAccessToken(_ token: String) throws {
+        let data = Data(token.utf8)
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: accessTokenKey,
+            kSecValueData as String: data
+        ]
+        
+        SecItemDelete(query as CFDictionary) // Delete existing
+        let status = SecItemAdd(query as CFDictionary, nil)
+        
+        guard status == errSecSuccess else {
+            logger.error("Failed to save access token: \(status)")
+            throw NSError(domain: "KeychainManager", code: Int(status), userInfo: nil)
+        }
+    }
+    
+    /// Get access token
+    static func getAccessToken() -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: accessTokenKey,
+            kSecReturnData as String: true
+        ]
+        
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        
+        guard status == errSecSuccess,
+              let data = result as? Data,
+              let token = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+        
+        return token
+    }
+    
+    /// Save refresh token securely
+    static func saveRefreshToken(_ token: String) throws {
+        let data = Data(token.utf8)
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: refreshTokenKey,
+            kSecValueData as String: data
+        ]
+        
+        SecItemDelete(query as CFDictionary) // Delete existing
+        let status = SecItemAdd(query as CFDictionary, nil)
+        
+        guard status == errSecSuccess else {
+            logger.error("Failed to save refresh token: \(status)")
+            throw NSError(domain: "KeychainManager", code: Int(status), userInfo: nil)
+        }
+    }
+    
+    /// Get refresh token
+    static func getRefreshToken() -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: refreshTokenKey,
+            kSecReturnData as String: true
+        ]
+        
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        
+        guard status == errSecSuccess,
+              let data = result as? Data,
+              let token = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+        
+        return token
+    }
+    
+    /// Save user ID securely
+    static func saveUserId(_ userId: String) throws {
+        let data = Data(userId.utf8)
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: userIdKey,
+            kSecValueData as String: data
+        ]
+        
+        SecItemDelete(query as CFDictionary) // Delete existing
+        let status = SecItemAdd(query as CFDictionary, nil)
+        
+        guard status == errSecSuccess else {
+            logger.error("Failed to save user ID: \(status)")
+            throw NSError(domain: "KeychainManager", code: Int(status), userInfo: nil)
+        }
+    }
+    
+    /// Get user ID
+    static func getUserId() -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: userIdKey,
+            kSecReturnData as String: true
+        ]
+        
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        
+        guard status == errSecSuccess,
+              let data = result as? Data,
+              let userId = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+        
+        return userId
+    }
+    
+    /// Clear all tokens (access, refresh, userId)
+    static func clearAllTokens() {
+        let accounts = [accessTokenKey, refreshTokenKey, userIdKey]
+        
+        for account in accounts {
+            let query: [String: Any] = [
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: service,
+                kSecAttrAccount as String: account
+            ]
+            
+            SecItemDelete(query as CFDictionary)
+        }
+        
+        logger.info("🗑️ All tokens cleared from Keychain")
+    }
 }
