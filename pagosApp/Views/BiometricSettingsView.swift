@@ -50,8 +50,15 @@ struct BiometricSettingsView: View {
                     get: { settingsManager.isBiometricLockEnabled },
                     set: { newValue in
                         if newValue {
-                            // When enabling, authenticate with biometrics first
-                            authenticateToEnable()
+                            // Check if credentials are already stored (user already logged in)
+                            if KeychainManager.hasStoredCredentials() {
+                                // Credentials exist, just enable without asking for Face ID again
+                                settingsManager.isBiometricLockEnabled = true
+                            } else {
+                                // No credentials stored, this shouldn't happen but handle edge case
+                                errorMessage = "Debes iniciar sesión primero para habilitar Face ID"
+                                showError = true
+                            }
                         } else {
                             // When disabling, delete credentials from Keychain
                             settingsManager.isBiometricLockEnabled = false
@@ -102,36 +109,6 @@ struct BiometricSettingsView: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text(errorMessage)
-        }
-    }
-    
-    private func authenticateToEnable() {
-        let context = LAContext()
-        var error: NSError?
-        
-        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
-            errorMessage = "Face ID / Touch ID no está disponible"
-            showError = true
-            return
-        }
-        
-        let reason = "Confirma tu identidad para habilitar Face ID"
-        
-        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, authenticationError in
-            DispatchQueue.main.async {
-                if success {
-                    // Authentication successful, enable Face ID
-                    settingsManager.isBiometricLockEnabled = true
-                } else {
-                    // Authentication failed
-                    if let error = authenticationError {
-                        errorMessage = "No se pudo verificar tu identidad: \(error.localizedDescription)"
-                    } else {
-                        errorMessage = "No se pudo verificar tu identidad"
-                    }
-                    showError = true
-                }
-            }
         }
     }
 }
