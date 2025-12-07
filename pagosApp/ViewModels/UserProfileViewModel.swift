@@ -40,26 +40,30 @@ final class UserProfileViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var isSaving = false
     
+    private let repository: UserProfileRepositoryProtocol
     private let supabaseClient: SupabaseClient
-    private let modelContext: ModelContext
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "UserProfile")
     
     init(supabaseClient: SupabaseClient, modelContext: ModelContext) {
         self.supabaseClient = supabaseClient
-        self.modelContext = modelContext
+        self.repository = UserProfileRepository(supabaseClient: supabaseClient, modelContext: modelContext)
+    }
+    
+    // For testing with mock repository
+    init(repository: UserProfileRepositoryProtocol, supabaseClient: SupabaseClient) {
+        self.repository = repository
+        self.supabaseClient = supabaseClient
     }
     
     /// Load user profile from SwiftData (local first)
-    func loadLocalProfile() {
+    func loadLocalProfile() async {
         isLoading = true
         errorMessage = nil
         
         do {
-            let descriptor = FetchDescriptor<UserProfile>()
-            let profiles = try modelContext.fetch(descriptor)
+            profile = try await repository.getLocalProfile()
             
-            if let localProfile = profiles.first {
-                profile = localProfile
+            if profile != nil {
                 logger.info("✅ Profile loaded from local storage")
             } else {
                 logger.info("⚠️ No local profile found")
@@ -83,28 +87,14 @@ final class UserProfileViewModel: ObservableObject {
             // Get current user ID
             let userId = try await supabaseClient.auth.session.user.id
             
-            logger.info("Fetching profile from Supabase for user: \(userId)")
-            
-            // Query user_profiles table
-            let response: UserProfileDTO = try await supabaseClient
-                .from("user_profiles")
-                .select()
-                .eq("user_id", value: userId.uuidString)
-                .single()
-                .execute()
-                .value
+            // Fetch from remote
+            let profileDTO = try await repository.fetchProfile(userId: userId)
             
             // Convert DTO to Model
-            let profileModel = response.toModel()
+            let profileModel = profileDTO.toModel()
             
-            // Delete old profile if exists
-            let descriptor = FetchDescriptor<UserProfile>()
-            let existingProfiles = try modelContext.fetch(descriptor)
-            existingProfiles.forEach { modelContext.delete($0) }
-            
-            // Save new profile to SwiftData
-            modelContext.insert(profileModel)
-            try modelContext.save()
+            // Save to local storage
+            try await repository.saveProfile(profileModel)
             
             profile = profileModel
             logger.info("✅ Profile fetched and saved to local storage")
@@ -121,43 +111,37 @@ final class UserProfileViewModel: ObservableObject {
     }
     
     /// Update user profile in Supabase and then update SwiftData
-    func updateProfile(_ updatedProfile: UserProfile) async -> Bool {
+    func updateProfile(with editableProfile: EditableProfile) async -> Bool {
+        guard let currentProfile = profile else {
+            errorMessage = "No hay perfil cargado"
+            return false
+        }
+        
         isSaving = true
         errorMessage = nil
         
         do {
-            logger.info("Updating profile for user: \(updatedProfile.userId)")
+            logger.info("Updating profile for user: \(currentProfile.userId)")
             
-            // Prepare update data
-            let updateData = ProfileUpdateDTO(
-                fullName: updatedProfile.fullName,
-                email: updatedProfile.email,
-                phone: updatedProfile.phone,
-                dateOfBirth: updatedProfile.dateOfBirth?.ISO8601Format(),
-                gender: updatedProfile.genderRawValue,
-                country: updatedProfile.country,
-                city: updatedProfile.city,
-                preferredCurrency: updatedProfile.preferredCurrencyRawValue
+            // Prepare update data (excluding email which doesn't change)
+            var updateData = editableProfile.toUpdateDTO()
+            updateData = ProfileUpdateDTO(
+                fullName: editableProfile.fullName,
+                email: currentProfile.email, // Keep existing email
+                phone: editableProfile.phone.isEmpty ? nil : editableProfile.phone,
+                dateOfBirth: editableProfile.dateOfBirth?.ISO8601Format(),
+                gender: editableProfile.gender?.rawValue,
+                country: currentProfile.country, // Keep existing country
+                city: editableProfile.city.isEmpty ? nil : editableProfile.city,
+                preferredCurrency: editableProfile.preferredCurrency.rawValue
             )
             
             // Update in Supabase
-            try await supabaseClient
-                .from("user_profiles")
-                .update(updateData)
-                .eq("user_id", value: updatedProfile.userId.uuidString)
-                .execute()
+            try await repository.updateProfile(userId: currentProfile.userId, profile: updateData)
             
-            // Update local profile
-            updatedProfile.fullName = updatedProfile.fullName
-            updatedProfile.email = updatedProfile.email
-            updatedProfile.phone = updatedProfile.phone
-            updatedProfile.dateOfBirth = updatedProfile.dateOfBirth
-            updatedProfile.genderRawValue = updatedProfile.genderRawValue
-            updatedProfile.country = updatedProfile.country
-            updatedProfile.city = updatedProfile.city
-            updatedProfile.preferredCurrencyRawValue = updatedProfile.preferredCurrencyRawValue
-            
-            try modelContext.save()
+            // Apply changes to local profile
+            editableProfile.applyTo(currentProfile)
+            try await repository.saveProfile(currentProfile)
             
             logger.info("✅ Profile updated in Supabase and local storage")
             isSaving = false
@@ -172,13 +156,9 @@ final class UserProfileViewModel: ObservableObject {
     }
     
     /// Clear local profile (called on logout)
-    func clearLocalProfile() {
+    func clearLocalProfile() async {
         do {
-            let descriptor = FetchDescriptor<UserProfile>()
-            let profiles = try modelContext.fetch(descriptor)
-            profiles.forEach { modelContext.delete($0) }
-            try modelContext.save()
-            
+            try await repository.deleteLocalProfile()
             profile = nil
             logger.info("✅ Local profile cleared")
         } catch {
@@ -186,3 +166,4 @@ final class UserProfileViewModel: ObservableObject {
         }
     }
 }
+

@@ -14,15 +14,10 @@ struct UserProfileView: View {
     @Environment(\.dismiss) var dismiss
     @State private var isEditing = false
     @State private var showSuccessAlert = false
-    
-    // Editable fields
-    @State private var editedFullName = ""
-    @State private var editedPhone = ""
-    @State private var editedCity = ""
-    @State private var editedDateOfBirth: Date?
-    @State private var editedGender: UserProfile.Gender?
-    @State private var editedCurrency: Currency = .pen
     @State private var showDatePicker = false
+    
+    // Single state for all editable fields
+    @State private var editableProfile: EditableProfile?
     
     init(supabaseClient: SupabaseClient, modelContext: ModelContext) {
         _viewModel = StateObject(wrappedValue: UserProfileViewModel(supabaseClient: supabaseClient, modelContext: modelContext))
@@ -38,11 +33,11 @@ struct UserProfileView: View {
                         // Personal Information Section
                         Section(header: Text("Información Personal").foregroundColor(Color("AppTextPrimary"))) {
                             // Full Name
-                            if isEditing {
+                            if isEditing, let binding = Binding($editableProfile) {
                                 EditableTextFieldRow(
                                     icon: "person.fill",
                                     placeholder: "Nombre completo",
-                                    text: $editedFullName
+                                    text: binding.fullName
                                 )
                             } else {
                                 ProfileFieldRow(
@@ -62,11 +57,11 @@ struct UserProfileView: View {
                             )
                             
                             // Phone
-                            if isEditing {
+                            if isEditing, let binding = Binding($editableProfile) {
                                 EditableTextFieldRow(
                                     icon: "phone.fill",
                                     placeholder: "Teléfono",
-                                    text: $editedPhone,
+                                    text: binding.phone,
                                     keyboardType: .phonePad
                                 )
                             } else {
@@ -78,27 +73,31 @@ struct UserProfileView: View {
                             }
                             
                             // Gender
-                            GenderPickerRow(
-                                isEditing: isEditing,
-                                selectedGender: $editedGender
-                            )
+                            if let binding = Binding($editableProfile) {
+                                GenderPickerRow(
+                                    isEditing: isEditing,
+                                    selectedGender: binding.gender
+                                )
+                            }
                             
                             // Date of Birth
-                            DatePickerRow(
-                                isEditing: isEditing,
-                                selectedDate: $editedDateOfBirth,
-                                showPicker: $showDatePicker
-                            )
+                            if let binding = Binding($editableProfile) {
+                                DatePickerRow(
+                                    isEditing: isEditing,
+                                    selectedDate: binding.dateOfBirth,
+                                    showPicker: $showDatePicker
+                                )
+                            }
                         }
                         
                         // Location Section
                         Section(header: Text("Ubicación").foregroundColor(Color("AppTextPrimary"))) {
                             // City
-                            if isEditing {
+                            if isEditing, let binding = Binding($editableProfile) {
                                 EditableTextFieldRow(
                                     icon: "building.2.fill",
                                     placeholder: "Ciudad",
-                                    text: $editedCity
+                                    text: binding.city
                                 )
                             } else {
                                 ProfileFieldRow(
@@ -119,10 +118,12 @@ struct UserProfileView: View {
                         
                         // Preferences Section
                         Section(header: Text("Preferencias").foregroundColor(Color("AppTextPrimary"))) {
-                            CurrencyPickerRow(
-                                isEditing: isEditing,
-                                selectedCurrency: $editedCurrency
-                            )
+                            if let binding = Binding($editableProfile) {
+                                CurrencyPickerRow(
+                                    isEditing: isEditing,
+                                    selectedCurrency: binding.preferredCurrency
+                                )
+                            }
                         }
                     }
                     .scrollContentBackground(.hidden)
@@ -152,7 +153,7 @@ struct UserProfileView: View {
                                     .foregroundColor(.white)
                             }
                         }
-                        .disabled(viewModel.isSaving || editedFullName.isEmpty)
+                        .disabled(viewModel.isSaving || editableProfile?.fullName.isEmpty == true)
                     } else {
                         Button {
                             startEditing()
@@ -186,9 +187,9 @@ struct UserProfileView: View {
             } message: {
                 Text("Tu perfil ha sido actualizado correctamente.")
             }
-            .onAppear {
+            .task {
                 // Load from local storage (instant)
-                viewModel.loadLocalProfile()
+                await viewModel.loadLocalProfile()
             }
         }
     }
@@ -197,35 +198,24 @@ struct UserProfileView: View {
     
     private func startEditing() {
         guard let profile = viewModel.profile else { return }
-        editedFullName = profile.fullName
-        editedPhone = profile.phone ?? ""
-        editedCity = profile.city ?? ""
-        editedDateOfBirth = profile.dateOfBirth
-        editedGender = profile.gender
-        editedCurrency = profile.preferredCurrency
+        editableProfile = EditableProfile(from: profile)
         isEditing = true
     }
     
     private func cancelEditing() {
+        editableProfile = nil
         isEditing = false
         showDatePicker = false
     }
     
     private func saveProfile() async {
-        guard let profile = viewModel.profile else { return }
+        guard let edited = editableProfile else { return }
         
-        // Update profile with edited values
-        profile.fullName = editedFullName
-        profile.phone = editedPhone.isEmpty ? nil : editedPhone
-        profile.city = editedCity.isEmpty ? nil : editedCity
-        profile.dateOfBirth = editedDateOfBirth
-        profile.gender = editedGender
-        profile.preferredCurrency = editedCurrency
-        
-        let success = await viewModel.updateProfile(profile)
+        let success = await viewModel.updateProfile(with: edited)
         if success {
             showSuccessAlert = true
             showDatePicker = false
+            editableProfile = nil
         }
     }
 }
