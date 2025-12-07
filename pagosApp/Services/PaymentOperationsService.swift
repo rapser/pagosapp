@@ -145,7 +145,6 @@ class NotificationManagerAdapter: NotificationService {
 
 // MARK: - Adapter for EventKitManager
 
-@MainActor
 class EventKitManagerAdapter: CalendarService {
     private let manager: EventKitManager
 
@@ -157,15 +156,15 @@ class EventKitManagerAdapter: CalendarService {
         self.init(manager: EventKitManager.shared)
     }
 
-    func addEvent(for payment: Payment, completion: @escaping (String?) -> Void) {
+    func addEvent(for payment: Payment, completion: @escaping (String?) -> Void) async {
         manager.addEvent(for: payment, completion: completion)
     }
 
-    func updateEvent(for payment: Payment) {
+    func updateEvent(for payment: Payment) async {
         manager.updateEvent(for: payment)
     }
 
-    func removeEvent(for payment: Payment) {
+    func removeEvent(for payment: Payment) async {
         manager.removeEvent(for: payment)
     }
 }
