@@ -8,6 +8,7 @@
 
 import Foundation
 import OSLog
+import Supabase
 
 private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "AuthRepository")
 
@@ -24,6 +25,14 @@ final class AuthRepository: ObservableObject {
     // MARK: - Private Properties
     
     private let authService: any AuthService
+    
+    // MARK: - Public Properties
+    
+    /// Exposes the underlying Supabase client for legacy compatibility
+    /// Use only when absolutely necessary (e.g., UserProfileService)
+    var supabaseClient: SupabaseClient? {
+        return (authService as? SupabaseAuthAdapter)?.supabaseClient
+    }
     
     // MARK: - Initialization
     

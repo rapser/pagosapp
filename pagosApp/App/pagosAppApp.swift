@@ -44,7 +44,11 @@ struct pagosAppApp: App {
     private let passwordRecoveryUseCase: PasswordRecoveryUseCase
 
     init() {
-        authenticationManager = AuthenticationManager(authService: supabaseAuthService)
+        // Create auth adapter and repository
+        let authAdapter = SupabaseAuthAdapter(client: supabaseClient)
+        let authRepository = AuthRepository(authService: authAdapter)
+        
+        authenticationManager = AuthenticationManager(authRepository: authRepository)
         passwordRecoveryRepository = SupabasePasswordRecoveryRepository(authService: supabaseAuthService)
         passwordRecoveryUseCase = PasswordRecoveryUseCase(repository: passwordRecoveryRepository)
         
