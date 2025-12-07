@@ -16,6 +16,7 @@ class EditPaymentViewModel: ObservableObject {
 
     @Published var name: String
     @Published var amount: String
+    @Published var currency: Currency
     @Published var dueDate: Date
     @Published var category: PaymentCategory
     @Published var isPaid: Bool
@@ -41,6 +42,7 @@ class EditPaymentViewModel: ObservableObject {
     var hasChanges: Bool {
         name != payment.name ||
         amountValue != payment.amount ||
+        currency != payment.currency ||
         !Calendar.current.isDate(dueDate, inSameDayAs: payment.dueDate) ||
         category != payment.category ||
         isPaid != payment.isPaid
@@ -56,6 +58,7 @@ class EditPaymentViewModel: ObservableObject {
         // Initialize with current payment values
         self.name = payment.name
         self.amount = String(format: "%.2f", payment.amount)
+        self.currency = payment.currency
         self.dueDate = payment.dueDate
         self.category = payment.category
         self.isPaid = payment.isPaid
@@ -103,6 +106,7 @@ class EditPaymentViewModel: ObservableObject {
         // Update payment model
         payment.name = name
         payment.amount = amountValue
+        payment.currency = currency
         payment.dueDate = dueDate
         payment.category = category
         payment.isPaid = isPaid
@@ -129,6 +133,7 @@ class EditPaymentViewModel: ObservableObject {
     func resetChanges() {
         name = payment.name
         amount = String(format: "%.2f", payment.amount)
+        currency = payment.currency
         dueDate = payment.dueDate
         category = payment.category
         isPaid = payment.isPaid

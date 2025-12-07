@@ -15,7 +15,21 @@ Esto creará:
 - ✅ Row Level Security (RLS) policies para seguridad
 - ✅ Trigger para actualizar automáticamente `updated_at`
 
-### 2. Verificar la configuración
+### 2. Aplicar Migración de Moneda (si ya tienes la tabla creada)
+
+Si ya tienes la tabla `payments` creada y necesitas agregar soporte para múltiples monedas:
+
+1. Ve a **SQL Editor** en Supabase
+2. Copia y pega el contenido de `migration_add_currency.sql`
+3. Ejecuta el script
+
+Esto agregará:
+- ✅ Columna `currency` con valor por defecto 'PEN'
+- ✅ Índice en la columna currency
+- ✅ Constraint para validar solo PEN o USD
+- ✅ Actualización de registros existentes a 'PEN'
+
+### 3. Verificar la configuración
 
 #### Verificar la tabla
 ```sql
@@ -49,6 +63,7 @@ Las políticas RLS aseguran que:
 | `user_id` | UUID | ID del usuario (FK a auth.users) | NOT NULL, ON DELETE CASCADE |
 | `name` | TEXT | Nombre del pago | NOT NULL |
 | `amount` | DECIMAL(10,2) | Monto del pago | NOT NULL, >= 0 |
+| `currency` | TEXT | Moneda del pago (PEN o USD) | NOT NULL, DEFAULT 'PEN' |
 | `due_date` | TIMESTAMPTZ | Fecha de vencimiento | NOT NULL |
 | `is_paid` | BOOLEAN | Estado del pago | NOT NULL, DEFAULT FALSE |
 | `category` | TEXT | Categoría del pago | NOT NULL, CHECK constraint |
@@ -64,6 +79,13 @@ Las políticas RLS aseguran que:
 - `Suscripción`
 - `Otro`
 
+## Monedas Soportadas
+
+- `PEN` - Soles Peruanos (S/)
+- `USD` - Dólares Americanos ($)
+
+Por defecto, todos los pagos se crean en **PEN** (Soles).
+
 ## Índices
 
 Para mejorar el performance de las queries:
@@ -71,19 +93,35 @@ Para mejorar el performance de las queries:
 1. `idx_payments_user_id` - Acelera filtrado por usuario
 2. `idx_payments_due_date` - Acelera ordenamiento por fecha
 3. `idx_payments_is_paid` - Acelera filtrado por estado
+4. `idx_payments_currency` - Acelera filtrado por moneda
 
 ## Testing Manual
 
-### Insertar un pago de prueba
+### Insertar un pago de prueba en Soles
 ```sql
-INSERT INTO payments (user_id, name, amount, due_date, is_paid, category)
+INSERT INTO payments (user_id, name, amount, currency, due_date, is_paid, category)
 VALUES (
     auth.uid(), -- Tu user ID actual
-    'Test Payment',
+    'Test Payment - Soles',
     100.50,
+    'PEN',
     '2025-12-01',
     FALSE,
     'Recibo'
+);
+```
+
+### Insertar un pago de prueba en Dólares
+```sql
+INSERT INTO payments (user_id, name, amount, currency, due_date, is_paid, category)
+VALUES (
+    auth.uid(), -- Tu user ID actual
+    'Test Payment - Dollars',
+    50.00,
+    'USD',
+    '2025-12-15',
+    FALSE,
+    'Suscripción'
 );
 ```
 

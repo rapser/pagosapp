@@ -16,6 +16,7 @@ class AddPaymentViewModel: ObservableObject {
 
     @Published var name: String = ""
     @Published var amount: String = ""
+    @Published var currency: Currency = .pen
     @Published var dueDate: Date = Date()
     @Published var category: PaymentCategory = .servicios
     @Published var isLoading = false
@@ -82,7 +83,8 @@ class AddPaymentViewModel: ObservableObject {
             amount: amountValue,
             dueDate: dueDate,
             isPaid: false,
-            category: category
+            category: category,
+            currency: currency
         )
 
         // Delegate to PaymentOperationsService (SRP)
@@ -106,6 +108,7 @@ class AddPaymentViewModel: ObservableObject {
     func clearForm() {
         name = ""
         amount = ""
+        currency = .pen
         dueDate = Date()
         category = .servicios
     }

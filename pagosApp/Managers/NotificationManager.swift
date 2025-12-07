@@ -52,10 +52,12 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
                 
                 if daysBefore == 0 {
                     content.subtitle = "¡Hoy vence \(payment.name)!"
-                    content.body = "No olvides pagar \(payment.amount.formatted(.currency(code: Locale.current.currency?.identifier ?? "USD")))."
+                    let formattedAmount = payment.amount.formatted(.number.precision(.fractionLength(2)))
+                    content.body = "No olvides pagar \(payment.currency.symbol)\(formattedAmount)."
                 } else {
                     content.subtitle = "Vence en \(daysBefore) día(s): \(payment.name)"
-                    content.body = "Recuerda que tienes un pago de \(payment.amount.formatted(.currency(code: Locale.current.currency?.identifier ?? "USD"))) pendiente."
+                    let formattedAmount = payment.amount.formatted(.number.precision(.fractionLength(2)))
+                    content.body = "Recuerda que tienes un pago de \(payment.currency.symbol)\(formattedAmount) pendiente."
                 }
                 content.sound = .default
 

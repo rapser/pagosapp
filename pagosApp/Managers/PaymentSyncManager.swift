@@ -344,6 +344,7 @@ class PaymentSyncManager: ObservableObject {
                     // Update local payment with remote data
                     existingPayment.name = dto.name
                     existingPayment.amount = dto.amount
+                    existingPayment.currency = Currency(rawValue: dto.currency) ?? .pen
                     existingPayment.dueDate = dto.dueDate
                     existingPayment.isPaid = dto.isPaid
                     existingPayment.category = PaymentCategory(rawValue: dto.category) ?? .otro
