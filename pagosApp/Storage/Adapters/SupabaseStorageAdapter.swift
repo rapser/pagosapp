@@ -12,7 +12,6 @@ import OSLog
 
 /// Adapter to use Supabase as RemoteStorage implementation
 /// This can be swapped with Firebase, AWS, REST API implementations
-@MainActor
 class SupabaseStorageAdapter<DTO: RemoteTransferable>: RemoteStorage {
     typealias Identifier = DTO.Identifier
     
@@ -124,8 +123,7 @@ class SupabaseStorageAdapter<DTO: RemoteTransferable>: RemoteStorage {
 }
 
 /// Specific Supabase adapter for Payment
-@MainActor
-class PaymentSupabaseStorage: SupabaseStorageAdapter<PaymentDTO>, PaymentRemoteStorage {
+final class PaymentSupabaseStorage: SupabaseStorageAdapter<PaymentDTO>, PaymentRemoteStorage {
     
     init(client: SupabaseClient) {
         super.init(client: client, tableName: "payments")
@@ -151,8 +149,7 @@ class PaymentSupabaseStorage: SupabaseStorageAdapter<PaymentDTO>, PaymentRemoteS
 }
 
 /// Specific Supabase adapter for UserProfile
-@MainActor
-class UserProfileSupabaseStorage: SupabaseStorageAdapter<UserProfileDTO>, UserProfileRemoteStorage {
+final class UserProfileSupabaseStorage: SupabaseStorageAdapter<UserProfileDTO>, UserProfileRemoteStorage {
     
     init(client: SupabaseClient) {
         super.init(client: client, tableName: "user_profiles")
@@ -183,8 +180,7 @@ class UserProfileSupabaseStorage: SupabaseStorageAdapter<UserProfileDTO>, UserPr
 
 /*
 /// Example: Firebase adapter (future implementation)
-@MainActor
-class PaymentFirebaseStorage: PaymentRemoteStorage {
+final class PaymentFirebaseStorage: PaymentRemoteStorage {
     typealias DTO = PaymentDTO
     typealias Identifier = UUID
     
@@ -208,8 +204,7 @@ class PaymentFirebaseStorage: PaymentRemoteStorage {
 }
 
 /// Example: AWS DynamoDB adapter (future implementation)
-@MainActor
-class PaymentAWSStorage: PaymentRemoteStorage {
+final class PaymentAWSStorage: PaymentRemoteStorage {
     typealias DTO = PaymentDTO
     typealias Identifier = UUID
     
@@ -234,8 +229,7 @@ class PaymentAWSStorage: PaymentRemoteStorage {
 }
 
 /// Example: REST API adapter (future implementation)
-@MainActor
-class PaymentRESTStorage: PaymentRemoteStorage {
+final class PaymentRESTStorage: PaymentRemoteStorage {
     typealias DTO = PaymentDTO
     typealias Identifier = UUID
     

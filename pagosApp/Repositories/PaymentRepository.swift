@@ -11,29 +11,27 @@ import OSLog
 import SwiftData
 import Supabase
 
-@MainActor
 protocol PaymentRepositoryProtocol {
-    // Remote operations
+    // Remote operations (no @MainActor - can run on background)
     func fetchAllPayments(userId: UUID) async throws -> [PaymentDTO]
     func upsertPayment(userId: UUID, payment: PaymentDTO) async throws
     func upsertPayments(userId: UUID, payments: [PaymentDTO]) async throws
     func deletePayment(paymentId: UUID) async throws
     func deletePayments(paymentIds: [UUID]) async throws
     
-    // Local operations
-    func getAllLocalPayments() async throws -> [Payment]
-    func getLocalPayment(id: UUID) async throws -> Payment?
-    func savePayment(_ payment: Payment) async throws
-    func savePayments(_ payments: [Payment]) async throws
-    func deleteLocalPayment(_ payment: Payment) async throws
-    func deleteLocalPayments(_ payments: [Payment]) async throws
-    func clearAllLocalPayments() async throws
+    // Local operations (@MainActor - SwiftData requires main thread)
+    @MainActor func getAllLocalPayments() async throws -> [Payment]
+    @MainActor func getLocalPayment(id: UUID) async throws -> Payment?
+    @MainActor func savePayment(_ payment: Payment) async throws
+    @MainActor func savePayments(_ payments: [Payment]) async throws
+    @MainActor func deleteLocalPayment(_ payment: Payment) async throws
+    @MainActor func deleteLocalPayments(_ payments: [Payment]) async throws
+    @MainActor func clearAllLocalPayments() async throws
 }
 
 /// PaymentRepository using Storage Adapters (Strategy Pattern)
 /// Can swap remoteStorage (Supabase → Firebase → AWS) and localStorage (SwiftData → SQLite → Realm)
-@MainActor
-class PaymentRepository: PaymentRepositoryProtocol {
+final class PaymentRepository: PaymentRepositoryProtocol {
     private let remoteStorage: any PaymentRemoteStorage
     private let localStorage: any PaymentLocalStorage
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentRepository")
@@ -46,6 +44,8 @@ class PaymentRepository: PaymentRepositoryProtocol {
     }
     
     /// Convenience initializer for current setup (Supabase + SwiftData)
+    /// @MainActor required because SwiftDataStorageAdapter requires main actor
+    @MainActor
     convenience init(supabaseClient: SupabaseClient, modelContext: ModelContext) {
         let remoteStorage = PaymentSupabaseStorage(client: supabaseClient)
         let localStorage = PaymentSwiftDataStorage(modelContext: modelContext)
@@ -97,11 +97,13 @@ class PaymentRepository: PaymentRepositoryProtocol {
     
     // MARK: - Local Operations (delegates to localStorage adapter)
     
+    @MainActor
     func getAllLocalPayments() async throws -> [Payment] {
         logger.debug("📱 Fetching all local payments")
         return try await localStorage.fetchAll()
     }
     
+    @MainActor
     func getLocalPayment(id: UUID) async throws -> Payment? {
         logger.debug("📱 Fetching local payment: \(id)")
         // Fetch all and filter in memory (for simple queries this is efficient enough)
@@ -109,26 +111,31 @@ class PaymentRepository: PaymentRepositoryProtocol {
         return allPayments.first(where: { $0.id == id })
     }
     
+    @MainActor
     func savePayment(_ payment: Payment) async throws {
         logger.debug("💾 Saving payment locally: \(payment.name)")
         try await localStorage.save(payment)
     }
     
+    @MainActor
     func savePayments(_ payments: [Payment]) async throws {
         logger.debug("💾 Saving \(payments.count) payments locally")
         try await localStorage.saveAll(payments)
     }
     
+    @MainActor
     func deleteLocalPayment(_ payment: Payment) async throws {
         logger.debug("🗑️ Deleting local payment: \(payment.name)")
         try await localStorage.delete(payment)
     }
     
+    @MainActor
     func deleteLocalPayments(_ payments: [Payment]) async throws {
         logger.debug("🗑️ Deleting \(payments.count) local payments")
         try await localStorage.deleteAll(payments)
     }
     
+    @MainActor
     func clearAllLocalPayments() async throws {
         logger.info("🗑️ Clearing all local payments")
         try await localStorage.clear()
