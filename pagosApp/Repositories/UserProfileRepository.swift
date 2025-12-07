@@ -24,12 +24,12 @@ protocol UserProfileRepositoryProtocol {
 /// Can swap remoteStorage (Supabase → Firebase → AWS) and localStorage (SwiftData → SQLite → Realm)
 @MainActor
 class UserProfileRepository: UserProfileRepositoryProtocol {
-    private let remoteStorage: UserProfileRemoteStorage
-    private let localStorage: UserProfileLocalStorage
+    private let remoteStorage: any UserProfileRemoteStorage
+    private let localStorage: any UserProfileLocalStorage
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "UserProfileRepository")
     
     /// Primary initializer with dependency injection
-    init(remoteStorage: UserProfileRemoteStorage, localStorage: UserProfileLocalStorage) {
+    init(remoteStorage: any UserProfileRemoteStorage, localStorage: any UserProfileLocalStorage) {
         self.remoteStorage = remoteStorage
         self.localStorage = localStorage
         logger.info("✅ UserProfileRepository initialized with custom storage adapters")

@@ -87,12 +87,12 @@ class StorageFactory {
         return PaymentRepository(remoteStorage: remoteStorage, localStorage: localStorage)
     }
     
-    private func makePaymentLocalStorage(config: StorageConfiguration) -> PaymentLocalStorage {
+    private func makePaymentLocalStorage(config: StorageConfiguration) -> any PaymentLocalStorage {
         // Currently only SwiftData, but can add SQLite, Realm, etc.
         return PaymentSwiftDataStorage(modelContext: config.modelContext)
     }
     
-    private func makePaymentRemoteStorage(config: StorageConfiguration) -> PaymentRemoteStorage {
+    private func makePaymentRemoteStorage(config: StorageConfiguration) -> any PaymentRemoteStorage {
         switch config.provider {
         case .current:
             guard let client = config.supabaseClient else {
@@ -136,11 +136,11 @@ class StorageFactory {
         return UserProfileRepository(remoteStorage: remoteStorage, localStorage: localStorage)
     }
     
-    private func makeUserProfileLocalStorage(config: StorageConfiguration) -> UserProfileLocalStorage {
+    private func makeUserProfileLocalStorage(config: StorageConfiguration) -> any UserProfileLocalStorage {
         return UserProfileSwiftDataStorage(modelContext: config.modelContext)
     }
     
-    private func makeUserProfileRemoteStorage(config: StorageConfiguration) -> UserProfileRemoteStorage {
+    private func makeUserProfileRemoteStorage(config: StorageConfiguration) -> any UserProfileRemoteStorage {
         switch config.provider {
         case .current:
             guard let client = config.supabaseClient else {

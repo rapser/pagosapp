@@ -34,12 +34,12 @@ protocol PaymentRepositoryProtocol {
 /// Can swap remoteStorage (Supabase → Firebase → AWS) and localStorage (SwiftData → SQLite → Realm)
 @MainActor
 class PaymentRepository: PaymentRepositoryProtocol {
-    private let remoteStorage: PaymentRemoteStorage
-    private let localStorage: PaymentLocalStorage
+    private let remoteStorage: any PaymentRemoteStorage
+    private let localStorage: any PaymentLocalStorage
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentRepository")
     
     /// Primary initializer with dependency injection
-    init(remoteStorage: PaymentRemoteStorage, localStorage: PaymentLocalStorage) {
+    init(remoteStorage: any PaymentRemoteStorage, localStorage: any PaymentLocalStorage) {
         self.remoteStorage = remoteStorage
         self.localStorage = localStorage
         logger.info("✅ PaymentRepository initialized with custom storage adapters")
