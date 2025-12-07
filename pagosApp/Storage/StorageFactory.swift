@@ -57,8 +57,7 @@ struct StorageConfiguration {
 
 /// Factory for creating storage adapters and repositories
 /// This makes it easy to swap storage providers across the entire app
-@MainActor
-class StorageFactory {
+final class StorageFactory {
     
     // MARK: - Singleton
     
@@ -76,7 +75,7 @@ class StorageFactory {
     // MARK: - Payment Storage
     
     /// Create PaymentRepository based on configured provider
-    func makePaymentRepository() -> PaymentRepositoryProtocol {
+    @MainActor func makePaymentRepository() -> PaymentRepositoryProtocol {
         guard let config = configuration else {
             fatalError("❌ StorageFactory not configured. Call configure() first.")
         }
@@ -87,6 +86,7 @@ class StorageFactory {
         return PaymentRepository(remoteStorage: remoteStorage, localStorage: localStorage)
     }
     
+    @MainActor
     private func makePaymentLocalStorage(config: StorageConfiguration) -> any PaymentLocalStorage {
         // Currently only SwiftData, but can add SQLite, Realm, etc.
         return PaymentSwiftDataStorage(modelContext: config.modelContext)
@@ -125,6 +125,7 @@ class StorageFactory {
     // MARK: - UserProfile Storage
     
     /// Create UserProfileRepository based on configured provider
+    @MainActor
     func makeUserProfileRepository() -> UserProfileRepositoryProtocol {
         guard let config = configuration else {
             fatalError("❌ StorageFactory not configured. Call configure() first.")
@@ -136,6 +137,7 @@ class StorageFactory {
         return UserProfileRepository(remoteStorage: remoteStorage, localStorage: localStorage)
     }
     
+    @MainActor
     private func makeUserProfileLocalStorage(config: StorageConfiguration) -> any UserProfileLocalStorage {
         return UserProfileSwiftDataStorage(modelContext: config.modelContext)
     }
@@ -163,8 +165,7 @@ class StorageFactory {
 // MARK: - Mock Remote Storage (for offline mode)
 
 /// Mock remote storage for local-only mode
-@MainActor
-class MockPaymentRemoteStorage: PaymentRemoteStorage {
+final class MockPaymentRemoteStorage: PaymentRemoteStorage {
     func fetchAll(userId _: UUID) async throws -> [PaymentDTO] { [] }
     func fetchById(_: UUID) async throws -> PaymentDTO? { nil }
     func upsert(_: PaymentDTO, userId _: UUID) async throws {}
@@ -174,8 +175,7 @@ class MockPaymentRemoteStorage: PaymentRemoteStorage {
     func fetchFiltered(userId _: UUID, from _: Date?, to _: Date?) async throws -> [PaymentDTO] { [] }
 }
 
-@MainActor
-class MockUserProfileRemoteStorage: UserProfileRemoteStorage {
+final class MockUserProfileRemoteStorage: UserProfileRemoteStorage {
     func fetchAll(userId _: UUID) async throws -> [UserProfileDTO] { [] }
     func fetchById(_: UUID) async throws -> UserProfileDTO? { nil }
     func upsert(_: UserProfileDTO, userId _: UUID) async throws {}

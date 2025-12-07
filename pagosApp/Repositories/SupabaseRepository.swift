@@ -11,7 +11,6 @@ import Supabase
 
 /// Base protocol for repositories that interact with Supabase
 /// Implements Repository Pattern with remote and local operations
-@MainActor
 protocol SupabaseRepository {
     associatedtype RemoteDTO: Codable
     associatedtype LocalModel

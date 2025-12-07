@@ -10,7 +10,6 @@ import Foundation
 
 /// Generic protocol for local data persistence
 /// Allows swapping storage implementations (SwiftData, SQLite, Realm, CoreData)
-@MainActor
 protocol LocalStorage {
     associatedtype Entity
     
@@ -46,7 +45,6 @@ protocol LocalStorable {
 }
 
 /// Specific protocol for Payment local storage
-@MainActor
 protocol PaymentLocalStorage: LocalStorage where Entity == Payment {
     /// Fetch payments by user ID (business logic specific)
     func fetchByUser(_ userId: UUID) async throws -> [Payment]
@@ -59,7 +57,6 @@ protocol PaymentLocalStorage: LocalStorage where Entity == Payment {
 }
 
 /// Specific protocol for UserProfile local storage
-@MainActor
 protocol UserProfileLocalStorage: LocalStorage where Entity == UserProfile {
     /// Fetch profile by user ID
     func fetchByUserId(_ userId: UUID) async throws -> UserProfile?

@@ -91,7 +91,6 @@ enum AuthError: LocalizedError {
 
 /// Generic protocol for authentication services
 /// Allows swapping implementations (Supabase, Firebase, Auth0, Custom API)
-@MainActor
 protocol AuthService {
     /// Sign up a new user
     func signUp(credentials: RegistrationCredentials) async throws -> AuthSession
@@ -125,7 +124,6 @@ protocol AuthService {
 }
 
 /// Specific protocol for OAuth authentication (optional)
-@MainActor
 protocol OAuthAuthService: AuthService {
     /// Sign in with Google
     func signInWithGoogle() async throws -> AuthSession

@@ -31,8 +31,7 @@ protocol PaymentOperationsService {
 }
 
 /// Default implementation coordinating all payment operations
-@MainActor
-class DefaultPaymentOperationsService: PaymentOperationsService {
+final class DefaultPaymentOperationsService: PaymentOperationsService {
     private let modelContext: ModelContext
     private let syncService: PaymentSyncService
     private let notificationService: NotificationService

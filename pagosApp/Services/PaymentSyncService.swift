@@ -20,8 +20,7 @@ protocol PaymentSyncService {
 }
 
 /// Implementation using Repository Pattern
-@MainActor
-class DefaultPaymentSyncService: PaymentSyncService {
+final class DefaultPaymentSyncService: PaymentSyncService {
     private let repository: PaymentRepositoryProtocol
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentSync")
 

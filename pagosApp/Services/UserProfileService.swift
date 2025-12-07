@@ -10,8 +10,7 @@ import SwiftData
 import Supabase
 import OSLog
 
-@MainActor
-class UserProfileService {
+final class UserProfileService {
     static let shared = UserProfileService()
     
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "UserProfileService")
@@ -21,7 +20,7 @@ class UserProfileService {
     /// Fetch profile from Supabase and save to SwiftData
     /// Should be called after successful login
     func fetchAndSaveProfile(supabaseClient: SupabaseClient, modelContext: ModelContext) async -> Bool {
-        let repository = UserProfileRepository(supabaseClient: supabaseClient, modelContext: modelContext)
+        let repository = await UserProfileRepository(supabaseClient: supabaseClient, modelContext: modelContext)
         
         // Retry logic for SwiftData initialization
         for attempt in 1...3 {
@@ -68,7 +67,7 @@ class UserProfileService {
     /// Clear local profile from SwiftData
     /// Should be called on logout
     func clearLocalProfile(modelContext: ModelContext) async {
-        let repository = UserProfileRepository(supabaseClient: SupabaseClient(supabaseURL: URL(string: "https://dummy.com")!, supabaseKey: "dummy"), modelContext: modelContext)
+        let repository = await UserProfileRepository(supabaseClient: SupabaseClient(supabaseURL: URL(string: "https://dummy.com")!, supabaseKey: "dummy"), modelContext: modelContext)
         
         do {
             try await repository.deleteLocalProfile()

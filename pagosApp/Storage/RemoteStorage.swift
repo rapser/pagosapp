@@ -10,7 +10,6 @@ import Foundation
 
 /// Generic protocol for remote data persistence
 /// Allows swapping implementations (Supabase, Firebase, AWS, REST API)
-@MainActor
 protocol RemoteStorage {
     associatedtype DTO: Codable
     associatedtype Identifier: Hashable
@@ -42,14 +41,12 @@ protocol RemoteTransferable: Codable {
 }
 
 /// Specific protocol for Payment remote storage
-@MainActor
 protocol PaymentRemoteStorage: RemoteStorage where DTO == PaymentDTO, Identifier == UUID {
     /// Fetch payments with filters (optional business logic)
     func fetchFiltered(userId: UUID, from: Date?, to: Date?) async throws -> [PaymentDTO]
 }
 
 /// Specific protocol for UserProfile remote storage
-@MainActor
 protocol UserProfileRemoteStorage: RemoteStorage where DTO == UserProfileDTO, Identifier == UUID {
     /// Fetch profile by user ID
     func fetchProfile(userId: UUID) async throws -> UserProfileDTO?

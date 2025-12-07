@@ -12,6 +12,7 @@ import OSLog
 
 /// Adapter to use SwiftData as LocalStorage implementation
 /// This can be swapped with SQLite, Realm, CoreData implementations
+/// @MainActor required because ModelContext must be accessed on main thread
 @MainActor
 class SwiftDataStorageAdapter<Entity: PersistentModel>: LocalStorage {
     private let modelContext: ModelContext
@@ -76,8 +77,7 @@ class SwiftDataStorageAdapter<Entity: PersistentModel>: LocalStorage {
 }
 
 /// Specific SwiftData adapter for Payment
-@MainActor
-class PaymentSwiftDataStorage: SwiftDataStorageAdapter<Payment>, PaymentLocalStorage {
+final class PaymentSwiftDataStorage: SwiftDataStorageAdapter<Payment>, PaymentLocalStorage {
     
     func fetchByUser(_ userId: UUID) async throws -> [Payment] {
         // Local storage doesn't have userId field in Payment model
@@ -98,8 +98,7 @@ class PaymentSwiftDataStorage: SwiftDataStorageAdapter<Payment>, PaymentLocalSto
 }
 
 /// Specific SwiftData adapter for UserProfile
-@MainActor
-class UserProfileSwiftDataStorage: SwiftDataStorageAdapter<UserProfile>, UserProfileLocalStorage {
+final class UserProfileSwiftDataStorage: SwiftDataStorageAdapter<UserProfile>, UserProfileLocalStorage {
     
     func fetchByUserId(_ userId: UUID) async throws -> UserProfile? {
         let allProfiles = try await fetchAll()
@@ -111,8 +110,7 @@ class UserProfileSwiftDataStorage: SwiftDataStorageAdapter<UserProfile>, UserPro
 
 /*
 /// Example: SQLite adapter (future implementation)
-@MainActor
-class PaymentSQLiteStorage: PaymentLocalStorage {
+final class PaymentSQLiteStorage: PaymentLocalStorage {
     typealias Entity = Payment
     private let database: SQLiteDatabase
     
@@ -129,8 +127,7 @@ class PaymentSQLiteStorage: PaymentLocalStorage {
 }
 
 /// Example: Realm adapter (future implementation)
-@MainActor
-class PaymentRealmStorage: PaymentLocalStorage {
+final class PaymentRealmStorage: PaymentLocalStorage {
     typealias Entity = Payment
     private let realm: Realm
     
