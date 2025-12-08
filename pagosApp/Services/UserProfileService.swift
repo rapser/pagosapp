@@ -19,8 +19,9 @@ final class UserProfileService {
     
     /// Fetch profile from Supabase and save to SwiftData
     /// Should be called after successful login
+    @MainActor
     func fetchAndSaveProfile(supabaseClient: SupabaseClient, modelContext: ModelContext) async -> Bool {
-        let repository = await UserProfileRepository(supabaseClient: supabaseClient, modelContext: modelContext)
+        let repository = UserProfileRepository(supabaseClient: supabaseClient, modelContext: modelContext)
         
         // Retry logic for SwiftData initialization
         for attempt in 1...3 {
@@ -35,11 +36,21 @@ final class UserProfileService {
                 
                 logger.info("✅ Profile data fetched from Supabase")
                 
-                // Convert DTO to Model
-                let profileModel = profileDTO.toModel()
+                // Convert DTO to Entity
+                let profileEntity = UserProfileEntity(
+                    userId: profileDTO.userId,
+                    fullName: profileDTO.fullName,
+                    email: profileDTO.email,
+                    phone: profileDTO.phone,
+                    dateOfBirth: profileDTO.dateOfBirth,
+                    gender: profileDTO.gender.flatMap { UserProfileEntity.Gender(rawValue: $0) },
+                    country: profileDTO.country,
+                    city: profileDTO.city,
+                    preferredCurrency: Currency(rawValue: profileDTO.preferredCurrency) ?? .pen
+                )
                 
                 // Save to local storage
-                try await repository.saveProfile(profileModel)
+                try await repository.saveProfile(profileEntity)
                 
                 logger.info("✅ Profile fetched and saved to local storage")
                 return true
@@ -66,8 +77,9 @@ final class UserProfileService {
     
     /// Clear local profile from SwiftData
     /// Should be called on logout
+    @MainActor
     func clearLocalProfile(modelContext: ModelContext) async {
-        let repository = await UserProfileRepository(supabaseClient: SupabaseClient(supabaseURL: URL(string: "https://dummy.com")!, supabaseKey: "dummy"), modelContext: modelContext)
+        let repository = UserProfileRepository(supabaseClient: SupabaseClient(supabaseURL: URL(string: "https://dummy.com")!, supabaseKey: "dummy"), modelContext: modelContext)
         
         do {
             try await repository.deleteLocalProfile()

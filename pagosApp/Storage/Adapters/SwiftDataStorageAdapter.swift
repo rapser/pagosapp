@@ -27,11 +27,10 @@ class SwiftDataStorageAdapter<Entity: PersistentModel>: LocalStorage {
         return try modelContext.fetch(descriptor)
     }
     
-    func fetch(where predicate: NSPredicate?) async throws -> [Entity] {
-        // For SwiftData, we can't use NSPredicate directly
-        // This method is kept for protocol compliance but returns all entities
-        // Subclasses should use fetchAll() and filter in memory instead
-        return try await fetchAll()
+    func fetch(where predicate: @Sendable (Entity) -> Bool) async throws -> [Entity] {
+        // Modern Swift approach: fetch all and filter in memory with closure
+        let allEntities = try await fetchAll()
+        return allEntities.filter(predicate)
     }
     
     func save(_ entity: Entity) async throws {

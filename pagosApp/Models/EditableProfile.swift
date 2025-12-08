@@ -14,11 +14,11 @@ struct EditableProfile {
     var phone: String
     var city: String
     var dateOfBirth: Date?
-    var gender: UserProfile.Gender?
+    var gender: UserProfileEntity.Gender?
     var preferredCurrency: Currency
     
-    /// Inicializar desde UserProfile
-    init(from profile: UserProfile) {
+    /// Inicializar desde UserProfileEntity
+    init(from profile: UserProfileEntity) {
         self.fullName = profile.fullName
         self.phone = profile.phone ?? ""
         self.city = profile.city ?? ""
@@ -41,13 +41,18 @@ struct EditableProfile {
         )
     }
     
-    /// Aplicar cambios a UserProfile
-    func applyTo(_ profile: UserProfile) {
-        profile.fullName = fullName
-        profile.phone = phone.isEmpty ? nil : phone
-        profile.city = city.isEmpty ? nil : city
-        profile.dateOfBirth = dateOfBirth
-        profile.gender = gender
-        profile.preferredCurrency = preferredCurrency
+    /// Aplicar cambios a UserProfileEntity y crear nueva instancia
+    func applyTo(_ profile: UserProfileEntity) -> UserProfileEntity {
+        UserProfileEntity(
+            userId: profile.userId,
+            fullName: fullName,
+            email: profile.email,
+            phone: phone.isEmpty ? nil : phone,
+            dateOfBirth: dateOfBirth,
+            gender: gender,
+            country: profile.country,
+            city: city.isEmpty ? nil : city,
+            preferredCurrency: preferredCurrency
+        )
     }
 }

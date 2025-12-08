@@ -14,8 +14,8 @@ import SwiftData
 protocol UserProfileRepositoryProtocol {
     func fetchProfile(userId: UUID) async throws -> UserProfileDTO
     func updateProfile(userId: UUID, profile: ProfileUpdateDTO) async throws
-    @MainActor func getLocalProfile() async throws -> UserProfile?
-    @MainActor func saveProfile(_ profile: UserProfile) async throws
+    @MainActor func getLocalProfile() async throws -> UserProfileEntity?
+    @MainActor func saveProfile(_ profile: UserProfileEntity) async throws
     @MainActor func deleteLocalProfile() async throws
 }
 
@@ -23,10 +23,11 @@ protocol UserProfileRepositoryProtocol {
 /// Can swap remoteStorage (Supabase → Firebase → AWS) and localStorage (SwiftData → SQLite → Realm)
 final class UserProfileRepository: UserProfileRepositoryProtocol {
     private let remoteStorage: any UserProfileRemoteStorage
-    private let localStorage: any UserProfileLocalStorage
+    @MainActor private let localStorage: any UserProfileLocalStorage
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "UserProfileRepository")
     
     /// Primary initializer with dependency injection
+    @MainActor
     init(remoteStorage: any UserProfileRemoteStorage, localStorage: any UserProfileLocalStorage) {
         self.remoteStorage = remoteStorage
         self.localStorage = localStorage
@@ -86,14 +87,15 @@ final class UserProfileRepository: UserProfileRepositoryProtocol {
     // MARK: - Local Operations (delegates to localStorage adapter)
     
     @MainActor
-    func getLocalProfile() async throws -> UserProfile? {
+    func getLocalProfile() async throws -> UserProfileEntity? {
         logger.debug("📱 Fetching local profile")
         let profiles = try await localStorage.fetchAll()
-        return profiles.first
+        // Map from SwiftData model to Sendable entity
+        return profiles.first.map { UserProfileEntity(from: $0) }
     }
     
     @MainActor
-    func saveProfile(_ profile: UserProfile) async throws {
+    func saveProfile(_ profile: UserProfileEntity) async throws {
         logger.debug("💾 Saving profile locally")
         
         // Delete old profile if exists (single profile per user)
@@ -102,8 +104,9 @@ final class UserProfileRepository: UserProfileRepositoryProtocol {
             try await localStorage.deleteAll(existingProfiles)
         }
         
-        // Save new profile
-        try await localStorage.save(profile)
+        // Map from Sendable entity to SwiftData model
+        let profileModel = profile.toModel()
+        try await localStorage.save(profileModel)
         logger.info("✅ Profile saved to local storage")
     }
     
