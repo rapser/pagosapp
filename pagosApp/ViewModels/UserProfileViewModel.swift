@@ -38,7 +38,7 @@ struct ProfileUpdateDTO: Encodable {
 @MainActor
 @Observable
 final class UserProfileViewModel {
-    var profile: UserProfile?
+    var profile: UserProfileEntity?
     var isLoading = false
     var errorMessage: String?
     var isSaving = false
@@ -93,13 +93,23 @@ final class UserProfileViewModel {
             // Fetch from remote
             let profileDTO = try await repository.fetchProfile(userId: userId)
             
-            // Convert DTO to Model
-            let profileModel = profileDTO.toModel()
+            // Convert DTO to Domain Entity (Sendable)
+            let profileEntity = UserProfileEntity(
+                userId: profileDTO.userId,
+                fullName: profileDTO.fullName,
+                email: profileDTO.email,
+                phone: profileDTO.phone,
+                dateOfBirth: profileDTO.dateOfBirth,
+                gender: profileDTO.gender.flatMap { UserProfileEntity.Gender(rawValue: $0) },
+                country: profileDTO.country,
+                city: profileDTO.city,
+                preferredCurrency: Currency(rawValue: profileDTO.preferredCurrency) ?? .pen
+            )
             
             // Save to local storage
-            try await repository.saveProfile(profileModel)
+            try await repository.saveProfile(profileEntity)
             
-            profile = profileModel
+            profile = profileEntity
             logger.info("✅ Profile fetched and saved to local storage")
             
             isLoading = false
@@ -142,9 +152,12 @@ final class UserProfileViewModel {
             // Update in Supabase
             try await repository.updateProfile(userId: currentProfile.userId, profile: updateData)
             
-            // Apply changes to local profile
-            editableProfile.applyTo(currentProfile)
-            try await repository.saveProfile(currentProfile)
+            // Apply changes to create updated entity
+            let updatedProfile = editableProfile.applyTo(currentProfile)
+            try await repository.saveProfile(updatedProfile)
+            
+            // Update local state
+            profile = updatedProfile
             
             logger.info("✅ Profile updated in Supabase and local storage")
             isSaving = false

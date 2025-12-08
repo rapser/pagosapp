@@ -8,6 +8,10 @@
 import Foundation
 import SwiftData
 
+/// SwiftData model for user profile persistence
+/// SwiftData manages thread-safety internally through ModelContext.
+/// All access must go through ModelContext on @MainActor.
+/// For thread-safe operations, use UserProfileEntity instead.
 @Model
 final class UserProfile {
     @Attribute(.unique) var userId: UUID

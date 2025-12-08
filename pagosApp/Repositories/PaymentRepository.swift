@@ -19,24 +19,25 @@ protocol PaymentRepositoryProtocol {
     func deletePayment(paymentId: UUID) async throws
     func deletePayments(paymentIds: [UUID]) async throws
     
-    // Local operations (@MainActor - SwiftData requires main thread)
-    @MainActor func getAllLocalPayments() async throws -> [Payment]
-    @MainActor func getLocalPayment(id: UUID) async throws -> Payment?
-    @MainActor func savePayment(_ payment: Payment) async throws
-    @MainActor func savePayments(_ payments: [Payment]) async throws
-    @MainActor func deleteLocalPayment(_ payment: Payment) async throws
-    @MainActor func deleteLocalPayments(_ payments: [Payment]) async throws
-    @MainActor func clearAllLocalPayments() async throws
+    // Local operations (returns Sendable entities, @MainActor internally for SwiftData)
+    func getAllLocalPayments() async throws -> [PaymentEntity]
+    func getLocalPayment(id: UUID) async throws -> PaymentEntity?
+    func savePayment(_ payment: PaymentEntity) async throws
+    func savePayments(_ payments: [PaymentEntity]) async throws
+    func deleteLocalPayment(id: UUID) async throws
+    func deleteLocalPayments(ids: [UUID]) async throws
+    func clearAllLocalPayments() async throws
 }
 
 /// PaymentRepository using Storage Adapters (Strategy Pattern)
 /// Can swap remoteStorage (Supabase → Firebase → AWS) and localStorage (SwiftData → SQLite → Realm)
 final class PaymentRepository: PaymentRepositoryProtocol {
     private let remoteStorage: any PaymentRemoteStorage
-    private let localStorage: any PaymentLocalStorage
+    @MainActor private let localStorage: any PaymentLocalStorage
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentRepository")
     
     /// Primary initializer with dependency injection
+    @MainActor
     init(remoteStorage: any PaymentRemoteStorage, localStorage: any PaymentLocalStorage) {
         self.remoteStorage = remoteStorage
         self.localStorage = localStorage
@@ -95,49 +96,70 @@ final class PaymentRepository: PaymentRepositoryProtocol {
         logger.info("✅ \(paymentIds.count) payments deleted")
     }
     
-    // MARK: - Local Operations (delegates to localStorage adapter)
+    // MARK: - Local Operations (delegates to localStorage adapter, returns Sendable entities)
     
-    @MainActor
-    func getAllLocalPayments() async throws -> [Payment] {
+    func getAllLocalPayments() async throws -> [PaymentEntity] {
         logger.debug("📱 Fetching all local payments")
-        return try await localStorage.fetchAll()
+        return try await withMainActor {
+            let payments = try await localStorage.fetchAll()
+            return payments.toEntities()
+        }
     }
     
-    @MainActor
-    func getLocalPayment(id: UUID) async throws -> Payment? {
+    func getLocalPayment(id: UUID) async throws -> PaymentEntity? {
         logger.debug("📱 Fetching local payment: \(id)")
-        // Fetch all and filter in memory (for simple queries this is efficient enough)
-        let allPayments = try await localStorage.fetchAll()
-        return allPayments.first(where: { $0.id == id })
+        return try await withMainActor {
+            let allPayments = try await localStorage.fetchAll()
+            return allPayments.first(where: { $0.id == id }).map { PaymentEntity(from: $0) }
+        }
     }
     
-    @MainActor
-    func savePayment(_ payment: Payment) async throws {
+    func savePayment(_ payment: PaymentEntity) async throws {
         logger.debug("💾 Saving payment locally: \(payment.name)")
-        try await localStorage.save(payment)
+        try await withMainActor {
+            let model = payment.toModel()
+            try await localStorage.save(model)
+        }
     }
     
-    @MainActor
-    func savePayments(_ payments: [Payment]) async throws {
+    func savePayments(_ payments: [PaymentEntity]) async throws {
         logger.debug("💾 Saving \(payments.count) payments locally")
-        try await localStorage.saveAll(payments)
+        try await withMainActor {
+            let models = payments.toModels()
+            try await localStorage.saveAll(models)
+        }
     }
     
-    @MainActor
-    func deleteLocalPayment(_ payment: Payment) async throws {
-        logger.debug("🗑️ Deleting local payment: \(payment.name)")
-        try await localStorage.delete(payment)
+    func deleteLocalPayment(id: UUID) async throws {
+        logger.debug("🗑️ Deleting local payment: \(id)")
+        try await withMainActor {
+            let allPayments = try await localStorage.fetchAll()
+            if let payment = allPayments.first(where: { $0.id == id }) {
+                try await localStorage.delete(payment)
+            }
+        }
     }
     
-    @MainActor
-    func deleteLocalPayments(_ payments: [Payment]) async throws {
-        logger.debug("🗑️ Deleting \(payments.count) local payments")
-        try await localStorage.deleteAll(payments)
+    func deleteLocalPayments(ids: [UUID]) async throws {
+        logger.debug("🗑️ Deleting \(ids.count) local payments")
+        try await withMainActor {
+            let allPayments = try await localStorage.fetchAll()
+            let paymentsToDelete = allPayments.filter { ids.contains($0.id) }
+            try await localStorage.deleteAll(paymentsToDelete)
+        }
     }
     
-    @MainActor
     func clearAllLocalPayments() async throws {
         logger.info("🗑️ Clearing all local payments")
-        try await localStorage.clear()
+        try await withMainActor {
+            try await localStorage.clear()
+        }
+    }
+    
+    // MARK: - Helper for MainActor isolation
+    
+    @MainActor
+    private func withMainActor<T>(_ operation: @MainActor () async throws -> T) async rethrows -> T {
+        return try await operation()
     }
 }

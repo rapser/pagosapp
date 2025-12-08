@@ -51,11 +51,11 @@ enum SyncStatus: String, Codable {
 }
 
 /// SwiftData model representing a payment
-/// @unchecked Sendable: SwiftData @Model classes must be classes (not structs) and SwiftData
-/// manages thread-safety internally through ModelContext. All access should go through ModelContext.
-/// Direct property mutation outside ModelContext is prohibited.
+/// SwiftData manages thread-safety internally through ModelContext.
+/// All access must go through ModelContext on @MainActor.
+/// For thread-safe operations, use PaymentEntity instead.
 @Model
-final class Payment: @unchecked Sendable {
+final class Payment {
     // Usamos un UUID para identificar de forma única cada pago, útil para notificaciones.
     @Attribute(.unique) var id: UUID
     var name: String

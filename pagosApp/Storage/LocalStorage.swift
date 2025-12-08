@@ -16,8 +16,8 @@ protocol LocalStorage {
     /// Fetch all entities
     func fetchAll() async throws -> [Entity]
     
-    /// Fetch entities matching a predicate
-    func fetch(where predicate: NSPredicate?) async throws -> [Entity]
+    /// Fetch entities matching a Swift closure (modern approach)
+    func fetch(where predicate: @Sendable (Entity) -> Bool) async throws -> [Entity]
     
     /// Save a single entity
     func save(_ entity: Entity) async throws
@@ -45,6 +45,8 @@ protocol LocalStorable {
 }
 
 /// Specific protocol for Payment local storage
+/// @MainActor required because Payment is SwiftData @Model
+@MainActor
 protocol PaymentLocalStorage: LocalStorage where Entity == Payment {
     /// Fetch payments by user ID (business logic specific)
     func fetchByUser(_ userId: UUID) async throws -> [Payment]
@@ -57,6 +59,8 @@ protocol PaymentLocalStorage: LocalStorage where Entity == Payment {
 }
 
 /// Specific protocol for UserProfile local storage
+/// @MainActor required because UserProfile is SwiftData @Model
+@MainActor
 protocol UserProfileLocalStorage: LocalStorage where Entity == UserProfile {
     /// Fetch profile by user ID
     func fetchByUserId(_ userId: UUID) async throws -> UserProfile?

@@ -9,9 +9,9 @@ import SwiftUI
 
 struct GenderPickerRow: View {
     let isEditing: Bool
-    @Binding var selectedGender: UserProfile.Gender?
+    @Binding var selectedGender: UserProfileEntity.Gender?
     
-    private var genderBinding: Binding<UserProfile.Gender> {
+    private var genderBinding: Binding<UserProfileEntity.Gender> {
         Binding(
             get: { selectedGender ?? .masculino },
             set: { selectedGender = $0 }
@@ -26,7 +26,7 @@ struct GenderPickerRow: View {
             
             if isEditing {
                 Picker("Género", selection: genderBinding) {
-                    ForEach(UserProfile.Gender.allCases, id: \.self) { gender in
+                    ForEach(UserProfileEntity.Gender.allCases, id: \.self) { gender in
                         Text(gender.displayName).tag(gender)
                     }
                 }
