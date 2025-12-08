@@ -10,20 +10,48 @@ import Foundation
 import SwiftData
 import OSLog
 
-/// Adapter to use SwiftData as LocalStorage implementation
-/// This can be swapped with SQLite, Realm, CoreData implementations
-/// @MainActor required because ModelContext must be accessed on main thread
-class SwiftDataStorageAdapter<Entity: PersistentModel>: LocalStorage {
+/// Actor-isolated wrapper for ModelContext
+/// This ensures all ModelContext operations happen on MainActor without forcing the entire adapter class
+@MainActor
+final class ModelContextExecutor {
     private let modelContext: ModelContext
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "SwiftDataStorage")
     
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
     }
     
+    func fetch<Entity: PersistentModel>(_ descriptor: FetchDescriptor<Entity>) throws -> [Entity] {
+        try modelContext.fetch(descriptor)
+    }
+    
+    func insert<Entity: PersistentModel>(_ entity: Entity) {
+        modelContext.insert(entity)
+    }
+    
+    func delete<Entity: PersistentModel>(_ entity: Entity) {
+        modelContext.delete(entity)
+    }
+    
+    func save() throws {
+        try modelContext.save()
+    }
+}
+
+/// Adapter to use SwiftData as LocalStorage implementation
+/// This can be swapped with SQLite, Realm, CoreData implementations
+/// Uses ModelContextExecutor for actor-isolated access to ModelContext
+class SwiftDataStorageAdapter<Entity: PersistentModel>: LocalStorage {
+    private let executor: ModelContextExecutor
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "SwiftDataStorage")
+    
+    @MainActor
+    init(modelContext: ModelContext) {
+        self.executor = ModelContextExecutor(modelContext: modelContext)
+    }
+    
     func fetchAll() async throws -> [Entity] {
         let descriptor = FetchDescriptor<Entity>()
-        return try modelContext.fetch(descriptor)
+        return try await executor.fetch(descriptor)
     }
     
     func fetch(where predicate: @Sendable (Entity) -> Bool) async throws -> [Entity] {
@@ -33,30 +61,30 @@ class SwiftDataStorageAdapter<Entity: PersistentModel>: LocalStorage {
     }
     
     func save(_ entity: Entity) async throws {
-        modelContext.insert(entity)
-        try modelContext.save()
+        await executor.insert(entity)
+        try await executor.save()
         logger.debug("✅ Entity saved to SwiftData")
     }
     
     func saveAll(_ entities: [Entity]) async throws {
         for entity in entities {
-            modelContext.insert(entity)
+            await executor.insert(entity)
         }
-        try modelContext.save()
+        try await executor.save()
         logger.debug("✅ \(entities.count) entities saved to SwiftData")
     }
     
     func delete(_ entity: Entity) async throws {
-        modelContext.delete(entity)
-        try modelContext.save()
+        await executor.delete(entity)
+        try await executor.save()
         logger.debug("✅ Entity deleted from SwiftData")
     }
     
     func deleteAll(_ entities: [Entity]) async throws {
         for entity in entities {
-            modelContext.delete(entity)
+            await executor.delete(entity)
         }
-        try modelContext.save()
+        try await executor.save()
         logger.debug("✅ \(entities.count) entities deleted from SwiftData")
     }
     
