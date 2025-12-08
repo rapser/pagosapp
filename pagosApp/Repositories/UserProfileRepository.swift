@@ -14,20 +14,19 @@ import SwiftData
 protocol UserProfileRepositoryProtocol {
     func fetchProfile(userId: UUID) async throws -> UserProfileDTO
     func updateProfile(userId: UUID, profile: ProfileUpdateDTO) async throws
-    @MainActor func getLocalProfile() async throws -> UserProfileEntity?
-    @MainActor func saveProfile(_ profile: UserProfileEntity) async throws
-    @MainActor func deleteLocalProfile() async throws
+    func getLocalProfile() async throws -> UserProfileEntity?
+    func saveProfile(_ profile: UserProfileEntity) async throws
+    func deleteLocalProfile() async throws
 }
 
 /// UserProfileRepository using Storage Adapters (Strategy Pattern)
 /// Can swap remoteStorage (Supabase → Firebase → AWS) and localStorage (SwiftData → SQLite → Realm)
 final class UserProfileRepository: UserProfileRepositoryProtocol {
     private let remoteStorage: any UserProfileRemoteStorage
-    @MainActor private let localStorage: any UserProfileLocalStorage
+    private let localStorage: any UserProfileLocalStorage
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "UserProfileRepository")
     
     /// Primary initializer with dependency injection
-    @MainActor
     init(remoteStorage: any UserProfileRemoteStorage, localStorage: any UserProfileLocalStorage) {
         self.remoteStorage = remoteStorage
         self.localStorage = localStorage
@@ -35,7 +34,6 @@ final class UserProfileRepository: UserProfileRepositoryProtocol {
     }
     
     /// Convenience initializer for current setup (Supabase + SwiftData)
-    /// @MainActor required because SwiftDataStorageAdapter requires main actor
     @MainActor
     convenience init(supabaseClient: SupabaseClient, modelContext: ModelContext) {
         let remoteStorage = UserProfileSupabaseStorage(client: supabaseClient)
@@ -86,18 +84,30 @@ final class UserProfileRepository: UserProfileRepositoryProtocol {
     
     // MARK: - Local Operations (delegates to localStorage adapter)
     
-    @MainActor
     func getLocalProfile() async throws -> UserProfileEntity? {
         logger.debug("📱 Fetching local profile")
+        return try await _getLocalProfile()
+    }
+    
+    func saveProfile(_ profile: UserProfileEntity) async throws {
+        logger.debug("💾 Saving profile locally")
+        try await _saveProfile(profile)
+    }
+    
+    func deleteLocalProfile() async throws {
+        logger.info("🗑️ Deleting local profile")
+        try await _deleteLocalProfile()
+    }
+    
+    // MARK: - Private @MainActor methods for SwiftData operations
+    
+    private func _getLocalProfile() async throws -> UserProfileEntity? {
         let profiles = try await localStorage.fetchAll()
         // Map from SwiftData model to Sendable entity
         return profiles.first.map { UserProfileEntity(from: $0) }
     }
     
-    @MainActor
-    func saveProfile(_ profile: UserProfileEntity) async throws {
-        logger.debug("💾 Saving profile locally")
-        
+    private func _saveProfile(_ profile: UserProfileEntity) async throws {
         // Delete old profile if exists (single profile per user)
         let existingProfiles = try await localStorage.fetchAll()
         if !existingProfiles.isEmpty {
@@ -111,8 +121,7 @@ final class UserProfileRepository: UserProfileRepositoryProtocol {
     }
     
     @MainActor
-    func deleteLocalProfile() async throws {
-        logger.info("🗑️ Deleting local profile")
+    private func _deleteLocalProfile() async throws {
         try await localStorage.clear()
         logger.info("✅ Local profile deleted")
     }

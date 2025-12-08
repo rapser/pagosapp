@@ -45,8 +45,6 @@ protocol LocalStorable {
 }
 
 /// Specific protocol for Payment local storage
-/// @MainActor required because Payment is SwiftData @Model
-@MainActor
 protocol PaymentLocalStorage: LocalStorage where Entity == Payment {
     /// Fetch payments by user ID (business logic specific)
     func fetchByUser(_ userId: UUID) async throws -> [Payment]
@@ -59,8 +57,6 @@ protocol PaymentLocalStorage: LocalStorage where Entity == Payment {
 }
 
 /// Specific protocol for UserProfile local storage
-/// @MainActor required because UserProfile is SwiftData @Model
-@MainActor
 protocol UserProfileLocalStorage: LocalStorage where Entity == UserProfile {
     /// Fetch profile by user ID
     func fetchByUserId(_ userId: UUID) async throws -> UserProfile?
