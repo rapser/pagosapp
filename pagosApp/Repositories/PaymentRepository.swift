@@ -33,11 +33,10 @@ protocol PaymentRepositoryProtocol {
 /// Can swap remoteStorage (Supabase → Firebase → AWS) and localStorage (SwiftData → SQLite → Realm)
 final class PaymentRepository: PaymentRepositoryProtocol {
     private let remoteStorage: any PaymentRemoteStorage
-    @MainActor private let localStorage: any PaymentLocalStorage
+    private let localStorage: any PaymentLocalStorage
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentRepository")
     
     /// Primary initializer with dependency injection
-    @MainActor
     init(remoteStorage: any PaymentRemoteStorage, localStorage: any PaymentLocalStorage) {
         self.remoteStorage = remoteStorage
         self.localStorage = localStorage
@@ -45,7 +44,6 @@ final class PaymentRepository: PaymentRepositoryProtocol {
     }
     
     /// Convenience initializer for current setup (Supabase + SwiftData)
-    /// @MainActor required because SwiftDataStorageAdapter requires main actor
     @MainActor
     convenience init(supabaseClient: SupabaseClient, modelContext: ModelContext) {
         let remoteStorage = PaymentSupabaseStorage(client: supabaseClient)
@@ -100,66 +98,78 @@ final class PaymentRepository: PaymentRepositoryProtocol {
     
     func getAllLocalPayments() async throws -> [PaymentEntity] {
         logger.debug("📱 Fetching all local payments")
-        return try await withMainActor {
-            let payments = try await localStorage.fetchAll()
-            return payments.toEntities()
-        }
+        return try await _getAllLocalPayments()
     }
     
     func getLocalPayment(id: UUID) async throws -> PaymentEntity? {
         logger.debug("📱 Fetching local payment: \(id)")
-        return try await withMainActor {
-            let allPayments = try await localStorage.fetchAll()
-            return allPayments.first(where: { $0.id == id }).map { PaymentEntity(from: $0) }
-        }
+        return try await _getLocalPayment(id: id)
     }
     
     func savePayment(_ payment: PaymentEntity) async throws {
         logger.debug("💾 Saving payment locally: \(payment.name)")
-        try await withMainActor {
-            let model = payment.toModel()
-            try await localStorage.save(model)
-        }
+        try await _savePayment(payment)
     }
     
     func savePayments(_ payments: [PaymentEntity]) async throws {
         logger.debug("💾 Saving \(payments.count) payments locally")
-        try await withMainActor {
-            let models = payments.toModels()
-            try await localStorage.saveAll(models)
-        }
+        try await _savePayments(payments)
     }
     
     func deleteLocalPayment(id: UUID) async throws {
         logger.debug("🗑️ Deleting local payment: \(id)")
-        try await withMainActor {
-            let allPayments = try await localStorage.fetchAll()
-            if let payment = allPayments.first(where: { $0.id == id }) {
-                try await localStorage.delete(payment)
-            }
-        }
+        try await _deleteLocalPayment(id: id)
     }
     
     func deleteLocalPayments(ids: [UUID]) async throws {
         logger.debug("🗑️ Deleting \(ids.count) local payments")
-        try await withMainActor {
-            let allPayments = try await localStorage.fetchAll()
-            let paymentsToDelete = allPayments.filter { ids.contains($0.id) }
-            try await localStorage.deleteAll(paymentsToDelete)
-        }
+        try await _deleteLocalPayments(ids: ids)
     }
     
     func clearAllLocalPayments() async throws {
         logger.info("🗑️ Clearing all local payments")
-        try await withMainActor {
-            try await localStorage.clear()
+        try await _clearAllLocalPayments()
+    }
+    
+    // MARK: - Private @MainActor methods for SwiftData operations
+    
+    private func _getAllLocalPayments() async throws -> [PaymentEntity] {
+        let payments = try await localStorage.fetchAll()
+        return payments.toEntities()
+    }
+    
+    private func _getLocalPayment(id: UUID) async throws -> PaymentEntity? {
+        let allPayments = try await localStorage.fetchAll()
+        return allPayments.first(where: { $0.id == id }).map { PaymentEntity(from: $0) }
+    }
+    
+    @MainActor
+    private func _savePayment(_ payment: PaymentEntity) async throws {
+        let model = payment.toModel()
+        try await localStorage.save(model)
+    }
+    
+    @MainActor
+    private func _savePayments(_ payments: [PaymentEntity]) async throws {
+        let models = payments.toModels()
+        try await localStorage.saveAll(models)
+    }
+    
+    private func _deleteLocalPayment(id: UUID) async throws {
+        let allPayments = try await localStorage.fetchAll()
+        if let payment = allPayments.first(where: { $0.id == id }) {
+            try await localStorage.delete(payment)
         }
     }
     
-    // MARK: - Helper for MainActor isolation
+    private func _deleteLocalPayments(ids: [UUID]) async throws {
+        let allPayments = try await localStorage.fetchAll()
+        let paymentsToDelete = allPayments.filter { ids.contains($0.id) }
+        try await localStorage.deleteAll(paymentsToDelete)
+    }
     
     @MainActor
-    private func withMainActor<T>(_ operation: @MainActor () async throws -> T) async rethrows -> T {
-        return try await operation()
+    private func _clearAllLocalPayments() async throws {
+        try await localStorage.clear()
     }
 }
