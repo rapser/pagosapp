@@ -3,36 +3,64 @@
 //  pagosApp
 //
 //  Manages synchronization between local SwiftData and Supabase backend
+//  Modern iOS 18+ using @Observable macro
 //
 
 import Foundation
 import SwiftData
+import Observation
 import OSLog
 
 @MainActor
-class PaymentSyncManager: ObservableObject {
+@Observable
+final class PaymentSyncManager {
     static let shared = PaymentSyncManager()
-
-    private let syncService: PaymentSyncService
+    
+    private var syncService: PaymentSyncService?
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentSyncManager")
     private let errorHandler = ErrorHandler.shared
 
-    @Published var isSyncing = false
-    @Published var lastSyncDate: Date?
-    @Published var pendingSyncCount = 0
-    @Published var syncError: Error?
+    var isSyncing = false
+    var lastSyncDate: Date?
+    var pendingSyncCount = 0
+    var syncError: Error?
 
     private let lastSyncKey = "lastPaymentSyncDate"
 
-    init(syncService: PaymentSyncService = SupabasePaymentSyncService(client: supabaseClient)) {
-        self.syncService = syncService
+    private init() {
         self.lastSyncDate = UserDefaults.standard.object(forKey: lastSyncKey) as? Date
+    }
+    
+    /// Initialize with modelContext (call once at app startup)
+    func configure(with modelContext: ModelContext) {
+        guard syncService == nil else { return } // Only configure once
+        let repository = PaymentRepository(supabaseClient: supabaseClient, modelContext: modelContext)
+        self.syncService = DefaultPaymentSyncService(repository: repository)
+        logger.info("✅ PaymentSyncManager configured with repository")
+    }
+    
+    private func ensureConfigured() {
+        guard syncService != nil else {
+            logger.error("❌ PaymentSyncManager not configured! Call configure(with:) first")
+            fatalError("PaymentSyncManager must be configured with modelContext before use")
+        }
+    }
+    
+    /// Get current user ID from Supabase auth
+    private func getCurrentUserId() throws -> UUID {
+        guard let userId = supabaseClient.auth.currentUser?.id else {
+            throw PaymentSyncError.notAuthenticated
+        }
+        return userId
     }
 
     /// Sync a single payment to server
-    func syncPayment(_ payment: Payment) async {
+    func syncPayment(_ payment: Payment, userId: UUID) async {
+        ensureConfigured()
+        guard let service = syncService else { return }
+        
         do {
-            try await syncService.syncPayment(payment)
+            try await service.syncPayment(payment, userId: userId)
             logger.info("✅ Payment synced: \(payment.name)")
         } catch {
             logger.error("❌ Failed to sync payment: \(error.localizedDescription)")
@@ -42,8 +70,11 @@ class PaymentSyncManager: ObservableObject {
 
     /// Sync payment deletion to server
     func syncDeletePayment(_ paymentId: UUID) async {
+        ensureConfigured()
+        guard let service = syncService else { return }
+        
         do {
-            try await syncService.syncDeletePayment(paymentId)
+            try await service.syncDeletePayment(paymentId)
             logger.info("✅ Payment deletion synced: \(paymentId)")
         } catch {
             logger.error("❌ Failed to sync payment deletion: \(error.localizedDescription)")
@@ -59,6 +90,14 @@ class PaymentSyncManager: ObservableObject {
             
             pendingSyncCount = pendingPayments.count
             logger.info("📊 Pending sync count updated: \(self.pendingSyncCount) payments")
+            
+            // Log details for debugging
+            if pendingSyncCount > 0 {
+                logger.info("⚠️ Payments pending sync breakdown:")
+                for payment in pendingPayments {
+                    logger.info("  - \(payment.name): status=\(payment.syncStatus.rawValue)")
+                }
+            }
         } catch {
             logger.error("❌ Failed to update pending sync count: \(error.localizedDescription)")
             // Don't reset to 0 - keep the last known value to avoid hiding pending items
@@ -195,6 +234,7 @@ class PaymentSyncManager: ObservableObject {
         }
 
         isSyncing = true
+        // Clear previous errors at the start
         syncError = nil
         defer { isSyncing = false }
 
@@ -207,12 +247,15 @@ class PaymentSyncManager: ObservableObject {
             // 2. Download remote changes
             try await downloadRemoteChanges(modelContext: modelContext)
 
-            // 4. Update counters and state
+            // 3. Update counters and state
             updatePendingSyncCount(modelContext: modelContext)
             lastSyncDate = Date()
             UserDefaults.standard.set(lastSyncDate, forKey: lastSyncKey)
 
-            // Notify that sync completed so views can refresh
+            // 4. Clear any previous errors since sync completed successfully
+            syncError = nil
+
+            // 5. Notify that sync completed so views can refresh
             NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
 
             logger.info("✅ Manual sync completed successfully")
@@ -264,33 +307,64 @@ class PaymentSyncManager: ObservableObject {
         for payment in paymentsToSync {
             payment.syncStatus = .syncing
         }
-        try modelContext.save()
+        
+        do {
+            try modelContext.save()
+        } catch {
+            logger.error("❌ Failed to save 'syncing' status: \(error.localizedDescription)")
+            // Continue anyway - we'll try to sync even if we can't persist the status
+        }
 
         // Upload to server
         do {
-            try await syncService.syncAllLocalPayments(paymentsToSync)
+            ensureConfigured()
+            guard let service = syncService else { return }
+            let userId = try getCurrentUserId()
+            
+            try await service.syncAllLocalPayments(paymentsToSync, userId: userId)
 
             // Mark as synced
             for payment in paymentsToSync {
                 payment.syncStatus = .synced
                 payment.lastSyncedAt = Date()
             }
-            try modelContext.save()
-
-            logger.info("✅ Uploaded \(paymentsToSync.count) payments successfully")
+            
+            do {
+                try modelContext.save()
+                logger.info("✅ Uploaded \(paymentsToSync.count) payments successfully")
+            } catch {
+                logger.error("❌ Failed to save 'synced' status: \(error.localizedDescription)")
+                // This is critical - if we can't save synced status, revert to previous state
+                for payment in paymentsToSync {
+                    payment.syncStatus = .modified
+                }
+                throw error
+            }
         } catch {
             // Mark as error
+            logger.error("❌ Upload failed, marking payments as error: \(error.localizedDescription)")
             for payment in paymentsToSync {
                 payment.syncStatus = .error
             }
-            try? modelContext.save()
+            
+            do {
+                try modelContext.save()
+            } catch let saveError {
+                logger.error("❌ CRITICAL: Failed to save 'error' status: \(saveError.localizedDescription)")
+                // If we can't even save error status, database might be corrupted
+            }
+            
             throw error
         }
     }
 
     /// Download and merge remote changes
     private func downloadRemoteChanges(modelContext: ModelContext) async throws {
-        let remoteDTOs = try await syncService.fetchAllPayments()
+        ensureConfigured()
+        guard let service = syncService else { return }
+        let userId = try getCurrentUserId()
+        
+        let remoteDTOs = try await service.fetchAllPayments(userId: userId)
         logger.info("Fetched \(remoteDTOs.count) payments from server")
 
         try await mergeRemotePayments(remoteDTOs, into: modelContext)
@@ -309,6 +383,7 @@ class PaymentSyncManager: ObservableObject {
                     // Update local payment with remote data
                     existingPayment.name = dto.name
                     existingPayment.amount = dto.amount
+                    existingPayment.currency = Currency(rawValue: dto.currency) ?? .pen
                     existingPayment.dueDate = dto.dueDate
                     existingPayment.isPaid = dto.isPaid
                     existingPayment.category = PaymentCategory(rawValue: dto.category) ?? .otro
@@ -337,27 +412,5 @@ class PaymentSyncManager: ObservableObject {
             errorHandler.handle(PaymentError.saveFailed(error))
             throw error
         }
-    }
-
-    // MARK: - Deprecated Methods
-
-    /// Deprecated: Use performManualSync instead
-    @available(*, deprecated, message: "Use performManualSync for offline-first behavior")
-    func performFullSync(modelContext: ModelContext, isAuthenticated: Bool = false) async {
-        do {
-            try await performManualSync(modelContext: modelContext, isAuthenticated: isAuthenticated)
-        } catch {
-            logger.error("❌ Full sync failed: \(error.localizedDescription)")
-            errorHandler.handle(error)
-        }
-    }
-
-    /// Auto-sync on app launch or login - DISABLED for offline-first mode
-    /// User must manually sync from Settings
-    @available(*, deprecated, message: "Auto-sync disabled for offline-first behavior. Use manual sync from Settings.")
-    func autoSyncIfNeeded(modelContext: ModelContext) async {
-        logger.info("⚠️ Auto-sync is disabled. User must manually sync from Settings.")
-        // Update pending count so user knows to sync
-        updatePendingSyncCount(modelContext: modelContext)
     }
 }

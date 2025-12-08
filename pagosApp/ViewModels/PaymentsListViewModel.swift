@@ -3,22 +3,24 @@
 //  pagosApp
 //
 //  ViewModel for PaymentsListView following MVVM architecture
+//  Modern iOS 18+ using @Observable macro
 //
 
 import Foundation
 import SwiftUI
 import SwiftData
-import Combine
+import Observation
 import OSLog
 
 @MainActor
-class PaymentsListViewModel: ObservableObject {
-    // MARK: - Published Properties
+@Observable
+final class PaymentsListViewModel {
+    // MARK: - Observable Properties (no @Published needed)
 
-    @Published var payments: [Payment] = []
-    @Published var selectedFilter: PaymentFilter = .currentMonth
-    @Published var isLoading = false
-    @Published var error: Error?
+    var payments: [Payment] = []
+    var selectedFilter: PaymentFilter = .currentMonth
+    var isLoading = false
+    var error: Error?
 
     // MARK: - Dependencies (DIP: depend on abstractions)
 
@@ -26,7 +28,6 @@ class PaymentsListViewModel: ObservableObject {
     private let paymentOperations: PaymentOperationsService
     private let syncService: PaymentSyncService
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentsListViewModel")
-    private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Computed Properties
 
@@ -58,21 +59,23 @@ class PaymentsListViewModel: ObservableObject {
         self.modelContext = modelContext
         self.paymentOperations = paymentOperations
         self.syncService = syncService
+        self.isLoading = true // Start with loading state
         fetchPayments()
         setupNotificationObserver()
     }
 
     private func setupNotificationObserver() {
-        NotificationCenter.default.publisher(for: NSNotification.Name("PaymentsDidSync"))
-            .sink { [weak self] _ in
-                self?.fetchPayments()
+        Task { @MainActor in
+            for await _ in NotificationCenter.default.notifications(named: NSNotification.Name("PaymentsDidSync")) {
+                fetchPayments()
             }
-            .store(in: &cancellables)
+        }
     }
 
     /// Convenience initializer with default dependencies
     convenience init(modelContext: ModelContext) {
-        let syncService = SupabasePaymentSyncService(client: supabaseClient)
+        let repository = PaymentRepository(supabaseClient: supabaseClient, modelContext: modelContext)
+        let syncService = DefaultPaymentSyncService(repository: repository)
         let notificationService = NotificationManagerAdapter()
         let calendarService = EventKitManagerAdapter()
         let paymentOperations = DefaultPaymentOperationsService(
@@ -93,6 +96,10 @@ class PaymentsListViewModel: ObservableObject {
 
     /// Fetch all payments from local database
     func fetchPayments() {
+        defer {
+            isLoading = false
+        }
+        
         do {
             let descriptor = FetchDescriptor<Payment>(sortBy: [SortDescriptor(\.dueDate, order: .forward)])
             payments = try modelContext.fetch(descriptor)
@@ -139,15 +146,6 @@ class PaymentsListViewModel: ObservableObject {
                 payment.isPaid.toggle() // Revert on error
             }
         }
-    }
-
-    /// Sync with server - DEPRECATED in Phase 2
-    /// Use PaymentSyncManager.performManualSync() from Settings instead
-    @available(*, deprecated, message: "Use PaymentSyncManager.performManualSync() from Settings for offline-first behavior")
-    func syncWithServer() async {
-        logger.warning("⚠️ syncWithServer() is deprecated. Use manual sync from Settings.")
-        // Just refresh local data
-        fetchPayments()
     }
 
     /// Refresh data

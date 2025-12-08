@@ -7,25 +7,21 @@
 
 import XCTest
 @testable import pagosApp
-import Combine
 
 @MainActor
 final class AuthenticationManagerTests: XCTestCase {
     var sut: AuthenticationManager!
     var mockAuthService: MockAuthenticationService!
-    var cancellables: Set<AnyCancellable>!
 
     override func setUp() async throws {
         try await super.setUp()
         mockAuthService = MockAuthenticationService()
         sut = AuthenticationManager(authService: mockAuthService)
-        cancellables = Set<AnyCancellable>()
     }
 
     override func tearDown() async throws {
         sut = nil
         mockAuthService = nil
-        cancellables = nil
         try await super.tearDown()
     }
 
@@ -86,20 +82,26 @@ final class AuthenticationManagerTests: XCTestCase {
         let email = "test@example.com"
         let password = "password123"
         mockAuthService.shouldSucceed = true
-        mockAuthService.delaySeconds = 0.5
-
-        var loadingStates: [Bool] = []
-        sut.$isLoading
-            .sink { isLoading in
-                loadingStates.append(isLoading)
-            }
-            .store(in: &cancellables)
+        mockAuthService.delaySeconds = 0.1
 
         // When
-        _ = await sut.login(email: email, password: password)
-
-        // Then
-        XCTAssertTrue(loadingStates.contains(true), "isLoading should be true during login")
+        XCTAssertFalse(sut.isLoading, "isLoading should be false initially")
+        
+        // Start login in background task
+        let loginTask = Task {
+            await sut.login(email: email, password: password)
+        }
+        
+        // Give a small delay to let login start
+        try await Task.sleep(nanoseconds: 10_000_000) // 0.01s
+        
+        // Then - during login
+        XCTAssertTrue(sut.isLoading, "isLoading should be true during login")
+        
+        // Wait for completion
+        _ = await loginTask.value
+        
+        // Then - after login
         XCTAssertFalse(sut.isLoading, "isLoading should be false after login")
     }
 
@@ -153,16 +155,16 @@ final class AuthenticationManagerTests: XCTestCase {
 
 // MARK: - Mock Authentication Service
 
-class MockAuthenticationService: AuthenticationService {
+final class MockAuthenticationService: AuthenticationService {
     var shouldSucceed = true
     var errorToThrow: AuthenticationError = .wrongCredentials
     var delaySeconds: TimeInterval = 0
     var isAuthenticatedValue = false
-
-    private let _isAuthenticatedSubject = CurrentValueSubject<Bool, Never>(false)
-
-    var isAuthenticatedPublisher: AnyPublisher<Bool, Never> {
-        _isAuthenticatedSubject.eraseToAnyPublisher()
+    
+    private let authContinuation = AsyncStream<Bool>.makeStream()
+    
+    var isAuthenticatedPublisher: AsyncStream<Bool> {
+        authContinuation.stream
     }
 
     var isAuthenticated: Bool {
@@ -176,7 +178,7 @@ class MockAuthenticationService: AuthenticationService {
 
         if shouldSucceed {
             isAuthenticatedValue = true
-            _isAuthenticatedSubject.send(true)
+            authContinuation.continuation.yield(true)
         } else {
             throw errorToThrow
         }
@@ -185,7 +187,7 @@ class MockAuthenticationService: AuthenticationService {
     func signOut() async throws {
         if shouldSucceed {
             isAuthenticatedValue = false
-            _isAuthenticatedSubject.send(false)
+            authContinuation.continuation.yield(false)
         } else {
             throw errorToThrow
         }
@@ -202,7 +204,7 @@ class MockAuthenticationService: AuthenticationService {
 
         if shouldSucceed {
             isAuthenticatedValue = true
-            _isAuthenticatedSubject.send(true)
+            authContinuation.continuation.yield(true)
         } else {
             throw errorToThrow
         }

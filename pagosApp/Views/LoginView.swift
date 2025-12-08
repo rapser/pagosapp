@@ -1,11 +1,12 @@
 import SwiftUI
 
 struct LoginView: View {
-    @EnvironmentObject private var passwordRecoveryUseCase: PasswordRecoveryUseCase
+    @Environment(PasswordRecoveryUseCase.self) private var passwordRecoveryUseCase
     @State private var email = ""
     @State private var password = ""
     @State private var errorMessage: String?
     @State private var showEmailPasswordLogin: Bool = false
+    @State private var isLoading = false
 
     var onLogin: (String, String) async -> AuthenticationError?
     var onBiometricLogin: () async -> Void
@@ -31,7 +32,11 @@ struct LoginView: View {
                         .foregroundColor(Color("AppTextPrimary"))
                         .padding(.top, 8)
 
-                    Button(action: { Task { await onBiometricLogin() } }) {
+                    Button(action: { 
+                        Task { 
+                            await onBiometricLogin()
+                        }
+                    }) {
                         HStack {
                             Image(systemName: "faceid")
                             Text("Ingresar con Face ID")
@@ -56,12 +61,14 @@ struct LoginView: View {
                         .padding()
                         .background(Color("AppBackground"))
                         .cornerRadius(10)
+                        .disabled(isLoading)
                     
                     SecureField("Contraseña", text: $password)
                         .textContentType(.password)
                         .padding()
                         .background(Color("AppBackground"))
                         .cornerRadius(10)
+                        .disabled(isLoading)
                     
                     if let errorMessage = errorMessage {
                         Text(errorMessage)
@@ -70,16 +77,28 @@ struct LoginView: View {
                     }
                     
                     Button(action: { 
-                        Task { errorMessage = await onLogin(email, password)?.localizedDescription }
+                        Task { 
+                            isLoading = true
+                            errorMessage = await onLogin(email, password)?.localizedDescription
+                            isLoading = false
+                        }
                     }) {
-                        Text("Iniciar Sesión")
-                            .font(.headline)
-                            .foregroundColor(.white) // Keeping white for text on primary button
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color("AppPrimary"))
-                            .cornerRadius(10)
+                        HStack {
+                            if isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(0.8)
+                            }
+                            Text(isLoading ? "Iniciando sesión..." : "Iniciar Sesión")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white) // Keeping white for text on primary button
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color("AppPrimary"))
+                        .cornerRadius(10)
                     }
+                    .disabled(isLoading)
                     
                     // Added Registration Link
                     NavigationLink(destination: RegistrationView()) {
@@ -88,6 +107,7 @@ struct LoginView: View {
                             .padding(.top)
                             .foregroundColor(Color("AppPrimary"))
                     }
+                    .disabled(isLoading)
                     
                     NavigationLink(destination: ForgotPasswordView(passwordRecoveryUseCase: passwordRecoveryUseCase)) {
                         Text("¿Olvidaste tu contraseña?")
@@ -95,11 +115,19 @@ struct LoginView: View {
                             .padding(.top, 5)
                             .foregroundColor(Color("AppTextSecondary"))
                     }
+                    .disabled(isLoading)
                 }
                 
                 Spacer()
             }
             .padding()
+            .overlay {
+                if isLoading {
+                    Color.black.opacity(0.1)
+                        .ignoresSafeArea()
+                        .allowsHitTesting(true)
+                }
+            }
             .onAppear {
                 // If biometrics are enabled, start with biometric login view
                 if isBiometricLoginEnabled {

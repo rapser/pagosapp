@@ -12,15 +12,15 @@ import OSLog
 
 /// Protocol for notification service (ISP + DIP)
 protocol NotificationService {
-    func scheduleNotifications(for payment: Payment)
-    func cancelNotifications(for payment: Payment)
+    func scheduleNotifications(for payment: Payment) async
+    func cancelNotifications(for payment: Payment) async
 }
 
 /// Protocol for calendar service (ISP + DIP)
 protocol CalendarService {
-    func addEvent(for payment: Payment, completion: @escaping (String?) -> Void)
-    func updateEvent(for payment: Payment)
-    func removeEvent(for payment: Payment)
+    func addEvent(for payment: Payment, completion: @escaping (String?) -> Void) async
+    func updateEvent(for payment: Payment) async
+    func removeEvent(for payment: Payment) async
 }
 
 /// Protocol for payment operations (ISP)
@@ -31,8 +31,7 @@ protocol PaymentOperationsService {
 }
 
 /// Default implementation coordinating all payment operations
-@MainActor
-class DefaultPaymentOperationsService: PaymentOperationsService {
+final class DefaultPaymentOperationsService: PaymentOperationsService {
     private let modelContext: ModelContext
     private let syncService: PaymentSyncService
     private let notificationService: NotificationService
@@ -60,9 +59,9 @@ class DefaultPaymentOperationsService: PaymentOperationsService {
         payment.syncStatus = .local
         try modelContext.save()
 
-        notificationService.scheduleNotifications(for: payment)
+        await notificationService.scheduleNotifications(for: payment)
 
-        calendarService.addEvent(for: payment) { [weak self] eventId in
+        await calendarService.addEvent(for: payment) { [weak self] eventId in
             payment.eventIdentifier = eventId
             try? self?.modelContext.save()
         }
@@ -84,12 +83,12 @@ class DefaultPaymentOperationsService: PaymentOperationsService {
 
         try modelContext.save()
 
-        notificationService.cancelNotifications(for: payment)
+        await notificationService.cancelNotifications(for: payment)
         if !payment.isPaid {
-            notificationService.scheduleNotifications(for: payment)
+            await notificationService.scheduleNotifications(for: payment)
         }
 
-        calendarService.updateEvent(for: payment)
+        await calendarService.updateEvent(for: payment)
 
         // Notify that a payment changed so Settings can update pending count
         NotificationCenter.default.post(name: NSNotification.Name("PaymentDidChange"), object: nil)
@@ -105,8 +104,8 @@ class DefaultPaymentOperationsService: PaymentOperationsService {
         let paymentId = payment.id
         let wasSynced = payment.syncStatus == .synced || payment.syncStatus == .modified
 
-        calendarService.removeEvent(for: payment)
-        notificationService.cancelNotifications(for: payment)
+        await calendarService.removeEvent(for: payment)
+        await notificationService.cancelNotifications(for: payment)
         modelContext.delete(payment)
         
         try modelContext.save()
@@ -134,11 +133,11 @@ class NotificationManagerAdapter: NotificationService {
         self.manager = manager
     }
 
-    func scheduleNotifications(for payment: Payment) {
+    func scheduleNotifications(for payment: Payment) async {
         manager.scheduleNotification(for: payment)  // Singular
     }
 
-    func cancelNotifications(for payment: Payment) {
+    func cancelNotifications(for payment: Payment) async {
         manager.cancelNotification(for: payment)    // Singular
     }
 }
@@ -148,19 +147,23 @@ class NotificationManagerAdapter: NotificationService {
 class EventKitManagerAdapter: CalendarService {
     private let manager: EventKitManager
 
-    init(manager: EventKitManager = .shared) {
+    init(manager: EventKitManager) {
         self.manager = manager
     }
+    
+    convenience init() {
+        self.init(manager: EventKitManager.shared)
+    }
 
-    func addEvent(for payment: Payment, completion: @escaping (String?) -> Void) {
+    func addEvent(for payment: Payment, completion: @escaping (String?) -> Void) async {
         manager.addEvent(for: payment, completion: completion)
     }
 
-    func updateEvent(for payment: Payment) {
+    func updateEvent(for payment: Payment) async {
         manager.updateEvent(for: payment)
     }
 
-    func removeEvent(for payment: Payment) {
+    func removeEvent(for payment: Payment) async {
         manager.removeEvent(for: payment)
     }
 }

@@ -3,18 +3,20 @@
 //  pagosApp
 //
 //  Created by miguel tomairo on 1/12/25.
+//  Modern iOS 18+ using @Observable macro
 //
 
 import Foundation
-import Combine
+import Observation
 
 @MainActor
-class ForgotPasswordViewModel: ObservableObject {
+@Observable
+final class ForgotPasswordViewModel {
 
-    @Published var email: String = ""
-    @Published var isLoading: Bool = false
-    @Published var didSendResetLink: Bool = false
-    @Published var errorMessage: String?
+    var email: String = ""
+    var isLoading: Bool = false
+    var didSendResetLink: Bool = false
+    var errorMessage: String?
 
     private let passwordRecoveryUseCase: PasswordRecoveryUseCase
 

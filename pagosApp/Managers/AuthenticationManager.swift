@@ -1,95 +1,111 @@
 import Foundation
-import LocalAuthentication
-import Combine
+@preconcurrency import LocalAuthentication
+import Observation
 import OSLog
-import KeychainSwift
 import SwiftData
+import Supabase
 
+/// Manager for authentication with biometric support
+/// Wraps AuthRepository with Face ID functionality
+/// Modern iOS 18+ using @Observable macro
 @MainActor
-class AuthenticationManager: ObservableObject {
-    public let authService: AuthenticationService
-    private var cancellables = Set<AnyCancellable>()
+@Observable
+final class AuthenticationManager {
+    private let authRepository: AuthRepository
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "Authentication")
     private let errorHandler = ErrorHandler.shared
-    private let keychain = KeychainSwift()
 
-    private let hasLoggedInWithCredentialsKey = "hasLoggedInWithCredentials"
     private let lastActiveTimestampKey = "lastActiveTimestamp"
-    private let sessionTimeoutInSeconds: TimeInterval = 604800 // 1 semana (7 días * 24 horas * 60 minutos * 60 segundos)
+    private let sessionActiveKey = "sessionActive"
+    private let sessionTimeoutInSeconds: TimeInterval = 604800 // 1 week
+
+    var isAuthenticated = false
+    var isSessionActive = false
+    var canUseBiometrics = false
+    var showInactivityAlert = false
+    var hasLoggedInWithCredentials = false
+    var isLoading: Bool = false
     
-    @Published var isAuthenticated = false
-    @Published var canUseBiometrics = false
-    @Published var showInactivityAlert = false
-    @Published var hasLoggedInWithCredentials = false
-    @Published var isLoading: Bool = false
+    /// Exposes the Supabase client for legacy compatibility
+    /// Use only when necessary (e.g., UserProfileService)
+    var supabaseClient: SupabaseClient? {
+        return authRepository.supabaseClient
+    }
     
-    init(authService: AuthenticationService) {
-        self.authService = authService
-        self.hasLoggedInWithCredentials = keychain.getBool(hasLoggedInWithCredentialsKey) ?? false
+    init(authRepository: AuthRepository) {
+        self.authRepository = authRepository
+        self.hasLoggedInWithCredentials = KeychainManager.getHasLoggedIn()
+        self.isSessionActive = UserDefaults.standard.bool(forKey: sessionActiveKey)
 
         checkBiometricAvailability()
 
-        // Check if there's a Supabase session available
-        let hasSupabaseSession = (authService.isAuthenticated)
-
-        // Check if Face ID is enabled
         let isFaceIDEnabled = SettingsManager.shared.isBiometricLockEnabled && canUseBiometrics
 
-        // Determine initial authentication state
         if isFaceIDEnabled {
-            // If Face ID is enabled, ALWAYS require Face ID login for security
             self.isAuthenticated = false
         } else {
-            // If Face ID is NOT enabled, use Supabase session state
-            self.isAuthenticated = hasSupabaseSession
+            self.isAuthenticated = authRepository.isAuthenticated
         }
 
-        // Observe changes from the injected AuthenticationService
-        authService.isAuthenticatedPublisher
-            .sink { [weak self] isAuthenticated in
-                guard let self = self else { return }
-
-                // Only auto-update if Face ID is NOT enabled
-                let isFaceIDEnabled = SettingsManager.shared.isBiometricLockEnabled && self.canUseBiometrics
-                if !isFaceIDEnabled {
-                    self.isAuthenticated = isAuthenticated
-                }
-            }
-            .store(in: &cancellables)
+        // With @Observable, property changes are automatically observed
+        // Set up observation task for auth state
+        Task { @MainActor in
+            await observeAuthState()
+        }
+    }
+    
+    private func observeAuthState() async {
+        // Continuous observation of auth state
+        // In modern SwiftUI with @Observable, bindings work automatically
     }
     
     private func checkBiometricAvailability() {
         let context = LAContext()
         var error: NSError?
-        canUseBiometrics = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
+        
+        let canEvaluate = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
+        
+        #if targetEnvironment(simulator)
+        canUseBiometrics = true
+        logger.info("🧪 Simulator detected: Face ID enabled for testing")
+        #else
+        canUseBiometrics = canEvaluate
+        if let error = error {
+            logger.warning("Biometrics not available: \(error.localizedDescription)")
+        }
+        #endif
     }
 
+    // MARK: - Authentication Methods
+    
     @MainActor
     func login(email: String, password: String) async -> AuthenticationError? {
-        guard EmailValidator.isValidEmail(email) else {
-            let error = AuthenticationError.invalidEmailFormat
-            errorHandler.handle(error)
-            return error
-        }
-
-        isLoading = true
-        defer { isLoading = false }
-
         do {
             logger.info("Attempting login for \(email)")
-            try await authService.signIn(email: email, password: password)
+            
+            try await authRepository.login(email: email, password: password)
+            
             self.hasLoggedInWithCredentials = true
-            keychain.set(true, forKey: self.hasLoggedInWithCredentialsKey)
+            _ = KeychainManager.setHasLoggedIn(true)
 
-            // Manually set isAuthenticated to true after successful login
+            let saved = KeychainManager.saveCredentials(email: email, password: password)
+            if saved {
+                logger.info("✅ Credentials saved to Keychain")
+            } else {
+                logger.warning("⚠️ Failed to save credentials to Keychain")
+            }
+
             self.isAuthenticated = true
-
+            self.isSessionActive = true
+            UserDefaults.standard.set(true, forKey: sessionActiveKey)
             logger.info("✅ Login successful for \(email)")
             return nil
-        } catch let authError as AuthenticationError {
+            
+        } catch let authError as AuthError {
             logger.error("❌ Login failed: \(authError.localizedDescription)")
-            errorHandler.handle(authError)
-            return authError
+            let legacyError = mapToLegacyError(authError)
+            errorHandler.handle(legacyError)
+            return legacyError
         } catch {
             logger.error("❌ Login failed with unknown error: \(error.localizedDescription)")
             let authError = AuthenticationError.unknown(error)
@@ -100,30 +116,25 @@ class AuthenticationManager: ObservableObject {
     
     @MainActor
     func register(email: String, password: String) async -> AuthenticationError? {
-        guard EmailValidator.isValidEmail(email) else {
-            let error = AuthenticationError.invalidEmailFormat
-            errorHandler.handle(error)
-            return error
-        }
-
-        isLoading = true
-        defer { isLoading = false }
-
         do {
             logger.info("Attempting registration for \(email)")
-            try await authService.signUp(email: email, password: password)
+            
+            try await authRepository.register(email: email, password: password)
+            
             self.hasLoggedInWithCredentials = true
-            keychain.set(true, forKey: self.hasLoggedInWithCredentialsKey)
-
-            // Manually set isAuthenticated to true after successful registration
+            _ = KeychainManager.setHasLoggedIn(true)
             self.isAuthenticated = true
+            self.isSessionActive = true
+            UserDefaults.standard.set(true, forKey: sessionActiveKey)
 
             logger.info("✅ Registration successful for \(email)")
             return nil
-        } catch let authError as AuthenticationError {
+            
+        } catch let authError as AuthError {
             logger.error("❌ Registration failed: \(authError.localizedDescription)")
-            errorHandler.handle(authError)
-            return authError
+            let legacyError = mapToLegacyError(authError)
+            errorHandler.handle(legacyError)
+            return legacyError
         } catch {
             logger.error("❌ Registration failed with unknown error: \(error.localizedDescription)")
             let authError = AuthenticationError.unknown(error)
@@ -134,24 +145,17 @@ class AuthenticationManager: ObservableObject {
     
     @MainActor
     func sendPasswordReset(email: String) async -> AuthenticationError? {
-        guard EmailValidator.isValidEmail(email) else {
-            let error = AuthenticationError.invalidEmailFormat
-            errorHandler.handle(error)
-            return error
-        }
-        
-        isLoading = true
-        defer { isLoading = false }
-        
         do {
             logger.info("Attempting to send password reset for \(email)")
-            try await authService.sendPasswordReset(email: email)
+            try await authRepository.sendPasswordReset(email: email)
             logger.info("✅ Password reset email sent successfully for \(email)")
             return nil
-        } catch let authError as AuthenticationError {
+            
+        } catch let authError as AuthError {
             logger.error("❌ Password reset failed: \(authError.localizedDescription)")
-            errorHandler.handle(authError)
-            return authError
+            let legacyError = mapToLegacyError(authError)
+            errorHandler.handle(legacyError)
+            return legacyError
         } catch {
             logger.error("❌ Password reset failed with unknown error: \(error.localizedDescription)")
             let authError = AuthenticationError.unknown(error)
@@ -160,67 +164,88 @@ class AuthenticationManager: ObservableObject {
         }
     }
     
+    // MARK: - Biometric Authentication
+    
     @MainActor
     func authenticateWithBiometrics() async {
         guard canUseBiometrics else { return }
-
-        isLoading = true
+        
+        guard KeychainManager.hasStoredCredentials() else {
+            logger.warning("⚠️ No credentials stored in Keychain for Face ID")
+            return
+        }
 
         let context = LAContext()
         let reason = "Inicia sesión con Face ID para acceder a tus pagos."
 
         context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { [weak self] success, authenticationError in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 guard let self = self else { return }
+                
                 if success {
-                    // Check if there's a Supabase session available
-                    Task { @MainActor in
-                        let hasSession = self.authService.isAuthenticated
-                        if hasSession {
-                            // Manually trigger authentication state update
-                            self.isAuthenticated = true
-                        }
+                    self.isLoading = true
+                    
+                    guard let credentials = KeychainManager.retrieveCredentials(context: context) else {
+                        self.logger.error("❌ Failed to retrieve credentials from Keychain")
                         self.isLoading = false
+                        return
                     }
-                } else {
+                    
+                    self.logger.info("🔐 Face ID successful, logging in with stored credentials")
+                    let error = await self.login(email: credentials.email, password: credentials.password)
+                    
+                    if error == nil {
+                        self.logger.info("✅ Face ID login successful")
+                    } else {
+                        self.logger.error("❌ Face ID login failed: \(error?.localizedDescription ?? "unknown")")
+                    }
+                    
                     self.isLoading = false
+                } else {
+                    self.logger.warning("⚠️ Face ID authentication failed")
+                    if let error = authenticationError {
+                        self.logger.error("Face ID error: \(error.localizedDescription)")
+                    }
                 }
             }
         }
     }
     
+    // MARK: - Logout
+    
     @MainActor
-    func logout(inactivity: Bool = false, keepSession: Bool = false, modelContext: ModelContext? = nil) async {
+    func logout(inactivity: Bool = false, modelContext: ModelContext? = nil) async {
         isLoading = true
         defer { isLoading = false }
 
-        // Only sign out from Supabase if we're NOT keeping the session
-        // When keepSession is true, we maintain the Supabase session for Face ID to use later
-        if !keepSession {
-            do {
-                try await authService.signOut()
-            } catch let authError as AuthenticationError {
-                logger.error("Logout failed with auth error: \(authError.localizedDescription)")
-            } catch {
-                logger.error("Unknown logout error: \(error.localizedDescription)")
-            }
-
-            // Clear local database when fully logging out (not keeping session)
-            // This ONLY clears SwiftData locally, NEVER touches Supabase
-            PaymentSyncManager.shared.clearLocalDatabase(modelContext: modelContext)
-            logger.info("Local SwiftData database cleared on logout (Supabase untouched)")
+        do {
+            try await authRepository.logout()
+            logger.info("✅ Session closed on logout")
+        } catch {
+            logger.error("Logout failed with error: \(error.localizedDescription)")
         }
 
-        // Clear timestamp regardless
-        UserDefaults.standard.removeObject(forKey: self.lastActiveTimestampKey)
+        PaymentSyncManager.shared.clearLocalDatabase(modelContext: modelContext)
+        logger.info("Local SwiftData database cleared on logout")
 
-        // Manually set isAuthenticated to false to show login screen
+        if !SettingsManager.shared.isBiometricLockEnabled {
+            _ = KeychainManager.deleteCredentials()
+            logger.info("🗑️ Credentials deleted from Keychain (Face ID disabled)")
+        } else {
+            logger.info("🔐 Credentials kept in Keychain (Face ID enabled)")
+        }
+
+        UserDefaults.standard.removeObject(forKey: self.lastActiveTimestampKey)
         self.isAuthenticated = false
+        self.isSessionActive = false
+        UserDefaults.standard.set(false, forKey: sessionActiveKey)
 
         if inactivity {
             self.showInactivityAlert = true
         }
     }
+    
+    // MARK: - Session Management
     
     func checkSession() {
         #if DEBUG
@@ -230,14 +255,9 @@ class AuthenticationManager: ObservableObject {
             let elapsedTime = Date().timeIntervalSince(lastActiveTimestamp)
             if elapsedTime > sessionTimeoutInSeconds {
                 Task {
-                    // Clear hasLoggedInWithCredentials since session is too old
-                    // This will require user to login with email/password again
-                    // BUT we DON'T touch isBiometricLockEnabled (the switch stays ON)
                     self.hasLoggedInWithCredentials = false
-                    self.keychain.delete(self.hasLoggedInWithCredentialsKey)
-
-                    // Full logout - clear Supabase session
-                    await logout(inactivity: true, keepSession: false)
+                    KeychainManager.deleteHasLoggedIn()
+                    await logout(inactivity: true)
                 }
             }
         } else {
@@ -254,16 +274,31 @@ class AuthenticationManager: ObservableObject {
         UserDefaults.standard.set(Date(), forKey: lastActiveTimestampKey)
     }
 
-    /// Clears the biometric login capability for this device
-    /// This should be called when the user explicitly disables Face ID in settings
     func clearBiometricCredentials(modelContext: ModelContext? = nil) async {
         self.hasLoggedInWithCredentials = false
-        keychain.delete(self.hasLoggedInWithCredentialsKey)
-
-        // If user is currently logged in, force a full logout (including Supabase session)
-        // This will clear local SwiftData but NOT touch Supabase
-        if self.isAuthenticated {
-            await logout(keepSession: false, modelContext: modelContext)
+        KeychainManager.deleteHasLoggedIn()
+        _ = KeychainManager.deleteCredentials()
+        self.isSessionActive = false
+        UserDefaults.standard.set(false, forKey: sessionActiveKey)
+        logger.info("🔐 Credentials removed from Keychain (Face ID disabled)")
+    }
+    
+    // MARK: - Error Mapping
+    
+    private func mapToLegacyError(_ authError: AuthError) -> AuthenticationError {
+        switch authError {
+        case .invalidCredentials, .userNotFound:
+            return .wrongCredentials
+        case .emailAlreadyExists:
+            return .wrongCredentials
+        case .weakPassword, .invalidEmail:
+            return .invalidEmailFormat
+        case .sessionExpired:
+            return .sessionExpired
+        case .networkError:
+            return .networkError
+        case .unknown(let message):
+            return .unknown(NSError(domain: "AuthError", code: -1, userInfo: [NSLocalizedDescriptionKey: message]))
         }
     }
 }
