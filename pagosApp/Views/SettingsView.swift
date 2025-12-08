@@ -51,7 +51,7 @@ struct SettingsView: View {
                     }
 
                     // Authentication message if not logged in
-                    if !authManager.isAuthenticated {
+                    if !authManager.isAuthenticated && !authManager.isSessionActive {
                         HStack {
                             Image(systemName: "info.circle")
                                 .foregroundColor(Color("AppTextSecondary"))
@@ -73,13 +73,13 @@ struct SettingsView: View {
                                     .tint(Color("AppPrimary"))
                             } else {
                                 Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
-                                    .foregroundColor(authManager.isAuthenticated ? Color("AppPrimary") : Color("AppTextSecondary"))
+                                    .foregroundColor((authManager.isAuthenticated || authManager.isSessionActive) ? Color("AppPrimary") : Color("AppTextSecondary"))
                             }
                             Text(syncManager.isSyncing ? "Sincronizando..." : "Sincronizar ahora")
-                                .foregroundColor(syncManager.isSyncing ? Color("AppTextSecondary") : (authManager.isAuthenticated ? Color("AppPrimary") : Color("AppTextSecondary")))
+                                .foregroundColor(syncManager.isSyncing ? Color("AppTextSecondary") : ((authManager.isAuthenticated || authManager.isSessionActive) ? Color("AppPrimary") : Color("AppTextSecondary")))
                         }
                     }
-                    .disabled(syncManager.isSyncing || !authManager.isAuthenticated)
+                    .disabled(syncManager.isSyncing || (!authManager.isAuthenticated && !authManager.isSessionActive))
 
                     // Clear sync error button (only show if there are sync errors)
                     if syncManager.syncError != nil {
@@ -109,7 +109,7 @@ struct SettingsView: View {
                 }
 
                 Section(header: Text("Perfil").foregroundColor(Color("AppTextPrimary"))) {
-                    if authManager.isAuthenticated, let client = authManager.supabaseClient {
+                    if (authManager.isAuthenticated || authManager.isSessionActive), let client = authManager.supabaseClient {
                         NavigationLink(destination: UserProfileView(supabaseClient: client, modelContext: modelContext)) {
                             HStack {
                                 Image(systemName: "person.circle.fill")
