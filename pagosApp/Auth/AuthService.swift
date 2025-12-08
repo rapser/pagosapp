@@ -106,7 +106,10 @@ protocol AuthService {
     
     /// Refresh expired session
     func refreshSession(refreshToken: String) async throws -> AuthSession
-    
+
+    /// Set session with stored tokens
+    func setSession(accessToken: String, refreshToken: String) async throws -> AuthSession
+
     /// Send password reset email
     func sendPasswordResetEmail(email: String) async throws
     

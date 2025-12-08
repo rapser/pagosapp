@@ -16,9 +16,11 @@ final class AuthenticationManager {
     private let errorHandler = ErrorHandler.shared
 
     private let lastActiveTimestampKey = "lastActiveTimestamp"
+    private let sessionActiveKey = "sessionActive"
     private let sessionTimeoutInSeconds: TimeInterval = 604800 // 1 week
-    
+
     var isAuthenticated = false
+    var isSessionActive = false
     var canUseBiometrics = false
     var showInactivityAlert = false
     var hasLoggedInWithCredentials = false
@@ -33,17 +35,18 @@ final class AuthenticationManager {
     init(authRepository: AuthRepository) {
         self.authRepository = authRepository
         self.hasLoggedInWithCredentials = KeychainManager.getHasLoggedIn()
-        
+        self.isSessionActive = UserDefaults.standard.bool(forKey: sessionActiveKey)
+
         checkBiometricAvailability()
-        
+
         let isFaceIDEnabled = SettingsManager.shared.isBiometricLockEnabled && canUseBiometrics
-        
+
         if isFaceIDEnabled {
             self.isAuthenticated = false
         } else {
             self.isAuthenticated = authRepository.isAuthenticated
         }
-        
+
         // With @Observable, property changes are automatically observed
         // Set up observation task for auth state
         Task { @MainActor in
@@ -93,6 +96,8 @@ final class AuthenticationManager {
             }
 
             self.isAuthenticated = true
+            self.isSessionActive = true
+            UserDefaults.standard.set(true, forKey: sessionActiveKey)
             logger.info("✅ Login successful for \(email)")
             return nil
             
@@ -119,6 +124,8 @@ final class AuthenticationManager {
             self.hasLoggedInWithCredentials = true
             _ = KeychainManager.setHasLoggedIn(true)
             self.isAuthenticated = true
+            self.isSessionActive = true
+            UserDefaults.standard.set(true, forKey: sessionActiveKey)
 
             logger.info("✅ Registration successful for \(email)")
             return nil
@@ -230,6 +237,8 @@ final class AuthenticationManager {
 
         UserDefaults.standard.removeObject(forKey: self.lastActiveTimestampKey)
         self.isAuthenticated = false
+        self.isSessionActive = false
+        UserDefaults.standard.set(false, forKey: sessionActiveKey)
 
         if inactivity {
             self.showInactivityAlert = true
@@ -269,6 +278,8 @@ final class AuthenticationManager {
         self.hasLoggedInWithCredentials = false
         KeychainManager.deleteHasLoggedIn()
         _ = KeychainManager.deleteCredentials()
+        self.isSessionActive = false
+        UserDefaults.standard.set(false, forKey: sessionActiveKey)
         logger.info("🔐 Credentials removed from Keychain (Face ID disabled)")
     }
     
