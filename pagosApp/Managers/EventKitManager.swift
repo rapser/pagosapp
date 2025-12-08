@@ -1,8 +1,10 @@
 import Foundation
 import EventKit
+import Observation
 import OSLog
 
-class EventKitManager: ObservableObject {
+@Observable
+final class EventKitManager {
     static let shared = EventKitManager()
     private let eventStore = EKEventStore()
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "EventKit")
@@ -11,7 +13,7 @@ class EventKitManager: ObservableObject {
     func requestAccess(completion: @escaping (Bool) -> Void) {
         if #available(iOS 17.0, *) {
             eventStore.requestFullAccessToEvents { [weak self] granted, error in
-                DispatchQueue.main.async {
+                Task { @MainActor [weak self] in
                     if let error = error {
                         self?.logger.error("❌ Error requesting calendar access: \(error.localizedDescription)")
                     }
@@ -25,7 +27,7 @@ class EventKitManager: ObservableObject {
             }
         } else {
             eventStore.requestAccess(to: .event) { [weak self] granted, error in
-                DispatchQueue.main.async {
+                Task { @MainActor [weak self] in
                     if let error = error {
                         self?.logger.error("❌ Error requesting calendar access: \(error.localizedDescription)")
                     }

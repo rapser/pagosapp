@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct CalendarPaymentsView: View {
-    @EnvironmentObject var alertManager: AlertManager
+    @Environment(AlertManager.self) private var alertManager
     @Environment(\.modelContext) private var modelContext
     // Obtenemos todos los pagos para poder filtrarlos por fecha.
     @Query private var payments: [Payment]
@@ -40,7 +40,7 @@ struct CalendarPaymentsView: View {
                                     Text(payment.category.rawValue).font(.caption).foregroundColor(Color("AppTextSecondary"))
                                 }
                                 Spacer()
-                                Text(payment.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                                Text("\(payment.currency.symbol) \(payment.amount, format: .number.precision(.fractionLength(2)))")
                                     .foregroundColor(Color("AppTextPrimary"))
                             }
                         }
@@ -149,5 +149,5 @@ private let longDateFormatter: DateFormatter = {
 #Preview {
     CalendarPaymentsView()
         .modelContainer(for: [Payment.self], inMemory: true)
-        .environmentObject(AlertManager())
+        .environment(AlertManager())
 }

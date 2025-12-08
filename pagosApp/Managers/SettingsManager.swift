@@ -1,9 +1,12 @@
 import Foundation
+import Observation
 
-class SettingsManager: ObservableObject {
+@MainActor
+@Observable
+final class SettingsManager {
     static let shared = SettingsManager()
 
-    @Published var isBiometricLockEnabled: Bool {
+    var isBiometricLockEnabled: Bool {
         didSet {
             UserDefaults.standard.set(isBiometricLockEnabled, forKey: "isBiometricLockEnabled")
         }

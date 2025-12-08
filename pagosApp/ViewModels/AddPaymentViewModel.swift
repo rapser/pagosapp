@@ -3,22 +3,26 @@
 //  pagosApp
 //
 //  ViewModel for AddPaymentView following MVVM architecture
+//  Modern iOS 18+ using @Observable macro
 //
 
 import Foundation
 import SwiftUI
 import SwiftData
+import Observation
 import OSLog
 
 @MainActor
-class AddPaymentViewModel: ObservableObject {
-    // MARK: - Published Properties
+@Observable
+final class AddPaymentViewModel {
+    // MARK: - Observable Properties
 
-    @Published var name: String = ""
-    @Published var amount: String = ""
-    @Published var dueDate: Date = Date()
-    @Published var category: PaymentCategory = .servicios
-    @Published var isLoading = false
+    var name: String = ""
+    var amount: String = ""
+    var currency: Currency = .pen
+    var dueDate: Date = Date()
+    var category: PaymentCategory = .servicios
+    var isLoading = false
 
     // MARK: - Dependencies (DIP: depend on abstractions)
 
@@ -45,7 +49,8 @@ class AddPaymentViewModel: ObservableObject {
 
     /// Convenience initializer with default dependencies
     convenience init(modelContext: ModelContext) {
-        let syncService = SupabasePaymentSyncService(client: supabaseClient)
+        let repository = PaymentRepository(supabaseClient: supabaseClient, modelContext: modelContext)
+        let syncService = DefaultPaymentSyncService(repository: repository)
         let notificationService = NotificationManagerAdapter()
         let calendarService = EventKitManagerAdapter()
         let paymentOperations = DefaultPaymentOperationsService(
@@ -82,7 +87,8 @@ class AddPaymentViewModel: ObservableObject {
             amount: amountValue,
             dueDate: dueDate,
             isPaid: false,
-            category: category
+            category: category,
+            currency: currency
         )
 
         // Delegate to PaymentOperationsService (SRP)
@@ -106,6 +112,7 @@ class AddPaymentViewModel: ObservableObject {
     func clearForm() {
         name = ""
         amount = ""
+        currency = .pen
         dueDate = Date()
         category = .servicios
     }

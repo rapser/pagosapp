@@ -42,9 +42,14 @@ struct pagosAppApp: App {
     private let authenticationManager: AuthenticationManager
     private let passwordRecoveryRepository: PasswordRecoveryRepository
     private let passwordRecoveryUseCase: PasswordRecoveryUseCase
+    private let errorHandler = ErrorHandler.shared
 
     init() {
-        authenticationManager = AuthenticationManager(authService: supabaseAuthService)
+        // Create auth adapter and repository
+        let authAdapter = SupabaseAuthAdapter(client: supabaseClient)
+        let authRepository = AuthRepository(authService: authAdapter)
+        
+        authenticationManager = AuthenticationManager(authRepository: authRepository)
         passwordRecoveryRepository = SupabasePasswordRecoveryRepository(authService: supabaseAuthService)
         passwordRecoveryUseCase = PasswordRecoveryUseCase(repository: passwordRecoveryRepository)
         
@@ -53,21 +58,24 @@ struct pagosAppApp: App {
         
         // Request notification authorization at app launch
         NotificationManager.shared.requestAuthorization()
+        
+        // Configure StorageFactory (will be configured properly in ContentView with modelContext)
+        logger.info("✅ App initialized - StorageFactory will be configured in ContentView")
     }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(authenticationManager)
-                .environmentObject(passwordRecoveryUseCase)
-                .environmentObject(AlertManager())
+                .environment(authenticationManager)
+                .environment(passwordRecoveryUseCase)
+                .environment(errorHandler)
                 .tint(Color("AppPrimary"))
         }
         .modelContainer(createModelContainer())
     }
 
     private func createModelContainer() -> ModelContainer {
-        let schema = Schema([Payment.self])
+        let schema = Schema([Payment.self, UserProfile.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {

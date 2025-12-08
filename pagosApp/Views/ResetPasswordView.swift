@@ -10,8 +10,8 @@ import Supabase
 
 struct ResetPasswordView: View {
 
-    @StateObject private var viewModel: ResetPasswordViewModel
-    @EnvironmentObject private var alertManager: AlertManager
+    @State private var viewModel: ResetPasswordViewModel
+    @Environment(AlertManager.self) private var alertManager
     @Environment(\.dismiss) var dismiss
 
     let accessToken: String
@@ -20,7 +20,7 @@ struct ResetPasswordView: View {
     init(accessToken: String, refreshToken: String, passwordRecoveryUseCase: PasswordRecoveryUseCase) {
         self.accessToken = accessToken
         self.refreshToken = refreshToken
-        _viewModel = StateObject(wrappedValue: ResetPasswordViewModel(passwordRecoveryUseCase: passwordRecoveryUseCase))
+        _viewModel = State(wrappedValue: ResetPasswordViewModel(passwordRecoveryUseCase: passwordRecoveryUseCase))
     }
 
     private var passwordsMatch: Bool {
@@ -49,12 +49,14 @@ struct ResetPasswordView: View {
                     .background(Color("AppBackground"))
                     .cornerRadius(10)
                     .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 5)
+                    .disabled(viewModel.isLoading)
 
                 SecureField("Confirmar Contraseña", text: $viewModel.confirmPassword)
                     .padding()
                     .background(Color("AppBackground"))
                     .cornerRadius(10)
                     .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 5)
+                    .disabled(viewModel.isLoading)
 
                 if !passwordsMatch && !viewModel.confirmPassword.isEmpty {
                     Text("Las contraseñas no coinciden")

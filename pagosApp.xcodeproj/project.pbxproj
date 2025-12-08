@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		461BB2E72ECE942800DBE1AC /* KeychainSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 461BB2E62ECE942800DBE1AC /* KeychainSwift */; };
 		464D59D12E6C769900DE10FF /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 464D59D02E6C769900DE10FF /* Auth */; };
 		464D59D32E6C769900DE10FF /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 464D59D22E6C769900DE10FF /* Supabase */; };
 /* End PBXBuildFile section */
@@ -58,7 +57,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				461BB2E72ECE942800DBE1AC /* KeychainSwift in Frameworks */,
 				464D59D32E6C769900DE10FF /* Supabase in Frameworks */,
 				464D59D12E6C769900DE10FF /* Auth in Frameworks */,
 			);
@@ -114,7 +112,6 @@
 			packageProductDependencies = (
 				464D59D02E6C769900DE10FF /* Auth */,
 				464D59D22E6C769900DE10FF /* Supabase */,
-				461BB2E62ECE942800DBE1AC /* KeychainSwift */,
 			);
 			productName = pagosApp;
 			productReference = 464D59312E6B336D00DE10FF /* pagosApp.app */;
@@ -173,7 +170,6 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				464D59CF2E6C769900DE10FF /* XCRemoteSwiftPackageReference "supabase-swift" */,
-				461BB2E52ECE942800DBE1AC /* XCRemoteSwiftPackageReference "keychain-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 464D59322E6B336D00DE10FF /* Products */;
@@ -361,11 +357,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 8AJBS923B3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = pagosApp/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_NSCalendarsUsageDescription = "Tu aplicación necesita acceder a tu calendario para añadir y sincronizar los pagos registrados.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Usamos Face ID para que puedas iniciar sesión de forma rápida y segura.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -394,11 +391,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 8AJBS923B3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = pagosApp/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_NSCalendarsUsageDescription = "Tu aplicación necesita acceder a tu calendario para añadir y sincronizar los pagos registrados.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Usamos Face ID para que puedas iniciar sesión de forma rápida y segura.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -489,14 +487,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		461BB2E52ECE942800DBE1AC /* XCRemoteSwiftPackageReference "keychain-swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/evgenyneu/keychain-swift.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 24.0.0;
-			};
-		};
 		464D59CF2E6C769900DE10FF /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/supabase/supabase-swift.git";
@@ -508,11 +498,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		461BB2E62ECE942800DBE1AC /* KeychainSwift */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 461BB2E52ECE942800DBE1AC /* XCRemoteSwiftPackageReference "keychain-swift" */;
-			productName = KeychainSwift;
-		};
 		464D59D02E6C769900DE10FF /* Auth */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 464D59CF2E6C769900DE10FF /* XCRemoteSwiftPackageReference "supabase-swift" */;

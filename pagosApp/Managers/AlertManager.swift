@@ -1,4 +1,5 @@
 import SwiftUI
+import Observation
 
 struct AlertButton {
     let title: Text
@@ -6,8 +7,10 @@ struct AlertButton {
     let action: () -> Void
 }
 
-class AlertManager: ObservableObject {
-    @Published var isPresented = false
+@MainActor
+@Observable
+final class AlertManager {
+    var isPresented = false
     
     private(set) var title = Text("")
     private(set) var message: Text? = nil

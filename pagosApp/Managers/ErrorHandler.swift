@@ -3,11 +3,13 @@
 //  pagosApp
 //
 //  Created by Claude Code
+//  Modern iOS 18+ using @Observable macro
 //
 
 import Foundation
 import SwiftUI
 import OSLog
+import Observation
 
 /// Protocol for errors that can be displayed to users
 protocol UserFacingError: LocalizedError {
@@ -33,12 +35,13 @@ enum ErrorSeverity {
 }
 
 /// Centralized error handler for the app
+@Observable
 @MainActor
-class ErrorHandler: ObservableObject {
+final class ErrorHandler {
     static let shared = ErrorHandler()
 
-    @Published var currentError: ErrorAlert?
-    @Published var showError = false
+    var currentError: ErrorAlert?
+    var showError = false
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ErrorHandler")
 
@@ -122,13 +125,15 @@ struct ErrorAlert: Identifiable {
 // MARK: - View Modifier
 
 struct ErrorHandlingModifier: ViewModifier {
-    @ObservedObject var errorHandler = ErrorHandler.shared
+    @Environment(ErrorHandler.self) private var errorHandler
 
     func body(content: Content) -> some View {
+        @Bindable var handler = errorHandler
+        
         content
             .alert(
                 errorHandler.currentError?.title ?? "Error",
-                isPresented: $errorHandler.showError,
+                isPresented: $handler.showError,
                 presenting: errorHandler.currentError
             ) { error in
                 Button("OK", role: .cancel) {

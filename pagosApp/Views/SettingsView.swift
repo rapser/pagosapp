@@ -1,12 +1,11 @@
 import SwiftUI
-import Combine
 import SwiftData
 
 struct SettingsView: View {
-    @EnvironmentObject var authManager: AuthenticationManager
-    @EnvironmentObject var alertManager: AlertManager
-    @StateObject private var settingsManager = SettingsManager.shared
-    @StateObject private var syncManager = PaymentSyncManager.shared
+    @Environment(AuthenticationManager.self) private var authManager
+    @Environment(AlertManager.self) private var alertManager
+    @State private var settingsManager = SettingsManager.shared
+    @State private var syncManager = PaymentSyncManager.shared
     @Environment(\.modelContext) private var modelContext
 
     @State private var showingSyncError = false
@@ -82,8 +81,20 @@ struct SettingsView: View {
                     }
                     .disabled(syncManager.isSyncing || !authManager.isAuthenticated)
 
-                    // Database reset button (only show if there are sync errors)
+                    // Clear sync error button (only show if there are sync errors)
                     if syncManager.syncError != nil {
+                        Button {
+                            clearSyncError()
+                        } label: {
+                            HStack {
+                                Image(systemName: "arrow.clockwise.circle.fill")
+                                    .foregroundColor(.blue)
+                                Text("Reintentar sincronización")
+                                    .foregroundColor(.blue)
+                            }
+                        }
+                        
+                        // Database reset button (last resort)
                         Button {
                             showDatabaseResetAlert()
                         } label: {
@@ -97,8 +108,32 @@ struct SettingsView: View {
                     }
                 }
 
+                Section(header: Text("Perfil").foregroundColor(Color("AppTextPrimary"))) {
+                    if authManager.isAuthenticated, let client = authManager.supabaseClient {
+                        NavigationLink(destination: UserProfileView(supabaseClient: client, modelContext: modelContext)) {
+                            HStack {
+                                Image(systemName: "person.circle.fill")
+                                    .foregroundColor(Color("AppPrimary"))
+                                Text("Mi Perfil")
+                                    .foregroundColor(Color("AppTextPrimary"))
+                            }
+                        }
+                    } else {
+                        HStack {
+                            Image(systemName: "person.circle.fill")
+                                .foregroundColor(Color("AppTextSecondary"))
+                            Text("Mi Perfil")
+                                .foregroundColor(Color("AppTextSecondary"))
+                            Spacer()
+                            Text("Inicia sesión")
+                                .font(.caption)
+                                .foregroundColor(Color("AppTextSecondary"))
+                        }
+                    }
+                }
+
                 Section(header: Text("Seguridad").foregroundColor(Color("AppTextPrimary"))) {
-                    NavigationLink(destination: BiometricSettingsView().environmentObject(authManager)) {
+                    NavigationLink(destination: BiometricSettingsView().environment(authManager)) {
                         HStack {
                             Image(systemName: "faceid")
                                 .foregroundColor(Color("AppPrimary"))
@@ -152,6 +187,14 @@ struct SettingsView: View {
             showingSyncError = true
         }
     }
+    
+    private func clearSyncError() {
+        // Clear the sync error and try again
+        syncManager.syncError = nil
+        Task {
+            await performSync()
+        }
+    }
 
     private func showDatabaseResetAlert() {
         alertManager.show(
@@ -182,16 +225,14 @@ struct SettingsView: View {
     }
 
     private func showLogoutAlert() {
-        let hasFaceIDEnabled = settingsManager.isBiometricLockEnabled && authManager.canUseBiometrics
         alertManager.show(
             title: Text("Cerrar Sesión"),
             message: Text("¿Estás seguro de que quieres cerrar la sesión?"),
             buttons: [
                 AlertButton(title: Text("Aceptar"), role: .destructive) {
                     Task {
-                        // If Face ID is enabled, keep the session so user can login with Face ID
-                        // Pass modelContext to clear local database when not keeping session
-                        await authManager.logout(keepSession: hasFaceIDEnabled, modelContext: hasFaceIDEnabled ? nil : modelContext)
+                        // Always close Supabase session and clear local data
+                        await authManager.logout(modelContext: modelContext)
                     }
                 },
                 AlertButton(title: Text("Cancelar"), role: .cancel) { }

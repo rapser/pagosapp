@@ -3,23 +3,27 @@
 //  pagosApp
 //
 //  ViewModel for EditPaymentView following MVVM architecture
+//  Modern iOS 18+ using @Observable macro
 //
 
 import Foundation
 import SwiftUI
 import SwiftData
+import Observation
 import OSLog
 
 @MainActor
-class EditPaymentViewModel: ObservableObject {
-    // MARK: - Published Properties
+@Observable
+final class EditPaymentViewModel {
+    // MARK: - Observable Properties
 
-    @Published var name: String
-    @Published var amount: String
-    @Published var dueDate: Date
-    @Published var category: PaymentCategory
-    @Published var isPaid: Bool
-    @Published var isLoading = false
+    var name: String
+    var amount: String
+    var currency: Currency
+    var dueDate: Date
+    var category: PaymentCategory
+    var isPaid: Bool
+    var isLoading = false
 
     // MARK: - Dependencies (DIP: depend on abstractions)
 
@@ -41,6 +45,7 @@ class EditPaymentViewModel: ObservableObject {
     var hasChanges: Bool {
         name != payment.name ||
         amountValue != payment.amount ||
+        currency != payment.currency ||
         !Calendar.current.isDate(dueDate, inSameDayAs: payment.dueDate) ||
         category != payment.category ||
         isPaid != payment.isPaid
@@ -56,6 +61,7 @@ class EditPaymentViewModel: ObservableObject {
         // Initialize with current payment values
         self.name = payment.name
         self.amount = String(format: "%.2f", payment.amount)
+        self.currency = payment.currency
         self.dueDate = payment.dueDate
         self.category = payment.category
         self.isPaid = payment.isPaid
@@ -63,7 +69,8 @@ class EditPaymentViewModel: ObservableObject {
 
     /// Convenience initializer with default dependencies
     convenience init(payment: Payment, modelContext: ModelContext) {
-        let syncService = SupabasePaymentSyncService(client: supabaseClient)
+        let repository = PaymentRepository(supabaseClient: supabaseClient, modelContext: modelContext)
+        let syncService = DefaultPaymentSyncService(repository: repository)
         let notificationService = NotificationManagerAdapter()
         let calendarService = EventKitManagerAdapter()
         let paymentOperations = DefaultPaymentOperationsService(
@@ -103,6 +110,7 @@ class EditPaymentViewModel: ObservableObject {
         // Update payment model
         payment.name = name
         payment.amount = amountValue
+        payment.currency = currency
         payment.dueDate = dueDate
         payment.category = category
         payment.isPaid = isPaid
@@ -129,6 +137,7 @@ class EditPaymentViewModel: ObservableObject {
     func resetChanges() {
         name = payment.name
         amount = String(format: "%.2f", payment.amount)
+        currency = payment.currency
         dueDate = payment.dueDate
         category = payment.category
         isPaid = payment.isPaid

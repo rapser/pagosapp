@@ -3,12 +3,15 @@
 //  pagosApp
 //
 //  Created by miguel tomairo on 1/12/25.
+//  Modern iOS 18+ using @Observable macro
 //
 
 import Foundation
+import Observation
 
 @MainActor
-class PasswordRecoveryUseCase: ObservableObject {
+@Observable
+final class PasswordRecoveryUseCase {
     private let repository: PasswordRecoveryRepository
 
     init(repository: PasswordRecoveryRepository) {

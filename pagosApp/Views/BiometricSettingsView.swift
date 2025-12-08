@@ -1,10 +1,14 @@
 import SwiftUI
 import Supabase
+import LocalAuthentication
 
 struct BiometricSettingsView: View {
-    @StateObject private var settingsManager = SettingsManager.shared
-    @EnvironmentObject var authManager: AuthenticationManager
+    @State private var settingsManager = SettingsManager.shared
+    @Environment(AuthenticationManager.self) private var authManager
     @Environment(\.modelContext) private var modelContext
+    
+    @State private var showError = false
+    @State private var errorMessage = ""
 
     var body: some View {
         Form {
@@ -45,9 +49,19 @@ struct BiometricSettingsView: View {
                 Toggle("Habilitar Face ID / Touch ID", isOn: Binding(
                     get: { settingsManager.isBiometricLockEnabled },
                     set: { newValue in
-                        settingsManager.isBiometricLockEnabled = newValue
-                        // If user disables Face ID, clear biometric credentials
-                        if !newValue {
+                        if newValue {
+                            // Check if credentials are already stored (user already logged in)
+                            if KeychainManager.hasStoredCredentials() {
+                                // Credentials exist, just enable without asking for Face ID again
+                                settingsManager.isBiometricLockEnabled = true
+                            } else {
+                                // No credentials stored, this shouldn't happen but handle edge case
+                                errorMessage = "Debes iniciar sesión primero para habilitar Face ID"
+                                showError = true
+                            }
+                        } else {
+                            // When disabling, delete credentials from Keychain
+                            settingsManager.isBiometricLockEnabled = false
                             Task {
                                 await authManager.clearBiometricCredentials(modelContext: modelContext)
                             }
@@ -91,6 +105,11 @@ struct BiometricSettingsView: View {
         }
         .navigationTitle("Autenticación Biométrica")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Error", isPresented: $showError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage)
+        }
     }
 }
 
@@ -112,8 +131,16 @@ struct BenefitRow: View {
 }
 
 #Preview {
+    let client = SupabaseClient(
+        supabaseURL: URL(string: "https://example.com")!,
+        supabaseKey: "dummy_key"
+    )
+    let adapter = SupabaseAuthAdapter(client: client)
+    let repository = AuthRepository(authService: adapter)
+    let authManager = AuthenticationManager(authRepository: repository)
+    
     NavigationView {
         BiometricSettingsView()
-            .environmentObject(AuthenticationManager(authService: SupabaseAuthService(client: SupabaseClient(supabaseURL: URL(string: "https://example.com") ?? URL(filePath: "/"), supabaseKey: "dummy_key"))))
+            .environment(authManager)
     }
 }

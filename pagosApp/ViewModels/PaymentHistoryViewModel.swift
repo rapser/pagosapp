@@ -3,28 +3,27 @@
 //  pagosApp
 //
 //  Created by miguel tomairo on 1/12/25.
+//  Modern iOS 18+ using @Observable macro
 //
 
 import Foundation
 import SwiftUI
 import SwiftData
-import Combine
+import Observation
 import OSLog
 
 @MainActor
-class PaymentHistoryViewModel: ObservableObject {
-    // MARK: - Published Properties
-
-    @Published var payments: [Payment] = []
-    @Published var selectedFilter: PaymentHistoryFilter = .completed
-    @Published var isLoading = false
-    @Published var error: Error?
+@Observable
+final class PaymentHistoryViewModel {
+    var payments: [Payment] = []
+    var selectedFilter: PaymentHistoryFilter = .completed
+    var isLoading = false
+    var error: Error?
 
     // MARK: - Dependencies (DIP: depend on abstractions)
 
     private let modelContext: ModelContext
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentHistoryViewModel")
-    private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Computed Properties
 
@@ -50,11 +49,11 @@ class PaymentHistoryViewModel: ObservableObject {
     }
 
     private func setupNotificationObserver() {
-        NotificationCenter.default.publisher(for: NSNotification.Name("PaymentsDidSync"))
-            .sink { [weak self] _ in
-                self?.fetchPayments()
+        Task {
+            for await _ in NotificationCenter.default.notifications(named: NSNotification.Name("PaymentsDidSync")) {
+                fetchPayments()
             }
-            .store(in: &cancellables)
+        }
     }
 
     // MARK: - Data Operations

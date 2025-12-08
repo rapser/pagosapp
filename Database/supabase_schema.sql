@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS payments (
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     amount DECIMAL(10, 2) NOT NULL CHECK (amount >= 0),
+    currency TEXT NOT NULL DEFAULT 'PEN' CHECK (currency IN ('PEN', 'USD')),
     due_date TIMESTAMP WITH TIME ZONE NOT NULL,
     is_paid BOOLEAN NOT NULL DEFAULT FALSE,
     category TEXT NOT NULL CHECK (category IN ('Recibo', 'Tarjeta de Crédito', 'Ahorro', 'Suscripción', 'Otro')),

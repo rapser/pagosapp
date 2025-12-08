@@ -1,5 +1,4 @@
 import Foundation
-import Combine
 
 enum AuthenticationError: Error, LocalizedError, UserFacingError {
     case invalidEmailFormat

@@ -1,7 +1,9 @@
 import Foundation
 import UserNotifications
+import Observation
 
-class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
+@Observable
+final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     static let shared = NotificationManager()
     
     override private init() {
@@ -10,7 +12,7 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
     }
 
     /// Añade la presentación de la notificación en primer plano.
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
+    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         completionHandler([.banner, .sound])
@@ -52,10 +54,12 @@ class NotificationManager: NSObject, ObservableObject, UNUserNotificationCenterD
                 
                 if daysBefore == 0 {
                     content.subtitle = "¡Hoy vence \(payment.name)!"
-                    content.body = "No olvides pagar \(payment.amount.formatted(.currency(code: Locale.current.currency?.identifier ?? "USD")))."
+                    let formattedAmount = payment.amount.formatted(.number.precision(.fractionLength(2)))
+                    content.body = "No olvides pagar \(payment.currency.symbol)\(formattedAmount)."
                 } else {
                     content.subtitle = "Vence en \(daysBefore) día(s): \(payment.name)"
-                    content.body = "Recuerda que tienes un pago de \(payment.amount.formatted(.currency(code: Locale.current.currency?.identifier ?? "USD"))) pendiente."
+                    let formattedAmount = payment.amount.formatted(.number.precision(.fractionLength(2)))
+                    content.body = "Recuerda que tienes un pago de \(payment.currency.symbol)\(formattedAmount) pendiente."
                 }
                 content.sound = .default
 

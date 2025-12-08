@@ -10,45 +10,33 @@ import Supabase
 import OSLog
 
 /// Protocol for payment synchronization
+/// Now uses Repository Pattern for better separation of concerns
 protocol PaymentSyncService {
-    func syncPayment(_ payment: Payment) async throws
+    func syncPayment(_ payment: Payment, userId: UUID) async throws
     func syncDeletePayment(_ paymentId: UUID) async throws
     func syncDeletePayments(_ paymentIds: [UUID]) async throws
-    func fetchAllPayments() async throws -> [PaymentDTO]
-    func syncAllLocalPayments(_ payments: [Payment]) async throws
+    func fetchAllPayments(userId: UUID) async throws -> [PaymentDTO]
+    func syncAllLocalPayments(_ payments: [Payment], userId: UUID) async throws
 }
 
-/// Supabase implementation of payment sync service
-class SupabasePaymentSyncService: PaymentSyncService {
-    private let client: SupabaseClient
+/// Implementation using Repository Pattern
+final class DefaultPaymentSyncService: PaymentSyncService {
+    private let repository: PaymentRepositoryProtocol
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentSync")
 
-    init(client: SupabaseClient) {
-        self.client = client
-    }
-
-    /// Get current user ID
-    private func getCurrentUserId() throws -> UUID {
-        guard let userId = client.auth.currentUser?.id else {
-            throw PaymentSyncError.notAuthenticated
-        }
-        return userId
+    init(repository: PaymentRepositoryProtocol) {
+        self.repository = repository
     }
 
     /// Sync a single payment (upsert: insert or update)
-    func syncPayment(_ payment: Payment) async throws {
-        let userId = try getCurrentUserId()
+    func syncPayment(_ payment: Payment, userId: UUID) async throws {
         let dto = payment.toDTO(userId: userId)
 
         do {
             logger.info("Syncing payment: \(payment.name) (ID: \(payment.id))")
-
-            // Upsert payment (insert or update)
-            try await client
-                .from("payments")
-                .upsert(dto)
-                .execute()
-
+            
+            try await repository.upsertPayment(userId: userId, payment: dto)
+            
             logger.info("✅ Payment synced successfully: \(payment.name)")
         } catch {
             logger.error("❌ Failed to sync payment: \(error.localizedDescription)")
@@ -60,13 +48,9 @@ class SupabasePaymentSyncService: PaymentSyncService {
     func syncDeletePayment(_ paymentId: UUID) async throws {
         do {
             logger.info("Deleting payment from server: \(paymentId)")
-
-            try await client
-                .from("payments")
-                .delete()
-                .eq("id", value: paymentId.uuidString)
-                .execute()
-
+            
+            try await repository.deletePayment(paymentId: paymentId)
+            
             logger.info("✅ Payment deleted from server: \(paymentId)")
         } catch {
             logger.error("❌ Failed to delete payment from server: \(error.localizedDescription)")
@@ -84,16 +68,8 @@ class SupabasePaymentSyncService: PaymentSyncService {
         do {
             logger.info("Deleting \(paymentIds.count) payments from server")
             
-            // Delete each payment individually
-            // Supabase doesn't support bulk delete with IN clause easily, so we do it one by one
-            for paymentId in paymentIds {
-                try await client
-                    .from("payments")
-                    .delete()
-                    .eq("id", value: paymentId.uuidString)
-                    .execute()
-            }
-
+            try await repository.deletePayments(paymentIds: paymentIds)
+            
             logger.info("✅ Deleted \(paymentIds.count) payments from server")
         } catch {
             logger.error("❌ Failed to delete payments from server: \(error.localizedDescription)")
@@ -102,19 +78,12 @@ class SupabasePaymentSyncService: PaymentSyncService {
     }
 
     /// Fetch all payments from server
-    func fetchAllPayments() async throws -> [PaymentDTO] {
-        let userId = try getCurrentUserId()
-
+    func fetchAllPayments(userId: UUID) async throws -> [PaymentDTO] {
         do {
             logger.info("Fetching all payments from server for user: \(userId)")
-
-            let response: [PaymentDTO] = try await client
-                .from("payments")
-                .select()
-                .eq("user_id", value: userId.uuidString)
-                .execute()
-                .value
-
+            
+            let response = try await repository.fetchAllPayments(userId: userId)
+            
             logger.info("✅ Fetched \(response.count) payments from server")
             return response
         } catch {
@@ -124,8 +93,7 @@ class SupabasePaymentSyncService: PaymentSyncService {
     }
 
     /// Sync all local payments to server (bulk upsert)
-    func syncAllLocalPayments(_ payments: [Payment]) async throws {
-        let userId = try getCurrentUserId()
+    func syncAllLocalPayments(_ payments: [Payment], userId: UUID) async throws {
         let dtos = payments.map { $0.toDTO(userId: userId) }
 
         guard !dtos.isEmpty else {
@@ -135,12 +103,9 @@ class SupabasePaymentSyncService: PaymentSyncService {
 
         do {
             logger.info("Syncing \(dtos.count) payments to server")
-
-            try await client
-                .from("payments")
-                .upsert(dtos)
-                .execute()
-
+            
+            try await repository.upsertPayments(userId: userId, payments: dtos)
+            
             logger.info("✅ Synced \(dtos.count) payments successfully")
         } catch {
             logger.error("❌ Failed to sync payments: \(error.localizedDescription)")

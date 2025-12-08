@@ -7,8 +7,7 @@
 
 import Foundation
 
-@MainActor
-class SupabasePasswordRecoveryRepository: PasswordRecoveryRepository {
+final class SupabasePasswordRecoveryRepository: PasswordRecoveryRepository {
     private let authService: AuthenticationService
 
     init(authService: AuthenticationService) {

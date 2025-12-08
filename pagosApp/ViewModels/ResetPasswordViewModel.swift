@@ -3,19 +3,21 @@
 //  pagosApp
 //
 //  Created by miguel tomairo on 1/12/25.
+//  Modern iOS 18+ using @Observable macro
 //
 
 import Foundation
-import Combine
+import Observation
 
 @MainActor
-class ResetPasswordViewModel: ObservableObject {
+@Observable
+final class ResetPasswordViewModel {
 
-    @Published var newPassword: String = ""
-    @Published var confirmPassword: String = ""
-    @Published var isLoading: Bool = false
-    @Published var didResetPassword: Bool = false
-    @Published var errorMessage: String?
+    var newPassword: String = ""
+    var confirmPassword: String = ""
+    var isLoading: Bool = false
+    var didResetPassword: Bool = false
+    var errorMessage: String?
 
     private let passwordRecoveryUseCase: PasswordRecoveryUseCase
 

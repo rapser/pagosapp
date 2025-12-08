@@ -3,14 +3,16 @@
 //  pagosApp
 //
 //  Created by miguel tomairo on 9/09/25.
+//  Modern iOS 18+ using async/await
 //
 
-import Combine
+import Supabase
 
-protocol AuthenticationService: AnyObject {
-    var isAuthenticatedPublisher: AnyPublisher<Bool, Never> { get }
-    var isAuthenticated: Bool { get }
+protocol AuthenticationService: AnyObject, Sendable {
+    var isAuthenticated: Bool { get async }
+    var client: SupabaseClient { get }
     
+    func observeAuthState() async throws -> AsyncStream<Bool>
     func signIn(email: String, password: String) async throws
     func signOut() async throws
     func getCurrentUser() async throws -> String?

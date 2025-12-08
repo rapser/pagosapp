@@ -26,7 +26,7 @@ struct PaymentRowView: View {
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 4) {
-                Text(payment.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                Text("\(payment.currency.symbol) \(payment.amount, format: .number.precision(.fractionLength(2)))")
                     .fontWeight(.semibold)
                     .strikethrough(payment.isPaid, color: Color("AppTextSecondary")) // Themed color
                     .foregroundColor(Color("AppTextPrimary")) // Themed color

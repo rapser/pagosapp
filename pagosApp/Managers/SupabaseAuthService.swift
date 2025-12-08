@@ -1,37 +1,35 @@
 import Foundation
 import Supabase
-import Combine
 
-@MainActor
-class SupabaseAuthService: @preconcurrency AuthenticationService {
-    private let client: SupabaseClient
-    private let _isAuthenticated = CurrentValueSubject<Bool, Never>(false)
-    
-    var isAuthenticatedPublisher: AnyPublisher<Bool, Never> {
-        _isAuthenticated.eraseToAnyPublisher()
-    }
+final class SupabaseAuthService: AuthenticationService {
+    let client: SupabaseClient
     
     var isAuthenticated: Bool {
-        _isAuthenticated.value
+        get async {
+            client.auth.currentUser != nil
+        }
     }
     
     init(client: SupabaseClient) {
         self.client = client
-        // Initial check
-        let initialAuthStatus = (client.auth.currentUser != nil)
-        _isAuthenticated.value = initialAuthStatus
-
-        Task {
-            for await state in client.auth.authStateChanges {
-                switch state.event {
-                case .signedIn, .signedOut, .tokenRefreshed, .userUpdated, .passwordRecovery:
-                    self._isAuthenticated.value = (self.client.auth.currentUser != nil)
-                case .initialSession:
-                    self._isAuthenticated.value = (self.client.auth.currentUser != nil)
-                case .userDeleted:
-                    self._isAuthenticated.value = false
-                case .mfaChallengeVerified:
-                    self._isAuthenticated.value = (self.client.auth.currentUser != nil)
+    }
+    
+    func observeAuthState() async throws -> AsyncStream<Bool> {
+        AsyncStream { continuation in
+            Task {
+                // Send initial state
+                continuation.yield(client.auth.currentUser != nil)
+                
+                // Observe changes
+                for await state in client.auth.authStateChanges {
+                    switch state.event {
+                    case .signedIn, .signedOut, .tokenRefreshed, .userUpdated, .passwordRecovery, .initialSession:
+                        continuation.yield(client.auth.currentUser != nil)
+                    case .userDeleted:
+                        continuation.yield(false)
+                    case .mfaChallengeVerified:
+                        continuation.yield(client.auth.currentUser != nil)
+                    }
                 }
             }
         }
@@ -41,7 +39,8 @@ class SupabaseAuthService: @preconcurrency AuthenticationService {
         do {
             _ = try await client.auth.signIn(email: email, password: password)
         } catch let error as AuthError {
-            if error.message.contains("invalid login credentials") {
+            let errorMessage = error.localizedDescription.lowercased()
+            if errorMessage.contains("invalid login credentials") || errorMessage.contains("invalid email or password") {
                 throw AuthenticationError.wrongCredentials
             } else {
                 throw AuthenticationError.unknown(error)
@@ -70,9 +69,10 @@ class SupabaseAuthService: @preconcurrency AuthenticationService {
                 password: password
             )
         } catch let error as AuthError {
-            if error.message.contains("User already registered") || error.message.contains("User already exists") {
+            let errorMessage = error.localizedDescription.lowercased()
+            if errorMessage.contains("user already registered") || errorMessage.contains("user already exists") || errorMessage.contains("already registered") {
                 throw AuthenticationError.wrongCredentials
-            } else if error.message.contains("invalid email") {
+            } else if errorMessage.contains("invalid email") {
                 throw AuthenticationError.invalidEmailFormat
             } else {
                 throw AuthenticationError.unknown(error)
