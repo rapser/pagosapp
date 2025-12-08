@@ -13,7 +13,6 @@ import OSLog
 /// Adapter to use SwiftData as LocalStorage implementation
 /// This can be swapped with SQLite, Realm, CoreData implementations
 /// @MainActor required because ModelContext must be accessed on main thread
-@MainActor
 class SwiftDataStorageAdapter<Entity: PersistentModel>: LocalStorage {
     private let modelContext: ModelContext
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "SwiftDataStorage")
