@@ -61,12 +61,14 @@ struct LoginView: View {
                         .padding()
                         .background(Color("AppBackground"))
                         .cornerRadius(10)
+                        .disabled(isLoading)
                     
                     SecureField("Contraseña", text: $password)
                         .textContentType(.password)
                         .padding()
                         .background(Color("AppBackground"))
                         .cornerRadius(10)
+                        .disabled(isLoading)
                     
                     if let errorMessage = errorMessage {
                         Text(errorMessage)
@@ -105,6 +107,7 @@ struct LoginView: View {
                             .padding(.top)
                             .foregroundColor(Color("AppPrimary"))
                     }
+                    .disabled(isLoading)
                     
                     NavigationLink(destination: ForgotPasswordView(passwordRecoveryUseCase: passwordRecoveryUseCase)) {
                         Text("¿Olvidaste tu contraseña?")
@@ -112,11 +115,19 @@ struct LoginView: View {
                             .padding(.top, 5)
                             .foregroundColor(Color("AppTextSecondary"))
                     }
+                    .disabled(isLoading)
                 }
                 
                 Spacer()
             }
             .padding()
+            .overlay {
+                if isLoading {
+                    Color.black.opacity(0.1)
+                        .ignoresSafeArea()
+                        .allowsHitTesting(true)
+                }
+            }
             .onAppear {
                 // If biometrics are enabled, start with biometric login view
                 if isBiometricLoginEnabled {

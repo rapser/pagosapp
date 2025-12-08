@@ -49,12 +49,14 @@ struct ResetPasswordView: View {
                     .background(Color("AppBackground"))
                     .cornerRadius(10)
                     .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 5)
+                    .disabled(viewModel.isLoading)
 
                 SecureField("Confirmar Contraseña", text: $viewModel.confirmPassword)
                     .padding()
                     .background(Color("AppBackground"))
                     .cornerRadius(10)
                     .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 5)
+                    .disabled(viewModel.isLoading)
 
                 if !passwordsMatch && !viewModel.confirmPassword.isEmpty {
                     Text("Las contraseñas no coinciden")
