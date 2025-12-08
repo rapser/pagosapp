@@ -33,9 +33,25 @@ class SupabaseStorageAdapter<DTO: RemoteTransferable>: RemoteStorage {
                 .eq("user_id", value: userId.uuidString)
                 .execute()
                 .value
-            
+
             logger.debug("✅ Fetched \(response.count) items from Supabase (\(self.tableName))")
             return response
+        } catch let decodingError as DecodingError {
+            logger.error("❌ Decoding error fetching from Supabase: \(decodingError.localizedDescription)")
+            // Log more details about the decoding error
+            switch decodingError {
+            case .dataCorrupted(let context):
+                logger.error("Data corrupted: \(context.debugDescription)")
+            case .keyNotFound(let key, let context):
+                logger.error("Key not found: \(key.stringValue) - \(context.debugDescription)")
+            case .typeMismatch(let type, let context):
+                logger.error("Type mismatch: expected \(type) - \(context.debugDescription)")
+            case .valueNotFound(let type, let context):
+                logger.error("Value not found: expected \(type) - \(context.debugDescription)")
+            @unknown default:
+                logger.error("Unknown decoding error")
+            }
+            throw RemoteStorageError.networkError(decodingError)
         } catch {
             logger.error("❌ Failed to fetch from Supabase: \(error.localizedDescription)")
             throw RemoteStorageError.networkError(error)
