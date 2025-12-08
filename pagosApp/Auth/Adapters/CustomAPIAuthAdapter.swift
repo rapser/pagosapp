@@ -122,24 +122,48 @@ final class CustomAPIAuthAdapter: AuthService {
     }
     
     // MARK: - Refresh Session
-    
+
     func refreshSession(refreshToken: String) async throws -> AuthSession {
         let endpoint = baseURL.appendingPathComponent("/auth/refresh")
-        
+
         let body: [String: Any] = [
             "refreshToken": refreshToken
         ]
-        
+
         let request = try createRequest(url: endpoint, method: "POST", body: body)
-        
+
         do {
             let (data, response) = try await urlSession.data(for: request)
             try validateResponse(response)
-            
+
             return try decodeAuthSession(from: data)
-            
+
         } catch {
             logger.error("❌ Error al refrescar sesión: \(error.localizedDescription)")
+            throw AuthError.sessionExpired
+        }
+    }
+
+    // MARK: - Set Session
+
+    func setSession(accessToken: String, refreshToken: String) async throws -> AuthSession {
+        // For custom API, you might want to validate the tokens by calling a validation endpoint
+        // or just return a session if tokens are present (assuming they're valid)
+        // This is a template - adapt to your API's needs
+
+        let endpoint = baseURL.appendingPathComponent("/auth/validate")
+
+        var request = try createRequest(url: endpoint, method: "POST", body: nil)
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+
+        do {
+            let (data, response) = try await urlSession.data(for: request)
+            try validateResponse(response)
+
+            return try decodeAuthSession(from: data)
+
+        } catch {
+            logger.error("❌ Error al validar sesión: \(error.localizedDescription)")
             throw AuthError.sessionExpired
         }
     }

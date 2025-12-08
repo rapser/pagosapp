@@ -25,7 +25,7 @@ struct ContentView: View {
     var body: some View {
         @Bindable var auth = authManager
         ZStack {
-            if authManager.isAuthenticated {
+            if authManager.isSessionActive {
                 TabView {
                     PaymentsListView()
                         .tabItem {

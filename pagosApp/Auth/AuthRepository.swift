@@ -213,7 +213,7 @@ final class AuthRepository {
     /// Check if there's an existing valid session
     private func checkExistingSession() async {
         logger.debug("🔍 Verificando sesión existente")
-        
+
         do {
             if let session = try await authService.getCurrentSession() {
                 if session.isExpired {
@@ -224,8 +224,27 @@ final class AuthRepository {
                     updateAuthenticationState(with: session.user)
                 }
             } else {
-                logger.debug("ℹ️ No hay sesión activa")
-                clearAuthenticationState()
+                logger.debug("ℹ️ No hay sesión activa, intentando restaurar desde Keychain")
+                // Intentar restaurar sesión con tokens guardados si existen
+                if let accessToken = KeychainManager.getAccessToken(),
+                   let refreshToken = KeychainManager.getRefreshToken() {
+                    do {
+                        let session = try await authService.setSession(accessToken: accessToken, refreshToken: refreshToken)
+                        if session.isExpired {
+                            logger.debug("⚠️ Sesión restaurada pero expirada, intentando refresh")
+                            try await refreshSession()
+                        } else {
+                            logger.debug("✅ Sesión restaurada exitosamente")
+                            updateAuthenticationState(with: session.user)
+                        }
+                    } catch {
+                        logger.debug("❌ No se pudo restaurar sesión: \(error.localizedDescription)")
+                        clearAuthenticationState()
+                    }
+                } else {
+                    logger.debug("ℹ️ No hay tokens guardados")
+                    clearAuthenticationState()
+                }
             }
         } catch {
             logger.error("❌ Error al verificar sesión: \(error.localizedDescription)")

@@ -160,6 +160,11 @@ final class AuthFactory {
 /// Mock implementation for testing or when no provider is configured
 @MainActor
 final class MockAuthService: AuthService {
+    func setSession(accessToken: String, refreshToken: String) async throws -> AuthSession {
+        logger.warning("⚠️ MockAuthService.setSession llamado")
+        throw AuthError.unknown("Mock service - no real authentication")
+    }
+    
     func signUp(credentials: RegistrationCredentials) async throws -> AuthSession {
         logger.warning("⚠️ MockAuthService.signUp llamado")
         throw AuthError.unknown("Mock service - no real authentication")

@@ -109,18 +109,35 @@ final class SupabaseAuthAdapter: AuthService {
     }
     
     // MARK: - Refresh Session
-    
+
     func refreshSession(refreshToken: String) async throws -> AuthSession {
         do {
             logger.info("🔄 Renovando sesión")
-            
+
             let session = try await client.auth.refreshSession(refreshToken: refreshToken)
-            
+
             logger.info("✅ Sesión renovada exitosamente")
             return mapToAuthSession(session)
-            
+
         } catch {
             logger.error("❌ Error al renovar sesión: \(error.localizedDescription)")
+            throw AuthError.sessionExpired
+        }
+    }
+
+    // MARK: - Set Session
+
+    func setSession(accessToken: String, refreshToken: String) async throws -> AuthSession {
+        do {
+            logger.info("🔧 Estableciendo sesión desde tokens guardados")
+
+            let session = try await client.auth.setSession(accessToken: accessToken, refreshToken: refreshToken)
+
+            logger.info("✅ Sesión establecida exitosamente")
+            return mapToAuthSession(session)
+
+        } catch {
+            logger.error("❌ Error al establecer sesión: \(error.localizedDescription)")
             throw AuthError.sessionExpired
         }
     }

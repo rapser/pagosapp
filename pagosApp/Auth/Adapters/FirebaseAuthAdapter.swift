@@ -226,7 +226,11 @@ final class FirebaseAuthAdapter: AuthService {
     func refreshSession(refreshToken: String) async throws -> AuthSession {
         throw AuthError.sessionExpired
     }
-    
+
+    func setSession(accessToken: String, refreshToken: String) async throws -> AuthSession {
+        throw AuthError.unknown("Firebase no está configurado. Ver FirebaseAuthAdapter.swift")
+    }
+
     func sendPasswordResetEmail(email: String) async throws {
         throw AuthError.unknown("Firebase no está configurado. Ver FirebaseAuthAdapter.swift")
     }
