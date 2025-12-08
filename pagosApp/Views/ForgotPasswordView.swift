@@ -42,6 +42,7 @@ struct ForgotPasswordView: View {
                     .autocapitalization(.none)
                     .keyboardType(.emailAddress)
                     .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 5)
+                    .disabled(viewModel.isLoading)
                 
                 Button(action: {
                     viewModel.sendPasswordReset()
