@@ -8,7 +8,8 @@ struct ContentView: View {
     @Environment(PasswordRecoveryUseCase.self) private var passwordRecoveryUseCase
     @Environment(PaymentSyncManager.self) private var syncManager
     @Environment(SettingsManager.self) private var settingsManager
-    @State private var alertManager = AlertManager()
+    @Environment(AlertManager.self) private var alertManager
+    @Environment(\.dependencies) private var dependencies
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.modelContext) private var modelContext
 
@@ -25,6 +26,7 @@ struct ContentView: View {
 
     var body: some View {
         @Bindable var auth = authManager
+        @Bindable var alert = alertManager
         ZStack {
             if authManager.isSessionActive {
                 TabView {
@@ -81,20 +83,11 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            // Configure StorageFactory with current storage provider (Supabase + SwiftData)
-            let storageConfig = StorageConfiguration.supabase(
-                client: supabaseClient,
-                modelContext: modelContext
-            )
-            StorageFactory.shared.configure(storageConfig)
-            logger.info("✅ StorageFactory configured with Supabase + SwiftData")
-            
             // Configure PaymentSyncManager with modelContext
             syncManager.configure(with: modelContext)
-            
-            // Solicitamos permisos al iniciar la app
-            NotificationManager.shared.requestAuthorization()
-            EventKitManager.shared.requestAccess { _ in }
+
+            // Request calendar access (NotificationManager already requested in app init)
+            dependencies.eventKitManager.requestAccess { _ in }
             // authManager.checkSession() is now called by onChange(of: isAuthenticated) or scenePhase .active
         }
         .onChange(of: authManager.isAuthenticated) { oldValue, newValue in
@@ -148,7 +141,7 @@ struct ContentView: View {
                 stopForegroundCheckTimer() // Stop timer when app goes inactive
             }
         }
-        .alert(isPresented: $alertManager.isPresented) {
+        .alert(isPresented: $alert.isPresented) {
             if alertManager.buttons.count == 1 {
                 return Alert(
                     title: alertManager.title,
