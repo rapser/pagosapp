@@ -36,18 +36,21 @@ final class DefaultPaymentOperationsService: PaymentOperationsService {
     private let syncService: PaymentSyncService
     private let notificationService: NotificationService
     private let calendarService: CalendarService
+    private let paymentSyncManager: PaymentSyncManager
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentOperations")
 
     init(
         modelContext: ModelContext,
         syncService: PaymentSyncService,
         notificationService: NotificationService,
-        calendarService: CalendarService
+        calendarService: CalendarService,
+        paymentSyncManager: PaymentSyncManager
     ) {
         self.modelContext = modelContext
         self.syncService = syncService
         self.notificationService = notificationService
         self.calendarService = calendarService
+        self.paymentSyncManager = paymentSyncManager
     }
 
     // MARK: - Create
@@ -113,7 +116,7 @@ final class DefaultPaymentOperationsService: PaymentOperationsService {
         // Sync deletion to server in background if payment was synced
         if wasSynced {
             Task {
-                await PaymentSyncManager.shared.syncDeletePayment(paymentId)
+                await paymentSyncManager.syncDeletePayment(paymentId)
             }
         }
 

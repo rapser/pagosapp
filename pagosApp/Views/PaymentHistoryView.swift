@@ -10,6 +10,7 @@ import SwiftData
 
 struct PaymentHistoryView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(ErrorHandler.self) private var errorHandler
     @State private var viewModel: PaymentHistoryViewModel?
 
     init() {
@@ -97,7 +98,7 @@ struct PaymentHistoryView: View {
         }
         .onAppear {
             if viewModel == nil {
-                viewModel = PaymentHistoryViewModel(modelContext: modelContext)
+                viewModel = PaymentHistoryViewModel(modelContext: modelContext, errorHandler: errorHandler)
             }
         }
     }

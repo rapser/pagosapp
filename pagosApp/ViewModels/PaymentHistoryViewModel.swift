@@ -23,6 +23,7 @@ final class PaymentHistoryViewModel {
     // MARK: - Dependencies (DIP: depend on abstractions)
 
     private let modelContext: ModelContext
+    private let errorHandler: ErrorHandler
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentHistoryViewModel")
 
     // MARK: - Computed Properties
@@ -42,8 +43,9 @@ final class PaymentHistoryViewModel {
 
     // MARK: - Initialization (DIP: inject dependencies)
 
-    init(modelContext: ModelContext) {
+    init(modelContext: ModelContext, errorHandler: ErrorHandler) {
         self.modelContext = modelContext
+        self.errorHandler = errorHandler
         fetchPayments()
         setupNotificationObserver()
     }
@@ -67,7 +69,7 @@ final class PaymentHistoryViewModel {
         } catch {
             logger.error("❌ Failed to fetch payments: \(error.localizedDescription)")
             self.error = error
-            ErrorHandler.shared.handle(PaymentError.saveFailed(error))
+            errorHandler.handle(PaymentError.saveFailed(error))
         }
     }
 

@@ -35,17 +35,18 @@ enum ErrorSeverity {
 }
 
 /// Centralized error handler for the app
+/// Refactored to support Dependency Injection (no more Singleton)
 @Observable
 @MainActor
 final class ErrorHandler {
-    static let shared = ErrorHandler()
-
     var currentError: ErrorAlert?
     var showError = false
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ErrorHandler")
 
-    private init() {}
+    // MARK: - Initialization
+
+    init() {}
 
     /// Handle an error with user feedback
     func handle(_ error: Error, file: String = #file, function: String = #function, line: Int = #line) {

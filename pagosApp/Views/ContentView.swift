@@ -6,8 +6,9 @@ import OSLog
 struct ContentView: View {
     @Environment(AuthenticationManager.self) private var authManager
     @Environment(PasswordRecoveryUseCase.self) private var passwordRecoveryUseCase
+    @Environment(PaymentSyncManager.self) private var syncManager
+    @Environment(SettingsManager.self) private var settingsManager
     @State private var alertManager = AlertManager()
-    @State private var syncManager = PaymentSyncManager.shared
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.modelContext) private var modelContext
 
@@ -61,7 +62,7 @@ struct ContentView: View {
                     UITabBar.appearance().tintColor = UIColor(named: "AppPrimary")
                 }
             } else {
-                let biometricEnabled = authManager.canUseBiometrics && SettingsManager.shared.isBiometricLockEnabled && authManager.hasLoggedInWithCredentials
+                let biometricEnabled = authManager.canUseBiometrics && settingsManager.isBiometricLockEnabled && authManager.hasLoggedInWithCredentials
 
                 LoginView(
                     onLogin: { email, password in
@@ -263,15 +264,11 @@ struct ContentView: View {
 }
 
 #Preview {
-    let client = SupabaseClient(
-        supabaseURL: URL(string: "https://example.com")!,
-        supabaseKey: "dummy_key"
-    )
-    let adapter = SupabaseAuthAdapter(client: client)
-    let repository = AuthRepository(authService: adapter)
-    let authManager = AuthenticationManager(authRepository: repository)
-    
+    let dependencies = AppDependencies.mock()
+
     ContentView()
-        .environment(authManager)
+        .environment(dependencies.authenticationManager)
+        .environment(dependencies.paymentSyncManager)
+        .environment(dependencies.settingsManager)
         .environment(AlertManager())
 }
