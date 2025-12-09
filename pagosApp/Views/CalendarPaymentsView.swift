@@ -3,6 +3,7 @@ import SwiftData
 
 struct CalendarPaymentsView: View {
     @Environment(AlertManager.self) private var alertManager
+    @Environment(EventKitManager.self) private var eventKitManager
     @Environment(\.modelContext) private var modelContext
     // Obtenemos todos los pagos para poder filtrarlos por fecha.
     @Query private var payments: [Payment]
@@ -70,7 +71,7 @@ struct CalendarPaymentsView: View {
             return
         }
         
-        EventKitManager.shared.requestAccess { granted in
+        eventKitManager.requestAccess { granted in
             if granted {
                 var addedCount = 0
                 var updatedCount = 0
@@ -82,7 +83,7 @@ struct CalendarPaymentsView: View {
                     if payment.dueDate >= Date() {
                         if payment.eventIdentifier == nil {
                             // Add new event if not already synced
-                            EventKitManager.shared.addEvent(for: payment) { eventID in
+                            eventKitManager.addEvent(for: payment) { eventID in
                                 if let eventID = eventID {
                                     payment.eventIdentifier = eventID
                                     addedCount += 1
@@ -94,7 +95,7 @@ struct CalendarPaymentsView: View {
                             }
                         } else {
                             // Update existing event
-                            EventKitManager.shared.updateEvent(for: payment)
+                            eventKitManager.updateEvent(for: payment)
                             updatedCount += 1
                             processedCount += 1
                             if processedCount == totalPaymentsToProcess {

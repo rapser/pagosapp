@@ -70,7 +70,9 @@ final class DefaultPaymentOperationsService: PaymentOperationsService {
         }
 
         // Notify that a payment changed so Settings can update pending count
-        NotificationCenter.default.post(name: NSNotification.Name("PaymentDidChange"), object: nil)
+        await MainActor.run {
+            NotificationCenter.default.post(name: NSNotification.Name("PaymentDidChange"), object: nil)
+        }
 
         logger.info("✅ Payment created locally: \(payment.name)")
     }
@@ -94,7 +96,9 @@ final class DefaultPaymentOperationsService: PaymentOperationsService {
         await calendarService.updateEvent(for: payment)
 
         // Notify that a payment changed so Settings can update pending count
-        NotificationCenter.default.post(name: NSNotification.Name("PaymentDidChange"), object: nil)
+        await MainActor.run {
+            NotificationCenter.default.post(name: NSNotification.Name("PaymentDidChange"), object: nil)
+        }
 
         logger.info("✅ Payment updated locally: \(payment.name)")
     }
@@ -121,7 +125,9 @@ final class DefaultPaymentOperationsService: PaymentOperationsService {
         }
 
         // Notify that a payment changed so Settings can update pending count
-        NotificationCenter.default.post(name: NSNotification.Name("PaymentDidChange"), object: nil)
+        await MainActor.run {
+            NotificationCenter.default.post(name: NSNotification.Name("PaymentDidChange"), object: nil)
+        }
 
         logger.info("✅ Payment deleted locally: \(payment.name)")
     }
@@ -132,7 +138,7 @@ final class DefaultPaymentOperationsService: PaymentOperationsService {
 class NotificationManagerAdapter: NotificationService {
     private let manager: NotificationManager
 
-    init(manager: NotificationManager = .shared) {
+    init(manager: NotificationManager = NotificationManager()) {
         self.manager = manager
     }
 
@@ -154,8 +160,11 @@ class EventKitManagerAdapter: CalendarService {
         self.manager = manager
     }
     
+    @MainActor
     convenience init() {
-        self.init(manager: EventKitManager.shared)
+        // For convenience init, create a new instance with its own ErrorHandler
+        // Ideally, pass EventKitManager via DI from AppDependencies
+        self.init(manager: EventKitManager(errorHandler: ErrorHandler()))
     }
 
     func addEvent(for payment: Payment, completion: @escaping (String?) -> Void) async {

@@ -58,14 +58,10 @@ struct pagosAppApp: App {
         self.passwordRecoveryRepository = SupabasePasswordRecoveryRepository(authService: supabaseAuthService)
         self.passwordRecoveryUseCase = PasswordRecoveryUseCase(repository: passwordRecoveryRepository)
 
-        // Initialize NotificationManager to set up the delegate
-        _ = NotificationManager.shared
+        // Request notification authorization at app launch (via DI)
+        dependencies.notificationManager.requestAuthorization()
 
-        // Request notification authorization at app launch
-        NotificationManager.shared.requestAuthorization()
-
-        // Configure StorageFactory (will be configured properly in ContentView with modelContext)
-        logger.info("✅ App initialized with DI Container - StorageFactory will be configured in ContentView")
+        logger.info("✅ App initialized with full DI Container")
     }
 
     var body: some Scene {
@@ -78,6 +74,10 @@ struct pagosAppApp: App {
                 .environment(dependencies.paymentSyncManager)
                 .environment(dependencies.biometricManager)
                 .environment(dependencies.sessionManager)
+                .environment(dependencies.notificationManager)
+                .environment(dependencies.eventKitManager)
+                .environment(dependencies.alertManager)
+                .environment(dependencies.storageFactory)
                 .environment(passwordRecoveryUseCase)
                 .tint(Color("AppPrimary"))
         }

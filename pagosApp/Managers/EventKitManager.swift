@@ -3,11 +3,17 @@ import EventKit
 import Observation
 import OSLog
 
+/// Manages calendar events for payments
+/// Refactored to support Dependency Injection (no more Singleton)
 @Observable
 final class EventKitManager {
-    static let shared = EventKitManager()
     private let eventStore = EKEventStore()
+    private let errorHandler: ErrorHandler
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "EventKit")
+
+    init(errorHandler: ErrorHandler) {
+        self.errorHandler = errorHandler
+    }
 
     /// Solicita permiso al usuario para acceder al calendario.
     func requestAccess(completion: @escaping (Bool) -> Void) {
@@ -60,8 +66,7 @@ final class EventKitManager {
         } catch {
             logger.error("❌ Failed to save calendar event: \(error.localizedDescription)")
             Task { @MainActor in
-                let errorHandler = ErrorHandler()
-                errorHandler.handle(PaymentError.calendarSyncFailed(error))
+                self.errorHandler.handle(PaymentError.calendarSyncFailed(error))
             }
             completion(nil)
         }
@@ -100,8 +105,7 @@ final class EventKitManager {
         } catch {
             logger.error("❌ Failed to update calendar event: \(error.localizedDescription)")
             Task { @MainActor in
-                let errorHandler = ErrorHandler()
-                errorHandler.handle(PaymentError.calendarSyncFailed(error))
+                self.errorHandler.handle(PaymentError.calendarSyncFailed(error))
             }
         }
     }
@@ -120,8 +124,7 @@ final class EventKitManager {
         } catch {
             logger.error("❌ Failed to remove calendar event: \(error.localizedDescription)")
             Task { @MainActor in
-                let errorHandler = ErrorHandler()
-                errorHandler.handle(PaymentError.calendarSyncFailed(error))
+                self.errorHandler.handle(PaymentError.calendarSyncFailed(error))
             }
         }
     }

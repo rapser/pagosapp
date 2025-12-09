@@ -23,6 +23,10 @@ protocol AppDependenciesProtocol {
     var authenticationManager: AuthenticationManager { get }
     var biometricManager: BiometricManager { get }
     var sessionManager: SessionManager { get }
+    var notificationManager: NotificationManager { get }
+    var eventKitManager: EventKitManager { get }
+    var alertManager: AlertManager { get }
+    var storageFactory: StorageFactory { get }
 }
 
 /// Concrete implementation of app dependencies
@@ -38,6 +42,10 @@ final class AppDependencies: AppDependenciesProtocol {
     let authenticationManager: AuthenticationManager
     let biometricManager: BiometricManager
     let sessionManager: SessionManager
+    let notificationManager: NotificationManager
+    let eventKitManager: EventKitManager
+    let alertManager: AlertManager
+    let storageFactory: StorageFactory
 
     // MARK: - Initialization
 
@@ -50,6 +58,16 @@ final class AppDependencies: AppDependenciesProtocol {
         self.settingsManager = SettingsManager()
         self.biometricManager = BiometricManager()
         self.sessionManager = SessionManager()
+        self.notificationManager = NotificationManager()
+        self.eventKitManager = EventKitManager(errorHandler: errorHandler)
+        self.alertManager = AlertManager()
+
+        // Initialize StorageFactory with configuration
+        let storageConfig = StorageConfiguration.supabase(
+            client: supabaseClient,
+            modelContext: modelContext
+        )
+        self.storageFactory = StorageFactory(configuration: storageConfig)
 
         // Initialize PaymentSyncManager before AuthenticationManager (dependency order)
         self.paymentSyncManager = PaymentSyncManager(
@@ -89,10 +107,7 @@ final class AppDependencies: AppDependenciesProtocol {
 /// Environment key for dependency injection
 struct AppDependenciesKey: EnvironmentKey {
     @MainActor
-    static let defaultValue: AppDependencies = {
-        // This should never be used - app should always inject proper dependencies
-        fatalError("AppDependencies not injected. Make sure to inject via .environment()")
-    }()
+    static let defaultValue: AppDependencies = .mock()
 }
 
 extension EnvironmentValues {
