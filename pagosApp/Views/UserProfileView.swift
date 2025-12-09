@@ -30,7 +30,7 @@ struct UserProfileView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 // Custom Navigation Bar
                 HStack {

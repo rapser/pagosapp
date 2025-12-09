@@ -18,7 +18,7 @@ struct AddPaymentView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Group {
                 if let viewModel = viewModel {
                     @Bindable var vm = viewModel

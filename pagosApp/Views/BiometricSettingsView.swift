@@ -139,7 +139,7 @@ struct BenefitRow: View {
     let repository = AuthRepository(authService: adapter)
     let authManager = AuthenticationManager(authRepository: repository)
     
-    NavigationView {
+    NavigationStack {
         BiometricSettingsView()
             .environment(authManager)
     }

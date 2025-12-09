@@ -14,7 +14,7 @@ struct CalendarPaymentsView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 // Custom Calendar with payment indicators
                 CustomCalendarView(selectedDate: $selectedDate, payments: payments)

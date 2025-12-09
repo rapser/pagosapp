@@ -4,15 +4,17 @@ import SwiftData
 struct SettingsView: View {
     @Environment(AuthenticationManager.self) private var authManager
     @Environment(AlertManager.self) private var alertManager
-    @State private var settingsManager = SettingsManager.shared
-    @State private var syncManager = PaymentSyncManager.shared
     @Environment(\.modelContext) private var modelContext
 
     @State private var showingSyncError = false
     @State private var syncErrorMessage = ""
 
+    // Direct access to singletons (no @State needed)
+    private var settingsManager: SettingsManager { .shared }
+    private var syncManager: PaymentSyncManager { .shared }
+
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 // Sync Section
                 Section(header: Text("Sincronización").foregroundColor(Color("AppTextPrimary"))) {
