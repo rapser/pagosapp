@@ -28,6 +28,7 @@ final class AddPaymentViewModel {
 
     private let modelContext: ModelContext
     private let paymentOperations: PaymentOperationsService
+    private let errorHandler: ErrorHandler
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "AddPaymentViewModel")
 
     // MARK: - Validation
@@ -42,9 +43,10 @@ final class AddPaymentViewModel {
 
     // MARK: - Initialization (DIP: inject dependencies)
 
-    init(modelContext: ModelContext, paymentOperations: PaymentOperationsService) {
+    init(modelContext: ModelContext, paymentOperations: PaymentOperationsService, errorHandler: ErrorHandler) {
         self.modelContext = modelContext
         self.paymentOperations = paymentOperations
+        self.errorHandler = errorHandler
     }
 
     /// Convenience initializer with default dependencies
@@ -57,10 +59,11 @@ final class AddPaymentViewModel {
             modelContext: modelContext,
             syncService: syncService,
             notificationService: notificationService,
-            calendarService: calendarService
+            calendarService: calendarService,
+            paymentSyncManager: PaymentSyncManager(errorHandler: ErrorHandler())
         )
 
-        self.init(modelContext: modelContext, paymentOperations: paymentOperations)
+        self.init(modelContext: modelContext, paymentOperations: paymentOperations, errorHandler: ErrorHandler())
     }
 
     // MARK: - Actions
@@ -69,12 +72,12 @@ final class AddPaymentViewModel {
         // Validate
         guard isValid else {
             logger.warning("⚠️ Invalid payment data")
-            ErrorHandler.shared.handle(PaymentError.invalidAmount)
+            errorHandler.handle(PaymentError.invalidAmount)
             return
         }
 
         guard let amountValue = amountValue else {
-            ErrorHandler.shared.handle(PaymentError.invalidAmount)
+            errorHandler.handle(PaymentError.invalidAmount)
             return
         }
 
@@ -104,7 +107,7 @@ final class AddPaymentViewModel {
                 onSuccess()
             } catch {
                 logger.error("❌ Failed to save payment: \(error.localizedDescription)")
-                ErrorHandler.shared.handle(PaymentError.saveFailed(error))
+                errorHandler.handle(PaymentError.saveFailed(error))
             }
         }
     }

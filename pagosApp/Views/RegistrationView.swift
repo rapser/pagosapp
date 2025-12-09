@@ -99,14 +99,9 @@ struct RegistrationView: View {
 }
 
 #Preview {
-    let client = SupabaseClient(
-        supabaseURL: URL(string: "https://example.com")!,
-        supabaseKey: "dummy_key"
-    )
-    let adapter = SupabaseAuthAdapter(client: client)
-    let repository = AuthRepository(authService: adapter)
-    let authManager = AuthenticationManager(authRepository: repository)
-    
+    let dependencies = AppDependencies.mock()
+
     RegistrationView()
-        .environment(authManager)
+        .environment(dependencies.authenticationManager)
+        .environment(dependencies.errorHandler)
 }

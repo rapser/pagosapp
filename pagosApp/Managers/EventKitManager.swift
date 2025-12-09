@@ -60,7 +60,8 @@ final class EventKitManager {
         } catch {
             logger.error("❌ Failed to save calendar event: \(error.localizedDescription)")
             Task { @MainActor in
-                ErrorHandler.shared.handle(PaymentError.calendarSyncFailed(error))
+                let errorHandler = ErrorHandler()
+                errorHandler.handle(PaymentError.calendarSyncFailed(error))
             }
             completion(nil)
         }
@@ -99,7 +100,8 @@ final class EventKitManager {
         } catch {
             logger.error("❌ Failed to update calendar event: \(error.localizedDescription)")
             Task { @MainActor in
-                ErrorHandler.shared.handle(PaymentError.calendarSyncFailed(error))
+                let errorHandler = ErrorHandler()
+                errorHandler.handle(PaymentError.calendarSyncFailed(error))
             }
         }
     }
@@ -118,7 +120,8 @@ final class EventKitManager {
         } catch {
             logger.error("❌ Failed to remove calendar event: \(error.localizedDescription)")
             Task { @MainActor in
-                ErrorHandler.shared.handle(PaymentError.calendarSyncFailed(error))
+                let errorHandler = ErrorHandler()
+                errorHandler.handle(PaymentError.calendarSyncFailed(error))
             }
         }
     }

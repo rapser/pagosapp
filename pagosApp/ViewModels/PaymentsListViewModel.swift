@@ -27,6 +27,7 @@ final class PaymentsListViewModel {
     private let modelContext: ModelContext
     private let paymentOperations: PaymentOperationsService
     private let syncService: PaymentSyncService
+    private let errorHandler: ErrorHandler
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentsListViewModel")
 
     // MARK: - Computed Properties
@@ -54,11 +55,13 @@ final class PaymentsListViewModel {
     init(
         modelContext: ModelContext,
         paymentOperations: PaymentOperationsService,
-        syncService: PaymentSyncService
+        syncService: PaymentSyncService,
+        errorHandler: ErrorHandler
     ) {
         self.modelContext = modelContext
         self.paymentOperations = paymentOperations
         self.syncService = syncService
+        self.errorHandler = errorHandler
         self.isLoading = true // Start with loading state
         fetchPayments()
         setupNotificationObserver()
@@ -82,13 +85,15 @@ final class PaymentsListViewModel {
             modelContext: modelContext,
             syncService: syncService,
             notificationService: notificationService,
-            calendarService: calendarService
+            calendarService: calendarService,
+            paymentSyncManager: PaymentSyncManager(errorHandler: ErrorHandler())
         )
 
         self.init(
             modelContext: modelContext,
             paymentOperations: paymentOperations,
-            syncService: syncService
+            syncService: syncService,
+            errorHandler: ErrorHandler()
         )
     }
 
@@ -107,7 +112,7 @@ final class PaymentsListViewModel {
         } catch {
             logger.error("❌ Failed to fetch payments: \(error.localizedDescription)")
             self.error = error
-            ErrorHandler.shared.handle(PaymentError.saveFailed(error))
+            errorHandler.handle(PaymentError.saveFailed(error))
         }
     }
 
@@ -123,7 +128,7 @@ final class PaymentsListViewModel {
                 fetchPayments()
             } catch {
                 logger.error("❌ Failed to delete payment: \(error.localizedDescription)")
-                ErrorHandler.shared.handle(PaymentError.deleteFailed(error))
+                errorHandler.handle(PaymentError.deleteFailed(error))
             }
         }
     }
@@ -142,7 +147,7 @@ final class PaymentsListViewModel {
                 fetchPayments()
             } catch {
                 logger.error("❌ Failed to update payment status: \(error.localizedDescription)")
-                ErrorHandler.shared.handle(PaymentError.updateFailed(error))
+                errorHandler.handle(PaymentError.updateFailed(error))
                 payment.isPaid.toggle() // Revert on error
             }
         }

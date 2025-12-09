@@ -3,7 +3,7 @@ import Supabase
 import LocalAuthentication
 
 struct BiometricSettingsView: View {
-    @State private var settingsManager = SettingsManager.shared
+    @Environment(SettingsManager.self) private var settingsManager
     @Environment(AuthenticationManager.self) private var authManager
     @Environment(\.modelContext) private var modelContext
     
@@ -131,16 +131,11 @@ struct BenefitRow: View {
 }
 
 #Preview {
-    let client = SupabaseClient(
-        supabaseURL: URL(string: "https://example.com")!,
-        supabaseKey: "dummy_key"
-    )
-    let adapter = SupabaseAuthAdapter(client: client)
-    let repository = AuthRepository(authService: adapter)
-    let authManager = AuthenticationManager(authRepository: repository)
-    
+    let dependencies = AppDependencies.mock()
+
     NavigationStack {
         BiometricSettingsView()
-            .environment(authManager)
+            .environment(dependencies.authenticationManager)
+            .environment(dependencies.settingsManager)
     }
 }

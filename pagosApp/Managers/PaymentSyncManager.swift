@@ -11,14 +11,14 @@ import SwiftData
 import Observation
 import OSLog
 
+/// Manages synchronization between local SwiftData and Supabase backend
+/// Refactored to support Dependency Injection (no more Singleton)
 @MainActor
 @Observable
 final class PaymentSyncManager {
-    static let shared = PaymentSyncManager()
-    
     private var syncService: PaymentSyncService?
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentSyncManager")
-    private let errorHandler = ErrorHandler.shared
+    private let errorHandler: ErrorHandler
 
     var isSyncing = false
     var lastSyncDate: Date?
@@ -27,7 +27,10 @@ final class PaymentSyncManager {
 
     private let lastSyncKey = "lastPaymentSyncDate"
 
-    private init() {
+    // MARK: - Initialization
+
+    init(errorHandler: ErrorHandler) {
+        self.errorHandler = errorHandler
         self.lastSyncDate = UserDefaults.standard.object(forKey: lastSyncKey) as? Date
     }
     

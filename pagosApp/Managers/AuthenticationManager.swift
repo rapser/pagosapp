@@ -13,7 +13,9 @@ import Supabase
 final class AuthenticationManager {
     private let authRepository: AuthRepository
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "Authentication")
-    private let errorHandler = ErrorHandler.shared
+    private let errorHandler: ErrorHandler
+    private let settingsManager: SettingsManager
+    private let paymentSyncManager: PaymentSyncManager
 
     private let lastActiveTimestampKey = "lastActiveTimestamp"
     private let sessionActiveKey = "sessionActive"
@@ -25,21 +27,29 @@ final class AuthenticationManager {
     var showInactivityAlert = false
     var hasLoggedInWithCredentials = false
     var isLoading: Bool = false
-    
+
     /// Exposes the Supabase client for legacy compatibility
     /// Use only when necessary (e.g., UserProfileService)
     var supabaseClient: SupabaseClient? {
         return authRepository.supabaseClient
     }
-    
-    init(authRepository: AuthRepository) {
+
+    init(
+        authRepository: AuthRepository,
+        errorHandler: ErrorHandler,
+        settingsManager: SettingsManager,
+        paymentSyncManager: PaymentSyncManager
+    ) {
         self.authRepository = authRepository
+        self.errorHandler = errorHandler
+        self.settingsManager = settingsManager
+        self.paymentSyncManager = paymentSyncManager
         self.hasLoggedInWithCredentials = KeychainManager.getHasLoggedIn()
         self.isSessionActive = UserDefaults.standard.bool(forKey: sessionActiveKey)
 
         checkBiometricAvailability()
 
-        let isFaceIDEnabled = SettingsManager.shared.isBiometricLockEnabled && canUseBiometrics
+        let isFaceIDEnabled = settingsManager.isBiometricLockEnabled && canUseBiometrics
 
         if isFaceIDEnabled {
             self.isAuthenticated = false
@@ -225,10 +235,10 @@ final class AuthenticationManager {
             logger.error("Logout failed with error: \(error.localizedDescription)")
         }
 
-        PaymentSyncManager.shared.clearLocalDatabase(modelContext: modelContext)
+        paymentSyncManager.clearLocalDatabase(modelContext: modelContext)
         logger.info("Local SwiftData database cleared on logout")
 
-        if !SettingsManager.shared.isBiometricLockEnabled {
+        if !settingsManager.isBiometricLockEnabled {
             _ = KeychainManager.deleteCredentials()
             logger.info("🗑️ Credentials deleted from Keychain (Face ID disabled)")
         } else {
