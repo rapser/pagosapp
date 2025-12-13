@@ -83,6 +83,9 @@ final class AppDependencies: AppDependenciesProtocol {
             settingsManager: settingsManager,
             paymentSyncManager: paymentSyncManager
         )
+
+        // Set authRepository in PaymentSyncManager (circular dependency resolution)
+        self.paymentSyncManager.setAuthRepository(authRepository)
     }
 
     // MARK: - Convenience Initializer for Testing
@@ -105,7 +108,7 @@ final class AppDependencies: AppDependenciesProtocol {
 // MARK: - Environment Key
 
 /// Environment key for dependency injection
-struct AppDependenciesKey: EnvironmentKey {
+struct AppDependenciesKey: @preconcurrency EnvironmentKey {
     @MainActor
     static let defaultValue: AppDependencies = .mock()
 }

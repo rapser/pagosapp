@@ -8,7 +8,7 @@
 //
 
 import Foundation
-import LocalAuthentication
+@preconcurrency import LocalAuthentication
 import OSLog
 import Observation
 

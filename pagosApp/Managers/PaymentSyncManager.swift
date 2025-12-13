@@ -19,6 +19,7 @@ final class PaymentSyncManager {
     private var syncService: PaymentSyncService?
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentSyncManager")
     private let errorHandler: ErrorHandler
+    private weak var authRepository: AuthRepository?
 
     var isSyncing = false
     var lastSyncDate: Date?
@@ -29,9 +30,15 @@ final class PaymentSyncManager {
 
     // MARK: - Initialization
 
-    init(errorHandler: ErrorHandler) {
+    init(errorHandler: ErrorHandler, authRepository: AuthRepository? = nil) {
         self.errorHandler = errorHandler
+        self.authRepository = authRepository
         self.lastSyncDate = UserDefaults.standard.object(forKey: lastSyncKey) as? Date
+    }
+
+    /// Set auth repository after initialization (for DI circular dependency resolution)
+    func setAuthRepository(_ repository: AuthRepository) {
+        self.authRepository = repository
     }
     
     /// Initialize with modelContext (call once at app startup)
@@ -135,11 +142,36 @@ final class PaymentSyncManager {
         }
     }
 
+    /// Check if there are pending payments to sync before logout
+    /// Returns true if there are unsynchronized payments
+    func hasPendingSyncPayments(modelContext: ModelContext) -> Bool {
+        do {
+            let allPayments = try fetchAllPayments(from: modelContext)
+            let pendingPayments = filterPendingPayments(allPayments)
+            return !pendingPayments.isEmpty
+        } catch {
+            logger.error("❌ Failed to check pending sync: \(error.localizedDescription)")
+            return false // Safe default: allow logout if we can't check
+        }
+    }
+
     /// Clear all local payments and pending deletions from database (used on logout)
     /// This ONLY clears SwiftData locally - NEVER touches Supabase server
     /// This method is robust and doesn't depend on ModelContext being available
-    func clearLocalDatabase(modelContext: ModelContext? = nil) {
-        logger.info("Clearing local database on logout")
+    /// - Parameter modelContext: ModelContext to use for deletion
+    /// - Parameter force: If true, clears even if there are pending syncs (default: false)
+    /// - Returns: True if cleared successfully, false if there are pending syncs and force is false
+    @discardableResult
+    func clearLocalDatabase(modelContext: ModelContext? = nil, force: Bool = false) -> Bool {
+        logger.info("Clearing local database on logout (force: \(force))")
+
+        // Check for pending syncs if not forcing
+        if !force, let context = modelContext {
+            if hasPendingSyncPayments(modelContext: context) {
+                logger.warning("⚠️ Cannot clear database: there are unsynchronized payments")
+                return false
+            }
+        }
 
         // Try to clear via ModelContext if available
         if let context = modelContext {
@@ -171,6 +203,7 @@ final class PaymentSyncManager {
         NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
 
         logger.info("✅ Local SwiftData cleared successfully (Supabase data preserved)")
+        return true
     }
 
     /// Force delete database files when ModelContext is not available or corrupted
@@ -218,17 +251,14 @@ final class PaymentSyncManager {
     }
 
     /// Manual sync: Upload pending local changes and download remote changes
-    /// - Parameter isAuthenticated: Whether user is logged in
+    /// - Parameter isAuthenticated: Whether user is logged in locally
+    /// Note: In offline-first apps, we try to sync even if local state shows not authenticated
+    /// The ensureValidSession() call will determine if sync can actually proceed
     func performManualSync(modelContext: ModelContext, isAuthenticated: Bool) async throws {
-        guard isAuthenticated else {
-            let error = NSError(
-                domain: "PaymentSyncManager",
-                code: 401,
-                userInfo: [NSLocalizedDescriptionKey: "Debes iniciar sesión para sincronizar"]
-            )
-            syncError = error
-            logger.warning("Sync attempted without authentication")
-            throw error
+        // Don't block sync based on local auth state - let ensureValidSession() decide
+        // This allows syncing when token expired but user is still "logged in" locally
+        if !isAuthenticated {
+            logger.info("ℹ️ Local auth state is false, but will attempt sync anyway (offline-first mode)")
         }
 
         guard !isSyncing else {
@@ -242,6 +272,32 @@ final class PaymentSyncManager {
         defer { isSyncing = false }
 
         logger.info("🔄 Starting manual sync...")
+
+        // IMPORTANT: Verify and refresh session before syncing (offline-first approach)
+        do {
+            if let authRepo = authRepository {
+                try await authRepo.ensureValidSession()
+                logger.info("✅ Session verified and valid - proceeding with sync")
+            } else {
+                logger.warning("⚠️ AuthRepository not set, skipping session verification")
+            }
+        } catch {
+            // Session validation failed - likely offline or expired token
+            // This is OK for offline-first apps - just can't sync right now
+            logger.warning("⚠️ No se puede sincronizar: \(error.localizedDescription)")
+            logger.info("💡 Puedes seguir trabajando localmente. La sincronización se realizará cuando tengas conexión.")
+
+            let sessionError = NSError(
+                domain: "PaymentSyncManager",
+                code: 503, // Service Unavailable (más apropiado que 401 Unauthorized)
+                userInfo: [
+                    NSLocalizedDescriptionKey: "No se puede sincronizar en este momento",
+                    NSLocalizedRecoverySuggestionErrorKey: "Verifica tu conexión a internet. Puedes seguir trabajando localmente y sincronizar más tarde."
+                ]
+            )
+            syncError = sessionError
+            throw sessionError
+        }
 
         do {
             // 1. Upload local changes (only payments that need syncing)
