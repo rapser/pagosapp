@@ -11,6 +11,7 @@ import SwiftData
 import OSLog
 
 /// Protocol for notification service (ISP + DIP)
+@MainActor
 protocol NotificationService {
     func scheduleNotifications(for payment: Payment) async
     func cancelNotifications(for payment: Payment) async
@@ -24,6 +25,7 @@ protocol CalendarService {
 }
 
 /// Protocol for payment operations (ISP)
+@MainActor
 protocol PaymentOperationsService {
     func createPayment(_ payment: Payment) async throws
     func updatePayment(_ payment: Payment) async throws
@@ -31,6 +33,7 @@ protocol PaymentOperationsService {
 }
 
 /// Default implementation coordinating all payment operations
+@MainActor
 final class DefaultPaymentOperationsService: PaymentOperationsService {
     private let modelContext: ModelContext
     private let syncService: PaymentSyncService
@@ -135,19 +138,24 @@ final class DefaultPaymentOperationsService: PaymentOperationsService {
 
 // MARK: - Adapter for NotificationManager
 
+@MainActor
 class NotificationManagerAdapter: NotificationService {
     private let manager: NotificationManager
 
-    init(manager: NotificationManager = NotificationManager()) {
+    init(manager: NotificationManager) {
         self.manager = manager
     }
 
+    convenience init() {
+        self.init(manager: NotificationManager())
+    }
+
     func scheduleNotifications(for payment: Payment) async {
-        manager.scheduleNotification(for: payment)  // Singular
+        manager.scheduleNotification(for: payment)
     }
 
     func cancelNotifications(for payment: Payment) async {
-        manager.cancelNotification(for: payment)    // Singular
+        manager.cancelNotification(for: payment)
     }
 }
 

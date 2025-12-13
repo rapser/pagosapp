@@ -4,6 +4,7 @@ import Observation
 
 /// Manages local notifications for payment reminders
 /// Refactored to support Dependency Injection (no more Singleton)
+@MainActor
 @Observable
 final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
