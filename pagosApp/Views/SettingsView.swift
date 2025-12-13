@@ -231,7 +231,7 @@ struct SettingsView: View {
             buttons: [
                 AlertButton(title: Text("Aceptar"), role: .destructive) {
                     Task {
-                        // Always close Supabase session and clear local data
+                        // Logout will automatically preserve data if there are pending syncs
                         await authManager.logout(modelContext: modelContext)
                     }
                 },
