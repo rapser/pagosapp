@@ -86,6 +86,9 @@ final class AppDependencies: AppDependenciesProtocol {
 
         // Set authRepository in PaymentSyncManager (circular dependency resolution)
         self.paymentSyncManager.setAuthRepository(authRepository)
+
+        // Set notificationManager in PaymentSyncManager (to schedule notifications after sync)
+        self.paymentSyncManager.setNotificationManager(notificationManager)
     }
 
     // MARK: - Convenience Initializer for Testing

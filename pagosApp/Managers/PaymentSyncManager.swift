@@ -10,6 +10,7 @@ import Foundation
 import SwiftData
 import Observation
 import OSLog
+import UserNotifications
 
 /// Manages synchronization between local SwiftData and Supabase backend
 /// Refactored to support Dependency Injection (no more Singleton)
@@ -19,7 +20,8 @@ final class PaymentSyncManager {
     private var syncService: PaymentSyncService?
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentSyncManager")
     private let errorHandler: ErrorHandler
-    private weak var authRepository: AuthRepository?
+    private var authRepository: AuthRepository?
+    private var notificationManager: NotificationManager?
 
     var isSyncing = false
     var lastSyncDate: Date?
@@ -39,6 +41,11 @@ final class PaymentSyncManager {
     /// Set auth repository after initialization (for DI circular dependency resolution)
     func setAuthRepository(_ repository: AuthRepository) {
         self.authRepository = repository
+    }
+
+    /// Set notification manager after initialization (for DI circular dependency resolution)
+    func setNotificationManager(_ manager: NotificationManager) {
+        self.notificationManager = manager
     }
     
     /// Initialize with modelContext (call once at app startup)
@@ -162,7 +169,7 @@ final class PaymentSyncManager {
     /// - Parameter force: If true, clears even if there are pending syncs (default: false)
     /// - Returns: True if cleared successfully, false if there are pending syncs and force is false
     @discardableResult
-    func clearLocalDatabase(modelContext: ModelContext? = nil, force: Bool = false) -> Bool {
+    func clearLocalDatabase(modelContext: ModelContext? = nil, force: Bool = false) async -> Bool {
         logger.info("Clearing local database on logout (force: \(force))")
 
         // Check for pending syncs if not forcing
@@ -173,11 +180,27 @@ final class PaymentSyncManager {
             }
         }
 
-        // Try to clear via ModelContext if available
+        // IMPORTANT: Cancel all local notifications before clearing data
+        // This prevents notifications from previous user when switching accounts
         if let context = modelContext {
             do {
                 let allPayments = try fetchAllPayments(from: context)
 
+                // Cancel notifications for each payment
+                if let notificationMgr = notificationManager {
+                    logger.info("🔕 Cancelling notifications for \(allPayments.count) payments")
+                    for payment in allPayments {
+                        notificationMgr.cancelNotification(for: payment)
+                    }
+                    logger.info("✅ All notifications cancelled")
+                } else {
+                    // CRITICAL: Fallback to clear all notifications if manager unavailable
+                    logger.warning("⚠️ NotificationManager not available - clearing all pending notifications as fallback")
+                    UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+                    logger.info("✅ All pending notifications cleared (fallback)")
+                }
+
+                // Then delete payments
                 for payment in allPayments {
                     context.delete(payment)
                 }
@@ -273,14 +296,22 @@ final class PaymentSyncManager {
 
         logger.info("🔄 Starting manual sync...")
 
+        // IMPORTANT: Verify AuthRepository is available
+        guard let authRepo = authRepository else {
+            logger.error("❌ AuthRepository not available - cannot verify session for sync")
+            let error = NSError(
+                domain: "PaymentSyncManager",
+                code: 500,
+                userInfo: [NSLocalizedDescriptionKey: "Error interno: AuthRepository no disponible"]
+            )
+            syncError = error
+            throw error
+        }
+
         // IMPORTANT: Verify and refresh session before syncing (offline-first approach)
         do {
-            if let authRepo = authRepository {
-                try await authRepo.ensureValidSession()
-                logger.info("✅ Session verified and valid - proceeding with sync")
-            } else {
-                logger.warning("⚠️ AuthRepository not set, skipping session verification")
-            }
+            try await authRepo.ensureValidSession()
+            logger.info("✅ Session verified and valid - proceeding with sync")
         } catch {
             // Session validation failed - likely offline or expired token
             // This is OK for offline-first apps - just can't sync right now
@@ -434,6 +465,9 @@ final class PaymentSyncManager {
         // Fetch all local payments once
         let localPayments = try fetchAllPayments(from: modelContext)
 
+        // Track payments that need notification scheduling
+        var paymentsToSchedule: [Payment] = []
+
         for dto in remoteDTOs {
             // Find existing payment by ID
             if let existingPayment = findPayment(byId: dto.id, in: localPayments) {
@@ -449,6 +483,9 @@ final class PaymentSyncManager {
                     existingPayment.syncStatus = .synced
                     existingPayment.lastSyncedAt = Date()
                     logger.info("Updated local payment from remote: \(dto.name)")
+
+                    // Schedule notifications for updated payment
+                    paymentsToSchedule.append(existingPayment)
                 } else {
                     logger.info("Skipped updating \(dto.name) - has local modifications")
                 }
@@ -459,6 +496,9 @@ final class PaymentSyncManager {
                 newPayment.lastSyncedAt = Date()
                 modelContext.insert(newPayment)
                 logger.info("Inserted new payment from remote: \(dto.name)")
+
+                // Schedule notifications for new payment
+                paymentsToSchedule.append(newPayment)
             }
         }
 
@@ -470,6 +510,18 @@ final class PaymentSyncManager {
             logger.error("❌ Failed to save context: \(error.localizedDescription)")
             errorHandler.handle(PaymentError.saveFailed(error))
             throw error
+        }
+
+        // IMPORTANT: Schedule local notifications for all synced payments
+        // This ensures notifications work on devices that receive payments via sync
+        if let notificationMgr = notificationManager {
+            logger.info("📅 Scheduling notifications for \(paymentsToSchedule.count) synced payments")
+            for payment in paymentsToSchedule {
+                notificationMgr.scheduleNotification(for: payment)
+            }
+            logger.info("✅ Notifications scheduled successfully")
+        } else {
+            logger.warning("⚠️ NotificationManager not available - notifications not scheduled")
         }
     }
 }

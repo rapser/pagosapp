@@ -244,7 +244,7 @@ final class AuthenticationManager {
                 logger.info("📦 Data will be available and synced when user logs back in")
             } else {
                 // Safe to clear - all data is synced
-                paymentSyncManager.clearLocalDatabase(modelContext: context, force: false)
+                await paymentSyncManager.clearLocalDatabase(modelContext: context, force: false)
                 logger.info("✅ Local SwiftData database cleared on logout (all data was synced)")
             }
         } else {
