@@ -12,14 +12,9 @@ import SwiftData
 struct UserProfileView: View {
     @State private var viewModel: UserProfileViewModel
     @Environment(\.dismiss) var dismiss
-    @State private var isEditing = false
-    @State private var showSuccessAlert = false
-    @State private var showDatePicker = false
 
-    // Single state for all editable fields
-    @State private var editableProfile: EditableProfile?
-
-    init(supabaseClient: SupabaseClient, modelContext: ModelContext) {
+    init(supabaseClient: SupabaseClient,
+         modelContext: ModelContext) {
         _viewModel = State(wrappedValue: UserProfileViewModel(supabaseClient: supabaseClient, modelContext: modelContext))
     }
 
@@ -28,15 +23,15 @@ struct UserProfileView: View {
             VStack(spacing: 0) {
                 // Custom Navigation Bar
                 ProfileNavigationBar(
-                    isEditing: isEditing,
+                    isEditing: viewModel.isEditing,
                     isSaving: viewModel.isSaving,
-                    isFormValid: editableProfile?.fullName.isEmpty == false,
-                    onCancel: cancelEditing,
+                    isFormValid: viewModel.isFormValid,
+                    onCancel: { viewModel.cancelEditing() },
                     onDismiss: { dismiss() },
-                    onEdit: startEditing,
+                    onEdit: { viewModel.startEditing() },
                     onSave: {
                         Task {
-                            await saveProfile()
+                            await viewModel.saveProfile()
                         }
                     }
                 )
@@ -45,26 +40,25 @@ struct UserProfileView: View {
                 ZStack {
                     Color("AppBackground").ignoresSafeArea()
 
-                    if let profileEntity = viewModel.profile {
-                        let profile = profileEntity.toModel()
+                    if let profile = viewModel.profileModel {
                         Form {
                             PersonalInformationSection(
                                 profile: profile,
-                                isEditing: isEditing,
-                                editableProfile: $editableProfile,
-                                showDatePicker: $showDatePicker
+                                isEditing: viewModel.isEditing,
+                                editableProfile: $viewModel.editableProfile,
+                                showDatePicker: $viewModel.showDatePicker
                             )
 
                             LocationSection(
                                 profile: profile,
-                                isEditing: isEditing,
-                                editableProfile: $editableProfile
+                                isEditing: viewModel.isEditing,
+                                editableProfile: $viewModel.editableProfile
                             )
 
                             PreferencesSection(
                                 profile: profile,
-                                isEditing: isEditing,
-                                editableProfile: $editableProfile
+                                isEditing: viewModel.isEditing,
+                                editableProfile: $viewModel.editableProfile
                             )
                         }
                         .scrollContentBackground(.hidden)
@@ -79,42 +73,16 @@ struct UserProfileView: View {
                 }
             }
             .navigationBarHidden(true)
-            .alert("Perfil actualizado", isPresented: $showSuccessAlert) {
+            .alert("Perfil actualizado", isPresented: $viewModel.showSuccessAlert) {
                 Button("OK", role: .cancel) {
-                    isEditing = false
+                    viewModel.isEditing = false
                 }
             } message: {
                 Text("Tu perfil ha sido actualizado correctamente.")
             }
             .task {
-                // Load from local storage (instant)
                 await viewModel.loadLocalProfile()
             }
-        }
-    }
-
-    // MARK: - Helper Methods
-
-    private func startEditing() {
-        guard let profile = viewModel.profile else { return }
-        editableProfile = EditableProfile(from: profile)
-        isEditing = true
-    }
-
-    private func cancelEditing() {
-        showDatePicker = false
-        editableProfile = nil
-        isEditing = false
-    }
-
-    private func saveProfile() async {
-        guard let edited = editableProfile else { return }
-
-        let success = await viewModel.updateProfile(with: edited)
-        if success {
-            showSuccessAlert = true
-            showDatePicker = false
-            editableProfile = nil
         }
     }
 }

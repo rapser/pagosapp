@@ -15,24 +15,31 @@ import OSLog
 @MainActor
 @Observable
 final class UserProfileViewModel {
+    // MARK: - Domain State
     var profile: UserProfileEntity?
     var isLoading = false
     var errorMessage: String?
     var isSaving = false
-    
+
+    // MARK: - UI State
+    var isEditing = false
+    var showSuccessAlert = false
+    var showDatePicker = false
+    var editableProfile: EditableProfile?
+
     private let repository: UserProfileRepositoryProtocol
     private let supabaseClient: SupabaseClient
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "UserProfile")
-    
-    init(supabaseClient: SupabaseClient, modelContext: ModelContext) {
-        self.supabaseClient = supabaseClient
-        self.repository = UserProfileRepository(supabaseClient: supabaseClient, modelContext: modelContext)
-    }
-    
-    // For testing with mock repository
+
     init(repository: UserProfileRepositoryProtocol, supabaseClient: SupabaseClient) {
         self.repository = repository
         self.supabaseClient = supabaseClient
+    }
+
+    // Convenience init for production
+    convenience init(supabaseClient: SupabaseClient, modelContext: ModelContext) {
+        let repository = UserProfileRepository(supabaseClient: supabaseClient, modelContext: modelContext)
+        self.init(repository: repository, supabaseClient: supabaseClient)
     }
     
     /// Load user profile from SwiftData (local first)
@@ -157,6 +164,46 @@ final class UserProfileViewModel {
         } catch {
             logger.error("❌ Error clearing local profile: \(error.localizedDescription)")
         }
+    }
+
+    // MARK: - UI Actions
+
+    /// Start editing mode
+    func startEditing() {
+        guard let profile = profile else { return }
+        editableProfile = EditableProfile(from: profile)
+        isEditing = true
+    }
+
+    /// Cancel editing and reset state
+    func cancelEditing() {
+        showDatePicker = false
+        editableProfile = nil
+        isEditing = false
+    }
+
+    /// Save profile changes
+    func saveProfile() async {
+        guard let edited = editableProfile else { return }
+
+        let success = await updateProfile(with: edited)
+        if success {
+            showSuccessAlert = true
+            showDatePicker = false
+            editableProfile = nil
+        }
+    }
+
+    // MARK: - Computed Properties
+
+    /// Form validation
+    var isFormValid: Bool {
+        editableProfile?.fullName.isEmpty == false
+    }
+
+    /// Convert UserProfileEntity to UserProfile for UI components
+    var profileModel: UserProfile? {
+        profile?.toModel()
     }
 }
 
