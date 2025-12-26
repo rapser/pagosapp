@@ -215,44 +215,29 @@ final class AuthRepository {
     
     // MARK: - Session Management
     
-    /// Check if there's an existing valid session
+    /// Check if there's an existing valid session (offline-first approach)
     private func checkExistingSession() async {
-        logger.debug("🔍 Verificando sesión existente")
+        logger.debug("🔍 Verificando sesión existente (offline-first)")
 
-        do {
-            if let session = try await authService.getCurrentSession() {
-                if session.isExpired {
-                    logger.debug("⚠️ Sesión expirada, intentando renovar")
-                    try await refreshSession()
-                } else {
-                    logger.debug("✅ Sesión válida encontrada")
-                    updateAuthenticationState(with: session.user)
-                }
+        // OFFLINE-FIRST: Check Keychain tokens first WITHOUT calling Supabase
+        if let accessToken = KeychainManager.getAccessToken(),
+           let refreshToken = KeychainManager.getRefreshToken() {
+
+            logger.debug("✅ Tokens encontrados en Keychain - restaurando estado local")
+
+            // Restore local authentication state WITHOUT verifying with Supabase
+            // This allows the app to work offline indefinitely
+            // Verification with Supabase will happen only when needed (sync, critical operations)
+            if let userId = KeychainManager.getUserId() {
+                isAuthenticated = true
+                logger.info("✅ Sesión local restaurada - app funcionando en modo offline")
+                logger.info("💡 Tokens serán verificados con Supabase solo cuando sea necesario (sync, etc.)")
             } else {
-                logger.debug("ℹ️ No hay sesión activa, intentando restaurar desde Keychain")
-                // Intentar restaurar sesión con tokens guardados si existen
-                if let accessToken = KeychainManager.getAccessToken(),
-                   let refreshToken = KeychainManager.getRefreshToken() {
-                    do {
-                        let session = try await authService.setSession(accessToken: accessToken, refreshToken: refreshToken)
-                        if session.isExpired {
-                            logger.debug("⚠️ Sesión restaurada pero expirada, intentando refresh")
-                            try await refreshSession()
-                        } else {
-                            logger.debug("✅ Sesión restaurada exitosamente")
-                            updateAuthenticationState(with: session.user)
-                        }
-                    } catch {
-                        logger.debug("❌ No se pudo restaurar sesión: \(error.localizedDescription)")
-                        clearAuthenticationState()
-                    }
-                } else {
-                    logger.debug("ℹ️ No hay tokens guardados")
-                    clearAuthenticationState()
-                }
+                logger.warning("⚠️ Tokens encontrados pero no hay userId - limpiando estado")
+                clearAuthenticationState()
             }
-        } catch {
-            logger.error("❌ Error al verificar sesión: \(error.localizedDescription)")
+        } else {
+            logger.debug("ℹ️ No hay tokens guardados - usuario debe iniciar sesión")
             clearAuthenticationState()
         }
     }
