@@ -13,7 +13,9 @@ import Supabase
 final class AuthenticationManager {
     private let authRepository: AuthRepository
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "Authentication")
-    private let errorHandler = ErrorHandler.shared
+    private let errorHandler: ErrorHandler
+    private let settingsManager: SettingsManager
+    private let paymentSyncManager: PaymentSyncManager
 
     private let lastActiveTimestampKey = "lastActiveTimestamp"
     private let sessionActiveKey = "sessionActive"
@@ -25,21 +27,29 @@ final class AuthenticationManager {
     var showInactivityAlert = false
     var hasLoggedInWithCredentials = false
     var isLoading: Bool = false
-    
+
     /// Exposes the Supabase client for legacy compatibility
     /// Use only when necessary (e.g., UserProfileService)
     var supabaseClient: SupabaseClient? {
         return authRepository.supabaseClient
     }
-    
-    init(authRepository: AuthRepository) {
+
+    init(
+        authRepository: AuthRepository,
+        errorHandler: ErrorHandler,
+        settingsManager: SettingsManager,
+        paymentSyncManager: PaymentSyncManager
+    ) {
         self.authRepository = authRepository
+        self.errorHandler = errorHandler
+        self.settingsManager = settingsManager
+        self.paymentSyncManager = paymentSyncManager
         self.hasLoggedInWithCredentials = KeychainManager.getHasLoggedIn()
         self.isSessionActive = UserDefaults.standard.bool(forKey: sessionActiveKey)
 
         checkBiometricAvailability()
 
-        let isFaceIDEnabled = SettingsManager.shared.isBiometricLockEnabled && canUseBiometrics
+        let isFaceIDEnabled = settingsManager.isBiometricLockEnabled && canUseBiometrics
 
         if isFaceIDEnabled {
             self.isAuthenticated = false
@@ -212,7 +222,7 @@ final class AuthenticationManager {
     }
     
     // MARK: - Logout
-    
+
     @MainActor
     func logout(inactivity: Bool = false, modelContext: ModelContext? = nil) async {
         isLoading = true
@@ -225,10 +235,24 @@ final class AuthenticationManager {
             logger.error("Logout failed with error: \(error.localizedDescription)")
         }
 
-        PaymentSyncManager.shared.clearLocalDatabase(modelContext: modelContext)
-        logger.info("Local SwiftData database cleared on logout")
+        // IMPORTANT: Only clear local database if there are NO pending syncs
+        // This preserves unsynchronized data regardless of logout type (manual or inactivity)
+        if let context = modelContext {
+            let hasPending = paymentSyncManager.hasPendingSyncPayments(modelContext: context)
+            if hasPending {
+                logger.warning("⚠️ Preserving local data: \(self.paymentSyncManager.pendingSyncCount) payments pending sync")
+                logger.info("📦 Data will be available and synced when user logs back in")
+            } else {
+                // Safe to clear - all data is synced
+                await paymentSyncManager.clearLocalDatabase(modelContext: context, force: false)
+                logger.info("✅ Local SwiftData database cleared on logout (all data was synced)")
+            }
+        } else {
+            // No ModelContext, can't check - be conservative and don't clear
+            logger.warning("⚠️ No ModelContext available, preserving local data to be safe")
+        }
 
-        if !SettingsManager.shared.isBiometricLockEnabled {
+        if !settingsManager.isBiometricLockEnabled {
             _ = KeychainManager.deleteCredentials()
             logger.info("🗑️ Credentials deleted from Keychain (Face ID disabled)")
         } else {
@@ -254,16 +278,55 @@ final class AuthenticationManager {
         if let lastActiveTimestamp = UserDefaults.standard.object(forKey: lastActiveTimestampKey) as? Date {
             let elapsedTime = Date().timeIntervalSince(lastActiveTimestamp)
             if elapsedTime > sessionTimeoutInSeconds {
+                // IMPORTANT: Only logout if we can actually verify the session with Supabase
+                // If offline, don't logout - user can work indefinitely offline
                 Task {
-                    self.hasLoggedInWithCredentials = false
-                    KeychainManager.deleteHasLoggedIn()
-                    await logout(inactivity: true)
+                    await checkAndLogoutIfOnline()
                 }
             }
         } else {
             startInactivityTimer()
         }
         #endif
+    }
+
+    /// Check if we can connect to Supabase and logout only if online
+    /// This prevents automatic logout when working offline
+    private func checkAndLogoutIfOnline() async {
+        logger.info("🔍 Verificando si podemos cerrar sesión por inactividad...")
+
+        // Try to verify session with Supabase
+        do {
+            try await authRepository.ensureValidSession()
+            // If we get here, we have connection and valid session - don't logout
+            logger.info("✅ Sesión válida en Supabase - no cerrar por inactividad")
+            // Reset the timer since we verified the session is still active
+            updateLastActiveTimestamp()
+        } catch {
+            // ensureValidSession failed - could be:
+            // 1. Offline (no connection) -> DON'T logout
+            // 2. Online but session expired -> DO logout
+
+            // Try to determine if we're online by attempting a lightweight check
+            // If we can't connect at all, assume offline and don't logout
+            logger.warning("⚠️ No se pudo verificar sesión: \(error.localizedDescription)")
+
+            // Try to get current session - if this fails with network error, we're offline
+            do {
+                _ = try await authRepository.authServiceInternal.getCurrentSession()
+                // We got a response (even if session is expired), so we're ONLINE
+                // Session is expired and we're online -> logout
+                logger.info("🌐 Conexión disponible pero sesión expirada - cerrar por inactividad")
+                self.hasLoggedInWithCredentials = false
+                KeychainManager.deleteHasLoggedIn()
+                await logout(inactivity: true)
+            } catch {
+                // Can't connect to Supabase at all -> OFFLINE
+                // Don't logout - user can work offline indefinitely
+                logger.info("📴 Sin conexión - usuario puede seguir trabajando offline indefinidamente")
+                logger.info("⏰ Timeout de inactividad NO aplicado en modo offline")
+            }
+        }
     }
     
     func startInactivityTimer() {

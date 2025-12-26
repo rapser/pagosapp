@@ -14,7 +14,7 @@ struct LoginView: View {
     var isBiometricLoginEnabled: Bool
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 20) {
                 Spacer()
 

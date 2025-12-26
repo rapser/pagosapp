@@ -2,11 +2,13 @@ import Foundation
 import UserNotifications
 import Observation
 
+/// Manages local notifications for payment reminders
+/// Refactored to support Dependency Injection (no more Singleton)
+@MainActor
 @Observable
 final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
-    static let shared = NotificationManager()
-    
-    override private init() {
+
+    override init() {
         super.init()
         UNUserNotificationCenter.current().delegate = self
     }

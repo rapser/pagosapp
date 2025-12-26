@@ -4,15 +4,15 @@ import SwiftData
 struct SettingsView: View {
     @Environment(AuthenticationManager.self) private var authManager
     @Environment(AlertManager.self) private var alertManager
-    @State private var settingsManager = SettingsManager.shared
-    @State private var syncManager = PaymentSyncManager.shared
+    @Environment(SettingsManager.self) private var settingsManager
+    @Environment(PaymentSyncManager.self) private var syncManager
     @Environment(\.modelContext) private var modelContext
 
     @State private var showingSyncError = false
     @State private var syncErrorMessage = ""
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 // Sync Section
                 Section(header: Text("Sincronización").foregroundColor(Color("AppTextPrimary"))) {
@@ -51,7 +51,7 @@ struct SettingsView: View {
                     }
 
                     // Authentication message if not logged in
-                    if !authManager.isAuthenticated {
+                    if !authManager.isAuthenticated && !authManager.isSessionActive {
                         HStack {
                             Image(systemName: "info.circle")
                                 .foregroundColor(Color("AppTextSecondary"))
@@ -73,13 +73,13 @@ struct SettingsView: View {
                                     .tint(Color("AppPrimary"))
                             } else {
                                 Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
-                                    .foregroundColor(authManager.isAuthenticated ? Color("AppPrimary") : Color("AppTextSecondary"))
+                                    .foregroundColor((authManager.isAuthenticated || authManager.isSessionActive) ? Color("AppPrimary") : Color("AppTextSecondary"))
                             }
                             Text(syncManager.isSyncing ? "Sincronizando..." : "Sincronizar ahora")
-                                .foregroundColor(syncManager.isSyncing ? Color("AppTextSecondary") : (authManager.isAuthenticated ? Color("AppPrimary") : Color("AppTextSecondary")))
+                                .foregroundColor(syncManager.isSyncing ? Color("AppTextSecondary") : ((authManager.isAuthenticated || authManager.isSessionActive) ? Color("AppPrimary") : Color("AppTextSecondary")))
                         }
                     }
-                    .disabled(syncManager.isSyncing || !authManager.isAuthenticated)
+                    .disabled(syncManager.isSyncing || (!authManager.isAuthenticated && !authManager.isSessionActive))
 
                     // Clear sync error button (only show if there are sync errors)
                     if syncManager.syncError != nil {
@@ -109,7 +109,7 @@ struct SettingsView: View {
                 }
 
                 Section(header: Text("Perfil").foregroundColor(Color("AppTextPrimary"))) {
-                    if authManager.isAuthenticated, let client = authManager.supabaseClient {
+                    if (authManager.isAuthenticated || authManager.isSessionActive), let client = authManager.supabaseClient {
                         NavigationLink(destination: UserProfileView(supabaseClient: client, modelContext: modelContext)) {
                             HStack {
                                 Image(systemName: "person.circle.fill")
@@ -231,7 +231,7 @@ struct SettingsView: View {
             buttons: [
                 AlertButton(title: Text("Aceptar"), role: .destructive) {
                     Task {
-                        // Always close Supabase session and clear local data
+                        // Logout will automatically preserve data if there are pending syncs
                         await authManager.logout(modelContext: modelContext)
                     }
                 },
