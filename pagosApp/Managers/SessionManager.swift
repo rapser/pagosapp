@@ -4,7 +4,7 @@
 //
 //  Handles session state, timeouts, and inactivity tracking
 //  Separated from AuthenticationManager for better Single Responsibility
-//  Created by Claude Code - Fase 2 Technical Debt Reduction
+//  Created by miguel tomairo on 26/12/25.
 //
 
 import Foundation
@@ -45,7 +45,6 @@ final class SessionManager {
             showInactivityAlert = true
         }
 
-//        logger.info("🔴 Session ended" + (dueToInactivity ? " (inactivity)" : "")")
     }
 
     func clearSession() {

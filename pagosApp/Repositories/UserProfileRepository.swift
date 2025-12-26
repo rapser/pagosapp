@@ -11,14 +11,6 @@ import OSLog
 import Supabase
 import SwiftData
 
-protocol UserProfileRepositoryProtocol {
-    func fetchProfile(userId: UUID) async throws -> UserProfileDTO
-    func updateProfile(userId: UUID, profile: ProfileUpdateDTO) async throws
-    func getLocalProfile() async throws -> UserProfileEntity?
-    func saveProfile(_ profile: UserProfileEntity) async throws
-    func deleteLocalProfile() async throws
-}
-
 /// UserProfileRepository using Storage Adapters (Strategy Pattern)
 /// Can swap remoteStorage (Supabase → Firebase → AWS) and localStorage (SwiftData → SQLite → Realm)
 final class UserProfileRepository: UserProfileRepositoryProtocol {

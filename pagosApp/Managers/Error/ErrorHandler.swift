@@ -2,7 +2,7 @@
 //  ErrorHandler.swift
 //  pagosApp
 //
-//  Created by Claude Code
+//  Created by miguel tomairo on 26/12/25.
 //  Modern iOS 18+ using @Observable macro
 //
 
@@ -10,29 +10,6 @@ import Foundation
 import SwiftUI
 import OSLog
 import Observation
-
-/// Protocol for errors that can be displayed to users
-protocol UserFacingError: LocalizedError {
-    var title: String { get }
-    var recoverySuggestion: String? { get }
-    var severity: ErrorSeverity { get }
-}
-
-enum ErrorSeverity {
-    case info
-    case warning
-    case error
-    case critical
-
-    var icon: String {
-        switch self {
-        case .info: return "ℹ️"
-        case .warning: return "⚠️"
-        case .error: return "❌"
-        case .critical: return "🚨"
-        }
-    }
-}
 
 /// Centralized error handler for the app
 /// Refactored to support Dependency Injection (no more Singleton)
@@ -107,49 +84,6 @@ final class ErrorHandler {
     func logWarning(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
         let fileName = (file as NSString).lastPathComponent
         logger.warning("[\(fileName):\(line)] \(function) - \(message)")
-    }
-}
-
-/// Structure representing an error alert to display to the user
-struct ErrorAlert: Identifiable {
-    let id = UUID()
-    let title: String
-    let message: String
-    let severity: ErrorSeverity
-    let recoverySuggestion: String?
-
-    var icon: String {
-        severity.icon
-    }
-}
-
-// MARK: - View Modifier
-
-struct ErrorHandlingModifier: ViewModifier {
-    @Environment(ErrorHandler.self) private var errorHandler
-
-    func body(content: Content) -> some View {
-        @Bindable var handler = errorHandler
-        
-        content
-            .alert(
-                errorHandler.currentError?.title ?? "Error",
-                isPresented: $handler.showError,
-                presenting: errorHandler.currentError
-            ) { error in
-                Button("OK", role: .cancel) {
-                    errorHandler.showError = false
-                }
-            } message: { error in
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("\(error.icon) \(error.message)")
-
-                    if let suggestion = error.recoverySuggestion {
-                        Text("\n💡 \(suggestion)")
-                            .font(.caption)
-                    }
-                }
-            }
     }
 }
 

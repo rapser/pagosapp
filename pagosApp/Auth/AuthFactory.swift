@@ -12,56 +12,6 @@ import OSLog
 
 private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "AuthFactory")
 
-/// Authentication provider types
-enum AuthProvider {
-    case supabase
-    case firebase
-    case auth0
-    case customAPI
-}
-
-/// Configuration for authentication
-struct AuthConfiguration {
-    let provider: AuthProvider
-    let supabaseURL: URL?
-    let supabaseKey: String?
-    let firebaseConfig: [String: Any]?
-    let customAPIBaseURL: URL?
-    
-    /// Default configuration using Supabase
-    static func supabase(url: URL, key: String) -> AuthConfiguration {
-        return AuthConfiguration(
-            provider: .supabase,
-            supabaseURL: url,
-            supabaseKey: key,
-            firebaseConfig: nil,
-            customAPIBaseURL: nil
-        )
-    }
-    
-    /// Firebase configuration (for future implementation)
-    static func firebase(config: [String: Any]) -> AuthConfiguration {
-        return AuthConfiguration(
-            provider: .firebase,
-            supabaseURL: nil,
-            supabaseKey: nil,
-            firebaseConfig: config,
-            customAPIBaseURL: nil
-        )
-    }
-    
-    /// Custom API configuration (for future implementation)
-    static func customAPI(baseURL: URL) -> AuthConfiguration {
-        return AuthConfiguration(
-            provider: .customAPI,
-            supabaseURL: nil,
-            supabaseKey: nil,
-            firebaseConfig: nil,
-            customAPIBaseURL: baseURL
-        )
-    }
-}
-
 /// Factory for creating authentication components
 @MainActor
 final class AuthFactory {
@@ -152,60 +102,5 @@ final class AuthFactory {
         
         logger.info("✅ SupabaseAuthAdapter creado")
         return adapter
-    }
-}
-
-// MARK: - Mock Implementation
-
-/// Mock implementation for testing or when no provider is configured
-@MainActor
-final class MockAuthService: AuthService {
-    func setSession(accessToken: String, refreshToken: String) async throws -> AuthSession {
-        logger.warning("⚠️ MockAuthService.setSession llamado")
-        throw AuthError.unknown("Mock service - no real authentication")
-    }
-    
-    func signUp(credentials: RegistrationCredentials) async throws -> AuthSession {
-        logger.warning("⚠️ MockAuthService.signUp llamado")
-        throw AuthError.unknown("Mock service - no real authentication")
-    }
-    
-    func signIn(credentials: LoginCredentials) async throws -> AuthSession {
-        logger.warning("⚠️ MockAuthService.signIn llamado")
-        throw AuthError.unknown("Mock service - no real authentication")
-    }
-    
-    func signOut() async throws {
-        logger.warning("⚠️ MockAuthService.signOut llamado")
-    }
-    
-    func getCurrentSession() async throws -> AuthSession? {
-        logger.warning("⚠️ MockAuthService.getCurrentSession llamado")
-        return nil
-    }
-    
-    func refreshSession(refreshToken: String) async throws -> AuthSession {
-        logger.warning("⚠️ MockAuthService.refreshSession llamado")
-        throw AuthError.sessionExpired
-    }
-    
-    func sendPasswordResetEmail(email: String) async throws {
-        logger.warning("⚠️ MockAuthService.sendPasswordResetEmail llamado")
-    }
-    
-    func resetPassword(token: String, newPassword: String) async throws {
-        logger.warning("⚠️ MockAuthService.resetPassword llamado")
-    }
-    
-    func updateEmail(newEmail: String) async throws {
-        logger.warning("⚠️ MockAuthService.updateEmail llamado")
-    }
-    
-    func updatePassword(newPassword: String) async throws {
-        logger.warning("⚠️ MockAuthService.updatePassword llamado")
-    }
-    
-    func deleteAccount() async throws {
-        logger.warning("⚠️ MockAuthService.deleteAccount llamado")
     }
 }

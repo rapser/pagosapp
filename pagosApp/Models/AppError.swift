@@ -3,7 +3,7 @@
 //  pagosApp
 //
 //  Unified error handling for the entire app
-//  Created by Claude Code - Fase 1 Technical Debt Reduction
+//  Created by miguel tomairo on 26/12/25.
 //
 
 import Foundation

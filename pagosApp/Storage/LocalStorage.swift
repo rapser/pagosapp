@@ -38,26 +38,3 @@ protocol LocalStorage {
     func exists(_ entity: Entity) async throws -> Bool
 }
 
-/// Protocol for entities that can be stored locally
-protocol LocalStorable {
-    associatedtype Identifier: Hashable
-    var id: Identifier { get }
-}
-
-/// Specific protocol for Payment local storage
-protocol PaymentLocalStorage: LocalStorage where Entity == Payment {
-    /// Fetch payments by user ID (business logic specific)
-    func fetchByUser(_ userId: UUID) async throws -> [Payment]
-    
-    /// Fetch unpaid payments
-    func fetchUnpaid() async throws -> [Payment]
-    
-    /// Fetch payments pending sync
-    func fetchPendingSync() async throws -> [Payment]
-}
-
-/// Specific protocol for UserProfile local storage
-protocol UserProfileLocalStorage: LocalStorage where Entity == UserProfile {
-    /// Fetch profile by user ID
-    func fetchByUserId(_ userId: UUID) async throws -> UserProfile?
-}

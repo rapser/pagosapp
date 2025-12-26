@@ -10,28 +10,6 @@ import Foundation
 import SwiftData
 import OSLog
 
-/// Protocol for notification service (ISP + DIP)
-@MainActor
-protocol NotificationService {
-    func scheduleNotifications(for payment: Payment) async
-    func cancelNotifications(for payment: Payment) async
-}
-
-/// Protocol for calendar service (ISP + DIP)
-protocol CalendarService {
-    func addEvent(for payment: Payment, completion: @escaping (String?) -> Void) async
-    func updateEvent(for payment: Payment) async
-    func removeEvent(for payment: Payment) async
-}
-
-/// Protocol for payment operations (ISP)
-@MainActor
-protocol PaymentOperationsService {
-    func createPayment(_ payment: Payment) async throws
-    func updatePayment(_ payment: Payment) async throws
-    func deletePayment(_ payment: Payment) async throws
-}
-
 /// Default implementation coordinating all payment operations
 @MainActor
 final class DefaultPaymentOperationsService: PaymentOperationsService {
@@ -133,57 +111,5 @@ final class DefaultPaymentOperationsService: PaymentOperationsService {
         }
 
         logger.info("✅ Payment deleted locally: \(payment.name)")
-    }
-}
-
-// MARK: - Adapter for NotificationManager
-
-@MainActor
-class NotificationManagerAdapter: NotificationService {
-    private let manager: NotificationManager
-
-    init(manager: NotificationManager) {
-        self.manager = manager
-    }
-
-    convenience init() {
-        self.init(manager: NotificationManager())
-    }
-
-    func scheduleNotifications(for payment: Payment) async {
-        manager.scheduleNotification(for: payment)
-    }
-
-    func cancelNotifications(for payment: Payment) async {
-        manager.cancelNotification(for: payment)
-    }
-}
-
-// MARK: - Adapter for EventKitManager
-
-class EventKitManagerAdapter: CalendarService {
-    private let manager: EventKitManager
-
-    init(manager: EventKitManager) {
-        self.manager = manager
-    }
-    
-    @MainActor
-    convenience init() {
-        // For convenience init, create a new instance with its own ErrorHandler
-        // Ideally, pass EventKitManager via DI from AppDependencies
-        self.init(manager: EventKitManager(errorHandler: ErrorHandler()))
-    }
-
-    func addEvent(for payment: Payment, completion: @escaping (String?) -> Void) async {
-        manager.addEvent(for: payment, completion: completion)
-    }
-
-    func updateEvent(for payment: Payment) async {
-        manager.updateEvent(for: payment)
-    }
-
-    func removeEvent(for payment: Payment) async {
-        manager.removeEvent(for: payment)
     }
 }

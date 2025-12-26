@@ -1,31 +1,7 @@
+
 import SwiftUI
 import Charts
 import SwiftData
-
-/// Estructura para almacenar los datos agregados para el gráfico.
-struct CategorySpending: Identifiable {
-    let id = UUID()
-    let category: PaymentCategory
-    let totalAmount: Double
-    let currency: Currency
-}
-
-/// Estructura para almacenar los datos de gastos mensuales para el gráfico de barras.
-struct MonthlySpending: Identifiable {
-    let id = UUID()
-    let month: Date
-    let totalAmount: Double
-    let currency: Currency
-}
-
-/// Enum para las opciones de filtrado en la vista de estadísticas.
-enum StatsFilter: String, CaseIterable, Identifiable {
-    case month = "Este Mes"
-    case year = "Este Año"
-    case all = "Todos"
-    
-    var id: Self { self }
-}
 
 struct StatisticsView: View {
     // Obtenemos todos los pagos de SwiftData.
