@@ -11,6 +11,7 @@ import SwiftData
 import OSLog
 
 /// Protocol for notification service (ISP + DIP)
+@MainActor
 protocol NotificationService {
     func scheduleNotifications(for payment: Payment) async
     func cancelNotifications(for payment: Payment) async
@@ -24,6 +25,7 @@ protocol CalendarService {
 }
 
 /// Protocol for payment operations (ISP)
+@MainActor
 protocol PaymentOperationsService {
     func createPayment(_ payment: Payment) async throws
     func updatePayment(_ payment: Payment) async throws
@@ -31,23 +33,27 @@ protocol PaymentOperationsService {
 }
 
 /// Default implementation coordinating all payment operations
+@MainActor
 final class DefaultPaymentOperationsService: PaymentOperationsService {
     private let modelContext: ModelContext
     private let syncService: PaymentSyncService
     private let notificationService: NotificationService
     private let calendarService: CalendarService
+    private let paymentSyncManager: PaymentSyncManager
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentOperations")
 
     init(
         modelContext: ModelContext,
         syncService: PaymentSyncService,
         notificationService: NotificationService,
-        calendarService: CalendarService
+        calendarService: CalendarService,
+        paymentSyncManager: PaymentSyncManager
     ) {
         self.modelContext = modelContext
         self.syncService = syncService
         self.notificationService = notificationService
         self.calendarService = calendarService
+        self.paymentSyncManager = paymentSyncManager
     }
 
     // MARK: - Create
@@ -67,7 +73,9 @@ final class DefaultPaymentOperationsService: PaymentOperationsService {
         }
 
         // Notify that a payment changed so Settings can update pending count
-        NotificationCenter.default.post(name: NSNotification.Name("PaymentDidChange"), object: nil)
+        await MainActor.run {
+            NotificationCenter.default.post(name: NSNotification.Name("PaymentDidChange"), object: nil)
+        }
 
         logger.info("✅ Payment created locally: \(payment.name)")
     }
@@ -91,7 +99,9 @@ final class DefaultPaymentOperationsService: PaymentOperationsService {
         await calendarService.updateEvent(for: payment)
 
         // Notify that a payment changed so Settings can update pending count
-        NotificationCenter.default.post(name: NSNotification.Name("PaymentDidChange"), object: nil)
+        await MainActor.run {
+            NotificationCenter.default.post(name: NSNotification.Name("PaymentDidChange"), object: nil)
+        }
 
         logger.info("✅ Payment updated locally: \(payment.name)")
     }
@@ -113,12 +123,14 @@ final class DefaultPaymentOperationsService: PaymentOperationsService {
         // Sync deletion to server in background if payment was synced
         if wasSynced {
             Task {
-                await PaymentSyncManager.shared.syncDeletePayment(paymentId)
+                await paymentSyncManager.syncDeletePayment(paymentId)
             }
         }
 
         // Notify that a payment changed so Settings can update pending count
-        NotificationCenter.default.post(name: NSNotification.Name("PaymentDidChange"), object: nil)
+        await MainActor.run {
+            NotificationCenter.default.post(name: NSNotification.Name("PaymentDidChange"), object: nil)
+        }
 
         logger.info("✅ Payment deleted locally: \(payment.name)")
     }
@@ -126,19 +138,24 @@ final class DefaultPaymentOperationsService: PaymentOperationsService {
 
 // MARK: - Adapter for NotificationManager
 
+@MainActor
 class NotificationManagerAdapter: NotificationService {
     private let manager: NotificationManager
 
-    init(manager: NotificationManager = .shared) {
+    init(manager: NotificationManager) {
         self.manager = manager
     }
 
+    convenience init() {
+        self.init(manager: NotificationManager())
+    }
+
     func scheduleNotifications(for payment: Payment) async {
-        manager.scheduleNotification(for: payment)  // Singular
+        manager.scheduleNotification(for: payment)
     }
 
     func cancelNotifications(for payment: Payment) async {
-        manager.cancelNotification(for: payment)    // Singular
+        manager.cancelNotification(for: payment)
     }
 }
 
@@ -151,8 +168,11 @@ class EventKitManagerAdapter: CalendarService {
         self.manager = manager
     }
     
+    @MainActor
     convenience init() {
-        self.init(manager: EventKitManager.shared)
+        // For convenience init, create a new instance with its own ErrorHandler
+        // Ideally, pass EventKitManager via DI from AppDependencies
+        self.init(manager: EventKitManager(errorHandler: ErrorHandler()))
     }
 
     func addEvent(for payment: Payment, completion: @escaping (String?) -> Void) async {

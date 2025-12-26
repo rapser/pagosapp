@@ -30,6 +30,7 @@ final class EditPaymentViewModel {
     private let payment: Payment
     private let modelContext: ModelContext
     private let paymentOperations: PaymentOperationsService
+    private let errorHandler: ErrorHandler
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "EditPaymentViewModel")
 
     // MARK: - Validation
@@ -53,10 +54,11 @@ final class EditPaymentViewModel {
 
     // MARK: - Initialization (DIP: inject dependencies)
 
-    init(payment: Payment, modelContext: ModelContext, paymentOperations: PaymentOperationsService) {
+    init(payment: Payment, modelContext: ModelContext, paymentOperations: PaymentOperationsService, errorHandler: ErrorHandler) {
         self.payment = payment
         self.modelContext = modelContext
         self.paymentOperations = paymentOperations
+        self.errorHandler = errorHandler
 
         // Initialize with current payment values
         self.name = payment.name
@@ -77,10 +79,11 @@ final class EditPaymentViewModel {
             modelContext: modelContext,
             syncService: syncService,
             notificationService: notificationService,
-            calendarService: calendarService
+            calendarService: calendarService,
+            paymentSyncManager: PaymentSyncManager(errorHandler: ErrorHandler())
         )
 
-        self.init(payment: payment, modelContext: modelContext, paymentOperations: paymentOperations)
+        self.init(payment: payment, modelContext: modelContext, paymentOperations: paymentOperations, errorHandler: ErrorHandler())
     }
 
     // MARK: - Actions
@@ -89,12 +92,12 @@ final class EditPaymentViewModel {
         // Validate
         guard isValid else {
             logger.warning("⚠️ Invalid payment data")
-            ErrorHandler.shared.handle(PaymentError.invalidAmount)
+            errorHandler.handle(PaymentError.invalidAmount)
             return
         }
 
         guard let amountValue = amountValue else {
-            ErrorHandler.shared.handle(PaymentError.invalidAmount)
+            errorHandler.handle(PaymentError.invalidAmount)
             return
         }
 
@@ -125,7 +128,7 @@ final class EditPaymentViewModel {
                 onSuccess()
             } catch {
                 logger.error("❌ Failed to update payment: \(error.localizedDescription)")
-                ErrorHandler.shared.handle(PaymentError.updateFailed(error))
+                errorHandler.handle(PaymentError.updateFailed(error))
             }
         }
     }

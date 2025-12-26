@@ -39,42 +39,52 @@ let supabaseClient = createSupabaseClient()
 @main
 struct pagosAppApp: App {
     private let supabaseAuthService = SupabaseAuthService(client: supabaseClient)
-    private let authenticationManager: AuthenticationManager
     private let passwordRecoveryRepository: PasswordRecoveryRepository
     private let passwordRecoveryUseCase: PasswordRecoveryUseCase
-    private let errorHandler = ErrorHandler.shared
+    private let modelContainer: ModelContainer
+    private let dependencies: AppDependencies
 
     init() {
-        // Create auth adapter and repository
-        let authAdapter = SupabaseAuthAdapter(client: supabaseClient)
-        let authRepository = AuthRepository(authService: authAdapter)
-        
-        authenticationManager = AuthenticationManager(authRepository: authRepository)
-        passwordRecoveryRepository = SupabasePasswordRecoveryRepository(authService: supabaseAuthService)
-        passwordRecoveryUseCase = PasswordRecoveryUseCase(repository: passwordRecoveryRepository)
-        
-        // Initialize NotificationManager to set up the delegate
-        _ = NotificationManager.shared
-        
-        // Request notification authorization at app launch
-        NotificationManager.shared.requestAuthorization()
-        
-        // Configure StorageFactory (will be configured properly in ContentView with modelContext)
-        logger.info("✅ App initialized - StorageFactory will be configured in ContentView")
+        // Create ModelContainer first (needed for dependencies)
+        self.modelContainer = Self.createModelContainer()
+
+        // Create DI container with all dependencies
+        self.dependencies = AppDependencies(
+            modelContext: modelContainer.mainContext,
+            supabaseClient: supabaseClient
+        )
+
+        // Create password recovery dependencies (legacy compatibility)
+        self.passwordRecoveryRepository = SupabasePasswordRecoveryRepository(authService: supabaseAuthService)
+        self.passwordRecoveryUseCase = PasswordRecoveryUseCase(repository: passwordRecoveryRepository)
+
+        // Request notification authorization at app launch (via DI)
+        dependencies.notificationManager.requestAuthorization()
+
+        logger.info("✅ App initialized with full DI Container")
     }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environment(authenticationManager)
+                .environment(dependencies)
+                .environment(dependencies.authenticationManager)
+                .environment(dependencies.errorHandler)
+                .environment(dependencies.settingsManager)
+                .environment(dependencies.paymentSyncManager)
+                .environment(dependencies.biometricManager)
+                .environment(dependencies.sessionManager)
+                .environment(dependencies.notificationManager)
+                .environment(dependencies.eventKitManager)
+                .environment(dependencies.alertManager)
+                .environment(dependencies.storageFactory)
                 .environment(passwordRecoveryUseCase)
-                .environment(errorHandler)
                 .tint(Color("AppPrimary"))
         }
-        .modelContainer(createModelContainer())
+        .modelContainer(modelContainer)
     }
 
-    private func createModelContainer() -> ModelContainer {
+    private static func createModelContainer() -> ModelContainer {
         let schema = Schema([Payment.self, UserProfile.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

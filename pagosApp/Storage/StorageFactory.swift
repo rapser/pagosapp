@@ -9,6 +9,7 @@
 import Foundation
 import SwiftData
 import Supabase
+import Observation
 
 /// Storage provider types
 enum StorageProvider {
@@ -56,19 +57,15 @@ struct StorageConfiguration {
 }
 
 /// Factory for creating storage adapters and repositories
+/// Refactored to support Dependency Injection (no more Singleton)
 /// This makes it easy to swap storage providers across the entire app
+@Observable
 final class StorageFactory {
-    
-    // MARK: - Singleton
-    
-    static let shared = StorageFactory()
-    private init() {}
-    
-    private var configuration: StorageConfiguration?
-    
-    /// Configure the storage provider for the entire app
-    /// Call this once during app initialization
-    func configure(_ configuration: StorageConfiguration) {
+
+    private let configuration: StorageConfiguration
+
+    /// Initialize with a storage configuration
+    init(configuration: StorageConfiguration) {
         self.configuration = configuration
     }
     
@@ -76,13 +73,9 @@ final class StorageFactory {
     
     /// Create PaymentRepository based on configured provider
     @MainActor func makePaymentRepository() -> PaymentRepositoryProtocol {
-        guard let config = configuration else {
-            fatalError("❌ StorageFactory not configured. Call configure() first.")
-        }
-        
-        let localStorage = makePaymentLocalStorage(config: config)
-        let remoteStorage = makePaymentRemoteStorage(config: config)
-        
+        let localStorage = makePaymentLocalStorage(config: configuration)
+        let remoteStorage = makePaymentRemoteStorage(config: configuration)
+
         return PaymentRepository(remoteStorage: remoteStorage, localStorage: localStorage)
     }
     
@@ -127,13 +120,9 @@ final class StorageFactory {
     /// Create UserProfileRepository based on configured provider
     @MainActor
     func makeUserProfileRepository() -> UserProfileRepositoryProtocol {
-        guard let config = configuration else {
-            fatalError("❌ StorageFactory not configured. Call configure() first.")
-        }
-        
-        let localStorage = makeUserProfileLocalStorage(config: config)
-        let remoteStorage = makeUserProfileRemoteStorage(config: config)
-        
+        let localStorage = makeUserProfileLocalStorage(config: configuration)
+        let remoteStorage = makeUserProfileRemoteStorage(config: configuration)
+
         return UserProfileRepository(remoteStorage: remoteStorage, localStorage: localStorage)
     }
     

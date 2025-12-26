@@ -12,32 +12,97 @@ import SwiftData
 struct UserProfileView: View {
     @State private var viewModel: UserProfileViewModel
     @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) var colorScheme
     @State private var isEditing = false
     @State private var showSuccessAlert = false
     @State private var showDatePicker = false
-    
+
     // Single state for all editable fields
     @State private var editableProfile: EditableProfile?
+
+    // Adaptive button color based on light/dark mode
+    private var buttonColor: Color {
+        colorScheme == .dark ? .white : Color("AppPrimary")
+    }
     
     init(supabaseClient: SupabaseClient, modelContext: ModelContext) {
         _viewModel = State(wrappedValue: UserProfileViewModel(supabaseClient: supabaseClient, modelContext: modelContext))
     }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color("AppBackground").edgesIgnoringSafeArea(.all)
-                
-                if let profile = viewModel.profile {
-                    Form {
+        NavigationStack {
+            VStack(spacing: 0) {
+                // Custom Navigation Bar
+                HStack {
+                    // Leading button (Cancel or Close)
+                    if isEditing {
+                        Button("Cancelar") {
+                            cancelEditing()
+                        }
+                        .foregroundColor(buttonColor)
+                    } else {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark")
+                                .foregroundColor(buttonColor)
+                        }
+                    }
+
+                    Spacer()
+
+                    // Title
+                    Text("Mi Perfil")
+                        .font(.headline)
+                        .foregroundColor(Color("AppTextPrimary"))
+
+                    Spacer()
+
+                    // Trailing button (Edit or Save)
+                    if isEditing {
+                        Button {
+                            Task {
+                                await saveProfile()
+                            }
+                        } label: {
+                            if viewModel.isSaving {
+                                ProgressView()
+                                    .tint(buttonColor)
+                            } else {
+                                Text("Guardar")
+                                    .foregroundColor(buttonColor)
+                            }
+                        }
+                        .disabled(viewModel.isSaving || editableProfile?.fullName.isEmpty == true)
+                    } else {
+                        Button {
+                            startEditing()
+                        } label: {
+                            Text("Editar")
+                                .foregroundColor(buttonColor)
+                        }
+                    }
+                }
+                .padding()
+                .background(Color("AppBackground"))
+
+                // Content
+                ZStack {
+                    Color("AppBackground").ignoresSafeArea()
+
+                    if let profile = viewModel.profile {
+                        Form {
                         // Personal Information Section
                         Section(header: Text("Información Personal").foregroundColor(Color("AppTextPrimary"))) {
                             // Full Name
-                            if isEditing, let binding = Binding($editableProfile) {
+                            if isEditing, editableProfile != nil {
                                 EditableTextFieldRow(
                                     icon: "person.fill",
                                     placeholder: "Nombre completo",
-                                    text: binding.fullName
+                                    text: Binding(
+                                        get: { self.editableProfile?.fullName ?? "" },
+                                        set: { self.editableProfile?.fullName = $0 }
+                                    )
                                 )
                             } else {
                                 ProfileFieldRow(
@@ -57,11 +122,14 @@ struct UserProfileView: View {
                             )
                             
                             // Phone
-                            if isEditing, let binding = Binding($editableProfile) {
+                            if isEditing, editableProfile != nil {
                                 EditableTextFieldRow(
                                     icon: "phone.fill",
                                     placeholder: "Teléfono",
-                                    text: binding.phone,
+                                    text: Binding(
+                                        get: { self.editableProfile?.phone ?? "" },
+                                        set: { self.editableProfile?.phone = $0 }
+                                    ),
                                     keyboardType: .phonePad
                                 )
                             } else {
@@ -71,21 +139,39 @@ struct UserProfileView: View {
                                     value: profile.phone
                                 )
                             }
-                            
+
                             // Gender
-                            if let binding = Binding($editableProfile) {
+                            if isEditing, editableProfile != nil {
                                 GenderPickerRow(
                                     isEditing: isEditing,
-                                    selectedGender: binding.gender
+                                    selectedGender: Binding(
+                                        get: { self.editableProfile?.gender },
+                                        set: { self.editableProfile?.gender = $0 }
+                                    )
+                                )
+                            } else {
+                                ProfileFieldRow(
+                                    icon: "person.2.fill",
+                                    title: "Género",
+                                    value: profile.gender?.displayName
                                 )
                             }
-                            
+
                             // Date of Birth
-                            if let binding = Binding($editableProfile) {
+                            if isEditing, editableProfile != nil {
                                 DatePickerRow(
                                     isEditing: isEditing,
-                                    selectedDate: binding.dateOfBirth,
+                                    selectedDate: Binding(
+                                        get: { self.editableProfile?.dateOfBirth },
+                                        set: { self.editableProfile?.dateOfBirth = $0 }
+                                    ),
                                     showPicker: $showDatePicker
+                                )
+                            } else {
+                                ProfileFieldRow(
+                                    icon: "calendar",
+                                    title: "Fecha de nacimiento",
+                                    value: profile.dateOfBirth?.formatted(date: .long, time: .omitted)
                                 )
                             }
                         }
@@ -93,11 +179,14 @@ struct UserProfileView: View {
                         // Location Section
                         Section(header: Text("Ubicación").foregroundColor(Color("AppTextPrimary"))) {
                             // City
-                            if isEditing, let binding = Binding($editableProfile) {
+                            if isEditing, editableProfile != nil {
                                 EditableTextFieldRow(
                                     icon: "building.2.fill",
                                     placeholder: "Ciudad",
-                                    text: binding.city
+                                    text: Binding(
+                                        get: { self.editableProfile?.city ?? "" },
+                                        set: { self.editableProfile?.city = $0 }
+                                    )
                                 )
                             } else {
                                 ProfileFieldRow(
@@ -106,7 +195,7 @@ struct UserProfileView: View {
                                     value: profile.city
                                 )
                             }
-                            
+
                             // Country (read-only)
                             ProfileFieldRow(
                                 icon: "flag.fill",
@@ -115,18 +204,29 @@ struct UserProfileView: View {
                                 isOptional: false
                             )
                         }
-                        
+
                         // Preferences Section
                         Section(header: Text("Preferencias").foregroundColor(Color("AppTextPrimary"))) {
-                            if let binding = Binding($editableProfile) {
+                            if isEditing, editableProfile != nil {
                                 CurrencyPickerRow(
                                     isEditing: isEditing,
-                                    selectedCurrency: binding.preferredCurrency
+                                    selectedCurrency: Binding(
+                                        get: { self.editableProfile?.preferredCurrency ?? .pen },
+                                        set: { self.editableProfile?.preferredCurrency = $0 }
+                                    )
+                                )
+                            } else {
+                                ProfileFieldRow(
+                                    icon: "dollarsign.circle.fill",
+                                    title: "Moneda preferida",
+                                    value: profile.preferredCurrency.displayName,
+                                    isOptional: false
                                 )
                             }
                         }
                     }
                     .scrollContentBackground(.hidden)
+                    .listStyle(.insetGrouped)
                 } else if let errorMessage = viewModel.errorMessage {
                     ProfileErrorView(errorMessage: errorMessage) {
                         Task {
@@ -135,51 +235,8 @@ struct UserProfileView: View {
                     }
                 }
             }
-            .navigationTitle("Mi Perfil")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    if isEditing {
-                        Button {
-                            Task {
-                                await saveProfile()
-                            }
-                        } label: {
-                            if viewModel.isSaving {
-                                ProgressView()
-                                    .tint(.white)
-                            } else {
-                                Text("Guardar")
-                                    .foregroundColor(.white)
-                            }
-                        }
-                        .disabled(viewModel.isSaving || editableProfile?.fullName.isEmpty == true)
-                    } else {
-                        Button {
-                            startEditing()
-                        } label: {
-                            Text("Editar")
-                                .foregroundColor(.white)
-                        }
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarLeading) {
-                    if isEditing {
-                        Button("Cancelar") {
-                            cancelEditing()
-                        }
-                        .foregroundColor(.white)
-                    } else {
-                        Button {
-                            dismiss()
-                        } label: {
-                            Image(systemName: "xmark")
-                                .foregroundColor(.white)
-                        }
-                    }
-                }
             }
+            .navigationBarHidden(true)
             .alert("Perfil actualizado", isPresented: $showSuccessAlert) {
                 Button("OK", role: .cancel) {
                     isEditing = false
@@ -203,9 +260,9 @@ struct UserProfileView: View {
     }
     
     private func cancelEditing() {
+        showDatePicker = false
         editableProfile = nil
         isEditing = false
-        showDatePicker = false
     }
     
     private func saveProfile() async {

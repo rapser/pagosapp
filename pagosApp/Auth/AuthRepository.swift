@@ -26,8 +26,15 @@ final class AuthRepository {
     private(set) var isLoading: Bool = false
     
     // MARK: - Private Properties
-    
+
     private let authService: any AuthService
+
+    // MARK: - Internal Properties (for AuthenticationManager)
+
+    /// Expose authService for specific use cases (e.g., checking connection status)
+    internal var authServiceInternal: any AuthService {
+        return authService
+    }
     
     // MARK: - Public Properties
     
@@ -255,12 +262,12 @@ final class AuthRepository {
     /// Refresh expired session
     func refreshSession() async throws {
         logger.info("🔄 Renovando sesión")
-        
+
         guard let refreshToken = KeychainManager.getRefreshToken() else {
             logger.error("❌ No hay refresh token disponible")
             throw AuthError.sessionExpired
         }
-        
+
         do {
             let session = try await authService.refreshSession(refreshToken: refreshToken)
             try saveSession(session)
@@ -271,6 +278,47 @@ final class AuthRepository {
             clearSession()
             clearAuthenticationState()
             throw AuthError.sessionExpired
+        }
+    }
+
+    /// Ensure the current session is valid, refreshing if necessary
+    /// Call this before performing critical operations (sync, API calls, etc.)
+    /// IMPORTANT: This does NOT clear local authentication state - app can work offline
+    /// Only throws an error to indicate sync cannot proceed, but user stays "logged in" locally
+    func ensureValidSession() async throws {
+        logger.debug("🔍 Verificando validez de sesión antes de operación crítica")
+
+        // Check if we have a current session
+        guard let session = try await authService.getCurrentSession() else {
+            logger.warning("⚠️ No hay sesión activa en Supabase - puede ser modo offline")
+            // Don't clear local state - user can work offline
+            throw AuthError.sessionExpired
+        }
+
+        // If session is expired, try to refresh without clearing local state
+        if session.isExpired {
+            logger.info("⚠️ Sesión expirada, renovando automáticamente...")
+
+            guard let refreshToken = KeychainManager.getRefreshToken() else {
+                logger.warning("⚠️ No hay refresh token disponible - modo offline")
+                throw AuthError.sessionExpired
+            }
+
+            // Try to refresh - may fail if offline
+            // IMPORTANT: Don't clear local state if it fails
+            do {
+                let newSession = try await authService.refreshSession(refreshToken: refreshToken)
+                try saveSession(newSession)
+                updateAuthenticationState(with: newSession.user)
+                logger.info("✅ Sesión renovada exitosamente")
+            } catch {
+                logger.warning("⚠️ No se pudo renovar sesión - probablemente sin conexión")
+                logger.info("💡 Usuario puede seguir trabajando localmente")
+                // Don't clear local state - just throw to indicate sync can't proceed
+                throw AuthError.sessionExpired
+            }
+        } else {
+            logger.debug("✅ Sesión válida y activa")
         }
     }
     
