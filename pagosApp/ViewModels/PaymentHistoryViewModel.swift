@@ -78,13 +78,3 @@ final class PaymentHistoryViewModel {
         fetchPayments()
     }
 }
-
-// MARK: - Payment History Filter Enum
-
-enum PaymentHistoryFilter: String, CaseIterable, Identifiable {
-    case completed = "Completados"
-    case overdue = "Vencidos"
-    case all = "Todos"
-
-    var id: String { self.rawValue }
-}

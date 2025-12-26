@@ -2,9 +2,8 @@
 //  BiometricManager.swift
 //  pagosApp
 //
+//  Created by miguel tomairo on 26/12/25.
 //  Handles Face ID / Touch ID authentication
-//  Separated from AuthenticationManager for better Single Responsibility
-//  Created by Claude Code - Fase 2 Technical Debt Reduction
 //
 
 import Foundation

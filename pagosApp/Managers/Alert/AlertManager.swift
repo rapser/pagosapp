@@ -1,11 +1,6 @@
+
 import SwiftUI
 import Observation
-
-struct AlertButton {
-    let title: Text
-    let role: ButtonRole?
-    let action: () -> Void
-}
 
 @MainActor
 @Observable

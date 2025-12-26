@@ -38,8 +38,6 @@ final class AuthRepository {
     
     // MARK: - Public Properties
     
-    /// Exposes the underlying Supabase client for legacy compatibility
-    /// Use only when absolutely necessary (e.g., UserProfileService)
     var supabaseClient: SupabaseClient? {
         return (authService as? SupabaseAuthAdapter)?.supabaseClient
     }
@@ -281,10 +279,6 @@ final class AuthRepository {
         }
     }
 
-    /// Ensure the current session is valid, refreshing if necessary
-    /// Call this before performing critical operations (sync, API calls, etc.)
-    /// IMPORTANT: This does NOT clear local authentication state - app can work offline
-    /// Only throws an error to indicate sync cannot proceed, but user stays "logged in" locally
     func ensureValidSession() async throws {
         logger.debug("🔍 Verificando validez de sesión antes de operación crítica")
 

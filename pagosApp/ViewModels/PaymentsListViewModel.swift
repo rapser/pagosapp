@@ -170,12 +170,3 @@ final class PaymentsListViewModel {
         }
     }
 }
-
-// MARK: - Payment Filter Enum
-
-enum PaymentFilter: String, CaseIterable, Identifiable {
-    case currentMonth = "Próximos"
-    case futureMonths = "Futuros"
-
-    var id: String { self.rawValue }
-}

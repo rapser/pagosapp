@@ -1,3 +1,4 @@
+
 import SwiftUI
 import SwiftData
 
@@ -7,13 +8,8 @@ struct PaymentsListView: View {
     @State private var showingAddPaymentSheet = false
 
     init() {
-        // ViewModel will be created in onAppear with real modelContext
-
-        // Configurar segmented control con soporte para modo oscuro
-        // Fondo: azul en light mode, gris oscuro en dark mode
         UISegmentedControl.appearance().backgroundColor = UIColor(named: "SegmentedBackground")
 
-        // Segmento seleccionado: blanco en light mode, azul primario en dark mode
         UISegmentedControl.appearance().selectedSegmentTintColor = UIColor { traitCollection in
             if traitCollection.userInterfaceStyle == .dark {
                 return UIColor(named: "AppPrimary") ?? .systemBlue
@@ -22,10 +18,8 @@ struct PaymentsListView: View {
             }
         }
 
-        // Texto no seleccionado: blanco siempre
         UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.white], for: .normal)
 
-        // Texto seleccionado: azul en light mode, blanco en dark mode
         UISegmentedControl.appearance().setTitleTextAttributes([
             .foregroundColor: UIColor { traitCollection in
                 if traitCollection.userInterfaceStyle == .dark {
