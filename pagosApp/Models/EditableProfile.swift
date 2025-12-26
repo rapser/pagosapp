@@ -26,6 +26,21 @@ struct EditableProfile {
         self.gender = profile.gender
         self.preferredCurrency = profile.preferredCurrency
     }
+
+    /// Inicializar desde UserProfile (SwiftData)
+    init(from profile: UserProfile) {
+        self.fullName = profile.fullName
+        self.phone = profile.phone ?? ""
+        self.city = profile.city ?? ""
+        self.dateOfBirth = profile.dateOfBirth
+        // Convertir UserProfile.Gender a UserProfileEntity.Gender
+        if let gender = profile.gender {
+            self.gender = UserProfileEntity.Gender(rawValue: gender.rawValue)
+        } else {
+            self.gender = nil
+        }
+        self.preferredCurrency = profile.preferredCurrency
+    }
     
     /// Convertir a ProfileUpdateDTO para enviar a Supabase
     func toUpdateDTO() -> ProfileUpdateDTO {
