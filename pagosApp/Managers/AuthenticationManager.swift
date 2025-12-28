@@ -224,8 +224,10 @@ final class AuthenticationManager {
     
     // MARK: - Logout
 
+    /// Logout - Closes session but PRESERVES all local data (payments, profile, notifications)
+    /// User data remains on device and will be available when logging back in with the same account
     @MainActor
-    func logout(inactivity: Bool = false, modelContext: ModelContext? = nil) async {
+    func logout(inactivity: Bool = false) async {
         isLoading = true
         defer { isLoading = false }
 
@@ -236,23 +238,11 @@ final class AuthenticationManager {
             logger.error("Logout failed with error: \(error.localizedDescription)")
         }
 
-        // IMPORTANT: Only clear local database if there are NO pending syncs
-        // This preserves unsynchronized data regardless of logout type (manual or inactivity)
-        if let context = modelContext {
-            let hasPending = paymentSyncManager.hasPendingSyncPayments(modelContext: context)
-            if hasPending {
-                logger.warning("⚠️ Preserving local data: \(self.paymentSyncManager.pendingSyncCount) payments pending sync")
-                logger.info("📦 Data will be available and synced when user logs back in")
-            } else {
-                // Safe to clear - all data is synced
-                await paymentSyncManager.clearLocalDatabase(modelContext: context, force: false)
-                logger.info("✅ Local SwiftData database cleared on logout (all data was synced)")
-            }
-        } else {
-            // No ModelContext, can't check - be conservative and don't clear
-            logger.warning("⚠️ No ModelContext available, preserving local data to be safe")
-        }
+        // IMPORTANT: NEVER clear local data on logout (personal device)
+        // Data persists for when user logs back in
+        logger.info("📦 Local data preserved - payments and profile remain on device")
 
+        // Clear authentication tokens
         if !settingsManager.isBiometricLockEnabled {
             _ = KeychainManager.deleteCredentials()
             logger.info("🗑️ Credentials deleted from Keychain (Face ID disabled)")
@@ -260,6 +250,7 @@ final class AuthenticationManager {
             logger.info("🔐 Credentials kept in Keychain (Face ID enabled)")
         }
 
+        // Reset session state
         UserDefaults.standard.removeObject(forKey: self.lastActiveTimestampKey)
         self.isAuthenticated = false
         self.isSessionActive = false
@@ -268,6 +259,40 @@ final class AuthenticationManager {
         if inactivity {
             self.showInactivityAlert = true
         }
+    }
+
+    /// Unlink Device - Closes session AND removes all local data (payments, profile, notifications)
+    /// Use this when: selling device, switching accounts permanently, or wanting a fresh start
+    @MainActor
+    func unlinkDevice(modelContext: ModelContext) async {
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            try await authRepository.logout()
+            logger.info("✅ Session closed for device unlink")
+        } catch {
+            logger.error("Device unlink logout failed: \(error.localizedDescription)")
+        }
+
+        // Clear ALL local data
+        await paymentSyncManager.clearLocalDatabase(modelContext: modelContext, force: true)
+        logger.info("🗑️ All local payments cleared")
+
+        await UserProfileService.shared.clearLocalProfile(modelContext: modelContext)
+        logger.info("🗑️ Local profile cleared")
+
+        // Clear all authentication data
+        _ = KeychainManager.deleteCredentials()
+        logger.info("🗑️ All credentials deleted from Keychain")
+
+        // Reset all session state
+        UserDefaults.standard.removeObject(forKey: self.lastActiveTimestampKey)
+        self.isAuthenticated = false
+        self.isSessionActive = false
+        UserDefaults.standard.set(false, forKey: sessionActiveKey)
+
+        logger.info("✅ Device unlinked - all local data removed")
     }
     
     // MARK: - Session Management

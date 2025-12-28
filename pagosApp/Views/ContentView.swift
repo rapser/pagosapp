@@ -111,15 +111,9 @@ struct ContentView: View {
             } else if oldValue == true && newValue == false { // User explicitly logged out (not initial state)
                 stopForegroundCheckTimer() // Stop foreground check
 
-                // Clear user profile and database from local storage
-                Task {
-                    await UserProfileService.shared.clearLocalProfile(modelContext: modelContext)
-
-                    // Only clear database if user was previously authenticated
-                    // This clears ONLY local SwiftData, NEVER touches Supabase
-                    // Also cancels all local notifications
-                    await syncManager.clearLocalDatabase(modelContext: modelContext)
-                }
+                // IMPORTANT: On logout, we PRESERVE all local data (payments, profile, notifications)
+                // Data is only cleared when user explicitly chooses "Unlink Device" in Settings
+                // This allows seamless re-login with the same account on a personal device
             }
         }
         .onChange(of: scenePhase) { oldValue, newPhase in
