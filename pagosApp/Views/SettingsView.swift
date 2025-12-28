@@ -154,9 +154,14 @@ struct SettingsView: View {
                     }
                 }
 
-                Section {
-                    Button("Cerrar Sesión", role: .destructive) {
+                Section(header: Text("Sesión").foregroundColor(Color("AppTextPrimary"))) {
+                    Button("Cerrar Sesión") {
                         showLogoutAlert()
+                    }
+                    .foregroundColor(Color("AppTextPrimary"))
+
+                    Button("Desvincular Dispositivo", role: .destructive) {
+                        showUnlinkDeviceAlert()
                     }
                 }
             }
@@ -228,12 +233,31 @@ struct SettingsView: View {
     private func showLogoutAlert() {
         alertManager.show(
             title: Text("Cerrar Sesión"),
-            message: Text("¿Estás seguro de que quieres cerrar la sesión?"),
+            message: Text("Tu sesión se cerrará pero tus datos permanecerán en este dispositivo. Al volver a iniciar sesión con la misma cuenta, todo estará aquí."),
             buttons: [
-                AlertButton(title: Text("Aceptar"), role: .destructive) {
+                AlertButton(title: Text("Cerrar Sesión"), role: .cancel) {
                     Task {
-                        // Logout will automatically preserve data if there are pending syncs
-                        await authManager.logout(modelContext: modelContext)
+                        await authManager.logout()
+                    }
+                },
+                AlertButton(title: Text("Cancelar"), role: .cancel) { }
+            ]
+        )
+    }
+
+    private func showUnlinkDeviceAlert() {
+        let pendingCount = syncManager.pendingSyncCount
+        let warningMessage = pendingCount > 0
+            ? "⚠️ Tienes \(pendingCount) pago(s) sin sincronizar.\n\nEsta acción eliminará TODOS tus datos locales (pagos, perfil y notificaciones) de este dispositivo de forma permanente.\n\n¿Estás completamente seguro?"
+            : "Esta acción eliminará TODOS tus datos locales (pagos, perfil y notificaciones) de este dispositivo de forma permanente.\n\nTus datos en la nube están seguros y podrás descargarlos nuevamente al iniciar sesión en otro dispositivo.\n\n¿Estás seguro?"
+
+        alertManager.show(
+            title: Text("Desvincular Dispositivo"),
+            message: Text(warningMessage),
+            buttons: [
+                AlertButton(title: Text("Desvincular"), role: .destructive) {
+                    Task {
+                        await authManager.unlinkDevice(modelContext: modelContext)
                     }
                 },
                 AlertButton(title: Text("Cancelar"), role: .cancel) { }
