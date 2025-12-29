@@ -172,3 +172,4 @@ final class UserProfileViewModel {
         editableProfile?.fullName.isEmpty == false
     }
 }
+

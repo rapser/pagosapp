@@ -1,4 +1,3 @@
-
 import SwiftUI
 import Supabase
 import LocalAuthentication
@@ -6,7 +5,6 @@ import LocalAuthentication
 struct BiometricSettingsView: View {
     @Environment(SettingsManager.self) private var settingsManager
     @Environment(AuthenticationManager.self) private var authManager
-    @Environment(\.modelContext) private var modelContext
     
     @State private var showError = false
     @State private var errorMessage = ""
@@ -61,10 +59,9 @@ struct BiometricSettingsView: View {
                                 showError = true
                             }
                         } else {
-                            // When disabling, delete credentials from Keychain
                             settingsManager.isBiometricLockEnabled = false
                             Task {
-                                await authManager.clearBiometricCredentials(modelContext: modelContext)
+                                await authManager.clearBiometricCredentials()
                             }
                         }
                     }

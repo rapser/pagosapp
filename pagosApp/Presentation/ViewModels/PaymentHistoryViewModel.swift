@@ -1,34 +1,21 @@
-//
-//  PaymentHistoryViewModel.swift
-//  pagosApp
-//
-//  Created by miguel tomairo on 1/12/25.
-//  Modern iOS 18+ using @Observable macro
-//
-
 import Foundation
 import SwiftUI
-import SwiftData
 import Observation
 import OSLog
 
 @MainActor
 @Observable
 final class PaymentHistoryViewModel {
-    var payments: [Payment] = []
+    var payments: [PaymentEntity] = []
     var selectedFilter: PaymentHistoryFilter = .completed
     var isLoading = false
     var error: Error?
 
-    // MARK: - Dependencies (DIP: depend on abstractions)
-
-    private let modelContext: ModelContext
+    private let getAllPaymentsUseCase: GetAllPaymentsUseCase
     private let errorHandler: ErrorHandler
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentHistoryViewModel")
 
-    // MARK: - Computed Properties
-
-    var filteredPayments: [Payment] {
+    var filteredPayments: [PaymentEntity] {
         let now = Date()
 
         switch selectedFilter {
@@ -41,40 +28,41 @@ final class PaymentHistoryViewModel {
         }
     }
 
-    // MARK: - Initialization (DIP: inject dependencies)
-
-    init(modelContext: ModelContext, errorHandler: ErrorHandler) {
-        self.modelContext = modelContext
+    init(getAllPaymentsUseCase: GetAllPaymentsUseCase, errorHandler: ErrorHandler) {
+        self.getAllPaymentsUseCase = getAllPaymentsUseCase
         self.errorHandler = errorHandler
-        fetchPayments()
+        Task {
+            await fetchPayments()
+        }
         setupNotificationObserver()
     }
 
     private func setupNotificationObserver() {
         Task {
             for await _ in NotificationCenter.default.notifications(named: NSNotification.Name("PaymentsDidSync")) {
-                fetchPayments()
+                await fetchPayments()
             }
         }
     }
 
-    // MARK: - Data Operations
+    func fetchPayments() async {
+        isLoading = true
+        defer { isLoading = false }
 
-    /// Fetch all payments from local database
-    func fetchPayments() {
-        do {
-            let descriptor = FetchDescriptor<Payment>(sortBy: [SortDescriptor(\.dueDate, order: .reverse)]) // Most recent first
-            payments = try modelContext.fetch(descriptor)
+        let result = await getAllPaymentsUseCase.execute()
+
+        switch result {
+        case .success(let fetchedPayments):
+            payments = fetchedPayments.sorted { $0.dueDate > $1.dueDate }
             logger.info("✅ Fetched \(self.payments.count) payments for history")
-        } catch {
-            logger.error("❌ Failed to fetch payments: \(error.localizedDescription)")
+        case .failure(let error):
+            logger.error("❌ Failed to fetch payments: \(error.errorCode)")
             self.error = error
-            errorHandler.handle(PaymentError.saveFailed(error.localizedDescription))
+            errorHandler.handle(error)
         }
     }
 
-    /// Refresh data
-    func refresh() {
-        fetchPayments()
+    func refresh() async {
+        await fetchPayments()
     }
 }

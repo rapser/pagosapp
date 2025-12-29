@@ -101,7 +101,7 @@ final class AuthenticationManager {
         let result = await loginUseCase.execute(email: email, password: password)
 
         switch result {
-        case .success(let session):
+        case .success(_):
             // Save credentials for biometric login
             let saved = KeychainManager.saveCredentials(email: email, password: password)
             if saved {
@@ -133,7 +133,7 @@ final class AuthenticationManager {
         let result = await registerUseCase.execute(email: email, password: password, metadata: nil)
 
         switch result {
-        case .success(let session):
+        case .success(_):
             self.hasLoggedInWithCredentials = true
             _ = KeychainManager.setHasLoggedIn(true)
 
@@ -194,7 +194,7 @@ final class AuthenticationManager {
         let result = await biometricLoginUseCase.execute()
 
         switch result {
-        case .success(let session):
+        case .success(_):
             // Update coordinator state
             self.isAuthenticated = true
             self.isSessionActive = true
@@ -247,16 +247,13 @@ final class AuthenticationManager {
         }
     }
 
-    /// Unlink Device - Closes session AND removes all local data (payments, profile, notifications)
-    /// Use this when: selling device, switching accounts permanently, or wanting a fresh start
     @MainActor
-    func unlinkDevice(modelContext: ModelContext) async {
+    func unlinkDevice() async {
         logger.info("🔓 Unlinking device - clearing all local data")
 
         isLoading = true
         defer { isLoading = false }
 
-        // Logout from remote session
         let result = await logoutUseCase.execute()
         switch result {
         case .success:
@@ -265,15 +262,11 @@ final class AuthenticationManager {
             logger.error("❌ Device unlink logout failed: \(error.errorCode)")
         }
 
-        // Clear ALL local data
         _ = await paymentSyncCoordinator.clearLocalDatabase(force: true)
         logger.info("🗑️ All local payments cleared")
 
-        // TODO: Clear local profile via UserProfile Use Case
-        // For now, this functionality needs to be migrated to UserProfile DI Container
         logger.warning("⚠️ UserProfile cleanup not yet migrated to Clean Architecture")
 
-        // Clear all authentication data
         _ = KeychainManager.deleteCredentials()
         logger.info("🗑️ All credentials deleted from Keychain")
 
@@ -368,7 +361,7 @@ final class AuthenticationManager {
         }
     }
 
-    func clearBiometricCredentials(modelContext: ModelContext? = nil) async {
+    func clearBiometricCredentials() async {
         self.hasLoggedInWithCredentials = false
         KeychainManager.deleteHasLoggedIn()
         _ = KeychainManager.deleteCredentials()

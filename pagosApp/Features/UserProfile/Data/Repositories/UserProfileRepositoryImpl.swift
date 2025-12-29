@@ -83,7 +83,7 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
     private func _getLocalProfile() async -> Result<UserProfileEntity?, UserProfileError> {
         do {
             let profiles = try await localDataSource.fetchAll()
-            let profileEntity = profiles.first.map { mapper.toDomain(from: $0) }
+            let profileEntity = profiles.first
 
             if profileEntity != nil {
                 logger.debug("✅ Local profile found")
@@ -108,8 +108,7 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
             }
 
             // Save new profile
-            let profileModel = mapper.toModel(from: profile)
-            try await localDataSource.save(profileModel)
+            try await localDataSource.save(profile)
 
             logger.info("✅ Profile saved to local storage")
             return .success(())

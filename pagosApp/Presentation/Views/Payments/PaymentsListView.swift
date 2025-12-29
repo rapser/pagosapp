@@ -1,9 +1,6 @@
-
 import SwiftUI
-import SwiftData
 
 struct PaymentsListView: View {
-    @Environment(\.modelContext) private var modelContext
     @Environment(AppDependencies.self) private var dependencies
     @State private var viewModel: PaymentsListViewModel?
     @State private var showingAddPaymentSheet = false

@@ -1,16 +1,8 @@
-//
-//  PaymentHistoryView.swift
-//  pagosApp
-//
-//  Created by miguel tomairo on 1/12/25.
-//
-
 import SwiftUI
-import SwiftData
 
 struct PaymentHistoryView: View {
-    @Environment(\.modelContext) private var modelContext
     @Environment(ErrorHandler.self) private var errorHandler
+    @Environment(AppDependencies.self) private var dependencies
     @State private var viewModel: PaymentHistoryViewModel?
 
     init() {
@@ -79,14 +71,14 @@ struct PaymentHistoryView: View {
                             Spacer()
                         } else {
                             List {
-                                ForEach(vm.filteredPayments) { payment in
-                                    PaymentRowView(payment: payment, onToggleStatus: {}) // Empty closure for history
-                                        .opacity(payment.isPaid ? 1.0 : 0.7) // Dim overdue payments
+                                ForEach(vm.filteredPayments.map { PaymentMapper.toModel(from: $0) }) { payment in
+                                    PaymentRowView(payment: payment, onToggleStatus: {})
+                                        .opacity(payment.isPaid ? 1.0 : 0.7)
                                 }
                             }
                             .listStyle(.plain)
                             .refreshable {
-                                vm.refresh()
+                                await vm.refresh()
                             }
                         }
                     }
@@ -98,7 +90,7 @@ struct PaymentHistoryView: View {
         }
         .onAppear {
             if viewModel == nil {
-                viewModel = PaymentHistoryViewModel(modelContext: modelContext, errorHandler: errorHandler)
+                viewModel = dependencies.paymentDependencyContainer.makePaymentHistoryViewModel(errorHandler: errorHandler)
             }
         }
     }

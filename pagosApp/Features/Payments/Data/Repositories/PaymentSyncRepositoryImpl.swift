@@ -150,27 +150,21 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
 
     @MainActor
     private func _getAllLocalPayments() async throws -> [PaymentEntity] {
-        let models = try await localDataSource.fetchAll()
-        return mapper.toDomain(from: models)
+        return try await localDataSource.fetchAll()
     }
 
     @MainActor
     private func _getLocalPayment(id: UUID) async throws -> PaymentEntity? {
-        guard let model = try await localDataSource.fetch(id: id) else {
-            return nil
-        }
-        return mapper.toDomain(from: model)
+        return try await localDataSource.fetch(id: id)
     }
 
     @MainActor
     private func _savePaymentLocally(_ payment: PaymentEntity) async throws {
-        let model = mapper.toModel(from: payment)
-        try await localDataSource.save(model)
+        try await localDataSource.save(payment)
     }
 
     @MainActor
     private func _savePaymentsLocally(_ payments: [PaymentEntity]) async throws {
-        let models = mapper.toModel(from: payments)
-        try await localDataSource.saveAll(models)
+        try await localDataSource.saveAll(payments)
     }
 }

@@ -1,6 +1,4 @@
-
 import SwiftUI
-import SwiftData
 import Supabase
 import OSLog
 
@@ -12,7 +10,6 @@ struct ContentView: View {
     @Environment(AlertManager.self) private var alertManager
     @Environment(\.dependencies) private var dependencies
     @Environment(\.scenePhase) private var scenePhase
-    @Environment(\.modelContext) private var modelContext
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ContentView")
     private let foregroundCheckInterval: TimeInterval = 30

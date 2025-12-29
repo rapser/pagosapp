@@ -1,33 +1,11 @@
-//
-//  PaymentLocalDataSource.swift
-//  pagosApp
-//
-//  Protocol for Payment local data source
-//  Clean Architecture - Data Layer
-//
-
 import Foundation
 
-/// Protocol for local payment data operations (SwiftData)
 protocol PaymentLocalDataSource {
-    /// Fetch all payments from local storage
-    func fetchAll() async throws -> [Payment]
-
-    /// Fetch a single payment by ID
-    func fetch(id: UUID) async throws -> Payment?
-
-    /// Save a single payment
-    func save(_ payment: Payment) async throws
-
-    /// Save multiple payments
-    func saveAll(_ payments: [Payment]) async throws
-
-    /// Delete a single payment
-    func delete(_ payment: Payment) async throws
-
-    /// Delete multiple payments
-    func deleteAll(_ payments: [Payment]) async throws
-
-    /// Clear all payments
+    func fetchAll() async throws -> [PaymentEntity]
+    func fetch(id: UUID) async throws -> PaymentEntity?
+    func save(_ payment: PaymentEntity) async throws
+    func saveAll(_ payments: [PaymentEntity]) async throws
+    func delete(_ payment: PaymentEntity) async throws
+    func deleteAll(_ payments: [PaymentEntity]) async throws
     func clear() async throws
 }

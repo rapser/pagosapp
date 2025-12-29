@@ -151,4 +151,11 @@ final class PaymentDependencyContainer {
             togglePaymentStatusUseCase: makeTogglePaymentStatusUseCase()
         )
     }
+
+    func makePaymentHistoryViewModel(errorHandler: ErrorHandler) -> PaymentHistoryViewModel {
+        return PaymentHistoryViewModel(
+            getAllPaymentsUseCase: makeGetAllPaymentsUseCase(),
+            errorHandler: errorHandler
+        )
+    }
 }
