@@ -21,15 +21,22 @@ final class AppDependencies: AppDependenciesProtocol {
     // MARK: - Dependencies
 
     let settingsManager: SettingsManager
-    let paymentSyncManager: PaymentSyncManager
     let errorHandler: ErrorHandler
     let authenticationManager: AuthenticationManager
-    let biometricManager: BiometricManager
-    let sessionManager: SessionManager
     let notificationManager: NotificationManager
     let eventKitManager: EventKitManager
     let alertManager: AlertManager
-    let storageFactory: StorageFactory
+    let supabaseClient: SupabaseClient
+
+    // MARK: - Feature Containers (Clean Architecture)
+    let authDependencyContainer: AuthDependencyContainer
+    let paymentDependencyContainer: PaymentDependencyContainer
+    let userProfileDependencyContainer: UserProfileDependencyContainer
+    let calendarDependencyContainer: CalendarDependencyContainer
+    let statisticsDependencyContainer: StatisticsDependencyContainer
+
+    // MARK: - Coordinators
+    let paymentSyncCoordinator: PaymentSyncCoordinator
 
     // MARK: - Initialization
 
@@ -37,35 +44,45 @@ final class AppDependencies: AppDependenciesProtocol {
         modelContext: ModelContext,
         supabaseClient: SupabaseClient
     ) {
+        self.supabaseClient = supabaseClient
         self.errorHandler = ErrorHandler()
         self.settingsManager = SettingsManager()
-        self.biometricManager = BiometricManager()
-        self.sessionManager = SessionManager()
         self.notificationManager = NotificationManager()
         self.eventKitManager = EventKitManager(errorHandler: errorHandler)
         self.alertManager = AlertManager()
 
-        let storageConfig = StorageConfiguration.supabase(
-            client: supabaseClient,
+        // Create Feature Dependency Containers (Clean Architecture)
+        self.authDependencyContainer = AuthDependencyContainer(supabaseClient: supabaseClient)
+        self.paymentDependencyContainer = PaymentDependencyContainer(
+            supabaseClient: supabaseClient,
             modelContext: modelContext
         )
-        self.storageFactory = StorageFactory(configuration: storageConfig)
-
-        self.paymentSyncManager = PaymentSyncManager(
-            errorHandler: errorHandler
+        self.userProfileDependencyContainer = UserProfileDependencyContainer(
+            supabaseClient: supabaseClient,
+            modelContext: modelContext
+        )
+        self.calendarDependencyContainer = CalendarDependencyContainer(
+            paymentDependencyContainer: paymentDependencyContainer
+        )
+        self.statisticsDependencyContainer = StatisticsDependencyContainer(
+            paymentDependencyContainer: paymentDependencyContainer
         )
 
+        // Create Coordinators from containers
+        self.paymentSyncCoordinator = paymentDependencyContainer.makePaymentSyncCoordinator()
+
+        // Legacy AuthRepository for compatibility (to be removed in future phases)
         let authAdapter = SupabaseAuthAdapter(client: supabaseClient)
         let authRepository = AuthRepository(authService: authAdapter)
+
+        // AuthenticationManager now uses Use Cases via AuthDependencyContainer
         self.authenticationManager = AuthenticationManager(
             authRepository: authRepository,
             errorHandler: errorHandler,
             settingsManager: settingsManager,
-            paymentSyncManager: paymentSyncManager
+            paymentSyncCoordinator: paymentSyncCoordinator,
+            authDependencyContainer: authDependencyContainer
         )
-
-        self.paymentSyncManager.setAuthRepository(authRepository)
-        self.paymentSyncManager.setNotificationManager(notificationManager)
     }
 
     // MARK: - Convenience Initializer for Testing

@@ -89,7 +89,7 @@ final class SupabaseAuthAdapter: AuthService {
             
         } catch {
             logger.error("❌ Error al cerrar sesión: \(error.localizedDescription)")
-            throw AuthError.networkError(error)
+            throw AuthError.networkError(error.localizedDescription)
         }
     }
     
@@ -154,7 +154,7 @@ final class SupabaseAuthAdapter: AuthService {
             
         } catch {
             logger.error("❌ Error al enviar email de recuperación: \(error.localizedDescription)")
-            throw AuthError.networkError(error)
+            throw AuthError.networkError(error.localizedDescription)
         }
     }
     
@@ -217,7 +217,7 @@ final class SupabaseAuthAdapter: AuthService {
             
         } catch {
             logger.error("❌ Error al eliminar cuenta: \(error.localizedDescription)")
-            throw AuthError.networkError(error)
+            throw AuthError.networkError(error.localizedDescription)
         }
     }
     
@@ -267,7 +267,7 @@ final class SupabaseAuthAdapter: AuthService {
         } else if errorMessage.contains("expired") || errorMessage.contains("token") {
             return .sessionExpired
         } else {
-            return .networkError(error)
+            return .networkError(error.localizedDescription)
         }
     }
 }

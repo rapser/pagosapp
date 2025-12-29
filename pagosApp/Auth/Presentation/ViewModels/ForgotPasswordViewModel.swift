@@ -2,40 +2,63 @@
 //  ForgotPasswordViewModel.swift
 //  pagosApp
 //
-//  Created by miguel tomairo on 1/12/25.
-//  Modern iOS 18+ using @Observable macro
+//  ViewModel for Forgot Password screen
+//  Clean Architecture - Presentation Layer
 //
 
 import Foundation
 import Observation
+import OSLog
+
+private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "ForgotPasswordViewModel")
 
 @MainActor
 @Observable
 final class ForgotPasswordViewModel {
+    // MARK: - UI State
 
     var email: String = ""
     var isLoading: Bool = false
     var didSendResetLink: Bool = false
     var errorMessage: String?
+    var showError: Bool = false
+
+    // MARK: - Dependencies (Use Cases)
 
     private let passwordRecoveryUseCase: PasswordRecoveryUseCase
+
+    // MARK: - Initialization
 
     init(passwordRecoveryUseCase: PasswordRecoveryUseCase) {
         self.passwordRecoveryUseCase = passwordRecoveryUseCase
     }
 
-    func sendPasswordReset() {
+    // MARK: - Actions
+
+    func sendPasswordReset() async {
+        guard !isLoading else { return }
+
+        logger.info("📧 Attempting to send password reset email")
+
         isLoading = true
         errorMessage = nil
+        showError = false
+        defer { isLoading = false }
 
-        Task {
-            do {
-                try await passwordRecoveryUseCase.sendPasswordReset(email: email)
-                didSendResetLink = true
-            } catch {
-                errorMessage = "Error al enviar el correo de restablecimiento. Inténtalo de nuevo."
-            }
-            isLoading = false
+        do {
+            try await passwordRecoveryUseCase.sendPasswordReset(email: email)
+            didSendResetLink = true
+            logger.info("✅ Password reset email sent successfully")
+        } catch {
+            logger.error("❌ Failed to send password reset email: \(error.localizedDescription)")
+            errorMessage = "Error al enviar el correo de restablecimiento. Inténtalo de nuevo."
+            showError = true
         }
+    }
+
+    // MARK: - Validation
+
+    var isFormValid: Bool {
+        !email.isEmpty
     }
 }

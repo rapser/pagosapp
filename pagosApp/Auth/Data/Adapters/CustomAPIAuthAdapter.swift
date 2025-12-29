@@ -303,7 +303,7 @@ final class CustomAPIAuthAdapter: AuthService {
     
     private func validateResponse(_ response: URLResponse) throws {
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw AuthError.networkError(URLError(.badServerResponse))
+            throw AuthError.networkError(URLError(.badServerResponse).localizedDescription)
         }
         
         guard (200...299).contains(httpResponse.statusCode) else {
@@ -361,7 +361,7 @@ final class CustomAPIAuthAdapter: AuthService {
         if let authError = error as? AuthError {
             return authError
         }
-        
-        return .networkError(error)
+
+        return .networkError(error.localizedDescription)
     }
 }

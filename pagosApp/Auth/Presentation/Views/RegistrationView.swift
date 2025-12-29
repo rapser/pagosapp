@@ -1,27 +1,23 @@
-
 import SwiftUI
-import Supabase
 
 struct RegistrationView: View {
+    @State private var viewModel: RegisterViewModel
     @Environment(\.dismiss) var dismiss
-    @Environment(AuthenticationManager.self) private var authManager
-    
-    @State private var email = ""
-    @State private var password = ""
-    @State private var confirmPassword = ""
-    @State private var errorMessage: String?
-    @State private var isLoading = false
+
+    init(registerViewModel: RegisterViewModel) {
+        _viewModel = State(wrappedValue: registerViewModel)
+    }
     
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
                 Spacer()
-                
+
                 Text("Crear Cuenta")
                     .font(.largeTitle).bold()
                     .foregroundColor(Color("AppTextPrimary"))
-                
-                TextField("Correo electrónico", text: $email)
+
+                TextField("Correo electrónico", text: $viewModel.email)
                     .keyboardType(.emailAddress)
                     .textContentType(.emailAddress)
                     .autocapitalization(.none)
@@ -29,80 +25,131 @@ struct RegistrationView: View {
                     .padding()
                     .background(Color("AppBackground"))
                     .cornerRadius(10)
-                    .disabled(isLoading)
-                
-                SecureField("Contraseña", text: $password)
-                    .textContentType(.newPassword)
-                    .padding()
-                    .background(Color("AppBackground"))
-                    .cornerRadius(10)
-                    .disabled(isLoading)
-                
-                SecureField("Confirmar Contraseña", text: $confirmPassword)
-                    .textContentType(.newPassword)
-                    .padding()
-                    .background(Color("AppBackground"))
-                    .cornerRadius(10)
-                    .disabled(isLoading)
-                
-                if let errorMessage = errorMessage {
+                    .disabled(viewModel.isLoading)
+
+                HStack {
+                    if viewModel.showPassword {
+                        TextField("Contraseña", text: $viewModel.password)
+                            .textContentType(.newPassword)
+                    } else {
+                        SecureField("Contraseña", text: $viewModel.password)
+                            .textContentType(.newPassword)
+                    }
+
+                    Button(action: {
+                        viewModel.showPassword.toggle()
+                    }) {
+                        Image(systemName: viewModel.showPassword ? "eye.slash.fill" : "eye.fill")
+                            .foregroundColor(Color("AppTextSecondary"))
+                    }
+                }
+                .padding()
+                .background(Color("AppBackground"))
+                .cornerRadius(10)
+                .disabled(viewModel.isLoading)
+
+                HStack {
+                    if viewModel.showConfirmPassword {
+                        TextField("Confirmar Contraseña", text: $viewModel.confirmPassword)
+                            .textContentType(.newPassword)
+                    } else {
+                        SecureField("Confirmar Contraseña", text: $viewModel.confirmPassword)
+                            .textContentType(.newPassword)
+                    }
+
+                    Button(action: {
+                        viewModel.showConfirmPassword.toggle()
+                    }) {
+                        Image(systemName: viewModel.showConfirmPassword ? "eye.slash.fill" : "eye.fill")
+                            .foregroundColor(Color("AppTextSecondary"))
+                    }
+                }
+                .padding()
+                .background(Color("AppBackground"))
+                .cornerRadius(10)
+                .disabled(viewModel.isLoading)
+
+                // Password validation hints
+                if !viewModel.password.isEmpty {
+                    HStack(spacing: 5) {
+                        Image(systemName: viewModel.isPasswordStrong ? "checkmark.circle.fill" : "xmark.circle.fill")
+                            .foregroundColor(viewModel.isPasswordStrong ? .green : .red)
+                        Text("Mínimo 6 caracteres")
+                            .font(.caption)
+                            .foregroundColor(Color("AppTextSecondary"))
+                    }
+                }
+
+                if !viewModel.confirmPassword.isEmpty {
+                    HStack(spacing: 5) {
+                        Image(systemName: viewModel.passwordsMatch ? "checkmark.circle.fill" : "xmark.circle.fill")
+                            .foregroundColor(viewModel.passwordsMatch ? .green : .red)
+                        Text("Las contraseñas coinciden")
+                            .font(.caption)
+                            .foregroundColor(Color("AppTextSecondary"))
+                    }
+                }
+
+                if let errorMessage = viewModel.errorMessage {
                     Text(errorMessage)
-                        .foregroundColor(.red) // Keeping red for error messages
+                        .foregroundColor(.red)
                         .font(.caption)
                 }
-                
+
                 Button(action: {
                     Task {
-                        isLoading = true
-                        if password != confirmPassword {
-                            errorMessage = "Las contraseñas no coinciden."
-                            isLoading = false
-                            return
-                        }
-                        errorMessage = await authManager.register(email: email, password: password)?.localizedDescription
-                        isLoading = false
-                        if errorMessage == nil {
-                            dismiss()
-                        }
+                        await viewModel.register()
                     }
                 }) {
                     HStack {
-                        if isLoading {
+                        if viewModel.isLoading {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                 .scaleEffect(0.8)
                         }
-                        Text(isLoading ? "Registrando..." : "Registrarse")
+                        Text(viewModel.isLoading ? "Registrando..." : "Registrarse")
                     }
                     .font(.headline)
-                    .foregroundColor(.white) // Keeping white for text on primary button
+                    .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color("AppSuccess"))
+                    .background(viewModel.isFormValid ? Color("AppSuccess") : Color("AppSuccess").opacity(0.5))
                     .cornerRadius(10)
                 }
-                .disabled(isLoading)
-                
+                .disabled(viewModel.isLoading || !viewModel.isFormValid)
+
                 Spacer()
             }
             .padding()
             .overlay {
-                if isLoading {
+                if viewModel.isLoading {
                     Color.black.opacity(0.1)
                         .ignoresSafeArea()
                         .allowsHitTesting(true)
                 }
             }
-            .navigationTitle("") // Hide default navigation title
+            .navigationTitle("")
             .navigationBarHidden(true)
+            .onAppear {
+                // Set callback to dismiss on success
+                viewModel.onRegistrationSuccess = { _ in
+                    dismiss()
+                }
+            }
+            .alert("Error", isPresented: $viewModel.showError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
+                }
+            }
         }
     }
 }
 
 #Preview {
     let dependencies = AppDependencies.mock()
+    let authContainer = AuthDependencyContainer(supabaseClient: dependencies.supabaseClient)
 
-    RegistrationView()
-        .environment(dependencies.authenticationManager)
-        .environment(dependencies.errorHandler)
+    RegistrationView(registerViewModel: authContainer.makeRegisterViewModel())
 }

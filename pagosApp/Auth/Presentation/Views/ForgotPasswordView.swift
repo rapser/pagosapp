@@ -9,9 +9,8 @@ import SwiftUI
 import Supabase
 
 struct ForgotPasswordView: View {
-
     @State private var viewModel: ForgotPasswordViewModel
-    @Environment(AlertManager.self) private var alertManager
+    @State private var showSuccessAlert: Bool = false
     @Environment(\.dismiss) var dismiss
 
     init(passwordRecoveryUseCase: PasswordRecoveryUseCase) {
@@ -45,7 +44,9 @@ struct ForgotPasswordView: View {
                     .disabled(viewModel.isLoading)
                 
                 Button(action: {
-                    viewModel.sendPasswordReset()
+                    Task {
+                        await viewModel.sendPasswordReset()
+                    }
                 }) {
                     Text("Enviar Enlace")
                         .font(.headline)
@@ -70,13 +71,21 @@ struct ForgotPasswordView: View {
         }
         .onChange(of: viewModel.didSendResetLink) { oldValue, newValue in
             if newValue {
-                alertManager.show(
-                    title: Text("Correo Enviado"),
-                    message: Text("Se ha enviado un correo para restablecer tu contraseña. Revisa tu bandeja de entrada."),
-                    buttons: [
-                        .init(title: Text("OK"), role: .cancel, action: { dismiss() })
-                    ]
-                )
+                showSuccessAlert = true
+            }
+        }
+        .alert("Correo Enviado", isPresented: $showSuccessAlert) {
+            Button("OK", role: .cancel) {
+                dismiss()
+            }
+        } message: {
+            Text("Se ha enviado un correo para restablecer tu contraseña. Revisa tu bandeja de entrada.")
+        }
+        .alert("Error", isPresented: $viewModel.showError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            if let errorMessage = viewModel.errorMessage {
+                Text(errorMessage)
             }
         }
     }
