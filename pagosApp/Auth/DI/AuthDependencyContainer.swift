@@ -31,6 +31,10 @@ final class AuthDependencyContainer {
         KeychainAuthDataSource()
     }()
 
+    private lazy var biometricCredentialsDataSource: BiometricCredentialsDataSource = {
+        KeychainBiometricCredentialsDataSource()
+    }()
+
     // MARK: - Mappers
 
     private lazy var authDTOMapper: SupabaseAuthDTOMapper = {
@@ -118,6 +122,24 @@ final class AuthDependencyContainer {
     func makeGetAuthenticationStatusUseCase() -> GetAuthenticationStatusUseCase {
         GetAuthenticationStatusUseCase(
             authRepository: makeAuthRepository()
+        )
+    }
+
+    func makeSaveBiometricCredentialsUseCase() -> SaveBiometricCredentialsUseCase {
+        SaveBiometricCredentialsUseCase(
+            biometricCredentialsDataSource: biometricCredentialsDataSource
+        )
+    }
+
+    func makeClearBiometricCredentialsUseCase() -> ClearBiometricCredentialsUseCase {
+        ClearBiometricCredentialsUseCase(
+            biometricCredentialsDataSource: biometricCredentialsDataSource
+        )
+    }
+
+    func makeHasBiometricCredentialsUseCase() -> HasBiometricCredentialsUseCase {
+        HasBiometricCredentialsUseCase(
+            biometricCredentialsDataSource: biometricCredentialsDataSource
         )
     }
 
