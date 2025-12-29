@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SyncSectionView: View {
-    @Environment(AuthenticationManager.self) private var authManager
+    @Environment(SessionCoordinator.self) private var sessionCoordinator
     @Environment(PaymentSyncCoordinator.self) private var syncManager
 
     let onSyncTapped: () -> Void
@@ -16,13 +16,13 @@ struct SyncSectionView: View {
                 LastSyncDateRow(lastSyncDate: lastSync)
             }
 
-            if !authManager.isAuthenticated && !authManager.isSessionActive {
+            if !sessionCoordinator.isAuthenticated && !sessionCoordinator.isSessionActive {
                 AuthenticationRequiredRow()
             }
 
             SyncButton(
                 isSyncing: syncManager.isSyncing,
-                isAuthenticated: authManager.isAuthenticated || authManager.isSessionActive,
+                isAuthenticated: sessionCoordinator.isAuthenticated || sessionCoordinator.isSessionActive,
                 action: onSyncTapped
             )
 

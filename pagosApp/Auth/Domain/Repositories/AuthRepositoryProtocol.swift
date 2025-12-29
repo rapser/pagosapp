@@ -65,4 +65,10 @@ protocol AuthRepositoryProtocol {
     /// Delete user account
     /// - Returns: Result with Void or AuthError
     func deleteAccount() async -> Result<Void, AuthError>
+
+    // MARK: - User Info
+
+    /// Get current authenticated user ID
+    /// - Returns: User ID as UUID, or nil if not authenticated
+    func getCurrentUserId() async -> UUID?
 }

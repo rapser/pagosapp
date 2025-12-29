@@ -61,7 +61,7 @@ struct pagosAppApp: App {
         WindowGroup {
             ContentView()
                 .environment(dependencies)
-                .environment(dependencies.authenticationManager)
+                .environment(dependencies.sessionCoordinator)
                 .environment(dependencies.settingsStore)
                 .environment(dependencies.alertManager)
                 .tint(Color("AppPrimary"))

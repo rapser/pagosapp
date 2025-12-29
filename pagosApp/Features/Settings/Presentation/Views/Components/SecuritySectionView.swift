@@ -1,11 +1,11 @@
 import SwiftUI
 
 struct SecuritySectionView: View {
-    @Environment(AuthenticationManager.self) private var authManager
+    @Environment(SessionCoordinator.self) private var sessionCoordinator
 
     var body: some View {
         Section(header: Text("Seguridad").foregroundColor(Color("AppTextPrimary"))) {
-            NavigationLink(destination: BiometricSettingsView().environment(authManager)) {
+            NavigationLink(destination: BiometricSettingsView().environment(sessionCoordinator)) {
                 HStack {
                     Image(systemName: "faceid")
                         .foregroundColor(Color("AppPrimary"))

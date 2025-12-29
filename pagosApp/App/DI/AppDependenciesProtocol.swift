@@ -15,7 +15,7 @@ import Supabase
 protocol AppDependenciesProtocol {
     var settingsStore: SettingsStore { get }
     var errorHandler: ErrorHandler { get }
-    var authenticationManager: AuthenticationManager { get }
+    var sessionCoordinator: SessionCoordinator { get }
     var notificationDataSource: NotificationDataSource { get }
     var calendarEventDataSource: CalendarEventDataSource { get }
     var alertManager: AlertManager { get }
