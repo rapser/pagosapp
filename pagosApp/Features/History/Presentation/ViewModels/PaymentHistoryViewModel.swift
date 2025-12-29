@@ -6,7 +6,7 @@ import OSLog
 @MainActor
 @Observable
 final class PaymentHistoryViewModel {
-    var filteredPayments: [Payment] = []
+    var filteredPayments: [PaymentUI] = []
     var selectedFilter: PaymentHistoryFilter = .completed
     var isLoading = false
     var errorMessage: String?
@@ -38,7 +38,8 @@ final class PaymentHistoryViewModel {
 
         switch result {
         case .success(let payments):
-            filteredPayments = payments
+            // Convert Domain -> UI
+            filteredPayments = payments.toUI()
             errorMessage = nil
             logger.info("✅ Fetched \(self.filteredPayments.count) payments for history (filter: \(self.selectedFilter.rawValue))")
         case .failure(let error):

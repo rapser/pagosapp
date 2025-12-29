@@ -16,7 +16,7 @@ import OSLog
 final class PaymentsListViewModel {
     // MARK: - Observable Properties (UI State)
 
-    var payments: [Payment] = []
+    var payments: [PaymentUI] = []
     var selectedFilter: PaymentFilter = .currentMonth
     var isLoading = false
     var errorMessage: String?
@@ -31,7 +31,7 @@ final class PaymentsListViewModel {
 
     // MARK: - Computed Properties
 
-    var filteredPayments: [Payment] {
+    var filteredPayments: [PaymentUI] {
         let calendar = Calendar.current
         let now = Date()
 
@@ -82,7 +82,8 @@ final class PaymentsListViewModel {
 
         switch result {
         case .success(let fetchedPayments):
-            payments = fetchedPayments
+            // Convert Domain -> UI
+            payments = fetchedPayments.toUI()
             logger.info("✅ Fetched \(fetchedPayments.count) payments")
 
         case .failure(let error):
@@ -92,7 +93,7 @@ final class PaymentsListViewModel {
     }
 
     /// Delete a payment
-    func deletePayment(_ payment: Payment) async {
+    func deletePayment(_ payment: PaymentUI) async {
         isLoading = true
         defer { isLoading = false }
 
@@ -110,11 +111,12 @@ final class PaymentsListViewModel {
     }
 
     /// Toggle payment status
-    func togglePaymentStatus(_ payment: Payment) async {
+    func togglePaymentStatus(_ payment: PaymentUI) async {
         isLoading = true
         defer { isLoading = false }
 
-        let result = await togglePaymentStatusUseCase.execute(payment)
+        // Convert UI -> Domain for Use Case
+        let result = await togglePaymentStatusUseCase.execute(payment.toDomain())
 
         switch result {
         case .success(let updatedPayment):

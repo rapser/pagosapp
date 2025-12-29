@@ -5,12 +5,12 @@ struct CalendarPaymentsView: View {
     @Environment(AppDependencies.self) private var dependencies
     @State private var viewModel: CalendarViewModel?
 
-    private var paymentsForSelectedDate: [Payment] {
+    private var paymentsForSelectedDate: [PaymentUI] {
         guard let viewModel = viewModel else { return [] }
         return viewModel.paymentsForSelectedDate
     }
 
-    private var allPayments: [Payment] {
+    private var allPayments: [PaymentUI] {
         guard let viewModel = viewModel else { return [] }
         return viewModel.allPayments
     }

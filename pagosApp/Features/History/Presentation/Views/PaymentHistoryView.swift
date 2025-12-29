@@ -136,14 +136,13 @@ private struct HistoryEmptyView: View {
 }
 
 private struct HistoryListView: View {
-    let payments: [Payment]
+    let payments: [PaymentUI]
     let onRefresh: () async -> Void
 
     var body: some View {
         List {
             ForEach(payments) { payment in
                 PaymentRowView(payment: payment, onToggleStatus: {})
-                    .opacity(payment.isPaid ? 1.0 : 0.7)
             }
         }
         .listStyle(.plain)
