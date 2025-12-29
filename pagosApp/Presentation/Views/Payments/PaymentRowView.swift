@@ -1,6 +1,5 @@
 
 import SwiftUI
-import SwiftData
 
 struct PaymentRowView: View {
     @Bindable var payment: Payment

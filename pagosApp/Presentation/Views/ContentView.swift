@@ -1,5 +1,4 @@
 import SwiftUI
-import Supabase
 import OSLog
 
 struct ContentView: View {

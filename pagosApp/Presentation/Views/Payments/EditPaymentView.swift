@@ -1,6 +1,5 @@
 
 import SwiftUI
-import SwiftData
 
 struct EditPaymentView: View {
     @Environment(\.dismiss) var dismiss
