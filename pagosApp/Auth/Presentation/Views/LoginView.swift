@@ -8,8 +8,9 @@ struct LoginView: View {
 
     var onLoginSuccess: ((AuthSession) -> Void)?
 
-    init(loginViewModel: LoginViewModel) {
+    init(loginViewModel: LoginViewModel, onLoginSuccess: ((AuthSession) -> Void)? = nil) {
         _viewModel = State(wrappedValue: loginViewModel)
+        self.onLoginSuccess = onLoginSuccess
     }
     
     var body: some View {
@@ -158,18 +159,12 @@ struct LoginView: View {
                 }
             }
             .onAppear {
-                Task {
-                    // Check biometric availability
-                    let canUse = await viewModel.canUseBiometricLogin()
-                    let biometricType = await viewModel.getBiometricType()
+                // Check if should show biometric option (without calling use cases again)
+                // Use cached values from ViewModel state
+                let hasCredentials = viewModel.hasBiometricCredentials()
 
-                    // If biometrics are enabled, start with biometric login view
-                    if canUse && biometricType != .none {
-                        showEmailPasswordLogin = false
-                    } else {
-                        showEmailPasswordLogin = true
-                    }
-                }
+                // Only show biometric if credentials exist (device capability already checked by SessionCoordinator)
+                showEmailPasswordLogin = !hasCredentials
 
                 // Set callback
                 viewModel.onLoginSuccess = onLoginSuccess

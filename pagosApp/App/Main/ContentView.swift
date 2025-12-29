@@ -5,7 +5,7 @@ struct ContentView: View {
     @Environment(SessionCoordinator.self) private var sessionCoordinator
     @Environment(PaymentSyncCoordinator.self) private var syncManager
     @Environment(AlertManager.self) private var alertManager
-    @Environment(\.dependencies) private var dependencies
+    @Environment(AppDependencies.self) private var dependencies
     @Environment(\.scenePhase) private var scenePhase
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ContentView")
@@ -57,7 +57,11 @@ struct ContentView: View {
                 }
             } else {
                 let loginViewModel = dependencies.authDependencyContainer.makeLoginViewModel()
-                LoginView(loginViewModel: loginViewModel)
+                LoginView(loginViewModel: loginViewModel, onLoginSuccess: { session in
+                    Task {
+                        await sessionCoordinator.startSession()
+                    }
+                })
             }
 
             if sessionCoordinator.isLoading {

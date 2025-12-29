@@ -33,6 +33,7 @@ final class LoginViewModel {
     private let loginUseCase: LoginUseCase
     private let biometricLoginUseCase: BiometricLoginUseCase
     private let passwordRecoveryUseCase: PasswordRecoveryUseCase
+    private let hasBiometricCredentialsUseCase: HasBiometricCredentialsUseCase
 
     // MARK: - Callbacks
 
@@ -43,11 +44,13 @@ final class LoginViewModel {
     init(
         loginUseCase: LoginUseCase,
         biometricLoginUseCase: BiometricLoginUseCase,
-        passwordRecoveryUseCase: PasswordRecoveryUseCase
+        passwordRecoveryUseCase: PasswordRecoveryUseCase,
+        hasBiometricCredentialsUseCase: HasBiometricCredentialsUseCase
     ) {
         self.loginUseCase = loginUseCase
         self.biometricLoginUseCase = biometricLoginUseCase
         self.passwordRecoveryUseCase = passwordRecoveryUseCase
+        self.hasBiometricCredentialsUseCase = hasBiometricCredentialsUseCase
     }
 
     // MARK: - Actions
@@ -114,6 +117,11 @@ final class LoginViewModel {
         let type = await biometricLoginUseCase.getBiometricType()
         biometricType = type
         return type
+    }
+
+    /// Check if biometric credentials are stored
+    func hasBiometricCredentials() -> Bool {
+        return hasBiometricCredentialsUseCase.execute()
     }
 
     /// Get PasswordRecoveryUseCase for ForgotPasswordView
