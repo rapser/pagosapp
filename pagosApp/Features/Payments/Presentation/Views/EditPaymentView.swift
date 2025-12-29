@@ -5,9 +5,9 @@ struct EditPaymentView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(AppDependencies.self) private var dependencies
     @State private var viewModel: EditPaymentViewModel?
-    let payment: Payment
+    let payment: PaymentUI
 
-    init(payment: Payment) {
+    init(payment: PaymentUI) {
         self.payment = payment
     }
 
@@ -24,7 +24,8 @@ struct EditPaymentView: View {
                 if viewModel == nil {
                     // Get Use Cases from DI Container
                     let container = dependencies.paymentDependencyContainer
-                    viewModel = container.makeEditPaymentViewModel(for: payment)
+                    // Convert UI -> Domain for ViewModel
+                    viewModel = container.makeEditPaymentViewModel(for: payment.toDomain())
                 }
             }
         }
@@ -100,7 +101,7 @@ private struct EditPaymentFormView: View {
 
 #Preview {
     EditPaymentView(
-        payment: Payment(
+        payment: PaymentUI(
             id: UUID(),
             name: "Sample Payment",
             amount: 100.0,

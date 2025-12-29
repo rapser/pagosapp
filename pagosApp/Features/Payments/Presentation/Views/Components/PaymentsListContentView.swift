@@ -69,9 +69,9 @@ private struct LoadingIndicator: View {
 }
 
 private struct PaymentsList: View {
-    let payments: [Payment]
-    let onToggleStatus: (Payment) -> Void
-    let onDelete: (Payment) -> Void
+    let payments: [PaymentUI]
+    let onToggleStatus: (PaymentUI) -> Void
+    let onDelete: (PaymentUI) -> Void
     let onRefresh: () -> Void
 
     var body: some View {

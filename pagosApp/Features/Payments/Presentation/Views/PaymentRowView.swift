@@ -2,15 +2,15 @@
 import SwiftUI
 
 struct PaymentRowView: View {
-    let payment: Payment
+    let payment: PaymentUI
     var onToggleStatus: () -> Void
 
     var body: some View {
         HStack {
             // Checkbox para marcar como pagado
             Button(action: onToggleStatus) {
-                Image(systemName: payment.isPaid ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(payment.isPaid ? Color("AppSuccess") : Color("AppTextSecondary")) // Themed colors
+                Image(systemName: payment.statusIcon)
+                    .foregroundColor(payment.statusColor)
                     .font(.title2)
             }
             .buttonStyle(.plain)
@@ -18,22 +18,23 @@ struct PaymentRowView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(payment.name)
                     .fontWeight(.bold)
-                    .strikethrough(payment.isPaid, color: Color("AppTextSecondary")) // Themed color
-                    .foregroundColor(Color("AppTextPrimary")) // Themed color
+                    .strikethrough(payment.isPaid, color: Color("AppTextSecondary"))
+                    .foregroundColor(payment.displayColor)
                 Text(payment.category.rawValue)
                     .font(.caption)
-                    .foregroundColor(Color("AppTextSecondary")) // Themed color
+                    .foregroundColor(Color("AppTextSecondary"))
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 4) {
-                Text("\(payment.currency.symbol) \(payment.amount, format: .number.precision(.fractionLength(2)))")
+                Text(payment.formattedAmount)
                     .fontWeight(.semibold)
-                    .strikethrough(payment.isPaid, color: Color("AppTextSecondary")) // Themed color
-                    .foregroundColor(Color("AppTextPrimary")) // Themed color
-                Text(payment.dueDate, style: .date)
+                    .strikethrough(payment.isPaid, color: Color("AppTextSecondary"))
+                    .foregroundColor(payment.displayColor)
+                Text(payment.formattedDate)
                     .font(.caption)
-                    .foregroundColor(Color("AppTextSecondary")) // Themed color
+                    .foregroundColor(Color("AppTextSecondary"))
             }
         }
+        .opacity(payment.displayOpacity)
     }
 }

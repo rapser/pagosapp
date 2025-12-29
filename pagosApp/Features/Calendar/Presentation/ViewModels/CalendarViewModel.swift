@@ -15,8 +15,8 @@ import OSLog
 final class CalendarViewModel {
     // MARK: - Observable Properties (UI State)
 
-    var allPayments: [Payment] = []
-    var paymentsForSelectedDate: [Payment] = []
+    var allPayments: [PaymentUI] = []
+    var paymentsForSelectedDate: [PaymentUI] = []
     var selectedDate: Date = Calendar.current.startOfDay(for: Date())
     var isLoading = false
     var errorMessage: String?
@@ -52,7 +52,8 @@ final class CalendarViewModel {
 
         switch result {
         case .success(let payments):
-            allPayments = payments
+            // Convert Domain -> UI
+            allPayments = payments.toUI()
             logger.info("✅ Loaded \(payments.count) payments for calendar")
 
         case .failure(let error):
@@ -67,7 +68,8 @@ final class CalendarViewModel {
 
         switch result {
         case .success(let payments):
-            paymentsForSelectedDate = payments
+            // Convert Domain -> UI
+            paymentsForSelectedDate = payments.toUI()
             logger.info("✅ Loaded \(payments.count) payments for selected date")
 
         case .failure(let error):

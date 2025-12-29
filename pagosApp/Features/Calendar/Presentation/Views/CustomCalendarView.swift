@@ -2,7 +2,7 @@ import SwiftUI
 
 struct CustomCalendarView: View {
     @Binding var selectedDate: Date
-    let payments: [Payment]
+    let payments: [PaymentUI]
 
     @State private var currentMonth: Date = Date()
     @State private var selectionToggle = false
