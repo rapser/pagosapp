@@ -70,7 +70,9 @@ final class SessionCoordinator {
         Task {
             await checkBiometricAvailability()
 
-            let isFaceIDEnabled = settingsStore.isBiometricLockEnabled && canUseBiometrics
+            // Check if biometric is enabled AND credentials exist
+            let hasCredentials = hasBiometricCredentialsUseCase.execute()
+            let isFaceIDEnabled = settingsStore.isBiometricLockEnabled && canUseBiometrics && hasCredentials
 
             if isFaceIDEnabled {
                 self.isAuthenticated = false
@@ -99,6 +101,10 @@ final class SessionCoordinator {
         self.isSessionActive = true
         await sessionRepository.startSession()
         await sessionRepository.updateLastActiveTimestamp()
+
+        // Auto-sync payments after login
+        logger.info("🔄 Starting automatic sync after login")
+        try? await paymentSyncCoordinator.performSync()
     }
 
     /// End current session

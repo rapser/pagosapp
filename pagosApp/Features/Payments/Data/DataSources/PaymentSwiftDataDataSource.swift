@@ -14,9 +14,16 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
     func fetchAll() async throws -> [Payment] {
         logger.debug("📱 Fetching all payments from SwiftData")
         let descriptor = FetchDescriptor<PaymentEntity>()
-        let payments = try modelContext.fetch(descriptor)
-        logger.debug("✅ Fetched \(payments.count) payments from SwiftData")
-        return payments.map { PaymentMapper.toDomain(from: $0) }
+
+        do {
+            let payments = try modelContext.fetch(descriptor)
+            logger.debug("✅ Fetched \(payments.count) payments from SwiftData")
+            return payments.map { PaymentMapper.toDomain(from: $0) }
+        } catch {
+            logger.error("❌ Failed to fetch payments from SwiftData: \(error.localizedDescription)")
+            // Return empty array instead of crashing
+            return []
+        }
     }
 
     func fetch(id: UUID) async throws -> Payment? {
