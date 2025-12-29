@@ -23,6 +23,10 @@ final class SessionCoordinator {
     var isLoading: Bool = false
     var canUseBiometrics = false
 
+    // MARK: - Internal State
+
+    private var hasPerformedInitialCheck = false
+
     // MARK: - Dependencies (Use Cases only - Clean Architecture)
 
     private let loginUseCase: LoginUseCase
@@ -67,18 +71,41 @@ final class SessionCoordinator {
 
         self.isSessionActive = sessionRepository.hasActiveSession
 
+        // Initialize to false until we verify
+        self.isAuthenticated = false
+
         Task {
+            // Only perform initial check once
+            guard !hasPerformedInitialCheck else {
+                logger.debug("⏭️ Skipping duplicate initial check")
+                return
+            }
+            hasPerformedInitialCheck = true
+
             await checkBiometricAvailability()
 
-            // Check if biometric is enabled AND credentials exist
-            let hasCredentials = hasBiometricCredentialsUseCase.execute()
-            let isFaceIDEnabled = settingsStore.isBiometricLockEnabled && canUseBiometrics && hasCredentials
+            // Check if there's an active authenticated session
+            let hasActiveSession = await getAuthenticationStatusUseCase.execute()
 
-            if isFaceIDEnabled {
+            // Check if biometric is enabled AND credentials exist AND has active session
+            let hasCredentials = hasBiometricCredentialsUseCase.execute()
+
+            logger.info("🔐 Biometric check - Settings: \(settingsStore.isBiometricLockEnabled), CanUse: \(self.canUseBiometrics), HasCreds: \(hasCredentials), HasSession: \(hasActiveSession)")
+
+            let shouldShowBiometric = settingsStore.isBiometricLockEnabled && canUseBiometrics && hasCredentials && hasActiveSession
+
+            if shouldShowBiometric {
+                // Show Face ID lock screen (user is logged in but needs to unlock)
+                logger.info("✅ Showing Face ID lock screen")
                 self.isAuthenticated = false
+            } else if hasActiveSession {
+                // Has session but no biometric - already authenticated
+                logger.info("✅ Has active session without biometric - authenticated")
+                self.isAuthenticated = true
             } else {
-                // Use Use Case instead of legacy AuthRepository
-                self.isAuthenticated = await getAuthenticationStatusUseCase.execute()
+                // No session - show login screen
+                logger.info("📱 No active session - showing login screen")
+                self.isAuthenticated = false
             }
         }
     }

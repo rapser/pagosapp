@@ -164,7 +164,8 @@ final class AuthDependencyContainer {
         LoginViewModel(
             loginUseCase: makeLoginUseCase(),
             biometricLoginUseCase: makeBiometricLoginUseCase(),
-            passwordRecoveryUseCase: makePasswordRecoveryUseCase()
+            passwordRecoveryUseCase: makePasswordRecoveryUseCase(),
+            hasBiometricCredentialsUseCase: makeHasBiometricCredentialsUseCase()
         )
     }
 

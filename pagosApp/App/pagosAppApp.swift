@@ -18,6 +18,8 @@ private func createSupabaseClient() -> SupabaseClient {
     do {
         let url = try AppConfiguration.supabaseURL
         let key = try AppConfiguration.supabaseKey
+        logger.info("✅ Supabase URL: \(url.absoluteString)")
+        logger.info("✅ Supabase Key length: \(key.count) characters")
         logger.info("✅ Supabase client initialized successfully")
         return SupabaseClient(supabaseURL: url, supabaseKey: key)
     } catch {
