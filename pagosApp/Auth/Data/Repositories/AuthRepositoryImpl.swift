@@ -93,25 +93,17 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
     }
 
     func signOut() async -> Result<Void, AuthError> {
-        do {
-            logger.info("🚪 Signing out user")
+        logger.info("🚪 Signing out user")
 
-            // Sign out from remote (best effort - don't fail if offline)
-            try? await remoteDataSource.signOut()
+        // Sign out from remote (best effort - don't fail if offline)
+        try? await remoteDataSource.signOut()
 
-            // Clear local tokens
-            localDataSource.clearTokens()
+        // Clear local tokens
+        localDataSource.clearTokens()
 
-            logger.info("✅ User signed out successfully")
+        logger.info("✅ User signed out successfully")
 
-            return .success(())
-
-        } catch {
-            logger.error("❌ Sign out failed: \(error.localizedDescription)")
-            // Even if remote sign out fails, we clear local tokens
-            localDataSource.clearTokens()
-            return .success(())
-        }
+        return .success(())
     }
 
     func getCurrentSession() async -> AuthSession? {

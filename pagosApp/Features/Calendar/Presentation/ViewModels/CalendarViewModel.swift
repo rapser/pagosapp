@@ -26,16 +26,19 @@ final class CalendarViewModel {
     private let getAllPaymentsUseCase: GetAllPaymentsForCalendarUseCase
     private let getPaymentsByDateUseCase: GetPaymentsByDateUseCase
     private let getPaymentsByMonthUseCase: GetPaymentsByMonthUseCase
+    private let calendarEventDataSource: CalendarEventDataSource
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "CalendarViewModel")
 
     init(
         getAllPaymentsUseCase: GetAllPaymentsForCalendarUseCase,
         getPaymentsByDateUseCase: GetPaymentsByDateUseCase,
-        getPaymentsByMonthUseCase: GetPaymentsByMonthUseCase
+        getPaymentsByMonthUseCase: GetPaymentsByMonthUseCase,
+        calendarEventDataSource: CalendarEventDataSource
     ) {
         self.getAllPaymentsUseCase = getAllPaymentsUseCase
         self.getPaymentsByDateUseCase = getPaymentsByDateUseCase
         self.getPaymentsByMonthUseCase = getPaymentsByMonthUseCase
+        self.calendarEventDataSource = calendarEventDataSource
     }
 
     // MARK: - Data Operations
@@ -102,5 +105,70 @@ final class CalendarViewModel {
     func refresh() async {
         await loadAllPayments()
         await loadPaymentsForSelectedDate()
+    }
+
+    // MARK: - Calendar Sync Operations
+
+    /// Sync payments with device calendar
+    func syncPaymentsWithCalendar(completion: @escaping (SyncResult) -> Void) {
+        guard !paymentsForSelectedDate.isEmpty else {
+            completion(.noPayments)
+            return
+        }
+
+        calendarEventDataSource.requestAccess { [weak self] granted in
+            guard let self = self else { return }
+
+            Task { @MainActor in
+                if granted {
+                    await self.performSync(completion: completion)
+                } else {
+                    completion(.accessDenied)
+                }
+            }
+        }
+    }
+
+    private func performSync(completion: @escaping (SyncResult) -> Void) async {
+        var added = 0
+        var updated = 0
+        var skipped = 0
+
+        for payment in paymentsForSelectedDate where payment.dueDate >= Date() {
+            let title = "Pago: \(payment.name)"
+
+            if let eventId = payment.eventIdentifier {
+                // Update existing event
+                calendarEventDataSource.updateEvent(
+                    eventIdentifier: eventId,
+                    title: title,
+                    dueDate: payment.dueDate,
+                    isPaid: payment.isPaid
+                )
+                updated += 1
+            } else {
+                // Add new event
+                calendarEventDataSource.addEvent(
+                    title: title,
+                    dueDate: payment.dueDate
+                ) { eventId in
+                    if eventId != nil {
+                        added += 1
+                    }
+                }
+            }
+        }
+
+        // Count skipped (past payments)
+        skipped = paymentsForSelectedDate.filter { $0.dueDate < Date() }.count
+
+        completion(.success(added: added, updated: updated, skipped: skipped))
+        logger.info("✅ Calendar sync completed: \(added) added, \(updated) updated, \(skipped) skipped")
+    }
+
+    enum SyncResult {
+        case success(added: Int, updated: Int, skipped: Int)
+        case noPayments
+        case accessDenied
     }
 }

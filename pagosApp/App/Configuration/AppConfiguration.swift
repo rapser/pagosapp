@@ -1,14 +1,15 @@
 //
-//  ConfigurationManager.swift
+//  AppConfiguration.swift
 //  pagosApp
 //
-//  Created by miguel tomairo on 26/12/25.
+//  App-level configuration reader from Info.plist
+//  Clean Architecture - App Configuration Layer
 //
 
 import Foundation
 
-/// Manager for handling app configuration from Info.plist
-enum ConfigurationManager {
+/// App configuration reader from Info.plist
+enum AppConfiguration {
 
     /// Get a configuration value from Info.plist
     /// - Parameter key: The configuration key

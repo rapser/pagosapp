@@ -2,7 +2,7 @@ import SwiftUI
 import LocalAuthentication
 
 struct BiometricSettingsView: View {
-    @Environment(SettingsManager.self) private var settingsManager
+    @Environment(SettingsStore.self) private var settingsStore
     @Environment(AuthenticationManager.self) private var authManager
     
     @State private var showError = false
@@ -45,20 +45,20 @@ struct BiometricSettingsView: View {
 
             Section {
                 Toggle("Habilitar Face ID / Touch ID", isOn: Binding(
-                    get: { settingsManager.isBiometricLockEnabled },
+                    get: { settingsStore.isBiometricLockEnabled },
                     set: { newValue in
                         if newValue {
                             // Check if credentials are already stored (user already logged in)
                             if KeychainManager.hasStoredCredentials() {
                                 // Credentials exist, just enable without asking for Face ID again
-                                settingsManager.isBiometricLockEnabled = true
+                                settingsStore.isBiometricLockEnabled = true
                             } else {
                                 // No credentials stored, this shouldn't happen but handle edge case
                                 errorMessage = "Debes iniciar sesión primero para habilitar Face ID"
                                 showError = true
                             }
                         } else {
-                            settingsManager.isBiometricLockEnabled = false
+                            settingsStore.isBiometricLockEnabled = false
                             Task {
                                 await authManager.clearBiometricCredentials()
                             }
@@ -133,6 +133,5 @@ struct BenefitRow: View {
     NavigationStack {
         BiometricSettingsView()
             .environment(dependencies.authenticationManager)
-            .environment(dependencies.settingsManager)
     }
 }

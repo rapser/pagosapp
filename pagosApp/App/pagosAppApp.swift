@@ -16,8 +16,8 @@ private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp
 /// Falls back to demo values if configuration is missing (for previews/tests)
 private func createSupabaseClient() -> SupabaseClient {
     do {
-        let url = try ConfigurationManager.supabaseURL
-        let key = try ConfigurationManager.supabaseKey
+        let url = try AppConfiguration.supabaseURL
+        let key = try AppConfiguration.supabaseKey
         logger.info("✅ Supabase client initialized successfully")
         return SupabaseClient(supabaseURL: url, supabaseKey: key)
     } catch {
@@ -52,7 +52,7 @@ struct pagosAppApp: App {
         )
 
         // Request notification authorization at app launch (via DI)
-        dependencies.notificationManager.requestAuthorization()
+        dependencies.notificationDataSource.requestAuthorization()
 
         logger.info("✅ App initialized with full DI Container")
     }
@@ -62,9 +62,7 @@ struct pagosAppApp: App {
             ContentView()
                 .environment(dependencies)
                 .environment(dependencies.authenticationManager)
-                .environment(dependencies.settingsManager)
-                .environment(dependencies.notificationManager)
-                .environment(dependencies.eventKitManager)
+                .environment(dependencies.settingsStore)
                 .environment(dependencies.alertManager)
                 .tint(Color("AppPrimary"))
         }

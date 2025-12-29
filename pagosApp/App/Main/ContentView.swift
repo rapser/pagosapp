@@ -4,7 +4,6 @@ import OSLog
 struct ContentView: View {
     @Environment(AuthenticationManager.self) private var authManager
     @Environment(PaymentSyncCoordinator.self) private var syncManager
-    @Environment(SettingsManager.self) private var settingsManager
     @Environment(AlertManager.self) private var alertManager
     @Environment(\.dependencies) private var dependencies
     @Environment(\.scenePhase) private var scenePhase
@@ -65,7 +64,8 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            dependencies.eventKitManager.requestAccess { _ in }
+            // Request calendar access via DataSource
+            dependencies.calendarEventDataSource.requestAccess { _ in }
         }
         .onChange(of: authManager.isAuthenticated) { oldValue, newValue in
             if newValue {
@@ -209,6 +209,5 @@ struct ContentView: View {
     ContentView()
         .environment(dependencies.authenticationManager)
         .environment(dependencies.paymentSyncCoordinator)
-        .environment(dependencies.settingsManager)
         .environment(AlertManager())
 }

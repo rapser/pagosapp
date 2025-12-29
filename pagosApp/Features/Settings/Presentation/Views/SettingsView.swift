@@ -3,7 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(AuthenticationManager.self) private var authManager
     @Environment(AlertManager.self) private var alertManager
-    @Environment(SettingsManager.self) private var settingsManager
+    @Environment(SettingsStore.self) private var settingsStore
     @Environment(PaymentSyncCoordinator.self) private var syncManager
 
     @State private var showingSyncError = false

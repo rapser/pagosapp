@@ -12,11 +12,16 @@ import Foundation
 @MainActor
 final class CalendarDependencyContainer {
     private let paymentDependencyContainer: PaymentDependencyContainer
+    private let calendarEventDataSource: CalendarEventDataSource
 
     // MARK: - Initialization
 
-    init(paymentDependencyContainer: PaymentDependencyContainer) {
+    init(
+        paymentDependencyContainer: PaymentDependencyContainer,
+        calendarEventDataSource: CalendarEventDataSource
+    ) {
         self.paymentDependencyContainer = paymentDependencyContainer
+        self.calendarEventDataSource = calendarEventDataSource
     }
 
     // MARK: - Repository
@@ -53,7 +58,8 @@ final class CalendarDependencyContainer {
         return CalendarViewModel(
             getAllPaymentsUseCase: makeGetAllPaymentsForCalendarUseCase(),
             getPaymentsByDateUseCase: makeGetPaymentsByDateUseCase(),
-            getPaymentsByMonthUseCase: makeGetPaymentsByMonthUseCase()
+            getPaymentsByMonthUseCase: makeGetPaymentsByMonthUseCase(),
+            calendarEventDataSource: calendarEventDataSource
         )
     }
 }
