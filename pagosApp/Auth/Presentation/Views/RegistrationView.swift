@@ -149,7 +149,5 @@ struct RegistrationView: View {
 
 #Preview {
     let dependencies = AppDependencies.mock()
-    let authContainer = AuthDependencyContainer(supabaseClient: dependencies.supabaseClient)
-
-    RegistrationView(registerViewModel: authContainer.makeRegisterViewModel())
+    RegistrationView(registerViewModel: dependencies.authDependencyContainer.makeRegisterViewModel())
 }

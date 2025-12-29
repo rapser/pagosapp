@@ -202,7 +202,5 @@ struct LoginView: View {
 
 #Preview {
     let dependencies = AppDependencies.mock()
-    let authContainer = AuthDependencyContainer(supabaseClient: dependencies.supabaseClient)
-
-    LoginView(loginViewModel: authContainer.makeLoginViewModel())
+    LoginView(loginViewModel: dependencies.authDependencyContainer.makeLoginViewModel())
 }
