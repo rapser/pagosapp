@@ -2,7 +2,6 @@ import SwiftUI
 
 struct CalendarPaymentsView: View {
     @Environment(AlertManager.self) private var alertManager
-    @Environment(EventKitManager.self) private var eventKitManager
     @Environment(AppDependencies.self) private var dependencies
     @State private var viewModel: CalendarViewModel?
 
@@ -81,94 +80,46 @@ struct CalendarPaymentsView: View {
             }
         }
     }
-    
-    private func syncPaymentsWithCalendar() {
-        guard !paymentsForSelectedDate.isEmpty else {
-            alertManager.show(
-                title: Text("Sin Pagos"),
-                message: Text("No hay pagos para sincronizar en la fecha seleccionada."),
-                buttons: [AlertButton(title: Text("Aceptar"), role: .cancel) { }]
-            )
-            return
-        }
-        
-        eventKitManager.requestAccess { granted in
-            if granted {
-                var addedCount = 0
-                var updatedCount = 0
-                var skippedCount = 0
-                let totalPaymentsToProcess = paymentsForSelectedDate.count
-                var processedCount = 0
 
-                for payment in paymentsForSelectedDate {
-                    if payment.dueDate >= Date() {
-                        if payment.eventIdentifier == nil {
-                            // Add new event if not already synced
-                            eventKitManager.addEvent(for: payment) { eventID in
-                                if let eventID = eventID {
-                                    payment.eventIdentifier = eventID
-                                    addedCount += 1
-                                }
-                                processedCount += 1
-                                if processedCount == totalPaymentsToProcess {
-                                    showSyncCompletionAlert(added: addedCount, updated: updatedCount, skipped: skippedCount)
-                                }
-                            }
-                        } else {
-                            // Update existing event
-                            eventKitManager.updateEvent(for: payment)
-                            updatedCount += 1
-                            processedCount += 1
-                            if processedCount == totalPaymentsToProcess {
-                                showSyncCompletionAlert(added: addedCount, updated: updatedCount, skipped: skippedCount)
-                            }
-                        }
-                    } else {
-                        skippedCount += 1
-                        processedCount += 1
-                        if processedCount == totalPaymentsToProcess {
-                            showSyncCompletionAlert(added: addedCount, updated: updatedCount, skipped: skippedCount)
-                        }
-                    }
-                }
-            } else {
+    private func syncPaymentsWithCalendar() {
+        guard let viewModel = viewModel else { return }
+
+        viewModel.syncPaymentsWithCalendar { result in
+            switch result {
+            case .success(let added, let updated, let skipped):
+                let message = """
+                Sincronización completada:
+                • \(added) eventos añadidos
+                • \(updated) eventos actualizados
+                • \(skipped) eventos omitidos (fechas pasadas)
+                """
+
                 alertManager.show(
-                    title: Text("Permiso Denegado"),
-                    message: Text("Necesitamos acceso a tu calendario para sincronizar los pagos."),
+                    title: Text("Sincronización Exitosa"),
+                    message: Text(message),
+                    buttons: [AlertButton(title: Text("Aceptar"), role: .cancel) { }]
+                )
+
+            case .noPayments:
+                alertManager.show(
+                    title: Text("Sin Pagos"),
+                    message: Text("No hay pagos para sincronizar en la fecha seleccionada."),
+                    buttons: [AlertButton(title: Text("Aceptar"), role: .cancel) { }]
+                )
+
+            case .accessDenied:
+                alertManager.show(
+                    title: Text("Acceso Denegado"),
+                    message: Text("Por favor, habilita el acceso al calendario en Ajustes."),
                     buttons: [AlertButton(title: Text("Aceptar"), role: .cancel) { }]
                 )
             }
         }
     }
-    
-    private func showSyncCompletionAlert(added: Int, updated: Int, skipped: Int) {
-        var message = ""
-        let totalSynced = added + updated
-        
-        if totalSynced > 0 {
-            message += "Se han sincronizado \(totalSynced) pagos con tu calendario.\n"
-        }
-        if skipped > 0 {
-            message += "Se han omitido \(skipped) pagos vencidos o ya sincronizados.\n"
-        }
-        
-        alertManager.show(
-            title: Text("Sincronización Completa"),
-            message: Text(message.trimmingCharacters(in: .whitespacesAndNewlines)),
-            buttons: [AlertButton(title: Text("Aceptar"), role: .cancel) { }]
-        )
-    }
 }
 
-// Formateador de fecha para el título de la lista.
 private let longDateFormatter: DateFormatter = {
     let formatter = DateFormatter()
     formatter.dateStyle = .long
-    formatter.locale = Locale(identifier: "es_ES")
     return formatter
 }()
-
-#Preview {
-    CalendarPaymentsView()
-        .environment(AlertManager())
-}

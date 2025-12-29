@@ -20,11 +20,11 @@ import SwiftUI
 final class AppDependencies: AppDependenciesProtocol {
     // MARK: - Dependencies
 
-    let settingsManager: SettingsManager
+    let settingsStore: SettingsStore
     let errorHandler: ErrorHandler
     let authenticationManager: AuthenticationManager
-    let notificationManager: NotificationManager
-    let eventKitManager: EventKitManager
+    let notificationDataSource: NotificationDataSource
+    let calendarEventDataSource: CalendarEventDataSource
     let alertManager: AlertManager
     let supabaseClient: SupabaseClient
 
@@ -46,9 +46,13 @@ final class AppDependencies: AppDependenciesProtocol {
     ) {
         self.supabaseClient = supabaseClient
         self.errorHandler = ErrorHandler()
-        self.settingsManager = SettingsManager()
-        self.notificationManager = NotificationManager()
-        self.eventKitManager = EventKitManager(errorHandler: errorHandler)
+
+        // Platform DataSources
+        let settingsDataSource = UserDefaultsSettingsDataSource()
+        self.settingsStore = SettingsStore(dataSource: settingsDataSource)
+        self.notificationDataSource = UserNotificationsDataSource()
+        self.calendarEventDataSource = EventKitCalendarDataSource()
+
         self.alertManager = AlertManager()
 
         // Create Feature Dependency Containers (Clean Architecture)
@@ -62,7 +66,8 @@ final class AppDependencies: AppDependenciesProtocol {
             modelContext: modelContext
         )
         self.calendarDependencyContainer = CalendarDependencyContainer(
-            paymentDependencyContainer: paymentDependencyContainer
+            paymentDependencyContainer: paymentDependencyContainer,
+            calendarEventDataSource: calendarEventDataSource
         )
         self.statisticsDependencyContainer = StatisticsDependencyContainer(
             paymentDependencyContainer: paymentDependencyContainer
@@ -79,7 +84,7 @@ final class AppDependencies: AppDependenciesProtocol {
         self.authenticationManager = AuthenticationManager(
             authRepository: authRepository,
             errorHandler: errorHandler,
-            settingsManager: settingsManager,
+            settingsStore: settingsStore,
             paymentSyncCoordinator: paymentSyncCoordinator,
             authDependencyContainer: authDependencyContainer
         )

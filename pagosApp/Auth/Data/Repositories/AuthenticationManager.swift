@@ -23,7 +23,7 @@ final class AuthenticationManager {
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "AuthenticationManager")
     private let errorHandler: ErrorHandler
-    private let settingsManager: SettingsManager
+    private let settingsStore: SettingsStore
     private let paymentSyncCoordinator: PaymentSyncCoordinator
 
     // Legacy - for UserProfileService compatibility
@@ -49,13 +49,13 @@ final class AuthenticationManager {
     init(
         authRepository: AuthRepository,
         errorHandler: ErrorHandler,
-        settingsManager: SettingsManager,
+        settingsStore: SettingsStore,
         paymentSyncCoordinator: PaymentSyncCoordinator,
         authDependencyContainer: AuthDependencyContainer
     ) {
         self.authRepository = authRepository
         self.errorHandler = errorHandler
-        self.settingsManager = settingsManager
+        self.settingsStore = settingsStore
         self.paymentSyncCoordinator = paymentSyncCoordinator
 
         // Initialize Use Cases from container
@@ -72,7 +72,7 @@ final class AuthenticationManager {
         Task {
             await checkBiometricAvailability()
 
-            let isFaceIDEnabled = settingsManager.isBiometricLockEnabled && canUseBiometrics
+            let isFaceIDEnabled = settingsStore.isBiometricLockEnabled && canUseBiometrics
 
             if isFaceIDEnabled {
                 self.isAuthenticated = false
@@ -156,17 +156,15 @@ final class AuthenticationManager {
     func sendPasswordReset(email: String) async -> AuthError? {
         logger.info("📧 Delegating password reset to PasswordRecoveryUseCase")
 
-        do {
-            try await passwordRecoveryUseCase.sendPasswordReset(email: email)
+        let result = await passwordRecoveryUseCase.sendPasswordReset(email: email)
+
+        switch result {
+        case .success:
             logger.info("✅ Password reset email sent successfully")
             return nil
-        } catch let authError as AuthError {
+
+        case .failure(let authError):
             logger.error("❌ Password reset failed: \(authError.errorCode)")
-            errorHandler.handle(authError)
-            return authError
-        } catch {
-            logger.error("❌ Password reset failed: \(error.localizedDescription)")
-            let authError = AuthError.unknown(error.localizedDescription)
             errorHandler.handle(authError)
             return authError
         }
@@ -231,7 +229,7 @@ final class AuthenticationManager {
         }
 
         // Coordination: Clear authentication tokens based on settings
-        if !settingsManager.isBiometricLockEnabled {
+        if !settingsStore.isBiometricLockEnabled {
             _ = KeychainManager.deleteCredentials()
             logger.info("🗑️ Credentials deleted from Keychain (biometric disabled)")
         } else {

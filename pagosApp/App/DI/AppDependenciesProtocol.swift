@@ -13,11 +13,11 @@ import Supabase
 /// This allows for easy testing with mock implementations
 @MainActor
 protocol AppDependenciesProtocol {
-    var settingsManager: SettingsManager { get }
+    var settingsStore: SettingsStore { get }
     var errorHandler: ErrorHandler { get }
     var authenticationManager: AuthenticationManager { get }
-    var notificationManager: NotificationManager { get }
-    var eventKitManager: EventKitManager { get }
+    var notificationDataSource: NotificationDataSource { get }
+    var calendarEventDataSource: CalendarEventDataSource { get }
     var alertManager: AlertManager { get }
     var supabaseClient: SupabaseClient { get }
 
