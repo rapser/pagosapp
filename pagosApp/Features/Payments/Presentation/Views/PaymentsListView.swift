@@ -46,6 +46,11 @@ struct PaymentsListView: View {
             if viewModel == nil {
                 viewModel = dependencies.paymentDependencyContainer.makePaymentsListViewModel()
             }
+
+            // Fetch payments when view appears
+            Task {
+                await viewModel?.fetchPayments()
+            }
         }
     }
 }
