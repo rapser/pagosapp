@@ -15,12 +15,7 @@ private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "Supabas
 @MainActor
 final class SupabaseAuthAdapter: AuthService {
     private let client: SupabaseClient
-    
-    /// Public access to Supabase client for legacy compatibility
-    var supabaseClient: SupabaseClient {
-        return client
-    }
-    
+
     init(client: SupabaseClient) {
         self.client = client
     }

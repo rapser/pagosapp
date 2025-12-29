@@ -47,13 +47,20 @@ final class StatisticsDependencyContainer {
         )
     }
 
+    func makeCheckPaymentsByCurrencyUseCase() -> CheckPaymentsByCurrencyUseCase {
+        return CheckPaymentsByCurrencyUseCase(
+            paymentRepository: paymentDependencyContainer.makePaymentRepository()
+        )
+    }
+
     // MARK: - ViewModels
 
     func makeStatisticsViewModel() -> StatisticsViewModel {
         return StatisticsViewModel(
             calculateCategoryStatsUseCase: makeCalculateCategoryStatsUseCase(),
             calculateMonthlyStatsUseCase: makeCalculateMonthlyStatsUseCase(),
-            getTotalSpendingUseCase: makeGetTotalSpendingUseCase()
+            getTotalSpendingUseCase: makeGetTotalSpendingUseCase(),
+            checkPaymentsByCurrencyUseCase: makeCheckPaymentsByCurrencyUseCase()
         )
     }
 }

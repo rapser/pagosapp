@@ -51,7 +51,9 @@ struct StatisticsView: View {
                                     // Selector de moneda con diseño de tabs
                                     CurrencyTabSelector(
                                         selectedCurrency: $vm.selectedCurrency,
-                                        totalSpending: vm.totalSpending
+                                        totalSpending: vm.totalSpending,
+                                        hasPENPayments: vm.hasPENPayments,
+                                        hasUSDPayments: vm.hasUSDPayments
                                     )
                                     .onChange(of: vm.selectedCurrency) { _, newValue in
                                         Task {
@@ -106,10 +108,8 @@ struct StatisticsView: View {
 private struct CurrencyTabSelector: View {
     @Binding var selectedCurrency: Currency
     let totalSpending: Double
-    
-    // TODO: Get from ViewModel (check if there are payments in each currency)
-    private var hasPENPayments: Bool { true }
-    private var hasUSDPayments: Bool { true }
+    let hasPENPayments: Bool
+    let hasUSDPayments: Bool
     
     var body: some View {
         HStack(spacing: 0) {

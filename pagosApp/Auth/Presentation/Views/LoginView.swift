@@ -4,6 +4,7 @@ struct LoginView: View {
     @State private var viewModel: LoginViewModel
     @State private var showEmailPasswordLogin: Bool = false
     @Environment(\.dismiss) var dismiss
+    @Environment(\.dependencies) private var dependencies
 
     var onLoginSuccess: ((AuthSession) -> Void)?
 
@@ -113,8 +114,11 @@ struct LoginView: View {
                     .disabled(viewModel.isLoading || !viewModel.isFormValid)
 
                     // Registration Link
-                    // TODO: Get RegisterViewModel from DI Container
-                    NavigationLink(destination: Text("Registro temporalmente deshabilitado")) {
+                    NavigationLink(
+                        destination: RegistrationView(
+                            registerViewModel: dependencies.authDependencyContainer.makeRegisterViewModel()
+                        )
+                    ) {
                         Text("¿No tienes cuenta? Regístrate aquí")
                             .font(.callout)
                             .padding(.top)

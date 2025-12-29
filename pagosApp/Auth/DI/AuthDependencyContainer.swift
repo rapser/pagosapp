@@ -108,6 +108,19 @@ final class AuthDependencyContainer {
         )
     }
 
+    func makeEnsureValidSessionUseCase() -> EnsureValidSessionUseCase {
+        EnsureValidSessionUseCase(
+            authRepository: makeAuthRepository(),
+            refreshSessionUseCase: makeRefreshSessionUseCase()
+        )
+    }
+
+    func makeGetAuthenticationStatusUseCase() -> GetAuthenticationStatusUseCase {
+        GetAuthenticationStatusUseCase(
+            authRepository: makeAuthRepository()
+        )
+    }
+
     // MARK: - Coordinators
 
     func makeSessionCoordinator(
@@ -115,12 +128,7 @@ final class AuthDependencyContainer {
         settingsStore: SettingsStore,
         paymentSyncCoordinator: PaymentSyncCoordinator
     ) -> SessionCoordinator {
-        // Legacy AuthRepository for compatibility (to be removed in future phases)
-        let authAdapter = SupabaseAuthAdapter(client: supabaseClient)
-        let authRepository = AuthRepository(authService: authAdapter)
-
         return SessionCoordinator(
-            authRepository: authRepository,
             errorHandler: errorHandler,
             settingsStore: settingsStore,
             paymentSyncCoordinator: paymentSyncCoordinator,

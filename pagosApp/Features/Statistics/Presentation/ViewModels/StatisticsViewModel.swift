@@ -22,22 +22,27 @@ final class StatisticsViewModel {
     var selectedCurrency: Currency = .pen
     var isLoading = false
     var errorMessage: String?
+    var hasPENPayments: Bool = false
+    var hasUSDPayments: Bool = false
 
     // MARK: - Dependencies (Use Cases)
 
     private let calculateCategoryStatsUseCase: CalculateCategoryStatsUseCase
     private let calculateMonthlyStatsUseCase: CalculateMonthlyStatsUseCase
     private let getTotalSpendingUseCase: GetTotalSpendingUseCase
+    private let checkPaymentsByCurrencyUseCase: CheckPaymentsByCurrencyUseCase
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "StatisticsViewModel")
 
     init(
         calculateCategoryStatsUseCase: CalculateCategoryStatsUseCase,
         calculateMonthlyStatsUseCase: CalculateMonthlyStatsUseCase,
-        getTotalSpendingUseCase: GetTotalSpendingUseCase
+        getTotalSpendingUseCase: GetTotalSpendingUseCase,
+        checkPaymentsByCurrencyUseCase: CheckPaymentsByCurrencyUseCase
     ) {
         self.calculateCategoryStatsUseCase = calculateCategoryStatsUseCase
         self.calculateMonthlyStatsUseCase = calculateMonthlyStatsUseCase
         self.getTotalSpendingUseCase = getTotalSpendingUseCase
+        self.checkPaymentsByCurrencyUseCase = checkPaymentsByCurrencyUseCase
     }
 
     // MARK: - Data Operations
@@ -50,6 +55,14 @@ final class StatisticsViewModel {
         await loadCategoryStats()
         await loadMonthlyStats()
         await loadTotalSpending()
+        await loadAvailableCurrencies()
+    }
+
+    /// Load available currencies
+    func loadAvailableCurrencies() async {
+        hasPENPayments = await checkPaymentsByCurrencyUseCase.execute(currency: .pen)
+        hasUSDPayments = await checkPaymentsByCurrencyUseCase.execute(currency: .usd)
+        logger.info("✅ Currency availability - PEN: \(self.hasPENPayments), USD: \(self.hasUSDPayments)")
     }
 
     /// Load category statistics
