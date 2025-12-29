@@ -110,37 +110,31 @@ final class PaymentRepositoryImpl: PaymentRepositoryProtocol {
 
     @MainActor
     private func _getAllLocalPayments() async throws -> [PaymentEntity] {
-        let models = try await localDataSource.fetchAll()
-        return mapper.toDomain(from: models)
+        return try await localDataSource.fetchAll()
     }
 
     @MainActor
     private func _getLocalPayment(id: UUID) async throws -> PaymentEntity? {
-        guard let model = try await localDataSource.fetch(id: id) else {
-            return nil
-        }
-        return mapper.toDomain(from: model)
+        return try await localDataSource.fetch(id: id)
     }
 
     @MainActor
     private func _savePayment(_ payment: PaymentEntity) async throws {
-        let model = mapper.toModel(from: payment)
-        try await localDataSource.save(model)
+        try await localDataSource.save(payment)
     }
 
     @MainActor
     private func _savePayments(_ payments: [PaymentEntity]) async throws {
-        let models = mapper.toModel(from: payments)
-        try await localDataSource.saveAll(models)
+        try await localDataSource.saveAll(payments)
     }
 
     @MainActor
     private func _deleteLocalPayment(id: UUID) async throws {
-        guard let model = try await localDataSource.fetch(id: id) else {
+        guard let entity = try await localDataSource.fetch(id: id) else {
             logger.warning("⚠️ Payment not found for deletion: \(id)")
             return
         }
-        try await localDataSource.delete(model)
+        try await localDataSource.delete(entity)
     }
 
     @MainActor

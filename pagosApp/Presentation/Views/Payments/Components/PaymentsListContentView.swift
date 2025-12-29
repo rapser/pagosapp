@@ -1,10 +1,8 @@
 import SwiftUI
-import SwiftData
 
 struct PaymentsListContentView: View {
     @Bindable var viewModel: PaymentsListViewModel
     @Binding var showingAddPaymentSheet: Bool
-    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         VStack {

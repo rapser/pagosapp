@@ -1,13 +1,10 @@
-
 import SwiftUI
-import SwiftData
 
 struct SettingsView: View {
     @Environment(AuthenticationManager.self) private var authManager
     @Environment(AlertManager.self) private var alertManager
     @Environment(SettingsManager.self) private var settingsManager
     @Environment(PaymentSyncCoordinator.self) private var syncManager
-    @Environment(\.modelContext) private var modelContext
 
     @State private var showingSyncError = false
     @State private var syncErrorMessage = ""
@@ -135,7 +132,7 @@ struct SettingsView: View {
             buttons: [
                 AlertButton(title: Text("Desvincular"), role: .destructive) {
                     Task {
-                        await authManager.unlinkDevice(modelContext: modelContext)
+                        await authManager.unlinkDevice()
                     }
                 },
                 AlertButton(title: Text("Cancelar"), role: .cancel) { }

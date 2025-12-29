@@ -1,61 +1,82 @@
 import SwiftUI
-import SwiftData
 
 struct CalendarPaymentsView: View {
     @Environment(AlertManager.self) private var alertManager
     @Environment(EventKitManager.self) private var eventKitManager
-    @Environment(\.modelContext) private var modelContext
-    // Obtenemos todos los pagos para poder filtrarlos por fecha.
-    @Query private var payments: [Payment]
-    @State private var selectedDate: Date = Calendar.current.startOfDay(for: Date())
+    @Environment(AppDependencies.self) private var dependencies
+    @State private var viewModel: CalendarViewModel?
 
-    // Propiedad computada para obtener los pagos de la fecha seleccionada.
     private var paymentsForSelectedDate: [Payment] {
-        payments.filter { Calendar.current.isDate($0.dueDate, inSameDayAs: selectedDate) }
+        guard let viewModel = viewModel else { return [] }
+        return viewModel.paymentsForSelectedDate.map { PaymentMapper.toModel(from: $0) }
+    }
+
+    private var allPayments: [Payment] {
+        guard let viewModel = viewModel else { return [] }
+        return viewModel.allPayments.map { PaymentMapper.toModel(from: $0) }
     }
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Custom Calendar with payment indicators
-                CustomCalendarView(selectedDate: $selectedDate, payments: payments)
-                    .background(Color("AppBackground"))
+            Group {
+                if let viewModel = viewModel {
+                    @Bindable var vm = viewModel
 
-                Divider()
-
-                // Lista de pagos para la fecha seleccionada
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("Pagos para \(selectedDate, formatter: longDateFormatter)")
-                        .font(.headline)
-                        .foregroundColor(Color("AppTextPrimary"))
-                        .padding()
-
-                    if paymentsForSelectedDate.isEmpty {
-                        ContentUnavailableView("Sin Pagos", systemImage: "calendar.badge.exclamationmark", description: Text("No hay pagos programados para este día."))
-                            .foregroundColor(Color("AppTextSecondary"))
-                    } else {
-                        List(paymentsForSelectedDate) { payment in
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(payment.name).fontWeight(.semibold)
-                                    Text(payment.category.rawValue).font(.caption).foregroundColor(Color("AppTextSecondary"))
+                    VStack(spacing: 0) {
+                        CustomCalendarView(selectedDate: $vm.selectedDate, payments: allPayments)
+                            .background(Color("AppBackground"))
+                            .onChange(of: vm.selectedDate) { _, newDate in
+                                Task {
+                                    await vm.selectDate(newDate)
                                 }
-                                Spacer()
-                                Text("\(payment.currency.symbol) \(payment.amount, format: .number.precision(.fractionLength(2)))")
-                                    .foregroundColor(Color("AppTextPrimary"))
+                            }
+
+                        Divider()
+
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text("Pagos para \(vm.selectedDate, formatter: longDateFormatter)")
+                                .font(.headline)
+                                .foregroundColor(Color("AppTextPrimary"))
+                                .padding()
+
+                            if paymentsForSelectedDate.isEmpty {
+                                ContentUnavailableView("Sin Pagos", systemImage: "calendar.badge.exclamationmark", description: Text("No hay pagos programados para este día."))
+                                    .foregroundColor(Color("AppTextSecondary"))
+                            } else {
+                                List(paymentsForSelectedDate) { payment in
+                                    HStack {
+                                        VStack(alignment: .leading) {
+                                            Text(payment.name).fontWeight(.semibold)
+                                            Text(payment.category.rawValue).font(.caption).foregroundColor(Color("AppTextSecondary"))
+                                        }
+                                        Spacer()
+                                        Text("\(payment.currency.symbol) \(payment.amount, format: .number.precision(.fractionLength(2)))")
+                                            .foregroundColor(Color("AppTextPrimary"))
+                                    }
+                                }
+                                .listStyle(.plain)
                             }
                         }
-                        .listStyle(.plain)
                     }
+                    .navigationTitle("Calendario")
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Sincronizar") {
+                                syncPaymentsWithCalendar()
+                            }
+                            .foregroundColor(Color("AppPrimary"))
+                        }
+                    }
+                } else {
+                    ProgressView("Cargando...")
                 }
             }
-            .navigationTitle("Calendario")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Sincronizar") {
-                        syncPaymentsWithCalendar()
-                    }
-                    .foregroundColor(Color("AppPrimary"))
+        }
+        .onAppear {
+            if viewModel == nil {
+                viewModel = dependencies.calendarDependencyContainer.makeCalendarViewModel()
+                Task {
+                    await viewModel?.refresh()
                 }
             }
         }
@@ -149,6 +170,5 @@ private let longDateFormatter: DateFormatter = {
 
 #Preview {
     CalendarPaymentsView()
-        .modelContainer(for: [Payment.self], inMemory: true)
         .environment(AlertManager())
 }

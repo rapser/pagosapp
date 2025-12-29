@@ -1,16 +1,15 @@
 import SwiftUI
-import SwiftData
-import Supabase
 
 struct ProfileSectionView: View {
     @Environment(AuthenticationManager.self) private var authManager
-    @Environment(\.modelContext) private var modelContext
+    @Environment(AppDependencies.self) private var dependencies
 
     var body: some View {
         Section(header: Text("Perfil").foregroundColor(Color("AppTextPrimary"))) {
-            if (authManager.isAuthenticated || authManager.isSessionActive),
-               let client = authManager.supabaseClient {
-                NavigationLink(destination: UserProfileView()) {
+            if (authManager.isAuthenticated || authManager.isSessionActive) {
+                NavigationLink(destination: UserProfileView(
+                    viewModel: dependencies.userProfileDependencyContainer.makeUserProfileViewModel()
+                )) {
                     HStack {
                         Image(systemName: "person.circle.fill")
                             .foregroundColor(Color("AppPrimary"))
