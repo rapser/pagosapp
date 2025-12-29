@@ -9,8 +9,8 @@
 import Foundation
 
 /// DTO for Supabase communication
-struct UserProfileDTO: Codable, RemoteTransferable {
-    var id: UUID { userId }  // RemoteTransferable requirement
+struct UserProfileDTO: Codable, Identifiable {
+    var id: UUID { userId }  // Identifiable requirement
     let userId: UUID
     let fullName: String
     let email: String

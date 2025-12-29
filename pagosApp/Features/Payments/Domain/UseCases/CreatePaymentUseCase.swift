@@ -38,7 +38,7 @@ final class CreatePaymentUseCase {
         }
 
         // 2. Set initial sync status
-        var newPayment = payment
+        let newPayment = payment
         // We need to ensure syncStatus is .local for new payments
         // Note: PaymentEntity is immutable, so repository will handle this
 

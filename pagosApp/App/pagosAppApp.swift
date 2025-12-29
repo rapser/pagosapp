@@ -62,7 +62,6 @@ struct pagosAppApp: App {
             ContentView()
                 .environment(dependencies)
                 .environment(dependencies.authenticationManager)
-                .environment(dependencies.errorHandler)
                 .environment(dependencies.settingsManager)
                 .environment(dependencies.notificationManager)
                 .environment(dependencies.eventKitManager)

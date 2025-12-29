@@ -12,18 +12,24 @@ import Observation
 @MainActor
 @Observable
 final class PasswordRecoveryUseCase {
-    private let repository: PasswordRecoveryRepository
+    private let authRepository: AuthRepositoryProtocol
 
-    init(repository: PasswordRecoveryRepository) {
-        self.repository = repository
+    init(authRepository: AuthRepositoryProtocol) {
+        self.authRepository = authRepository
     }
 
-    func sendPasswordReset(email: String) async throws {
-        try await repository.sendPasswordReset(email: email)
+    /// Send password reset email
+    func sendPasswordReset(email: String) async -> Result<Void, AuthError> {
+        return await authRepository.sendPasswordResetEmail(email: email)
     }
 
-    func resetPassword(accessToken: String, refreshToken: String, newPassword: String) async throws {
-        try await repository.setSession(accessToken: accessToken, refreshToken: refreshToken)
-        try await repository.updatePassword(newPassword: newPassword)
+    /// Reset password with token and update password
+    func resetPassword(token: String, newPassword: String) async -> Result<Void, AuthError> {
+        return await authRepository.resetPassword(token: token, newPassword: newPassword)
+    }
+
+    /// Update current user's password
+    func updatePassword(newPassword: String) async -> Result<Void, AuthError> {
+        return await authRepository.updatePassword(newPassword: newPassword)
     }
 }
