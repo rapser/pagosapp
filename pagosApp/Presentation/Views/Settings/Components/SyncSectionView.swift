@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftData
 
 struct SyncSectionView: View {
     @Environment(AuthenticationManager.self) private var authManager
