@@ -22,7 +22,7 @@ final class AppDependencies: AppDependenciesProtocol {
 
     let settingsStore: SettingsStore
     let errorHandler: ErrorHandler
-    let authenticationManager: AuthenticationManager
+    let sessionCoordinator: SessionCoordinator
     let notificationDataSource: NotificationDataSource
     let calendarEventDataSource: CalendarEventDataSource
     let alertManager: AlertManager
@@ -80,8 +80,8 @@ final class AppDependencies: AppDependenciesProtocol {
         let authAdapter = SupabaseAuthAdapter(client: supabaseClient)
         let authRepository = AuthRepository(authService: authAdapter)
 
-        // AuthenticationManager now uses Use Cases via AuthDependencyContainer
-        self.authenticationManager = AuthenticationManager(
+        // SessionCoordinator manages session lifecycle using Use Cases
+        self.sessionCoordinator = SessionCoordinator(
             authRepository: authRepository,
             errorHandler: errorHandler,
             settingsStore: settingsStore,

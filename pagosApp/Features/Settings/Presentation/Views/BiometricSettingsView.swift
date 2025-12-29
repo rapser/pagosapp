@@ -3,7 +3,7 @@ import LocalAuthentication
 
 struct BiometricSettingsView: View {
     @Environment(SettingsStore.self) private var settingsStore
-    @Environment(AuthenticationManager.self) private var authManager
+    @Environment(SessionCoordinator.self) private var sessionCoordinator
     
     @State private var showError = false
     @State private var errorMessage = ""
@@ -60,15 +60,15 @@ struct BiometricSettingsView: View {
                         } else {
                             settingsStore.isBiometricLockEnabled = false
                             Task {
-                                await authManager.clearBiometricCredentials()
+                                await sessionCoordinator.clearBiometricCredentials()
                             }
                         }
                     }
                 ))
                     .tint(Color("AppPrimary"))
-                    .disabled(!authManager.canUseBiometrics)
+                    .disabled(!sessionCoordinator.canUseBiometrics)
 
-                if !authManager.canUseBiometrics {
+                if !sessionCoordinator.canUseBiometrics {
                     HStack {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundColor(.orange)
@@ -132,6 +132,6 @@ struct BenefitRow: View {
 
     NavigationStack {
         BiometricSettingsView()
-            .environment(dependencies.authenticationManager)
+            .environment(dependencies.sessionCoordinator)
     }
 }

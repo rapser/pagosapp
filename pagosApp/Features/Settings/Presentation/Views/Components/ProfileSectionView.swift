@@ -1,12 +1,12 @@
 import SwiftUI
 
 struct ProfileSectionView: View {
-    @Environment(AuthenticationManager.self) private var authManager
+    @Environment(SessionCoordinator.self) private var sessionCoordinator
     @Environment(AppDependencies.self) private var dependencies
 
     var body: some View {
         Section(header: Text("Perfil").foregroundColor(Color("AppTextPrimary"))) {
-            if (authManager.isAuthenticated || authManager.isSessionActive) {
+            if (sessionCoordinator.isAuthenticated || sessionCoordinator.isSessionActive) {
                 NavigationLink(destination: UserProfileView(
                     viewModel: dependencies.userProfileDependencyContainer.makeUserProfileViewModel()
                 )) {

@@ -102,6 +102,12 @@ final class AuthDependencyContainer {
         )
     }
 
+    func makeGetCurrentUserIdUseCase() -> GetCurrentUserIdUseCase {
+        GetCurrentUserIdUseCase(
+            authRepository: makeAuthRepository()
+        )
+    }
+
     // MARK: - ViewModels
 
     func makeLoginViewModel() -> LoginViewModel {

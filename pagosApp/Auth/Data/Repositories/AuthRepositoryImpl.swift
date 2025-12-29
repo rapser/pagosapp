@@ -254,4 +254,14 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             return .failure(.unknown(error.localizedDescription))
         }
     }
+
+    // MARK: - User Info
+
+    func getCurrentUserId() async -> UUID? {
+        guard let session = await getCurrentSession() else {
+            return nil
+        }
+
+        return session.user.id
+    }
 }

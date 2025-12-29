@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @Environment(AuthenticationManager.self) private var authManager
+    @Environment(SessionCoordinator.self) private var sessionCoordinator
     @Environment(AlertManager.self) private var alertManager
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(PaymentSyncCoordinator.self) private var syncManager
@@ -112,7 +112,7 @@ struct SettingsView: View {
             buttons: [
                 AlertButton(title: Text("Cerrar Sesión"), role: .cancel) {
                     Task {
-                        await authManager.logout()
+                        await sessionCoordinator.logout()
                     }
                 },
                 AlertButton(title: Text("Cancelar"), role: .cancel) { }
@@ -132,7 +132,7 @@ struct SettingsView: View {
             buttons: [
                 AlertButton(title: Text("Desvincular"), role: .destructive) {
                     Task {
-                        await authManager.unlinkDevice()
+                        await sessionCoordinator.unlinkDevice()
                     }
                 },
                 AlertButton(title: Text("Cancelar"), role: .cancel) { }

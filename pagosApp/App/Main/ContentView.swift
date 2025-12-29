@@ -2,7 +2,7 @@ import SwiftUI
 import OSLog
 
 struct ContentView: View {
-    @Environment(AuthenticationManager.self) private var authManager
+    @Environment(SessionCoordinator.self) private var sessionCoordinator
     @Environment(PaymentSyncCoordinator.self) private var syncManager
     @Environment(AlertManager.self) private var alertManager
     @Environment(\.dependencies) private var dependencies
@@ -16,10 +16,10 @@ struct ContentView: View {
     @State private var foregroundCheckTask: Task<Void, Never>?
 
     var body: some View {
-        @Bindable var auth = authManager
+        @Bindable var session = sessionCoordinator
         @Bindable var alert = alertManager
         ZStack {
-            if authManager.isSessionActive {
+            if sessionCoordinator.isSessionActive {
                 TabView {
                     PaymentsListView()
                         .tabItem {
@@ -43,7 +43,6 @@ struct ContentView: View {
                         }
 
                     SettingsView()
-                        .environment(authManager)
                         .environment(alertManager)
                         .tabItem {
                             Label("Ajustes", systemImage: "gear")
@@ -59,7 +58,7 @@ struct ContentView: View {
                 LoginView(loginViewModel: loginViewModel)
             }
 
-            if authManager.isLoading {
+            if sessionCoordinator.isLoading {
                 LoadingView()
             }
         }
@@ -67,9 +66,9 @@ struct ContentView: View {
             // Request calendar access via DataSource
             dependencies.calendarEventDataSource.requestAccess { _ in }
         }
-        .onChange(of: authManager.isAuthenticated) { oldValue, newValue in
+        .onChange(of: sessionCoordinator.isAuthenticated) { oldValue, newValue in
             if newValue {
-                authManager.startInactivityTimer()
+                sessionCoordinator.updateLastActiveTimestamp()
                 startForegroundCheckTimer()
 
                 Task(priority: .utility) {
@@ -77,7 +76,8 @@ struct ContentView: View {
                 }
 
                 Task(priority: .background) {
-                    if let userId = authManager.supabaseClient?.auth.currentUser?.id {
+                    let getCurrentUserIdUseCase = dependencies.authDependencyContainer.makeGetCurrentUserIdUseCase()
+                    if let userId = await getCurrentUserIdUseCase.execute() {
                         let fetchUseCase = dependencies.userProfileDependencyContainer.makeFetchUserProfileUseCase()
                         _ = await fetchUseCase.execute(userId: userId)
                     }
@@ -88,18 +88,18 @@ struct ContentView: View {
         }
         .onChange(of: scenePhase) { oldValue, newPhase in
             if newPhase == .active {
-                if authManager.isAuthenticated {
-                    authManager.checkSession()
+                if sessionCoordinator.isAuthenticated {
+                    sessionCoordinator.checkSession()
                     startForegroundCheckTimer()
                 }
             } else if newPhase == .background {
-                if authManager.isAuthenticated {
-                    authManager.updateLastActiveTimestamp()
+                if sessionCoordinator.isAuthenticated {
+                    sessionCoordinator.updateLastActiveTimestamp()
                 }
                 stopForegroundCheckTimer()
             } else if newPhase == .inactive {
-                if authManager.isAuthenticated {
-                    authManager.updateLastActiveTimestamp()
+                if sessionCoordinator.isAuthenticated {
+                    sessionCoordinator.updateLastActiveTimestamp()
                 }
                 stopForegroundCheckTimer()
             }
@@ -128,9 +128,9 @@ struct ContentView: View {
                 return Alert(title: alertManager.title, message: alertManager.message)
             }
         }
-        .alert("Sesión Cerrada por Inactividad", isPresented: $auth.showInactivityAlert) {
+        .alert("Sesión Cerrada por Inactividad", isPresented: $session.showInactivityAlert) {
             Button("Aceptar") {
-                auth.showInactivityAlert = false
+                session.showInactivityAlert = false
             }
         } message: {
             Text("Tu sesión ha sido cerrada automáticamente debido a 1 semana de inactividad.")
@@ -150,26 +150,9 @@ struct ContentView: View {
                 logger.info("Processing password reset deep link")
                 if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
                    let queryItems = components.queryItems {
-                    var code: String?
-                    var accessToken: String?
-                    var refreshToken: String?
-
-                    for item in queryItems {
-                        if item.name == "code" {
-                            code = item.value
-                            logger.info("Found code for PKCE flow")
-                        } else if item.name == "access_token" {
-                            accessToken = item.value
-                            logger.info("Found access token")
-                        } else if item.name == "refresh_token" {
-                            refreshToken = item.value
-                            logger.info("Found refresh token")
-                        }
-                    }
-
                     // Extract access_token (used as reset token by Supabase)
-                    if let token = accessToken {
-                        resetToken = token
+                    if let accessToken = queryItems.first(where: { $0.name == "access_token" })?.value {
+                        resetToken = accessToken
                         showResetPassword = true
                         logger.info("Password reset token found")
                     } else {
@@ -190,13 +173,13 @@ struct ContentView: View {
         foregroundCheckTask = Task { @MainActor in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(foregroundCheckInterval))
-                if !Task.isCancelled && authManager.isAuthenticated {
-                    authManager.checkSession()
+                if !Task.isCancelled && sessionCoordinator.isAuthenticated {
+                    sessionCoordinator.checkSession()
                 }
             }
         }
     }
-    
+
     private func stopForegroundCheckTimer() {
         foregroundCheckTask?.cancel()
         foregroundCheckTask = nil
@@ -207,7 +190,7 @@ struct ContentView: View {
     let dependencies = AppDependencies.mock()
 
     ContentView()
-        .environment(dependencies.authenticationManager)
+        .environment(dependencies.sessionCoordinator)
         .environment(dependencies.paymentSyncCoordinator)
         .environment(AlertManager())
 }
