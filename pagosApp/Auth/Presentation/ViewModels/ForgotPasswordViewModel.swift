@@ -45,12 +45,14 @@ final class ForgotPasswordViewModel {
         showError = false
         defer { isLoading = false }
 
-        do {
-            try await passwordRecoveryUseCase.sendPasswordReset(email: email)
+        let result = await passwordRecoveryUseCase.sendPasswordReset(email: email)
+
+        switch result {
+        case .success:
             didSendResetLink = true
             logger.info("✅ Password reset email sent successfully")
-        } catch {
-            logger.error("❌ Failed to send password reset email: \(error.localizedDescription)")
+        case .failure(let error):
+            logger.error("❌ Failed to send password reset email: \(error.errorCode)")
             errorMessage = "Error al enviar el correo de restablecimiento. Inténtalo de nuevo."
             showError = true
         }

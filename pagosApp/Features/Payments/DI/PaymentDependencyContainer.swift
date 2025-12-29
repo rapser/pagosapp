@@ -152,10 +152,9 @@ final class PaymentDependencyContainer {
         )
     }
 
-    func makePaymentHistoryViewModel(errorHandler: ErrorHandler) -> PaymentHistoryViewModel {
+    func makePaymentHistoryViewModel() -> PaymentHistoryViewModel {
         return PaymentHistoryViewModel(
-            getAllPaymentsUseCase: makeGetAllPaymentsUseCase(),
-            errorHandler: errorHandler
+            getAllPaymentsUseCase: makeGetAllPaymentsUseCase()
         )
     }
 }

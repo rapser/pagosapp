@@ -9,17 +9,15 @@ import SwiftUI
 import Supabase
 
 struct ResetPasswordView: View {
-    @State private var viewModel: ResetPasswordViewModel
+    @Bindable var viewModel: ResetPasswordViewModel
     @State private var showSuccessAlert: Bool = false
     @Environment(\.dismiss) var dismiss
 
-    let accessToken: String
-    let refreshToken: String
+    let token: String
 
-    init(accessToken: String, refreshToken: String, passwordRecoveryUseCase: PasswordRecoveryUseCase) {
-        self.accessToken = accessToken
-        self.refreshToken = refreshToken
-        _viewModel = State(wrappedValue: ResetPasswordViewModel(passwordRecoveryUseCase: passwordRecoveryUseCase))
+    init(token: String, viewModel: ResetPasswordViewModel) {
+        self.token = token
+        self.viewModel = viewModel
     }
 
     private var passwordsMatch: Bool {
@@ -71,7 +69,7 @@ struct ResetPasswordView: View {
 
                 Button(action: {
                     Task {
-                        await viewModel.resetPassword(accessToken: accessToken, refreshToken: refreshToken)
+                        await viewModel.resetPassword(token: token)
                     }
                 }) {
                     Text("Restablecer Contraseña")

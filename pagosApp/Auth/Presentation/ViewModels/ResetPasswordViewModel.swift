@@ -38,7 +38,7 @@ final class ResetPasswordViewModel {
 
     // MARK: - Actions
 
-    func resetPassword(accessToken: String, refreshToken: String) async {
+    func resetPassword(token: String) async {
         guard !isLoading else { return }
 
         logger.info("🔐 Attempting to reset password")
@@ -62,16 +62,17 @@ final class ResetPasswordViewModel {
         showError = false
         defer { isLoading = false }
 
-        do {
-            try await passwordRecoveryUseCase.resetPassword(
-                accessToken: accessToken,
-                refreshToken: refreshToken,
-                newPassword: newPassword
-            )
+        let result = await passwordRecoveryUseCase.resetPassword(
+            token: token,
+            newPassword: newPassword
+        )
+
+        switch result {
+        case .success:
             didResetPassword = true
             logger.info("✅ Password reset successfully")
-        } catch {
-            logger.error("❌ Failed to reset password: \(error.localizedDescription)")
+        case .failure(let error):
+            logger.error("❌ Failed to reset password: \(error.errorCode)")
             errorMessage = "Error al restablecer la contraseña. Inténtalo de nuevo."
             showError = true
         }

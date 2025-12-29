@@ -97,9 +97,9 @@ final class AuthDependencyContainer {
     }
 
     func makePasswordRecoveryUseCase() -> PasswordRecoveryUseCase {
-        // TODO: Migrate PasswordRecoveryRepository to Clean Architecture
-        // For now, create a temporary repository using Supabase client directly
-        fatalError("PasswordRecoveryUseCase needs migration to Clean Architecture - use AuthenticationManager.sendPasswordReset instead")
+        PasswordRecoveryUseCase(
+            authRepository: makeAuthRepository()
+        )
     }
 
     // MARK: - ViewModels
