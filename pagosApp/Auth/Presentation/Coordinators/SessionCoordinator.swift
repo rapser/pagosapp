@@ -23,7 +23,7 @@ final class SessionCoordinator {
     var isLoading: Bool = false
     var canUseBiometrics = false
 
-    // MARK: - Dependencies
+    // MARK: - Dependencies (Use Cases only - Clean Architecture)
 
     private let loginUseCase: LoginUseCase
     private let registerUseCase: RegisterUseCase
@@ -31,7 +31,8 @@ final class SessionCoordinator {
     private let logoutUseCase: LogoutUseCase
     private let sessionRepository: SessionRepositoryProtocol
     private let passwordRecoveryUseCase: PasswordRecoveryUseCase
-    private let authRepository: AuthRepository
+    private let ensureValidSessionUseCase: EnsureValidSessionUseCase
+    private let getAuthenticationStatusUseCase: GetAuthenticationStatusUseCase
     private let errorHandler: ErrorHandler
     private let settingsStore: SettingsStore
     private let paymentSyncCoordinator: PaymentSyncCoordinator
@@ -41,24 +42,24 @@ final class SessionCoordinator {
     // MARK: - Initialization
 
     init(
-        authRepository: AuthRepository,
         errorHandler: ErrorHandler,
         settingsStore: SettingsStore,
         paymentSyncCoordinator: PaymentSyncCoordinator,
         authDependencyContainer: AuthDependencyContainer
     ) {
-        self.authRepository = authRepository
         self.errorHandler = errorHandler
         self.settingsStore = settingsStore
         self.paymentSyncCoordinator = paymentSyncCoordinator
 
-        // Initialize Use Cases from container
+        // Initialize Use Cases from container (Clean Architecture)
         self.loginUseCase = authDependencyContainer.makeLoginUseCase()
         self.registerUseCase = authDependencyContainer.makeRegisterUseCase()
         self.biometricLoginUseCase = authDependencyContainer.makeBiometricLoginUseCase()
         self.logoutUseCase = authDependencyContainer.makeLogoutUseCase()
         self.sessionRepository = authDependencyContainer.makeSessionRepository()
         self.passwordRecoveryUseCase = authDependencyContainer.makePasswordRecoveryUseCase()
+        self.ensureValidSessionUseCase = authDependencyContainer.makeEnsureValidSessionUseCase()
+        self.getAuthenticationStatusUseCase = authDependencyContainer.makeGetAuthenticationStatusUseCase()
 
         self.isSessionActive = sessionRepository.hasActiveSession
 
@@ -70,7 +71,8 @@ final class SessionCoordinator {
             if isFaceIDEnabled {
                 self.isAuthenticated = false
             } else {
-                self.isAuthenticated = authRepository.isAuthenticated
+                // Use Use Case instead of legacy AuthRepository
+                self.isAuthenticated = await getAuthenticationStatusUseCase.execute()
             }
         }
     }
@@ -151,18 +153,21 @@ final class SessionCoordinator {
         logger.info("🔍 Checking if should logout due to inactivity...")
 
         do {
-            try await authRepository.ensureValidSession()
-            logger.info("✅ Valid session in Supabase - not logging out")
+            // Use Use Case to ensure valid session (Clean Architecture)
+            try await ensureValidSessionUseCase.execute()
+            logger.info("✅ Valid session in backend - not logging out")
             await sessionRepository.updateLastActiveTimestamp()
         } catch {
             logger.warning("⚠️ Could not verify session: \(error.localizedDescription)")
 
-            do {
-                _ = try await authRepository.authServiceInternal.getCurrentSession()
+            // Check if we're online by attempting to get current session
+            let isAuthenticated = await getAuthenticationStatusUseCase.execute()
+
+            if isAuthenticated {
                 // Online but session expired -> logout
                 logger.info("🌐 Connection available but session expired - logging out due to inactivity")
                 await performLogout(inactivity: true, clearCredentials: true)
-            } catch {
+            } else {
                 // Offline -> don't logout
                 logger.info("📴 No connection - user can continue working offline indefinitely")
             }
