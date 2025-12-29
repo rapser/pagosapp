@@ -6,29 +6,16 @@ import OSLog
 @MainActor
 @Observable
 final class PaymentHistoryViewModel {
-    var payments: [PaymentEntity] = []
+    var filteredPayments: [Payment] = []
     var selectedFilter: PaymentHistoryFilter = .completed
     var isLoading = false
     var errorMessage: String?
 
-    private let getAllPaymentsUseCase: GetAllPaymentsUseCase
+    private let getPaymentHistoryUseCase: GetPaymentHistoryUseCase
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentHistoryViewModel")
 
-    var filteredPayments: [PaymentEntity] {
-        let now = Date()
-
-        switch selectedFilter {
-        case .completed:
-            return payments.filter { $0.isPaid }
-        case .overdue:
-            return payments.filter { !$0.isPaid && $0.dueDate < now }
-        case .all:
-            return payments.filter { $0.isPaid || $0.dueDate < now }
-        }
-    }
-
-    init(getAllPaymentsUseCase: GetAllPaymentsUseCase) {
-        self.getAllPaymentsUseCase = getAllPaymentsUseCase
+    init(getPaymentHistoryUseCase: GetPaymentHistoryUseCase) {
+        self.getPaymentHistoryUseCase = getPaymentHistoryUseCase
         Task {
             await fetchPayments()
         }
@@ -47,17 +34,22 @@ final class PaymentHistoryViewModel {
         isLoading = true
         defer { isLoading = false }
 
-        let result = await getAllPaymentsUseCase.execute()
+        let result = await getPaymentHistoryUseCase.execute(filter: selectedFilter)
 
         switch result {
-        case .success(let fetchedPayments):
-            payments = fetchedPayments.sorted { $0.dueDate > $1.dueDate }
+        case .success(let payments):
+            filteredPayments = payments
             errorMessage = nil
-            logger.info("✅ Fetched \(self.payments.count) payments for history")
+            logger.info("✅ Fetched \(self.filteredPayments.count) payments for history (filter: \(self.selectedFilter.rawValue))")
         case .failure(let error):
-            logger.error("❌ Failed to fetch payments: \(error.errorCode)")
+            logger.error("❌ Failed to fetch payment history: \(error.errorCode)")
             errorMessage = "Error al cargar el historial de pagos"
         }
+    }
+
+    func updateFilter(_ newFilter: PaymentHistoryFilter) async {
+        selectedFilter = newFilter
+        await fetchPayments()
     }
 
     func refresh() async {

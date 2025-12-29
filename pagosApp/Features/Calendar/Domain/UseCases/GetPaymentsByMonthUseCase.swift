@@ -20,8 +20,8 @@ final class GetPaymentsByMonthUseCase {
 
     /// Execute: Get payments for a specific month
     /// - Parameter month: A date representing the month to filter payments
-    /// - Returns: Result with array of PaymentEntity or PaymentError
-    func execute(for month: Date) async -> Result<[PaymentEntity], PaymentError> {
+    /// - Returns: Result with array of Payment or PaymentError
+    func execute(for month: Date) async -> Result<[Payment], PaymentError> {
         logger.debug("📅 Getting payments for month: \(month)")
 
         let result = await calendarRepository.getPayments(forMonth: month)

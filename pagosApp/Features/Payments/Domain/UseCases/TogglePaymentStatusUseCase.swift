@@ -21,11 +21,11 @@ final class TogglePaymentStatusUseCase {
     /// Execute the toggle payment status use case
     /// - Parameter payment: The payment to toggle
     /// - Returns: Result with updated payment or error
-    func execute(_ payment: PaymentEntity) async -> Result<PaymentEntity, PaymentError> {
+    func execute(_ payment: Payment) async -> Result<Payment, PaymentError> {
         logger.info("🔄 Toggling payment status: \(payment.name) -> \(!payment.isPaid)")
 
         // Create updated payment with toggled status
-        let updatedPayment = PaymentEntity(
+        let updatedPayment = Payment(
             id: payment.id,
             name: payment.name,
             amount: payment.amount,

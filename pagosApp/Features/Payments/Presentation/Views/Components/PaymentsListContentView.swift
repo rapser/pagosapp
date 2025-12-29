@@ -12,17 +12,15 @@ struct PaymentsListContentView: View {
                 LoadingIndicator()
             } else {
                 PaymentsList(
-                    payments: paymentsAsModels,
+                    payments: viewModel.filteredPayments,
                     onToggleStatus: { payment in
-                        let entity = PaymentMapper.toEntity(from: payment)
                         Task {
-                            await viewModel.togglePaymentStatus(entity)
+                            await viewModel.togglePaymentStatus(payment)
                         }
                     },
                     onDelete: { payment in
-                        let entity = PaymentMapper.toEntity(from: payment)
                         Task {
-                            await viewModel.deletePayment(entity)
+                            await viewModel.deletePayment(payment)
                         }
                     },
                     onRefresh: {
@@ -46,12 +44,6 @@ struct PaymentsListContentView: View {
                         await viewModel.refresh()
                     }
                 }
-        }
-    }
-
-    private var paymentsAsModels: [Payment] {
-        viewModel.filteredPayments.map { entity in
-            PaymentMapper.toModel(from: entity)
         }
     }
 }

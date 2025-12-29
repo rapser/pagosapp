@@ -15,8 +15,8 @@ import OSLog
 final class CalendarViewModel {
     // MARK: - Observable Properties (UI State)
 
-    var allPayments: [PaymentEntity] = []
-    var paymentsForSelectedDate: [PaymentEntity] = []
+    var allPayments: [Payment] = []
+    var paymentsForSelectedDate: [Payment] = []
     var selectedDate: Date = Calendar.current.startOfDay(for: Date())
     var isLoading = false
     var errorMessage: String?

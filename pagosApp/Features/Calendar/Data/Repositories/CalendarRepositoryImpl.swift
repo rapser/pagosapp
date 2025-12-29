@@ -23,7 +23,7 @@ final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
 
     // MARK: - Calendar Queries
 
-    func getPayments(forDate date: Date) async -> Result<[PaymentEntity], PaymentError> {
+    func getPayments(forDate date: Date) async -> Result<[Payment], PaymentError> {
         logger.debug("📅 Getting payments for specific date")
 
         // Get all payments first
@@ -43,7 +43,7 @@ final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
         }
     }
 
-    func getPayments(forMonth month: Date) async -> Result<[PaymentEntity], PaymentError> {
+    func getPayments(forMonth month: Date) async -> Result<[Payment], PaymentError> {
         logger.debug("📅 Getting payments for specific month")
 
         // Get all payments first
@@ -63,7 +63,7 @@ final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
         }
     }
 
-    func getAllPayments() async -> Result<[PaymentEntity], PaymentError> {
+    func getAllPayments() async -> Result<[Payment], PaymentError> {
         logger.debug("📅 Getting all payments for calendar")
 
         do {

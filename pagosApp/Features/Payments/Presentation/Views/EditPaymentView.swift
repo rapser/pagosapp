@@ -5,7 +5,7 @@ struct EditPaymentView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(AppDependencies.self) private var dependencies
     @State private var viewModel: EditPaymentViewModel?
-    @Bindable var payment: Payment
+    let payment: Payment
 
     init(payment: Payment) {
         self.payment = payment
@@ -22,12 +22,9 @@ struct EditPaymentView: View {
             }
             .onAppear {
                 if viewModel == nil {
-                    // Convert SwiftData Payment to PaymentEntity
-                    let paymentEntity = PaymentMapper.toEntity(from: payment)
-
                     // Get Use Cases from DI Container
                     let container = dependencies.paymentDependencyContainer
-                    viewModel = container.makeEditPaymentViewModel(for: paymentEntity)
+                    viewModel = container.makeEditPaymentViewModel(for: payment)
                 }
             }
         }
@@ -102,5 +99,18 @@ private struct EditPaymentFormView: View {
 }
 
 #Preview {
-    EditPaymentView(payment: Payment(name: "Sample", amount: 100, dueDate: Date(), category: .servicios, currency: .pen))
+    EditPaymentView(
+        payment: Payment(
+            id: UUID(),
+            name: "Sample Payment",
+            amount: 100.0,
+            currency: .pen,
+            dueDate: Date(),
+            isPaid: false,
+            category: .servicios,
+            eventIdentifier: nil,
+            syncStatus: .synced,
+            lastSyncedAt: Date()
+        )
+    )
 }

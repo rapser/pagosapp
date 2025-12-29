@@ -14,16 +14,16 @@ protocol PaymentSyncRepositoryProtocol {
     func getCurrentUserId() async throws -> UUID
 
     /// Upload local payments to remote
-    func uploadPayments(_ payments: [PaymentEntity], userId: UUID) async throws
+    func uploadPayments(_ payments: [Payment], userId: UUID) async throws
 
     /// Download payments from remote
-    func downloadPayments(userId: UUID) async throws -> [PaymentEntity]
+    func downloadPayments(userId: UUID) async throws -> [Payment]
 
     /// Sync single payment deletion to remote
     func syncDeletion(paymentId: UUID) async throws
 
     /// Get payments pending synchronization
-    func getPendingPayments() async throws -> [PaymentEntity]
+    func getPendingPayments() async throws -> [Payment]
 
     /// Get pending sync count
     func getPendingSyncCount() async throws -> Int

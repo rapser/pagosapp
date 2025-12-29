@@ -76,5 +76,5 @@ struct AddPaymentView: View {
 
 #Preview {
     AddPaymentView()
-        .modelContainer(for: [Payment.self], inMemory: true)
+        .modelContainer(for: [PaymentEntity.self], inMemory: true)
 }

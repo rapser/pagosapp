@@ -19,8 +19,8 @@ final class GetAllPaymentsForCalendarUseCase {
     }
 
     /// Execute: Get all payments
-    /// - Returns: Result with array of PaymentEntity or PaymentError
-    func execute() async -> Result<[PaymentEntity], PaymentError> {
+    /// - Returns: Result with array of Payment or PaymentError
+    func execute() async -> Result<[Payment], PaymentError> {
         logger.debug("📅 Getting all payments for calendar")
 
         let result = await calendarRepository.getAllPayments()

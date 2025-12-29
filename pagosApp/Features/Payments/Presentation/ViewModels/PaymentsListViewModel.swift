@@ -16,7 +16,7 @@ import OSLog
 final class PaymentsListViewModel {
     // MARK: - Observable Properties (UI State)
 
-    var payments: [PaymentEntity] = []
+    var payments: [Payment] = []
     var selectedFilter: PaymentFilter = .currentMonth
     var isLoading = false
     var errorMessage: String?
@@ -31,7 +31,7 @@ final class PaymentsListViewModel {
 
     // MARK: - Computed Properties
 
-    var filteredPayments: [PaymentEntity] {
+    var filteredPayments: [Payment] {
         let calendar = Calendar.current
         let now = Date()
 
@@ -92,7 +92,7 @@ final class PaymentsListViewModel {
     }
 
     /// Delete a payment
-    func deletePayment(_ payment: PaymentEntity) async {
+    func deletePayment(_ payment: Payment) async {
         isLoading = true
         defer { isLoading = false }
 
@@ -110,7 +110,7 @@ final class PaymentsListViewModel {
     }
 
     /// Toggle payment status
-    func togglePaymentStatus(_ payment: PaymentEntity) async {
+    func togglePaymentStatus(_ payment: Payment) async {
         isLoading = true
         defer { isLoading = false }
 

@@ -1,9 +1,16 @@
+//
+//  PaymentEntity.swift
+//  pagosApp
+//
+//  SwiftData model for local persistence
+//  Clean Architecture - Data Layer (Local DTO)
+//
 
 import Foundation
 import SwiftData
 
 @Model
-final class Payment {
+final class PaymentEntity {
     @Attribute(.unique) var id: UUID
     var name: String
     var amount: Double

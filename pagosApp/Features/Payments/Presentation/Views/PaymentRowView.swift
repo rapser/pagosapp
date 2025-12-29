@@ -2,7 +2,7 @@
 import SwiftUI
 
 struct PaymentRowView: View {
-    @Bindable var payment: Payment
+    let payment: Payment
     var onToggleStatus: () -> Void
 
     var body: some View {

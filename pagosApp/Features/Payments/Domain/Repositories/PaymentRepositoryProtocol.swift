@@ -15,12 +15,12 @@ protocol PaymentRepositoryProtocol {
     func upsertPayments(userId: UUID, payments: [PaymentDTO]) async throws
     func deletePayment(paymentId: UUID) async throws
     func deletePayments(paymentIds: [UUID]) async throws
-    
+
     // Local operations (returns Sendable entities, @MainActor internally for SwiftData)
-    func getAllLocalPayments() async throws -> [PaymentEntity]
-    func getLocalPayment(id: UUID) async throws -> PaymentEntity?
-    func savePayment(_ payment: PaymentEntity) async throws
-    func savePayments(_ payments: [PaymentEntity]) async throws
+    func getAllLocalPayments() async throws -> [Payment]
+    func getLocalPayment(id: UUID) async throws -> Payment?
+    func savePayment(_ payment: Payment) async throws
+    func savePayments(_ payments: [Payment]) async throws
     func deleteLocalPayment(id: UUID) async throws
     func deleteLocalPayments(ids: [UUID]) async throws
     func clearAllLocalPayments() async throws

@@ -21,7 +21,7 @@ final class GetPaymentUseCase {
     /// Execute get payment by ID
     /// - Parameter id: The payment ID
     /// - Returns: Result with payment or error
-    func execute(id: UUID) async -> Result<PaymentEntity?, PaymentError> {
+    func execute(id: UUID) async -> Result<Payment?, PaymentError> {
         logger.debug("📱 Fetching payment: \(id)")
 
         do {

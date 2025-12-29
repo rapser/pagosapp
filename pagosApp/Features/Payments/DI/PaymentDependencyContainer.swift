@@ -136,7 +136,7 @@ final class PaymentDependencyContainer {
         )
     }
 
-    func makeEditPaymentViewModel(for payment: PaymentEntity) -> EditPaymentViewModel {
+    func makeEditPaymentViewModel(for payment: Payment) -> EditPaymentViewModel {
         return EditPaymentViewModel(
             payment: payment,
             updatePaymentUseCase: makeUpdatePaymentUseCase(),
@@ -149,12 +149,6 @@ final class PaymentDependencyContainer {
             getAllPaymentsUseCase: makeGetAllPaymentsUseCase(),
             deletePaymentUseCase: makeDeletePaymentUseCase(),
             togglePaymentStatusUseCase: makeTogglePaymentStatusUseCase()
-        )
-    }
-
-    func makePaymentHistoryViewModel() -> PaymentHistoryViewModel {
-        return PaymentHistoryViewModel(
-            getAllPaymentsUseCase: makeGetAllPaymentsUseCase()
         )
     }
 }

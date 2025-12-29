@@ -23,7 +23,7 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
 
     // MARK: - Statistics Queries
 
-    func getAllPayments() async -> Result<[PaymentEntity], PaymentError> {
+    func getAllPayments() async -> Result<[Payment], PaymentError> {
         logger.debug("📊 Getting all payments for statistics")
 
         do {
@@ -38,11 +38,11 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
     func getFilteredPayments(
         filter: StatsFilter,
         currency: Currency
-    ) async -> Result<[PaymentEntity], PaymentError> {
+    ) async -> Result<[Payment], PaymentError> {
         logger.debug("📊 Getting filtered payments: \(filter.rawValue), currency: \(currency.rawValue)")
 
         // Get all payments first
-        let allPayments: [PaymentEntity]
+        let allPayments: [Payment]
         do {
             allPayments = try await paymentRepository.getAllLocalPayments()
         } catch {
@@ -52,7 +52,7 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
 
         // Filter by time period
         let now = Date()
-        let timeFiltered: [PaymentEntity]
+        let timeFiltered: [Payment]
 
         switch filter {
         case .month:
@@ -73,11 +73,11 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
     func getPaymentsForLastMonths(
         count: Int,
         currency: Currency
-    ) async -> Result<[PaymentEntity], PaymentError> {
+    ) async -> Result<[Payment], PaymentError> {
         logger.debug("📊 Getting payments for last \(count) months, currency: \(currency.rawValue)")
 
         // Get all payments first
-        let allPayments: [PaymentEntity]
+        let allPayments: [Payment]
         do {
             allPayments = try await paymentRepository.getAllLocalPayments()
         } catch {

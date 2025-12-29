@@ -70,7 +70,7 @@ struct pagosAppApp: App {
     }
 
     private static func createModelContainer() -> ModelContainer {
-        let schema = Schema([Payment.self, UserProfile.self])
+        let schema = Schema([PaymentEntity.self, UserProfile.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {
