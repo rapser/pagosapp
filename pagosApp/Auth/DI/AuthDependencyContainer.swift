@@ -108,6 +108,26 @@ final class AuthDependencyContainer {
         )
     }
 
+    // MARK: - Coordinators
+
+    func makeSessionCoordinator(
+        errorHandler: ErrorHandler,
+        settingsStore: SettingsStore,
+        paymentSyncCoordinator: PaymentSyncCoordinator
+    ) -> SessionCoordinator {
+        // Legacy AuthRepository for compatibility (to be removed in future phases)
+        let authAdapter = SupabaseAuthAdapter(client: supabaseClient)
+        let authRepository = AuthRepository(authService: authAdapter)
+
+        return SessionCoordinator(
+            authRepository: authRepository,
+            errorHandler: errorHandler,
+            settingsStore: settingsStore,
+            paymentSyncCoordinator: paymentSyncCoordinator,
+            authDependencyContainer: self
+        )
+    }
+
     // MARK: - ViewModels
 
     func makeLoginViewModel() -> LoginViewModel {

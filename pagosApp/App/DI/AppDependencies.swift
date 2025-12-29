@@ -3,37 +3,39 @@
 //  pagosApp
 //
 //  Dependency Injection Container
-//  Manages app-wide dependencies and eliminates Singleton pattern
+//  Orchestrates feature containers following Clean Architecture
 //
 
 import Foundation
 import SwiftData
-import Supabase
 import Observation
 import SwiftUI
+import Supabase
 
-/// App-wide dependency injection container
+/// App-wide dependency injection orchestrator
+/// Delegates to feature-specific DI containers (Clean Architecture)
 @MainActor
 @Observable
 final class AppDependencies {
-    // MARK: - Dependencies
+    // MARK: - Platform Services (Shared Infrastructure)
 
     let settingsStore: SettingsStore
     let errorHandler: ErrorHandler
-    let sessionCoordinator: SessionCoordinator
     let notificationDataSource: NotificationDataSource
     let calendarEventDataSource: CalendarEventDataSource
     let alertManager: AlertManager
-    let supabaseClient: SupabaseClient
 
     // MARK: - Feature Containers (Clean Architecture)
+
     let authDependencyContainer: AuthDependencyContainer
     let paymentDependencyContainer: PaymentDependencyContainer
     let userProfileDependencyContainer: UserProfileDependencyContainer
     let calendarDependencyContainer: CalendarDependencyContainer
     let statisticsDependencyContainer: StatisticsDependencyContainer
 
-    // MARK: - Coordinators
+    // MARK: - Coordinators (Created by Containers)
+
+    let sessionCoordinator: SessionCoordinator
     let paymentSyncCoordinator: PaymentSyncCoordinator
 
     // MARK: - Initialization
@@ -42,49 +44,44 @@ final class AppDependencies {
         modelContext: ModelContext,
         supabaseClient: SupabaseClient
     ) {
-        self.supabaseClient = supabaseClient
         self.errorHandler = ErrorHandler()
 
-        // Platform DataSources
+        // Platform DataSources (Infrastructure)
         let settingsDataSource = UserDefaultsSettingsDataSource()
         self.settingsStore = SettingsStore(dataSource: settingsDataSource)
         self.notificationDataSource = UserNotificationsDataSource()
         self.calendarEventDataSource = EventKitCalendarDataSource()
-
         self.alertManager = AlertManager()
 
-        // Create Feature Dependency Containers (Clean Architecture)
+        // Feature Dependency Containers (Clean Architecture)
         self.authDependencyContainer = AuthDependencyContainer(supabaseClient: supabaseClient)
+
         self.paymentDependencyContainer = PaymentDependencyContainer(
             supabaseClient: supabaseClient,
             modelContext: modelContext
         )
+
         self.userProfileDependencyContainer = UserProfileDependencyContainer(
             supabaseClient: supabaseClient,
             modelContext: modelContext
         )
+
         self.calendarDependencyContainer = CalendarDependencyContainer(
             paymentDependencyContainer: paymentDependencyContainer,
             calendarEventDataSource: calendarEventDataSource
         )
+
         self.statisticsDependencyContainer = StatisticsDependencyContainer(
             paymentDependencyContainer: paymentDependencyContainer
         )
 
-        // Create Coordinators from containers
+        // Coordinators (Created by feature containers)
         self.paymentSyncCoordinator = paymentDependencyContainer.makePaymentSyncCoordinator()
 
-        // Legacy AuthRepository for compatibility (to be removed in future phases)
-        let authAdapter = SupabaseAuthAdapter(client: supabaseClient)
-        let authRepository = AuthRepository(authService: authAdapter)
-
-        // SessionCoordinator manages session lifecycle using Use Cases
-        self.sessionCoordinator = SessionCoordinator(
-            authRepository: authRepository,
+        self.sessionCoordinator = authDependencyContainer.makeSessionCoordinator(
             errorHandler: errorHandler,
             settingsStore: settingsStore,
-            paymentSyncCoordinator: paymentSyncCoordinator,
-            authDependencyContainer: authDependencyContainer
+            paymentSyncCoordinator: paymentSyncCoordinator
         )
     }
 
