@@ -49,7 +49,7 @@ struct BiometricSettingsView: View {
                     set: { newValue in
                         if newValue {
                             // Check if credentials are already stored (user already logged in)
-                            if KeychainManager.hasStoredCredentials() {
+                            if sessionCoordinator.hasBiometricCredentials() {
                                 // Credentials exist, just enable without asking for Face ID again
                                 settingsStore.isBiometricLockEnabled = true
                             } else {

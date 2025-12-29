@@ -33,6 +33,8 @@ final class SessionCoordinator {
     private let passwordRecoveryUseCase: PasswordRecoveryUseCase
     private let ensureValidSessionUseCase: EnsureValidSessionUseCase
     private let getAuthenticationStatusUseCase: GetAuthenticationStatusUseCase
+    private let clearBiometricCredentialsUseCase: ClearBiometricCredentialsUseCase
+    private let hasBiometricCredentialsUseCase: HasBiometricCredentialsUseCase
     private let errorHandler: ErrorHandler
     private let settingsStore: SettingsStore
     private let paymentSyncCoordinator: PaymentSyncCoordinator
@@ -60,6 +62,8 @@ final class SessionCoordinator {
         self.passwordRecoveryUseCase = authDependencyContainer.makePasswordRecoveryUseCase()
         self.ensureValidSessionUseCase = authDependencyContainer.makeEnsureValidSessionUseCase()
         self.getAuthenticationStatusUseCase = authDependencyContainer.makeGetAuthenticationStatusUseCase()
+        self.clearBiometricCredentialsUseCase = authDependencyContainer.makeClearBiometricCredentialsUseCase()
+        self.hasBiometricCredentialsUseCase = authDependencyContainer.makeHasBiometricCredentialsUseCase()
 
         self.isSessionActive = sessionRepository.hasActiveSession
 
@@ -193,7 +197,7 @@ final class SessionCoordinator {
 
         logger.warning("⚠️ UserProfile cleanup not yet migrated to Clean Architecture")
 
-        _ = KeychainManager.deleteCredentials()
+        _ = clearBiometricCredentialsUseCase.execute()
         await sessionRepository.clearSession()
 
         self.isAuthenticated = false
@@ -211,8 +215,7 @@ final class SessionCoordinator {
         _ = await logoutUseCase.execute()
 
         if clearCredentials {
-            _ = KeychainManager.deleteCredentials()
-            KeychainManager.deleteHasLoggedIn()
+            _ = clearBiometricCredentialsUseCase.execute()
             logger.info("🗑️ Credentials deleted from Keychain")
         } else {
             logger.info("🔐 Credentials kept in Keychain (biometric enabled)")
@@ -232,7 +235,7 @@ final class SessionCoordinator {
             return
         }
 
-        guard KeychainManager.hasStoredCredentials() else {
+        guard hasBiometricCredentialsUseCase.execute() else {
             logger.warning("⚠️ No credentials stored in Keychain for biometric login")
             return
         }
@@ -257,11 +260,15 @@ final class SessionCoordinator {
 
     /// Clear biometric credentials
     func clearBiometricCredentials() async {
-        KeychainManager.deleteHasLoggedIn()
-        _ = KeychainManager.deleteCredentials()
+        _ = clearBiometricCredentialsUseCase.execute()
         await sessionRepository.clearSession()
 
         self.isSessionActive = false
         logger.info("🔐 Credentials removed from Keychain (biometric disabled)")
+    }
+
+    /// Check if biometric credentials are stored
+    func hasBiometricCredentials() -> Bool {
+        return hasBiometricCredentialsUseCase.execute()
     }
 }
