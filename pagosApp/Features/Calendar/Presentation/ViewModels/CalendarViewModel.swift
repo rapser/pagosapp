@@ -1,0 +1,106 @@
+//
+//  CalendarViewModel.swift
+//  pagosApp
+//
+//  ViewModel for Calendar using Clean Architecture
+//  Uses Use Cases instead of direct SwiftData queries
+//
+
+import Foundation
+import Observation
+import OSLog
+
+@MainActor
+@Observable
+final class CalendarViewModel {
+    // MARK: - Observable Properties (UI State)
+
+    var allPayments: [PaymentEntity] = []
+    var paymentsForSelectedDate: [PaymentEntity] = []
+    var selectedDate: Date = Calendar.current.startOfDay(for: Date())
+    var isLoading = false
+    var errorMessage: String?
+
+    // MARK: - Dependencies (Use Cases)
+
+    private let getAllPaymentsUseCase: GetAllPaymentsForCalendarUseCase
+    private let getPaymentsByDateUseCase: GetPaymentsByDateUseCase
+    private let getPaymentsByMonthUseCase: GetPaymentsByMonthUseCase
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "CalendarViewModel")
+
+    init(
+        getAllPaymentsUseCase: GetAllPaymentsForCalendarUseCase,
+        getPaymentsByDateUseCase: GetPaymentsByDateUseCase,
+        getPaymentsByMonthUseCase: GetPaymentsByMonthUseCase
+    ) {
+        self.getAllPaymentsUseCase = getAllPaymentsUseCase
+        self.getPaymentsByDateUseCase = getPaymentsByDateUseCase
+        self.getPaymentsByMonthUseCase = getPaymentsByMonthUseCase
+    }
+
+    // MARK: - Data Operations
+
+    /// Load all payments (for calendar indicators)
+    func loadAllPayments() async {
+        isLoading = true
+        defer { isLoading = false }
+
+        let result = await getAllPaymentsUseCase.execute()
+
+        switch result {
+        case .success(let payments):
+            allPayments = payments
+            logger.info("✅ Loaded \(payments.count) payments for calendar")
+
+        case .failure(let error):
+            logger.error("❌ Failed to load payments: \(error.errorCode)")
+            errorMessage = "Error al cargar pagos"
+        }
+    }
+
+    /// Load payments for selected date
+    func loadPaymentsForSelectedDate() async {
+        let result = await getPaymentsByDateUseCase.execute(for: selectedDate)
+
+        switch result {
+        case .success(let payments):
+            paymentsForSelectedDate = payments
+            logger.info("✅ Loaded \(payments.count) payments for selected date")
+
+        case .failure(let error):
+            logger.error("❌ Failed to load payments for date: \(error.errorCode)")
+            errorMessage = "Error al cargar pagos para la fecha seleccionada"
+        }
+    }
+
+    /// Load payments for a specific month
+    func loadPaymentsForMonth(_ month: Date) async {
+        let result = await getPaymentsByMonthUseCase.execute(for: month)
+
+        switch result {
+        case .success(let payments):
+            logger.info("✅ Loaded \(payments.count) payments for month")
+
+        case .failure(let error):
+            logger.error("❌ Failed to load payments for month: \(error.errorCode)")
+        }
+    }
+
+    /// Update selected date and reload payments
+    func selectDate(_ date: Date) async {
+        selectedDate = Calendar.current.startOfDay(for: date)
+        await loadPaymentsForSelectedDate()
+    }
+
+    /// Check if a date has payments (for calendar indicators)
+    func hasPayments(on date: Date) -> Bool {
+        let calendar = Calendar.current
+        return allPayments.contains { calendar.isDate($0.dueDate, inSameDayAs: date) }
+    }
+
+    /// Refresh all data
+    func refresh() async {
+        await loadAllPayments()
+        await loadPaymentsForSelectedDate()
+    }
+}

@@ -38,9 +38,6 @@ let supabaseClient = createSupabaseClient()
 
 @main
 struct pagosAppApp: App {
-    private let supabaseAuthService = SupabaseAuthService(client: supabaseClient)
-    private let passwordRecoveryRepository: PasswordRecoveryRepository
-    private let passwordRecoveryUseCase: PasswordRecoveryUseCase
     private let modelContainer: ModelContainer
     private let dependencies: AppDependencies
 
@@ -53,10 +50,6 @@ struct pagosAppApp: App {
             modelContext: modelContainer.mainContext,
             supabaseClient: supabaseClient
         )
-
-        // Create password recovery dependencies (legacy compatibility)
-        self.passwordRecoveryRepository = SupabasePasswordRecoveryRepository(authService: supabaseAuthService)
-        self.passwordRecoveryUseCase = PasswordRecoveryUseCase(repository: passwordRecoveryRepository)
 
         // Request notification authorization at app launch (via DI)
         dependencies.notificationManager.requestAuthorization()
@@ -71,14 +64,9 @@ struct pagosAppApp: App {
                 .environment(dependencies.authenticationManager)
                 .environment(dependencies.errorHandler)
                 .environment(dependencies.settingsManager)
-                .environment(dependencies.paymentSyncManager)
-                .environment(dependencies.biometricManager)
-                .environment(dependencies.sessionManager)
                 .environment(dependencies.notificationManager)
                 .environment(dependencies.eventKitManager)
                 .environment(dependencies.alertManager)
-                .environment(dependencies.storageFactory)
-                .environment(passwordRecoveryUseCase)
                 .tint(Color("AppPrimary"))
         }
         .modelContainer(modelContainer)

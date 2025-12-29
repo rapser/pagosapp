@@ -9,9 +9,8 @@ import SwiftUI
 import Supabase
 
 struct ResetPasswordView: View {
-
     @State private var viewModel: ResetPasswordViewModel
-    @Environment(AlertManager.self) private var alertManager
+    @State private var showSuccessAlert: Bool = false
     @Environment(\.dismiss) var dismiss
 
     let accessToken: String
@@ -71,7 +70,9 @@ struct ResetPasswordView: View {
                 }
 
                 Button(action: {
-                    viewModel.resetPassword(accessToken: accessToken, refreshToken: refreshToken)
+                    Task {
+                        await viewModel.resetPassword(accessToken: accessToken, refreshToken: refreshToken)
+                    }
                 }) {
                     Text("Restablecer Contraseña")
                         .font(.headline)
@@ -94,13 +95,21 @@ struct ResetPasswordView: View {
         }
         .onChange(of: viewModel.didResetPassword) { oldValue, newValue in
             if newValue {
-                alertManager.show(
-                    title: Text("¡Contraseña Actualizada!"),
-                    message: Text("Tu contraseña ha sido restablecida exitosamente. Ahora puedes iniciar sesión con tu nueva contraseña."),
-                    buttons: [
-                        .init(title: Text("Ir al Login"), role: .cancel, action: { dismiss() })
-                    ]
-                )
+                showSuccessAlert = true
+            }
+        }
+        .alert("¡Contraseña Actualizada!", isPresented: $showSuccessAlert) {
+            Button("Ir al Login", role: .cancel) {
+                dismiss()
+            }
+        } message: {
+            Text("Tu contraseña ha sido restablecida exitosamente. Ahora puedes iniciar sesión con tu nueva contraseña.")
+        }
+        .alert("Error", isPresented: $viewModel.showError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            if let errorMessage = viewModel.errorMessage {
+                Text(errorMessage)
             }
         }
     }

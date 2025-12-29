@@ -69,7 +69,7 @@ final class PaymentHistoryViewModel {
         } catch {
             logger.error("❌ Failed to fetch payments: \(error.localizedDescription)")
             self.error = error
-            errorHandler.handle(PaymentError.saveFailed(error))
+            errorHandler.handle(PaymentError.saveFailed(error.localizedDescription))
         }
     }
 

@@ -4,26 +4,15 @@ import SwiftData
 
 struct AddPaymentView: View {
     @Environment(\.dismiss) var dismiss
-    @Environment(\.modelContext) private var modelContext
+    @Environment(AppDependencies.self) private var dependencies
     @State private var viewModel: AddPaymentViewModel?
-    
-    init(viewModel: AddPaymentViewModel? = nil) {
-        if let viewModel = viewModel {
-            _viewModel = State(wrappedValue: viewModel)
-        } else {
-            // Temporary placeholder - will create proper one in onAppear
-            let container = try! ModelContainer(for: Payment.self)
-            let context = ModelContext(container)
-            _viewModel = State(wrappedValue: AddPaymentViewModel(modelContext: context))
-        }
-    }
 
     var body: some View {
         NavigationStack {
             Group {
                 if let viewModel = viewModel {
                     @Bindable var vm = viewModel
-                    
+
                     Form {
                         Section(header: Text("Detalles del Pago")) {
                             TextField("Nombre del pago", text: $vm.name)
@@ -55,7 +44,10 @@ struct AddPaymentView: View {
                         }
                         ToolbarItem(placement: .confirmationAction) {
                             Button("Guardar") {
-                                vm.savePayment(onSuccess: { dismiss() })
+                                Task {
+                                    await vm.savePayment()
+                                    dismiss()
+                                }
                             }
                             .disabled(!vm.isValid)
                         }
@@ -76,7 +68,7 @@ struct AddPaymentView: View {
             }
             .onAppear {
                 if viewModel == nil {
-                    viewModel = AddPaymentViewModel(modelContext: modelContext)
+                    viewModel = dependencies.paymentDependencyContainer.makeAddPaymentViewModel()
                 }
             }
         }

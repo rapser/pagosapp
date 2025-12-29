@@ -7,7 +7,7 @@ import OSLog
 struct ContentView: View {
     @Environment(AuthenticationManager.self) private var authManager
     @Environment(PasswordRecoveryUseCase.self) private var passwordRecoveryUseCase
-    @Environment(PaymentSyncManager.self) private var syncManager
+    @Environment(PaymentSyncCoordinator.self) private var syncManager
     @Environment(SettingsManager.self) private var settingsManager
     @Environment(AlertManager.self) private var alertManager
     @Environment(\.dependencies) private var dependencies
@@ -15,14 +15,11 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ContentView")
-    private let foregroundCheckInterval: TimeInterval = 30 // Check every 30 seconds
+    private let foregroundCheckInterval: TimeInterval = 30
 
-    // Password reset
     @State private var showResetPassword = false
     @State private var resetAccessToken: String?
     @State private var resetRefreshToken: String?
-    
-    // Foreground check task
     @State private var foregroundCheckTask: Task<Void, Never>?
 
     var body: some View {
@@ -65,76 +62,52 @@ struct ContentView: View {
                     UITabBar.appearance().tintColor = UIColor(named: "AppPrimary")
                 }
             } else {
-                let biometricEnabled = authManager.canUseBiometrics && settingsManager.isBiometricLockEnabled && authManager.hasLoggedInWithCredentials
-
-                LoginView(
-                    onLogin: { email, password in
-                        await authManager.login(email: email, password: password)
-                    },
-                    onBiometricLogin: {
-                        await authManager.authenticateWithBiometrics()
-                    },
-                    isBiometricLoginEnabled: biometricEnabled
-                )
+                let loginViewModel = dependencies.authDependencyContainer.makeLoginViewModel()
+                LoginView(loginViewModel: loginViewModel)
             }
-            
-            // Show loading view if authManager.isLoading is true
+
             if authManager.isLoading {
                 LoadingView()
             }
         }
         .onAppear {
-            // Configure PaymentSyncManager with modelContext
-            syncManager.configure(with: modelContext)
-
-            // Request calendar access (NotificationManager already requested in app init)
             dependencies.eventKitManager.requestAccess { _ in }
-            // authManager.checkSession() is now called by onChange(of: isAuthenticated) or scenePhase .active
         }
         .onChange(of: authManager.isAuthenticated) { oldValue, newValue in
-            if newValue { // User just became authenticated
-                authManager.startInactivityTimer() // Start the timer
-                startForegroundCheckTimer() // Start foreground check
+            if newValue {
+                authManager.startInactivityTimer()
+                startForegroundCheckTimer()
 
-                // Perform initial sync and fetch profile in parallel (non-blocking)
-                // Use Task instead of Task.detached to stay in MainActor context
                 Task(priority: .utility) {
-                    await syncManager.performInitialSyncIfNeeded(modelContext: modelContext, isAuthenticated: true)
+                    await syncManager.performInitialSyncIfNeeded(isAuthenticated: true)
                 }
-                
-                // Fetch and save user profile in background
+
                 Task(priority: .background) {
-                    if let client = authManager.supabaseClient {
-                        _ = await UserProfileService.shared.fetchAndSaveProfile(supabaseClient: client, modelContext: modelContext)
+                    if let userId = authManager.supabaseClient?.auth.currentUser?.id {
+                        let fetchUseCase = dependencies.userProfileDependencyContainer.makeFetchUserProfileUseCase()
+                        _ = await fetchUseCase.execute(userId: userId)
                     }
                 }
-            } else if oldValue == true && newValue == false { // User explicitly logged out (not initial state)
-                stopForegroundCheckTimer() // Stop foreground check
-
-                // IMPORTANT: On logout, we PRESERVE all local data (payments, profile, notifications)
-                // Data is only cleared when user explicitly chooses "Unlink Device" in Settings
-                // This allows seamless re-login with the same account on a personal device
+            } else if oldValue == true && newValue == false {
+                stopForegroundCheckTimer()
             }
         }
         .onChange(of: scenePhase) { oldValue, newPhase in
             if newPhase == .active {
-                // Only check session if already authenticated, otherwise it's handled by login/registration
                 if authManager.isAuthenticated {
                     authManager.checkSession()
-                    startForegroundCheckTimer() // Start timer when app becomes active
+                    startForegroundCheckTimer()
                 }
             } else if newPhase == .background {
-                // Update timestamp when going to background to track inactivity
                 if authManager.isAuthenticated {
                     authManager.updateLastActiveTimestamp()
                 }
-                stopForegroundCheckTimer() // Stop timer when app goes to background
+                stopForegroundCheckTimer()
             } else if newPhase == .inactive {
-                // For inactive, just update timestamp for inactivity timer
                 if authManager.isAuthenticated {
                     authManager.updateLastActiveTimestamp()
                 }
-                stopForegroundCheckTimer() // Stop timer when app goes inactive
+                stopForegroundCheckTimer()
             }
         }
         .alert(isPresented: $alert.isPresented) {
@@ -158,7 +131,6 @@ struct ContentView: View {
                     })
                 )
             } else {
-                // Fallback for no buttons or more than 2 (shouldn't happen with current usage)
                 return Alert(title: alertManager.title, message: alertManager.message)
             }
         }
@@ -179,10 +151,8 @@ struct ContentView: View {
             logger.info("Deep link opened: \(url.absoluteString)")
             if url.scheme == "pagosapp" && url.host == "reset-password" {
                 logger.info("Processing password reset deep link")
-                // Parse query parameters
                 if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
                    let queryItems = components.queryItems {
-                    // Check for code (PKCE flow) or direct tokens
                     var code: String?
                     var accessToken: String?
                     var refreshToken: String?
@@ -201,24 +171,22 @@ struct ContentView: View {
                     }
 
                     if let authCode = code {
-                        // PKCE flow: exchange code for session
                         Task {
                             do {
-                                let session = try await supabaseClient.auth.exchangeCodeForSession(authCode: authCode)
+                                let session = try await dependencies.supabaseClient.auth.exchangeCodeForSession(authCode: authCode)
                                 resetAccessToken = session.accessToken
                                 resetRefreshToken = session.refreshToken
                                 showResetPassword = true
-                                logger.info("Exchanged code for session, showing reset password view")
+                                logger.info("Exchanged code for session")
                             } catch {
-                                logger.error("Failed to exchange code for session: \(error)")
+                                logger.error("Failed to exchange code: \(error)")
                             }
                         }
                     } else if let access = accessToken, let refresh = refreshToken {
-                        // Direct tokens flow
                         resetAccessToken = access
                         resetRefreshToken = refresh
                         showResetPassword = true
-                        logger.info("Using direct tokens, showing reset password view")
+                        logger.info("Using direct tokens")
                     } else {
                         logger.error("Missing code or tokens in URL")
                     }
@@ -229,13 +197,12 @@ struct ContentView: View {
                 logger.info("URL does not match expected scheme/host")
             }
         }
-        .withErrorHandling() // Global error handling
+        .withErrorHandling()
     }
     
     private func startForegroundCheckTimer() {
-        // Ensure only one task is active
         stopForegroundCheckTimer()
-        
+
         foregroundCheckTask = Task { @MainActor in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(foregroundCheckInterval))
@@ -257,7 +224,7 @@ struct ContentView: View {
 
     ContentView()
         .environment(dependencies.authenticationManager)
-        .environment(dependencies.paymentSyncManager)
+        .environment(dependencies.paymentSyncCoordinator)
         .environment(dependencies.settingsManager)
         .environment(AlertManager())
 }

@@ -1,18 +1,15 @@
-
 import SwiftUI
 
 struct LoginView: View {
-    @Environment(PasswordRecoveryUseCase.self) private var passwordRecoveryUseCase
-    @State private var email = ""
-    @State private var password = ""
-    @State private var errorMessage: String?
+    @State private var viewModel: LoginViewModel
     @State private var showEmailPasswordLogin: Bool = false
-    @State private var isLoading = false
+    @Environment(\.dismiss) var dismiss
 
-    var onLogin: (String, String) async -> AuthenticationError?
-    var onBiometricLogin: () async -> Void
+    var onLoginSuccess: ((AuthSession) -> Void)?
 
-    var isBiometricLoginEnabled: Bool
+    init(loginViewModel: LoginViewModel) {
+        _viewModel = State(wrappedValue: loginViewModel)
+    }
     
     var body: some View {
         NavigationStack {
@@ -23,24 +20,24 @@ struct LoginView: View {
                     .font(.largeTitle).bold()
                     .foregroundColor(Color("AppTextPrimary"))
 
-                if isBiometricLoginEnabled && !showEmailPasswordLogin {
-                    Image(systemName: "faceid")
+                if viewModel.canUseBiometric && !showEmailPasswordLogin {
+                    Image(systemName: biometricIcon)
                         .font(.system(size: 80))
                         .foregroundColor(Color("AppPrimary"))
 
-                    Text("Usa Face ID para acceder")
+                    Text("Usa \(biometricName) para acceder")
                         .font(.headline)
                         .foregroundColor(Color("AppTextPrimary"))
                         .padding(.top, 8)
 
-                    Button(action: { 
-                        Task { 
-                            await onBiometricLogin()
+                    Button(action: {
+                        Task {
+                            await viewModel.loginWithBiometric()
                         }
                     }) {
                         HStack {
-                            Image(systemName: "faceid")
-                            Text("Ingresar con Face ID")
+                            Image(systemName: biometricIcon)
+                            Text("Ingresar con \(biometricName)")
                         }
                         .font(.headline)
                         .foregroundColor(.white)
@@ -50,11 +47,13 @@ struct LoginView: View {
                         .cornerRadius(10)
                     }
                     .padding(.top, 20)
+                    .disabled(viewModel.isLoading)
                 } else {
                     Image(systemName: "lock.shield.fill")
                         .font(.system(size: 80))
                         .foregroundColor(Color("AppTextSecondary"))
-                    TextField("Correo electrónico", text: $email)
+
+                    TextField("Correo electrónico", text: $viewModel.email)
                         .keyboardType(.emailAddress)
                         .textContentType(.emailAddress)
                         .autocapitalization(.none)
@@ -62,85 +61,148 @@ struct LoginView: View {
                         .padding()
                         .background(Color("AppBackground"))
                         .cornerRadius(10)
-                        .disabled(isLoading)
-                    
-                    SecureField("Contraseña", text: $password)
-                        .textContentType(.password)
-                        .padding()
-                        .background(Color("AppBackground"))
-                        .cornerRadius(10)
-                        .disabled(isLoading)
-                    
-                    if let errorMessage = errorMessage {
+                        .disabled(viewModel.isLoading)
+
+                    HStack {
+                        if viewModel.showPassword {
+                            TextField("Contraseña", text: $viewModel.password)
+                                .textContentType(.password)
+                        } else {
+                            SecureField("Contraseña", text: $viewModel.password)
+                                .textContentType(.password)
+                        }
+
+                        Button(action: {
+                            viewModel.showPassword.toggle()
+                        }) {
+                            Image(systemName: viewModel.showPassword ? "eye.slash.fill" : "eye.fill")
+                                .foregroundColor(Color("AppTextSecondary"))
+                        }
+                    }
+                    .padding()
+                    .background(Color("AppBackground"))
+                    .cornerRadius(10)
+                    .disabled(viewModel.isLoading)
+
+                    if let errorMessage = viewModel.errorMessage {
                         Text(errorMessage)
-                            .foregroundColor(.red) // Keeping red for error messages
+                            .foregroundColor(.red)
                             .font(.caption)
                     }
-                    
-                    Button(action: { 
-                        Task { 
-                            isLoading = true
-                            errorMessage = await onLogin(email, password)?.localizedDescription
-                            isLoading = false
+
+                    Button(action: {
+                        Task {
+                            await viewModel.login()
                         }
                     }) {
                         HStack {
-                            if isLoading {
+                            if viewModel.isLoading {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                     .scaleEffect(0.8)
                             }
-                            Text(isLoading ? "Iniciando sesión..." : "Iniciar Sesión")
+                            Text(viewModel.isLoading ? "Iniciando sesión..." : "Iniciar Sesión")
                         }
                         .font(.headline)
-                        .foregroundColor(.white) // Keeping white for text on primary button
+                        .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color("AppPrimary"))
+                        .background(viewModel.isFormValid ? Color("AppPrimary") : Color("AppPrimary").opacity(0.5))
                         .cornerRadius(10)
                     }
-                    .disabled(isLoading)
-                    
-                    // Added Registration Link
-                    NavigationLink(destination: RegistrationView()) {
+                    .disabled(viewModel.isLoading || !viewModel.isFormValid)
+
+                    // Registration Link
+                    // TODO: Get RegisterViewModel from DI Container
+                    NavigationLink(destination: Text("Registro temporalmente deshabilitado")) {
                         Text("¿No tienes cuenta? Regístrate aquí")
                             .font(.callout)
                             .padding(.top)
                             .foregroundColor(Color("AppPrimary"))
                     }
-                    .disabled(isLoading)
-                    
-                    NavigationLink(destination: ForgotPasswordView(passwordRecoveryUseCase: passwordRecoveryUseCase)) {
+                    .disabled(viewModel.isLoading)
+
+                    NavigationLink(destination: ForgotPasswordView(passwordRecoveryUseCase: viewModel.getPasswordRecoveryUseCase())) {
                         Text("¿Olvidaste tu contraseña?")
                             .font(.callout)
                             .padding(.top, 5)
                             .foregroundColor(Color("AppTextSecondary"))
                     }
-                    .disabled(isLoading)
+                    .disabled(viewModel.isLoading)
+
+                    if viewModel.canUseBiometric {
+                        Button(action: {
+                            showEmailPasswordLogin = false
+                        }) {
+                            Text("Usar \(biometricName)")
+                                .font(.callout)
+                                .padding(.top, 5)
+                                .foregroundColor(Color("AppTextSecondary"))
+                        }
+                        .disabled(viewModel.isLoading)
+                    }
                 }
                 
                 Spacer()
             }
             .padding()
             .overlay {
-                if isLoading {
+                if viewModel.isLoading {
                     Color.black.opacity(0.1)
                         .ignoresSafeArea()
                         .allowsHitTesting(true)
                 }
             }
             .onAppear {
-                // If biometrics are enabled, start with biometric login view
-                if isBiometricLoginEnabled {
-                    showEmailPasswordLogin = false
-                } else {
-                    showEmailPasswordLogin = true
+                Task {
+                    // Check biometric availability
+                    let canUse = await viewModel.canUseBiometricLogin()
+                    let biometricType = await viewModel.getBiometricType()
+
+                    // If biometrics are enabled, start with biometric login view
+                    if canUse && biometricType != .none {
+                        showEmailPasswordLogin = false
+                    } else {
+                        showEmailPasswordLogin = true
+                    }
+                }
+
+                // Set callback
+                viewModel.onLoginSuccess = onLoginSuccess
+            }
+            .alert("Error", isPresented: $viewModel.showError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
                 }
             }
         }
     }
+
+    // MARK: - Computed Properties
+
+    private var biometricIcon: String {
+        switch viewModel.biometricType {
+        case .faceID:
+            return "faceid"
+        case .touchID:
+            return "touchid"
+        case .opticID:
+            return "opticid"
+        case .none:
+            return "faceid"
+        }
+    }
+
+    private var biometricName: String {
+        viewModel.biometricType.description
+    }
 }
 
 #Preview {
-    LoginView(onLogin: { _,_ in return .wrongCredentials }, onBiometricLogin: { }, isBiometricLoginEnabled: true)
+    let dependencies = AppDependencies.mock()
+    let authContainer = AuthDependencyContainer(supabaseClient: dependencies.supabaseClient)
+
+    LoginView(loginViewModel: authContainer.makeLoginViewModel())
 }

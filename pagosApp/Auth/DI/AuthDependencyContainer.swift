@@ -2,6 +2,131 @@
 //  AuthDependencyContainer.swift
 //  pagosApp
 //
-//  Created by miguel tomairo on 27/12/25.
+//  Dependency Injection Container for Auth module
+//  Clean Architecture - DI Layer
 //
 
+import Foundation
+import Supabase
+
+/// Dependency injection container for Auth module
+/// Manages creation and lifecycle of all Auth dependencies
+@MainActor
+final class AuthDependencyContainer {
+    // MARK: - External Dependencies
+
+    private let supabaseClient: SupabaseClient
+
+    init(supabaseClient: SupabaseClient) {
+        self.supabaseClient = supabaseClient
+    }
+
+    // MARK: - Data Sources
+
+    private lazy var authRemoteDataSource: AuthRemoteDataSource = {
+        SupabaseAuthDataSource(client: supabaseClient)
+    }()
+
+    private lazy var authLocalDataSource: AuthLocalDataSource = {
+        KeychainAuthDataSource()
+    }()
+
+    // MARK: - Mappers
+
+    private lazy var authDTOMapper: SupabaseAuthDTOMapper = {
+        SupabaseAuthDTOMapper()
+    }()
+
+    // MARK: - Repositories
+
+    func makeAuthRepository() -> AuthRepositoryProtocol {
+        AuthRepositoryImpl(
+            remoteDataSource: authRemoteDataSource,
+            localDataSource: authLocalDataSource,
+            mapper: authDTOMapper
+        )
+    }
+
+    func makeSessionRepository() -> SessionRepositoryProtocol {
+        SessionRepositoryImpl()
+    }
+
+    func makeBiometricRepository() -> BiometricRepositoryProtocol {
+        BiometricRepositoryImpl()
+    }
+
+    // MARK: - Use Cases
+
+    func makeLoginUseCase() -> LoginUseCase {
+        LoginUseCase(
+            authRepository: makeAuthRepository()
+        )
+    }
+
+    func makeRegisterUseCase() -> RegisterUseCase {
+        RegisterUseCase(
+            authRepository: makeAuthRepository()
+        )
+    }
+
+    func makeLogoutUseCase() -> LogoutUseCase {
+        LogoutUseCase(
+            authRepository: makeAuthRepository(),
+            sessionRepository: makeSessionRepository()
+        )
+    }
+
+    func makeBiometricLoginUseCase() -> BiometricLoginUseCase {
+        BiometricLoginUseCase(
+            biometricRepository: makeBiometricRepository(),
+            authRepository: makeAuthRepository()
+        )
+    }
+
+    func makeValidateSessionUseCase() -> ValidateSessionUseCase {
+        ValidateSessionUseCase(
+            sessionRepository: makeSessionRepository()
+        )
+    }
+
+    func makeRefreshSessionUseCase() -> RefreshSessionUseCase {
+        RefreshSessionUseCase(
+            authRepository: makeAuthRepository(),
+            sessionRepository: makeSessionRepository()
+        )
+    }
+
+    func makePasswordRecoveryUseCase() -> PasswordRecoveryUseCase {
+        // TODO: Migrate PasswordRecoveryRepository to Clean Architecture
+        // For now, create a temporary repository using Supabase client directly
+        fatalError("PasswordRecoveryUseCase needs migration to Clean Architecture - use AuthenticationManager.sendPasswordReset instead")
+    }
+
+    // MARK: - ViewModels
+
+    func makeLoginViewModel() -> LoginViewModel {
+        LoginViewModel(
+            loginUseCase: makeLoginUseCase(),
+            biometricLoginUseCase: makeBiometricLoginUseCase(),
+            passwordRecoveryUseCase: makePasswordRecoveryUseCase()
+        )
+    }
+
+    func makeRegisterViewModel() -> RegisterViewModel {
+        RegisterViewModel(
+            registerUseCase: makeRegisterUseCase()
+        )
+    }
+
+    func makeForgotPasswordViewModel() -> ForgotPasswordViewModel {
+        ForgotPasswordViewModel(
+            passwordRecoveryUseCase: makePasswordRecoveryUseCase()
+        )
+    }
+
+    func makeResetPasswordViewModel() -> ResetPasswordViewModel {
+        ResetPasswordViewModel(
+            passwordRecoveryUseCase: makePasswordRecoveryUseCase()
+        )
+    }
+}

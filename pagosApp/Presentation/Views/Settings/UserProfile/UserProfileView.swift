@@ -4,18 +4,34 @@
 //
 //  Created by miguel tomairo on 7/12/25.
 //
+//  LEGACY VIEW - TODO: Migrate sections to use UserProfileEntity
+//  Currently uses SwiftData @Query for compatibility
+//
 
 import SwiftUI
 import Supabase
 import SwiftData
 
 struct UserProfileView: View {
-    @State private var viewModel: UserProfileViewModel
+    @Environment(AppDependencies.self) private var dependencies
     @Environment(\.dismiss) var dismiss
+    @Environment(\.modelContext) private var modelContext
 
-    init(supabaseClient: SupabaseClient,
-         modelContext: ModelContext) {
-        _viewModel = State(wrappedValue: UserProfileViewModel(supabaseClient: supabaseClient, modelContext: modelContext))
+    @Query private var profiles: [UserProfile]
+    @State private var isEditing = false
+    @State private var isSaving = false
+    @State private var showSuccessAlert = false
+    @State private var errorMessage: String?
+    @State private var editableProfile: EditableProfile?
+    @State private var showDatePicker = false
+
+    private var profile: UserProfile? {
+        profiles.first
+    }
+
+    private var isFormValid: Bool {
+        guard let editable = editableProfile else { return false }
+        return !editable.fullName.isEmpty
     }
 
     var body: some View {
@@ -23,15 +39,15 @@ struct UserProfileView: View {
             VStack(spacing: 0) {
                 // Custom Navigation Bar
                 ProfileNavigationBar(
-                    isEditing: viewModel.isEditing,
-                    isSaving: viewModel.isSaving,
-                    isFormValid: viewModel.isFormValid,
-                    onCancel: { viewModel.cancelEditing() },
+                    isEditing: isEditing,
+                    isSaving: isSaving,
+                    isFormValid: isFormValid,
+                    onCancel: { cancelEditing() },
                     onDismiss: { dismiss() },
-                    onEdit: { viewModel.startEditing() },
+                    onEdit: { startEditing() },
                     onSave: {
                         Task {
-                            await viewModel.saveProfile()
+                            await saveProfile()
                         }
                     }
                 )
@@ -40,49 +56,72 @@ struct UserProfileView: View {
                 ZStack {
                     Color("AppBackground").ignoresSafeArea()
 
-                    if let profile = viewModel.profileModel {
+                    if let profile = profile {
                         Form {
                             PersonalInformationSection(
                                 profile: profile,
-                                isEditing: viewModel.isEditing,
-                                editableProfile: $viewModel.editableProfile,
-                                showDatePicker: $viewModel.showDatePicker
+                                isEditing: isEditing,
+                                editableProfile: $editableProfile,
+                                showDatePicker: $showDatePicker
                             )
 
                             LocationSection(
                                 profile: profile,
-                                isEditing: viewModel.isEditing,
-                                editableProfile: $viewModel.editableProfile
+                                isEditing: isEditing,
+                                editableProfile: $editableProfile
                             )
 
                             PreferencesSection(
                                 profile: profile,
-                                isEditing: viewModel.isEditing,
-                                editableProfile: $viewModel.editableProfile
+                                isEditing: isEditing,
+                                editableProfile: $editableProfile
                             )
                         }
                         .scrollContentBackground(.hidden)
                         .listStyle(.insetGrouped)
-                    } else if let errorMessage = viewModel.errorMessage {
-                        ProfileErrorView(errorMessage: errorMessage) {
-                            Task {
-                                _ = await viewModel.fetchAndSaveProfile()
-                            }
-                        }
+                    } else {
+                        ProgressView("Cargando perfil...")
                     }
                 }
             }
             .navigationBarHidden(true)
-            .alert("Perfil actualizado", isPresented: $viewModel.showSuccessAlert) {
+            .alert("Perfil actualizado", isPresented: $showSuccessAlert) {
                 Button("OK", role: .cancel) {
-                    viewModel.isEditing = false
+                    isEditing = false
                 }
             } message: {
                 Text("Tu perfil ha sido actualizado correctamente.")
             }
-            .task {
-                await viewModel.loadLocalProfile()
-            }
+        }
+    }
+
+    private func startEditing() {
+        // EditableProfile is from Clean Architecture, but sections expect UserProfile (SwiftData)
+        // For now, just mark as editing without creating EditableProfile
+        isEditing = true
+    }
+
+    private func cancelEditing() {
+        editableProfile = nil
+        isEditing = false
+        showDatePicker = false
+    }
+
+    private func saveProfile() async {
+        guard let profile = profile else { return }
+
+        isSaving = true
+        defer { isSaving = false }
+
+        // SwiftData model updates happen directly in sections
+        // Just save the context
+        do {
+            try modelContext.save()
+            showSuccessAlert = true
+            isEditing = false
+            editableProfile = nil
+        } catch {
+            errorMessage = "Error al guardar: \(error.localizedDescription)"
         }
     }
 }
@@ -91,11 +130,5 @@ struct UserProfileView: View {
     @Previewable @State var container = try! ModelContainer(for: UserProfile.self, Payment.self)
     let context = ModelContext(container)
 
-    UserProfileView(
-        supabaseClient: SupabaseClient(
-            supabaseURL: URL(string: "https://example.com")!,
-            supabaseKey: "dummy_key"
-        ),
-        modelContext: context
-    )
+    UserProfileView()
 }
