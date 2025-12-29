@@ -29,7 +29,7 @@ final class EditPaymentViewModel {
 
     // MARK: - Dependencies (Use Cases)
 
-    private let paymentEntity: PaymentEntity
+    private let paymentEntity: Payment
     private let updatePaymentUseCase: UpdatePaymentUseCase
     private let togglePaymentStatusUseCase: TogglePaymentStatusUseCase
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "EditPaymentViewModel")
@@ -59,7 +59,7 @@ final class EditPaymentViewModel {
     // MARK: - Initialization
 
     init(
-        payment: PaymentEntity,
+        payment: Payment,
         updatePaymentUseCase: UpdatePaymentUseCase,
         togglePaymentStatusUseCase: TogglePaymentStatusUseCase
     ) {
@@ -100,7 +100,7 @@ final class EditPaymentViewModel {
         defer { isLoading = false }
 
         // Create updated payment entity
-        let updatedPayment = PaymentEntity(
+        let updatedPayment = Payment(
             id: paymentEntity.id,
             name: name,
             amount: amountValue,
@@ -143,7 +143,7 @@ final class EditPaymentViewModel {
         defer { isLoading = false }
 
         // Create current payment entity with current UI values
-        let currentPayment = PaymentEntity(
+        let currentPayment = Payment(
             id: paymentEntity.id,
             name: name,
             amount: amountValue ?? paymentEntity.amount,

@@ -23,7 +23,7 @@ final class UpdatePaymentUseCase {
     /// Execute the update payment use case
     /// - Parameter payment: The payment entity to update
     /// - Returns: Result with updated payment or error
-    func execute(_ payment: PaymentEntity) async -> Result<PaymentEntity, PaymentError> {
+    func execute(_ payment: Payment) async -> Result<Payment, PaymentError> {
         logger.info("🔄 Updating payment: \(payment.name)")
 
         // 1. Validate payment
@@ -41,7 +41,7 @@ final class UpdatePaymentUseCase {
         var updatedPayment = payment
         if payment.syncStatus == .synced {
             // Mark as modified when updating a synced payment
-            updatedPayment = PaymentEntity(
+            updatedPayment = Payment(
                 id: payment.id,
                 name: payment.name,
                 amount: payment.amount,

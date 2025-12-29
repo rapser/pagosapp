@@ -1,20 +1,20 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @Environment(SessionCoordinator.self) private var sessionCoordinator
     @Environment(AlertManager.self) private var alertManager
     @Environment(SettingsStore.self) private var settingsStore
-    @Environment(PaymentSyncCoordinator.self) private var syncManager
+    @State private var viewModel: SettingsViewModel
 
-    @State private var showingSyncError = false
-    @State private var syncErrorMessage = ""
+    init(viewModel: SettingsViewModel) {
+        self._viewModel = State(initialValue: viewModel)
+    }
 
     var body: some View {
         NavigationStack {
             Form {
                 SyncSectionView(
                     onSyncTapped: handleSyncTapped,
-                    onRetrySyncTapped: clearSyncError,
+                    onRetrySyncTapped: handleRetrySyncTapped,
                     onDatabaseResetTapped: showDatabaseResetAlert
                 )
 
@@ -30,24 +30,24 @@ struct SettingsView: View {
                 )
             }
             .navigationTitle("Ajustes")
-            .alert("Error de sincronización", isPresented: $showingSyncError) {
+            .alert("Error de sincronización", isPresented: $viewModel.showingSyncError) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text(syncErrorMessage)
+                Text(viewModel.syncErrorMessage)
             }
             .onAppear {
                 Task {
-                    await syncManager.updatePendingSyncCount()
+                    await viewModel.updatePendingSyncCount()
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PaymentsDidSync"))) { _ in
                 Task {
-                    await syncManager.updatePendingSyncCount()
+                    await viewModel.updatePendingSyncCount()
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PaymentDidChange"))) { _ in
                 Task {
-                    await syncManager.updatePendingSyncCount()
+                    await viewModel.updatePendingSyncCount()
                 }
             }
         }
@@ -55,23 +55,13 @@ struct SettingsView: View {
 
     private func handleSyncTapped() {
         Task {
-            await performSync()
+            await viewModel.handleSyncTapped()
         }
     }
-    
-    private func performSync() async {
-        do {
-            try await syncManager.performSync()
-        } catch {
-            syncErrorMessage = error.localizedDescription
-            showingSyncError = true
-        }
-    }
-    
-    private func clearSyncError() {
-        syncManager.syncError = nil
+
+    private func handleRetrySyncTapped() {
         Task {
-            await performSync()
+            await viewModel.clearSyncError()
         }
     }
 
@@ -82,7 +72,7 @@ struct SettingsView: View {
             buttons: [
                 AlertButton(title: Text("Reparar"), role: .destructive) {
                     Task {
-                        let success = await syncManager.clearLocalDatabase(force: true)
+                        let success = await viewModel.clearLocalDatabase()
                         if success {
                             alertManager.show(
                                 title: Text("Base de Datos Reparada"),
@@ -112,7 +102,7 @@ struct SettingsView: View {
             buttons: [
                 AlertButton(title: Text("Cerrar Sesión"), role: .cancel) {
                     Task {
-                        await sessionCoordinator.logout()
+                        await viewModel.logout()
                     }
                 },
                 AlertButton(title: Text("Cancelar"), role: .cancel) { }
@@ -121,7 +111,7 @@ struct SettingsView: View {
     }
 
     private func showUnlinkDeviceAlert() {
-        let pendingCount = syncManager.pendingSyncCount
+        let pendingCount = viewModel.pendingSyncCount
         let warningMessage = pendingCount > 0
             ? "⚠️ Tienes \(pendingCount) pago(s) sin sincronizar.\n\nEsta acción eliminará TODOS tus datos locales (pagos, perfil y notificaciones) de este dispositivo de forma permanente.\n\n¿Estás completamente seguro?"
             : "Esta acción eliminará TODOS tus datos locales (pagos, perfil y notificaciones) de este dispositivo de forma permanente.\n\nTus datos en la nube están seguros y podrás descargarlos nuevamente al iniciar sesión en otro dispositivo.\n\n¿Estás seguro?"
@@ -132,7 +122,7 @@ struct SettingsView: View {
             buttons: [
                 AlertButton(title: Text("Desvincular"), role: .destructive) {
                     Task {
-                        await sessionCoordinator.unlinkDevice()
+                        await viewModel.unlinkDevice()
                     }
                 },
                 AlertButton(title: Text("Cancelar"), role: .cancel) { }

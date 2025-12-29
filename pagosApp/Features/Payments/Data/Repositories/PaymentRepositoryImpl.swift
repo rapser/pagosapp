@@ -71,22 +71,22 @@ final class PaymentRepositoryImpl: PaymentRepositoryProtocol {
 
     // MARK: - Local Operations (returns Sendable entities)
 
-    func getAllLocalPayments() async throws -> [PaymentEntity] {
+    func getAllLocalPayments() async throws -> [Payment] {
         logger.debug("📱 Fetching all local payments")
         return try await _getAllLocalPayments()
     }
 
-    func getLocalPayment(id: UUID) async throws -> PaymentEntity? {
+    func getLocalPayment(id: UUID) async throws -> Payment? {
         logger.debug("📱 Fetching local payment: \(id)")
         return try await _getLocalPayment(id: id)
     }
 
-    func savePayment(_ payment: PaymentEntity) async throws {
+    func savePayment(_ payment: Payment) async throws {
         logger.debug("💾 Saving payment locally: \(payment.name)")
         try await _savePayment(payment)
     }
 
-    func savePayments(_ payments: [PaymentEntity]) async throws {
+    func savePayments(_ payments: [Payment]) async throws {
         logger.debug("💾 Saving \(payments.count) payments locally")
         try await _savePayments(payments)
     }
@@ -109,22 +109,22 @@ final class PaymentRepositoryImpl: PaymentRepositoryProtocol {
     // MARK: - Private @MainActor methods for SwiftData operations
 
     @MainActor
-    private func _getAllLocalPayments() async throws -> [PaymentEntity] {
+    private func _getAllLocalPayments() async throws -> [Payment] {
         return try await localDataSource.fetchAll()
     }
 
     @MainActor
-    private func _getLocalPayment(id: UUID) async throws -> PaymentEntity? {
+    private func _getLocalPayment(id: UUID) async throws -> Payment? {
         return try await localDataSource.fetch(id: id)
     }
 
     @MainActor
-    private func _savePayment(_ payment: PaymentEntity) async throws {
+    private func _savePayment(_ payment: Payment) async throws {
         try await localDataSource.save(payment)
     }
 
     @MainActor
-    private func _savePayments(_ payments: [PaymentEntity]) async throws {
+    private func _savePayments(_ payments: [Payment]) async throws {
         try await localDataSource.saveAll(payments)
     }
 

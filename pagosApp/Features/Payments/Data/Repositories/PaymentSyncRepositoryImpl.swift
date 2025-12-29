@@ -42,19 +42,19 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
 
     // MARK: - Upload
 
-    func uploadPayments(_ payments: [PaymentEntity], userId: UUID) async throws {
+    func uploadPayments(_ payments: [Payment], userId: UUID) async throws {
         logger.info("📤 Uploading \(payments.count) payments")
 
         // Convert entities to DTOs
-        let dtos = mapper.toRemoteDTO(from: payments, userId: userId)
+        let dtos = mapper.toDTO(from: payments, userId: userId)
 
         // Upload to remote
         try await remoteDataSource.upsertAll(dtos, userId: userId)
 
         // Update local sync status
-        var updatedPayments: [PaymentEntity] = []
+        var updatedPayments: [Payment] = []
         for payment in payments {
-            let updated = PaymentEntity(
+            let updated = Payment(
                 id: payment.id,
                 name: payment.name,
                 amount: payment.amount,
@@ -77,7 +77,7 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
 
     // MARK: - Download
 
-    func downloadPayments(userId: UUID) async throws -> [PaymentEntity] {
+    func downloadPayments(userId: UUID) async throws -> [Payment] {
         logger.info("📥 Downloading payments for user: \(userId)")
 
         // Fetch from remote
@@ -100,7 +100,7 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
 
     // MARK: - Pending Payments
 
-    func getPendingPayments() async throws -> [PaymentEntity] {
+    func getPendingPayments() async throws -> [Payment] {
         logger.debug("📊 Getting pending payments")
         let entities = try await _getAllLocalPayments()
 
@@ -129,7 +129,7 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
             return
         }
 
-        let updated = PaymentEntity(
+        let updated = Payment(
             id: payment.id,
             name: payment.name,
             amount: payment.amount,
@@ -149,22 +149,22 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
     // MARK: - Private @MainActor helpers
 
     @MainActor
-    private func _getAllLocalPayments() async throws -> [PaymentEntity] {
+    private func _getAllLocalPayments() async throws -> [Payment] {
         return try await localDataSource.fetchAll()
     }
 
     @MainActor
-    private func _getLocalPayment(id: UUID) async throws -> PaymentEntity? {
+    private func _getLocalPayment(id: UUID) async throws -> Payment? {
         return try await localDataSource.fetch(id: id)
     }
 
     @MainActor
-    private func _savePaymentLocally(_ payment: PaymentEntity) async throws {
+    private func _savePaymentLocally(_ payment: Payment) async throws {
         try await localDataSource.save(payment)
     }
 
     @MainActor
-    private func _savePaymentsLocally(_ payments: [PaymentEntity]) async throws {
+    private func _savePaymentsLocally(_ payments: [Payment]) async throws {
         try await localDataSource.saveAll(payments)
     }
 }

@@ -11,11 +11,11 @@ import Foundation
 /// Protocol defining calendar-specific payment queries
 protocol CalendarRepositoryProtocol {
     /// Get all payments for a specific date
-    func getPayments(forDate date: Date) async -> Result<[PaymentEntity], PaymentError>
+    func getPayments(forDate date: Date) async -> Result<[Payment], PaymentError>
 
     /// Get all payments for a specific month
-    func getPayments(forMonth month: Date) async -> Result<[PaymentEntity], PaymentError>
+    func getPayments(forMonth month: Date) async -> Result<[Payment], PaymentError>
 
     /// Get all payments (for calendar indicators)
-    func getAllPayments() async -> Result<[PaymentEntity], PaymentError>
+    func getAllPayments() async -> Result<[Payment], PaymentError>
 }

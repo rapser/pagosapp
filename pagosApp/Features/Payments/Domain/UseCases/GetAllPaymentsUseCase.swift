@@ -20,7 +20,7 @@ final class GetAllPaymentsUseCase {
 
     /// Execute get all payments
     /// - Returns: Result with array of payments or error
-    func execute() async -> Result<[PaymentEntity], PaymentError> {
+    func execute() async -> Result<[Payment], PaymentError> {
         logger.debug("📱 Fetching all local payments")
 
         do {

@@ -11,17 +11,17 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
         self.modelContext = modelContext
     }
 
-    func fetchAll() async throws -> [PaymentEntity] {
+    func fetchAll() async throws -> [Payment] {
         logger.debug("📱 Fetching all payments from SwiftData")
-        let descriptor = FetchDescriptor<Payment>()
+        let descriptor = FetchDescriptor<PaymentEntity>()
         let payments = try modelContext.fetch(descriptor)
         logger.debug("✅ Fetched \(payments.count) payments from SwiftData")
         return payments.map { PaymentMapper.toDomain(from: $0) }
     }
 
-    func fetch(id: UUID) async throws -> PaymentEntity? {
+    func fetch(id: UUID) async throws -> Payment? {
         logger.debug("📱 Fetching payment by ID: \(id)")
-        let descriptor = FetchDescriptor<Payment>()
+        let descriptor = FetchDescriptor<PaymentEntity>()
         let payments = try modelContext.fetch(descriptor)
         guard let payment = payments.first(where: { $0.id == id }) else {
             logger.debug("❌ Payment not found: \(id)")
@@ -31,10 +31,10 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
         return PaymentMapper.toDomain(from: payment)
     }
 
-    func save(_ payment: PaymentEntity) async throws {
+    func save(_ payment: Payment) async throws {
         logger.debug("💾 Saving payment: \(payment.name)")
 
-        let descriptor = FetchDescriptor<Payment>()
+        let descriptor = FetchDescriptor<PaymentEntity>()
         let existingPayments = try modelContext.fetch(descriptor)
 
         if let existing = existingPayments.first(where: { $0.id == payment.id }) {
@@ -49,7 +49,7 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
             existing.lastSyncedAt = payment.lastSyncedAt
             logger.debug("🔄 Updated existing payment: \(payment.name)")
         } else {
-            let newPayment = PaymentMapper.toModel(from: payment)
+            let newPayment = PaymentMapper.toEntity(from: payment)
             modelContext.insert(newPayment)
             logger.debug("➕ Inserted new payment: \(payment.name)")
         }
@@ -58,7 +58,7 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
         logger.debug("✅ Payment saved: \(payment.name)")
     }
 
-    func saveAll(_ payments: [PaymentEntity]) async throws {
+    func saveAll(_ payments: [Payment]) async throws {
         guard !payments.isEmpty else {
             logger.debug("⚠️ No payments to save")
             return
@@ -73,10 +73,10 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
         logger.debug("✅ \(payments.count) payments saved")
     }
 
-    func delete(_ payment: PaymentEntity) async throws {
+    func delete(_ payment: Payment) async throws {
         logger.debug("🗑️ Deleting payment: \(payment.name)")
 
-        let descriptor = FetchDescriptor<Payment>()
+        let descriptor = FetchDescriptor<PaymentEntity>()
         let existingPayments = try modelContext.fetch(descriptor)
 
         guard let existing = existingPayments.first(where: { $0.id == payment.id }) else {
@@ -89,7 +89,7 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
         logger.debug("✅ Payment deleted: \(payment.name)")
     }
 
-    func deleteAll(_ payments: [PaymentEntity]) async throws {
+    func deleteAll(_ payments: [Payment]) async throws {
         guard !payments.isEmpty else {
             logger.debug("⚠️ No payments to delete")
             return
@@ -107,7 +107,7 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
     func clear() async throws {
         logger.info("🗑️ Clearing all payments from SwiftData")
 
-        let descriptor = FetchDescriptor<Payment>()
+        let descriptor = FetchDescriptor<PaymentEntity>()
         let allPayments = try modelContext.fetch(descriptor)
 
         for payment in allPayments {

@@ -42,7 +42,9 @@ struct ContentView: View {
                             Label("Estadísticas", systemImage: "chart.pie.fill")
                         }
 
-                    SettingsView()
+                    SettingsView(
+                        viewModel: dependencies.settingsDependencyContainer.makeSettingsViewModel()
+                    )
                         .environment(alertManager)
                         .tabItem {
                             Label("Ajustes", systemImage: "gear")

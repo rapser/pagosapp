@@ -7,12 +7,12 @@ struct CalendarPaymentsView: View {
 
     private var paymentsForSelectedDate: [Payment] {
         guard let viewModel = viewModel else { return [] }
-        return viewModel.paymentsForSelectedDate.map { PaymentMapper.toModel(from: $0) }
+        return viewModel.paymentsForSelectedDate
     }
 
     private var allPayments: [Payment] {
         guard let viewModel = viewModel else { return [] }
-        return viewModel.allPayments.map { PaymentMapper.toModel(from: $0) }
+        return viewModel.allPayments
     }
 
     var body: some View {

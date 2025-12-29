@@ -35,17 +35,17 @@ struct PaymentDTO: Codable, Identifiable {
         case updatedAt = "updated_at"
     }
 
-    /// Initialize from local Payment model
-    init(from payment: Payment, userId: UUID) {
-        self.id = payment.id
+    /// Initialize from local PaymentEntity model
+    init(from entity: PaymentEntity, userId: UUID) {
+        self.id = entity.id
         self.userId = userId
-        self.name = payment.name
-        self.amount = payment.amount
-        self.currency = payment.currency.rawValue
-        self.dueDate = payment.dueDate
-        self.isPaid = payment.isPaid
-        self.category = payment.category.rawValue
-        self.eventIdentifier = payment.eventIdentifier
+        self.name = entity.name
+        self.amount = entity.amount
+        self.currency = entity.currency.rawValue
+        self.dueDate = entity.dueDate
+        self.isPaid = entity.isPaid
+        self.category = entity.category.rawValue
+        self.eventIdentifier = entity.eventIdentifier
         self.createdAt = nil
         self.updatedAt = nil
     }
@@ -150,11 +150,11 @@ struct PaymentDTO: Codable, Identifiable {
         return nil
     }
 
-    /// Convert to local Payment model
-    func toPayment() -> Payment {
+    /// Convert to local PaymentEntity model
+    func toEntity() -> PaymentEntity {
         let paymentCategory = PaymentCategory(rawValue: category) ?? .otro
         let paymentCurrency = Currency(rawValue: currency) ?? .pen
-        return Payment(
+        return PaymentEntity(
             id: id,
             name: name,
             amount: amount,
@@ -169,9 +169,9 @@ struct PaymentDTO: Codable, Identifiable {
     }
 }
 
-// MARK: - Payment Extension
+// MARK: - PaymentEntity Extension
 
-extension Payment {
+extension PaymentEntity {
     /// Convert to DTO for API communication
     func toDTO(userId: UUID) -> PaymentDTO {
         PaymentDTO(from: self, userId: userId)

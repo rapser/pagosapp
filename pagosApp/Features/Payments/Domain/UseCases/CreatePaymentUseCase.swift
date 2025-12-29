@@ -23,7 +23,7 @@ final class CreatePaymentUseCase {
     /// Execute the create payment use case
     /// - Parameter payment: The payment entity to create
     /// - Returns: Result with created payment or error
-    func execute(_ payment: PaymentEntity) async -> Result<PaymentEntity, PaymentError> {
+    func execute(_ payment: Payment) async -> Result<Payment, PaymentError> {
         logger.info("🔨 Creating payment: \(payment.name)")
 
         // 1. Validate payment
@@ -40,7 +40,7 @@ final class CreatePaymentUseCase {
         // 2. Set initial sync status
         let newPayment = payment
         // We need to ensure syncStatus is .local for new payments
-        // Note: PaymentEntity is immutable, so repository will handle this
+        // Note: Payment is immutable, so repository will handle this
 
         // 3. Save to repository
         do {

@@ -31,7 +31,7 @@ struct PaymentValidator {
     /// Validate complete payment entity
     /// - Parameter payment: The payment entity to validate
     /// - Throws: PaymentError if any validation fails
-    func validate(_ payment: PaymentEntity) throws {
+    func validate(_ payment: Payment) throws {
         try validateAmount(payment.amount)
         try validateDate(payment.dueDate)
 

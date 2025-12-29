@@ -68,7 +68,7 @@ final class AddPaymentViewModel {
         defer { isLoading = false }
 
         // Create payment entity
-        let payment = PaymentEntity(
+        let payment = Payment(
             id: UUID(),
             name: name,
             amount: amountValue,
