@@ -4,7 +4,6 @@
 //
 //  Dependency Injection Container
 //  Manages app-wide dependencies and eliminates Singleton pattern
-//  Created by Claude Code - Fase 2 Technical Debt Reduction
 //
 
 import Foundation
@@ -13,11 +12,10 @@ import Supabase
 import Observation
 import SwiftUI
 
-/// Concrete implementation of app dependencies
-/// This is the production DI container
+/// App-wide dependency injection container
 @MainActor
 @Observable
-final class AppDependencies: AppDependenciesProtocol {
+final class AppDependencies {
     // MARK: - Dependencies
 
     let settingsStore: SettingsStore
@@ -90,10 +88,9 @@ final class AppDependencies: AppDependenciesProtocol {
         )
     }
 
-    // MARK: - Convenience Initializer for Testing
+    // MARK: - Mock for Testing/Previews
 
     static func mock() -> AppDependencies {
-        
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try! ModelContainer(for: Payment.self, UserProfile.self, configurations: config)
         let mockSupabase = SupabaseClient(
@@ -104,5 +101,20 @@ final class AppDependencies: AppDependenciesProtocol {
             modelContext: container.mainContext,
             supabaseClient: mockSupabase
         )
+    }
+}
+
+// MARK: - Environment Key
+
+/// SwiftUI Environment key for dependency injection
+struct AppDependenciesKey: @preconcurrency EnvironmentKey {
+    @MainActor
+    static let defaultValue: AppDependencies = .mock()
+}
+
+extension EnvironmentValues {
+    var dependencies: AppDependencies {
+        get { self[AppDependenciesKey.self] }
+        set { self[AppDependenciesKey.self] = newValue }
     }
 }
