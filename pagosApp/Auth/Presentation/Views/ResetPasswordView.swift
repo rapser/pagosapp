@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import Supabase
 
 struct ResetPasswordView: View {
     @Bindable var viewModel: ResetPasswordViewModel

@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import Supabase
 
 struct ForgotPasswordView: View {
     @State private var viewModel: ForgotPasswordViewModel
