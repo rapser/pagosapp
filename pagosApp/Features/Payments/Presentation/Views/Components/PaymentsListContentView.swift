@@ -5,9 +5,7 @@ struct PaymentsListContentView: View {
     @Binding var showingAddPaymentSheet: Bool
 
     var body: some View {
-        VStack {
-            FilterPicker(selectedFilter: $viewModel.selectedFilter)
-
+        Group {
             if viewModel.isLoading {
                 LoadingIndicator()
             } else {
@@ -29,6 +27,12 @@ struct PaymentsListContentView: View {
                         }
                     }
                 )
+                .safeAreaInset(edge: .top, spacing: 0) {
+                    FilterPicker(selectedFilter: $viewModel.selectedFilter)
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                        .background(Color(uiColor: .systemGroupedBackground))
+                }
             }
         }
         .navigationTitle("Mis Pagos")
@@ -54,7 +58,6 @@ private struct FilterPicker: View {
             }
         }
         .pickerStyle(.segmented)
-        .padding(.horizontal)
     }
 }
 
