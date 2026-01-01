@@ -92,39 +92,60 @@ final class PaymentsListViewModel {
         }
     }
 
-    /// Delete a payment
+    /// Delete a payment with optimistic UI update
     func deletePayment(_ payment: PaymentUI) async {
-        isLoading = true
-        defer { isLoading = false }
+        // Optimistic update - remove from UI immediately
+        payments.removeAll { $0.id == payment.id }
 
+        // Perform actual delete in background
         let result = await deletePaymentUseCase.execute(paymentId: payment.id)
 
         switch result {
         case .success:
             logger.info("✅ Payment deleted: \(payment.name)")
-            // Removed fetchPayments() - SwiftData notification will trigger automatic update
+            // SwiftData notification will sync final state
 
         case .failure(let error):
             logger.error("❌ Failed to delete payment: \(error.errorCode)")
+            // Revert optimistic delete on failure - re-add payment
+            payments.append(payment)
             showError(for: error)
         }
     }
 
-    /// Toggle payment status
+    /// Toggle payment status with optimistic UI update
     func togglePaymentStatus(_ payment: PaymentUI) async {
-        isLoading = true
-        defer { isLoading = false }
+        // Optimistic update - update UI immediately for instant feedback
+        if let index = payments.firstIndex(where: { $0.id == payment.id }) {
+            let updatedPayment = PaymentUI(
+                id: payment.id,
+                name: payment.name,
+                amount: payment.amount,
+                currency: payment.currency,
+                dueDate: payment.dueDate,
+                isPaid: !payment.isPaid,  // Toggle immediately
+                category: payment.category,
+                eventIdentifier: payment.eventIdentifier,
+                syncStatus: payment.syncStatus,
+                lastSyncedAt: payment.lastSyncedAt
+            )
+            payments[index] = updatedPayment
+        }
 
-        // Convert UI -> Domain for Use Case
+        // Perform actual update in background (no loading state to avoid flicker)
         let result = await togglePaymentStatusUseCase.execute(payment.toDomain())
 
         switch result {
         case .success(let updatedPayment):
             logger.info("✅ Payment status updated: \(updatedPayment.name) - isPaid: \(updatedPayment.isPaid)")
-            // Removed fetchPayments() - SwiftData notification will trigger automatic update
+            // SwiftData notification will sync if there are differences
 
         case .failure(let error):
             logger.error("❌ Failed to update payment status: \(error.errorCode)")
+            // Revert optimistic update on failure
+            if let index = payments.firstIndex(where: { $0.id == payment.id }) {
+                payments[index] = payment
+            }
             showError(for: error)
         }
     }
