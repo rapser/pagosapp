@@ -73,7 +73,7 @@ final class PaymentsListViewModel {
 
     // MARK: - Data Operations
 
-    /// Fetch all payments from repository
+    /// Fetch all payments from repository (reads from local SwiftData - fast)
     func fetchPayments() async {
         isLoading = true
         defer { isLoading = false }
@@ -84,7 +84,7 @@ final class PaymentsListViewModel {
         case .success(let fetchedPayments):
             // Convert Domain -> UI
             payments = fetchedPayments.toUI()
-            logger.info("✅ Fetched \(fetchedPayments.count) payments")
+            logger.info("✅ Fetched \(fetchedPayments.count) payments from local storage")
 
         case .failure(let error):
             logger.error("❌ Failed to fetch payments: \(error.errorCode)")

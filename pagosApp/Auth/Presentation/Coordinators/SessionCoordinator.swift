@@ -129,9 +129,12 @@ final class SessionCoordinator {
         await sessionRepository.startSession()
         await sessionRepository.updateLastActiveTimestamp()
 
-        // Auto-sync payments after login
-        logger.info("🔄 Starting automatic sync after login")
-        try? await paymentSyncCoordinator.performSync()
+        // Sync payments in background (non-blocking)
+        // User will see local SwiftData immediately, sync updates in background
+        Task.detached { @MainActor in
+            self.logger.info("🔄 Starting background sync after login")
+            try? await self.paymentSyncCoordinator.performSync()
+        }
     }
 
     /// End current session
