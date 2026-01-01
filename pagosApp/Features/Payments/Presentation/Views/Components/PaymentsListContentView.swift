@@ -39,11 +39,7 @@ struct PaymentsListContentView: View {
         }
         .sheet(isPresented: $showingAddPaymentSheet) {
             AddPaymentView()
-                .onDisappear {
-                    Task {
-                        await viewModel.refresh()
-                    }
-                }
+            // Removed onDisappear refresh - SwiftData + @Observable handle updates automatically
         }
     }
 }

@@ -45,11 +45,11 @@ struct PaymentsListView: View {
         .onAppear {
             if viewModel == nil {
                 viewModel = dependencies.paymentDependencyContainer.makePaymentsListViewModel()
-            }
 
-            // Fetch payments when view appears
-            Task {
-                await viewModel?.fetchPayments()
+                // Only fetch on first load - subsequent updates come from SwiftData notifications
+                Task {
+                    await viewModel?.fetchPayments()
+                }
             }
         }
     }
