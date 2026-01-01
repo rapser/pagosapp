@@ -15,6 +15,13 @@ struct ContentView: View {
     @State private var resetToken: String?
     @State private var foregroundCheckTask: Task<Void, Never>?
 
+    init() {
+        // Configure UITabBar appearance once (global configuration)
+        UITabBar.appearance().backgroundColor = UIColor(named: "AppBackground")
+        UITabBar.appearance().unselectedItemTintColor = UIColor(named: "AppTextSecondary")
+        UITabBar.appearance().tintColor = UIColor(named: "AppPrimary")
+    }
+
     var body: some View {
         @Bindable var session = sessionCoordinator
         @Bindable var alert = alertManager
@@ -50,11 +57,7 @@ struct ContentView: View {
                             Label("Ajustes", systemImage: "gear")
                         }
                 }
-                .onAppear {
-                    UITabBar.appearance().backgroundColor = UIColor(named: "AppBackground")
-                    UITabBar.appearance().unselectedItemTintColor = UIColor(named: "AppTextSecondary")
-                    UITabBar.appearance().tintColor = UIColor(named: "AppPrimary")
-                }
+                // Removed onAppear - UITabBar.appearance() configured in init()
             } else {
                 let loginViewModel = dependencies.authDependencyContainer.makeLoginViewModel()
                 LoginView(loginViewModel: loginViewModel, onLoginSuccess: { session in
@@ -68,26 +71,14 @@ struct ContentView: View {
                 LoadingView()
             }
         }
-        .onAppear {
-            // Request calendar access via DataSource
-            dependencies.calendarEventDataSource.requestAccess { _ in }
-        }
+        // Removed onAppear for calendar permissions - moved to App init
         .onChange(of: sessionCoordinator.isAuthenticated) { oldValue, newValue in
             if newValue {
                 sessionCoordinator.updateLastActiveTimestamp()
                 startForegroundCheckTimer()
 
-                Task(priority: .utility) {
-                    await syncManager.performInitialSyncIfNeeded(isAuthenticated: true)
-                }
-
-                Task(priority: .background) {
-                    let getCurrentUserIdUseCase = dependencies.authDependencyContainer.makeGetCurrentUserIdUseCase()
-                    if let userId = await getCurrentUserIdUseCase.execute() {
-                        let fetchUseCase = dependencies.userProfileDependencyContainer.makeFetchUserProfileUseCase()
-                        _ = await fetchUseCase.execute(userId: userId)
-                    }
-                }
+                // Removed duplicate sync - SessionCoordinator.startSession() already handles sync
+                // Removed UserProfile fetch - will be loaded lazily when needed
             } else if oldValue == true && newValue == false {
                 stopForegroundCheckTimer()
             }
@@ -98,12 +89,8 @@ struct ContentView: View {
                     sessionCoordinator.checkSession()
                     startForegroundCheckTimer()
                 }
-            } else if newPhase == .background {
-                if sessionCoordinator.isAuthenticated {
-                    sessionCoordinator.updateLastActiveTimestamp()
-                }
-                stopForegroundCheckTimer()
-            } else if newPhase == .inactive {
+            } else if newPhase == .background || newPhase == .inactive {
+                // Combined .background and .inactive - same behavior
                 if sessionCoordinator.isAuthenticated {
                     sessionCoordinator.updateLastActiveTimestamp()
                 }

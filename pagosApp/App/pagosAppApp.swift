@@ -53,8 +53,9 @@ struct pagosAppApp: App {
             supabaseClient: supabaseClient
         )
 
-        // Request notification authorization at app launch (via DI)
+        // Request permissions at app launch (via DI)
         dependencies.notificationDataSource.requestAuthorization()
+        dependencies.calendarEventDataSource.requestAccess { _ in }
 
         logger.info("✅ App initialized with full DI Container")
     }
@@ -98,13 +99,5 @@ struct pagosAppApp: App {
         }
     }
 
-    private func cleanSwiftDataStore() {
-        if let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
-            let storeURL = appSupportURL.appendingPathComponent("default.store")
-            try? FileManager.default.removeItem(at: storeURL)
-            try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("wal"))
-            try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("shm"))
-            logger.info("SwiftData store cleaned")
-        }
-    }
+    // Removed cleanSwiftDataStore() - unused dead code
 }

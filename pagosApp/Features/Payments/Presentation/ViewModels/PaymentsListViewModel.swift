@@ -102,7 +102,7 @@ final class PaymentsListViewModel {
         switch result {
         case .success:
             logger.info("✅ Payment deleted: \(payment.name)")
-            await fetchPayments()
+            // Removed fetchPayments() - SwiftData notification will trigger automatic update
 
         case .failure(let error):
             logger.error("❌ Failed to delete payment: \(error.errorCode)")
@@ -121,7 +121,7 @@ final class PaymentsListViewModel {
         switch result {
         case .success(let updatedPayment):
             logger.info("✅ Payment status updated: \(updatedPayment.name) - isPaid: \(updatedPayment.isPaid)")
-            await fetchPayments()
+            // Removed fetchPayments() - SwiftData notification will trigger automatic update
 
         case .failure(let error):
             logger.error("❌ Failed to update payment status: \(error.errorCode)")
