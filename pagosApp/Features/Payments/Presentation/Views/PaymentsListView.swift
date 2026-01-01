@@ -46,7 +46,8 @@ struct PaymentsListView: View {
             if viewModel == nil {
                 viewModel = dependencies.paymentDependencyContainer.makePaymentsListViewModel()
 
-                // Only fetch on first load - subsequent updates come from SwiftData notifications
+                // Fetch local SwiftData immediately (fast, from device storage)
+                // Background sync will update data via NotificationCenter if needed
                 Task {
                     await viewModel?.fetchPayments()
                 }

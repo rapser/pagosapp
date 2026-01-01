@@ -64,19 +64,21 @@ final class LoginViewModel {
         isLoading = true
         errorMessage = nil
         showError = false
-        defer { isLoading = false }
 
         let result = await loginUseCase.execute(email: email, password: password)
 
         switch result {
         case .success(let session):
             logger.info("✅ Login successful")
+            // Disable local loading - SessionCoordinator will show global loading during startSession
+            isLoading = false
             onLoginSuccess?(session)
 
         case .failure(let error):
             logger.error("❌ Login failed: \(error.errorCode)")
             errorMessage = mapErrorToUserMessage(error)
             showError = true
+            isLoading = false
         }
     }
 
@@ -89,19 +91,21 @@ final class LoginViewModel {
         isLoading = true
         errorMessage = nil
         showError = false
-        defer { isLoading = false }
 
         let result = await biometricLoginUseCase.execute()
 
         switch result {
         case .success(let session):
             logger.info("✅ Biometric login successful")
+            // Disable local loading - SessionCoordinator will show global loading during startSession
+            isLoading = false
             onLoginSuccess?(session)
 
         case .failure(let error):
             logger.error("❌ Biometric login failed: \(error.errorCode)")
             errorMessage = mapErrorToUserMessage(error)
             showError = true
+            isLoading = false
         }
     }
 
