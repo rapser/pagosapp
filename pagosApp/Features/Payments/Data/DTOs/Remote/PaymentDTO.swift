@@ -57,126 +57,40 @@ struct PaymentDTO: Codable, Identifiable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        do {
-            id = try container.decode(UUID.self, forKey: .id)
-            print("✅ Decoded id: \(id)")
-        } catch {
-            print("❌ Failed to decode 'id': \(error)")
-            throw error
-        }
-
-        do {
-            userId = try container.decode(UUID.self, forKey: .userId)
-            print("✅ Decoded userId: \(userId)")
-        } catch {
-            print("❌ Failed to decode 'user_id': \(error)")
-            throw error
-        }
-
-        do {
-            name = try container.decode(String.self, forKey: .name)
-            print("✅ Decoded name: \(name)")
-        } catch {
-            print("❌ Failed to decode 'name': \(error)")
-            throw error
-        }
-
-        do {
-            amount = try container.decode(Double.self, forKey: .amount)
-            print("✅ Decoded amount: \(amount)")
-        } catch {
-            print("❌ Failed to decode 'amount': \(error)")
-            throw error
-        }
-
-        do {
-            currency = try container.decodeIfPresent(String.self, forKey: .currency) ?? "PEN"
-            print("✅ Decoded currency: \(currency)")
-        } catch {
-            print("❌ Failed to decode 'currency': \(error)")
-            throw error
-        }
+        id = try container.decode(UUID.self, forKey: .id)
+        userId = try container.decode(UUID.self, forKey: .userId)
+        name = try container.decode(String.self, forKey: .name)
+        amount = try container.decode(Double.self, forKey: .amount)
+        currency = try container.decodeIfPresent(String.self, forKey: .currency) ?? "PEN"
 
         // Handle date decoding with multiple format support
-        do {
-            let dueDateString = try container.decode(String.self, forKey: .dueDate)
-            print("🔍 Raw due_date string from Supabase: '\(dueDateString)'")
-
-            guard let date = PaymentDTO.parseDate(from: dueDateString) else {
-                print("❌ Failed to parse due_date string: '\(dueDateString)'")
-                throw DecodingError.dataCorruptedError(
-                    forKey: .dueDate,
-                    in: container,
-                    debugDescription: "Date string '\(dueDateString)' does not match any expected format"
-                )
-            }
-            dueDate = date
-            print("✅ Decoded dueDate: \(date)")
-        } catch {
-            print("❌ Failed to decode 'due_date': \(error)")
-            throw error
+        let dueDateString = try container.decode(String.self, forKey: .dueDate)
+        guard let date = PaymentDTO.parseDate(from: dueDateString) else {
+            throw DecodingError.dataCorruptedError(
+                forKey: .dueDate,
+                in: container,
+                debugDescription: "Date string '\(dueDateString)' does not match any expected format"
+            )
         }
+        dueDate = date
 
-        do {
-            isPaid = try container.decode(Bool.self, forKey: .isPaid)
-            print("✅ Decoded isPaid: \(isPaid)")
-        } catch {
-            print("❌ Failed to decode 'is_paid': \(error)")
-            throw error
-        }
-
-        do {
-            category = try container.decode(String.self, forKey: .category)
-            print("✅ Decoded category: \(category)")
-        } catch {
-            print("❌ Failed to decode 'category': \(error)")
-            throw error
-        }
-
-        do {
-            eventIdentifier = try container.decodeIfPresent(String.self, forKey: .eventIdentifier)
-            print("✅ Decoded eventIdentifier: \(eventIdentifier ?? "nil")")
-        } catch {
-            print("❌ Failed to decode 'event_identifier': \(error)")
-            throw error
-        }
-
-        do {
-            groupId = try container.decodeIfPresent(UUID.self, forKey: .groupId)
-            print("✅ Decoded groupId: \(groupId?.uuidString ?? "nil")")
-        } catch {
-            print("❌ Failed to decode 'group_id': \(error)")
-            throw error
-        }
+        isPaid = try container.decode(Bool.self, forKey: .isPaid)
+        category = try container.decode(String.self, forKey: .category)
+        eventIdentifier = try container.decodeIfPresent(String.self, forKey: .eventIdentifier)
+        groupId = try container.decodeIfPresent(UUID.self, forKey: .groupId)
 
         // Decode timestamps if present
         if let createdAtString = try container.decodeIfPresent(String.self, forKey: .createdAt) {
-            print("🔍 Raw created_at string: '\(createdAtString)'")
             createdAt = PaymentDTO.parseDate(from: createdAtString)
-            if createdAt != nil {
-                print("✅ Decoded createdAt: \(createdAt!)")
-            } else {
-                print("⚠️ Failed to parse created_at: '\(createdAtString)'")
-            }
         } else {
             createdAt = nil
-            print("✅ createdAt is nil")
         }
 
         if let updatedAtString = try container.decodeIfPresent(String.self, forKey: .updatedAt) {
-            print("🔍 Raw updated_at string: '\(updatedAtString)'")
             updatedAt = PaymentDTO.parseDate(from: updatedAtString)
-            if updatedAt != nil {
-                print("✅ Decoded updatedAt: \(updatedAt!)")
-            } else {
-                print("⚠️ Failed to parse updated_at: '\(updatedAtString)'")
-            }
         } else {
             updatedAt = nil
-            print("✅ updatedAt is nil")
         }
-
-        print("✅ Successfully decoded payment: \(name)")
     }
 
     /// Parse date from string with multiple format support
