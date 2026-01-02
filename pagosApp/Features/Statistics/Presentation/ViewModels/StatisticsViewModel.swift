@@ -20,7 +20,6 @@ final class StatisticsViewModel {
     var totalSpending: Double = 0
     var selectedFilter: StatsFilter = .all
     var selectedCurrency: Currency = .pen
-    var isLoading = false
     var errorMessage: String?
     var hasPENPayments: Bool = false
     var hasUSDPayments: Bool = false
@@ -47,11 +46,8 @@ final class StatisticsViewModel {
 
     // MARK: - Data Operations
 
-    /// Load all statistics
+    /// Load all statistics (reads from local SwiftData - fast, no loading indicator needed)
     func loadStatistics() async {
-        isLoading = true
-        defer { isLoading = false }
-
         await loadCategoryStats()
         await loadMonthlyStats()
         await loadTotalSpending()
