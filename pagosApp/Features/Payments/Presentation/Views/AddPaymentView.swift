@@ -28,24 +28,38 @@ struct AddPaymentView: View {
                         Section(header: Text("Montos")) {
                             if vm.showDualCurrency {
                                 // Dual-currency fields for credit cards
-                                VStack(alignment: .leading, spacing: 8) {
+                                VStack(alignment: .leading, spacing: 16) {
                                     Text("Tarjeta Bimoneda")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
 
-                                    HStack {
-                                        Text("S/")
-                                        TextField("Soles (opcional)", text: $vm.amount)
+                                    // PEN Card
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Label("Soles (S/)", systemImage: "banknote")
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                        TextField("0.00", text: $vm.amount)
                                             .keyboardType(.decimalPad)
+                                            .font(.title3)
+                                            .padding()
+                                            .background(Color(.systemGray6))
+                                            .cornerRadius(8)
                                     }
 
-                                    HStack {
-                                        Text("$")
-                                        TextField("Dólares (opcional)", text: $vm.amountUSD)
+                                    // USD Card
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Label("Dólares ($)", systemImage: "dollarsign.circle")
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                        TextField("0.00", text: $vm.amountUSD)
                                             .keyboardType(.decimalPad)
+                                            .font(.title3)
+                                            .padding()
+                                            .background(Color(.systemGray6))
+                                            .cornerRadius(8)
                                     }
 
-                                    Text("Ingresa al menos un monto. Si usas ambas monedas, se crearán 2 pagos vinculados.")
+                                    Text("💡 Ingresa al menos un monto")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
