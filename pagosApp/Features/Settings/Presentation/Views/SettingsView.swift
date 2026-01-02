@@ -1,0 +1,145 @@
+import SwiftUI
+
+struct SettingsView: View {
+    @Environment(AlertManager.self) private var alertManager
+    @Environment(SettingsStore.self) private var settingsStore
+    @State private var viewModel: SettingsViewModel
+
+    init(viewModel: SettingsViewModel) {
+        self._viewModel = State(initialValue: viewModel)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                // Perfil del usuario
+                ProfileSectionView()
+
+                // Seguridad (Biometría)
+                SecuritySectionView()
+
+                // Sincronización
+                SyncSectionView(
+                    onSyncTapped: handleSyncTapped,
+                    onRetrySyncTapped: handleRetrySyncTapped,
+                    onDatabaseResetTapped: showDatabaseResetAlert
+                )
+
+                // Legal (Políticas, Términos)
+                LegalSectionView()
+
+                // Acerca de la app
+                AboutSectionView()
+
+                // Datos del dispositivo (Desvincular - PELIGROSO)
+                DataSectionView(onUnlinkDeviceTapped: showUnlinkDeviceAlert)
+
+                // Sesión (Cerrar sesión)
+                SessionSectionView(onLogoutTapped: showLogoutAlert)
+            }
+            .navigationTitle("Ajustes")
+            .alert("Error de sincronización", isPresented: $viewModel.showingSyncError) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(viewModel.syncErrorMessage)
+            }
+            .onAppear {
+                Task {
+                    await viewModel.updatePendingSyncCount()
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PaymentsDidSync"))) { _ in
+                Task {
+                    await viewModel.updatePendingSyncCount()
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PaymentDidChange"))) { _ in
+                Task {
+                    await viewModel.updatePendingSyncCount()
+                }
+            }
+            .overlay {
+                if viewModel.isLoading {
+                    LoadingView(message: "Cerrando sesión...")
+                }
+            }
+        }
+    }
+
+    private func handleSyncTapped() {
+        Task {
+            await viewModel.handleSyncTapped()
+        }
+    }
+
+    private func handleRetrySyncTapped() {
+        Task {
+            await viewModel.clearSyncError()
+        }
+    }
+
+    private func showDatabaseResetAlert() {
+        alertManager.show(
+            title: Text("Reparar Base de Datos"),
+            message: Text("Esto eliminará todos los datos LOCALES de SwiftData y los volverá a descargar desde Supabase. Tus datos en el servidor NO se verán afectados. ¿Estás seguro?"),
+            buttons: [
+                AlertButton(title: Text("Reparar"), role: .destructive) {
+                    Task {
+                        let success = await viewModel.clearLocalDatabase()
+                        if success {
+                            alertManager.show(
+                                title: Text("Base de Datos Reparada"),
+                                message: Text("La aplicación se cerrará. Vuelve a abrirla para completar la reparación."),
+                                buttons: [AlertButton(title: Text("OK"), role: .cancel) {
+                                    exit(0)
+                                }]
+                            )
+                        } else {
+                            alertManager.show(
+                                title: Text("Error"),
+                                message: Text("No se pudo reparar la base de datos. Intenta reinstalar la aplicación."),
+                                buttons: [AlertButton(title: Text("OK"), role: .cancel) { }]
+                            )
+                        }
+                    }
+                },
+                AlertButton(title: Text("Cancelar"), role: .cancel) { }
+            ]
+        )
+    }
+
+    private func showLogoutAlert() {
+        alertManager.show(
+            title: Text("Cerrar Sesión"),
+            message: Text("Tu sesión se cerrará pero tus datos permanecerán en este dispositivo. Al volver a iniciar sesión con la misma cuenta, todo estará aquí."),
+            buttons: [
+                AlertButton(title: Text("Cerrar Sesión"), role: .destructive) {
+                    Task {
+                        await viewModel.logout()
+                    }
+                },
+                AlertButton(title: Text("Cancelar"), role: .cancel) { }
+            ]
+        )
+    }
+
+    private func showUnlinkDeviceAlert() {
+        let pendingCount = viewModel.pendingSyncCount
+        let warningMessage = pendingCount > 0
+            ? "⚠️ Tienes \(pendingCount) pago(s) sin sincronizar.\n\nEsta acción eliminará TODOS tus datos locales (pagos, perfil y notificaciones) de este dispositivo de forma permanente.\n\n¿Estás completamente seguro?"
+            : "Esta acción eliminará TODOS tus datos locales (pagos, perfil y notificaciones) de este dispositivo de forma permanente.\n\nTus datos en la nube están seguros y podrás descargarlos nuevamente al iniciar sesión en otro dispositivo.\n\n¿Estás seguro?"
+
+        alertManager.show(
+            title: Text("Desvincular Dispositivo"),
+            message: Text(warningMessage),
+            buttons: [
+                AlertButton(title: Text("Desvincular"), role: .destructive) {
+                    Task {
+                        await viewModel.unlinkDevice()
+                    }
+                },
+                AlertButton(title: Text("Cancelar"), role: .cancel) { }
+            ]
+        )
+    }
+}
