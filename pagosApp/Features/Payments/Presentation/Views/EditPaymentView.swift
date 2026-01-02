@@ -111,7 +111,8 @@ private struct EditPaymentFormView: View {
             category: .servicios,
             eventIdentifier: nil,
             syncStatus: .synced,
-            lastSyncedAt: Date()
+            lastSyncedAt: Date(),
+            groupId: nil
         )
     )
 }

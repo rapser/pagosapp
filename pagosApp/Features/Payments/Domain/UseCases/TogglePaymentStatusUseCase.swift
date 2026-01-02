@@ -35,7 +35,8 @@ final class TogglePaymentStatusUseCase {
             category: payment.category,
             eventIdentifier: payment.eventIdentifier,
             syncStatus: payment.syncStatus == .synced ? .modified : payment.syncStatus,
-            lastSyncedAt: payment.lastSyncedAt
+            lastSyncedAt: payment.lastSyncedAt,
+            groupId: payment.groupId
         )
 
         do {

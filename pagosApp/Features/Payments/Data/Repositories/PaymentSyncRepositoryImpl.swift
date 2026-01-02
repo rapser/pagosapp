@@ -64,7 +64,8 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
                 category: payment.category,
                 eventIdentifier: payment.eventIdentifier,
                 syncStatus: .synced,
-                lastSyncedAt: Date()
+                lastSyncedAt: Date(),
+                groupId: payment.groupId
             )
             updatedPayments.append(updated)
         }
@@ -139,7 +140,8 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
             category: payment.category,
             eventIdentifier: payment.eventIdentifier,
             syncStatus: status,
-            lastSyncedAt: status == .synced ? Date() : payment.lastSyncedAt
+            lastSyncedAt: status == .synced ? Date() : payment.lastSyncedAt,
+            groupId: payment.groupId
         )
 
         try await _savePaymentLocally(updated)

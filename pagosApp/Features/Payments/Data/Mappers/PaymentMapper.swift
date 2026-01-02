@@ -25,7 +25,8 @@ struct PaymentMapper {
             category: entity.category,
             eventIdentifier: entity.eventIdentifier,
             syncStatus: entity.syncStatus,
-            lastSyncedAt: entity.lastSyncedAt
+            lastSyncedAt: entity.lastSyncedAt,
+            groupId: entity.groupId
         )
     }
 
@@ -48,7 +49,8 @@ struct PaymentMapper {
             category: payment.category,
             eventIdentifier: payment.eventIdentifier,
             syncStatus: payment.syncStatus,
-            lastSyncedAt: payment.lastSyncedAt
+            lastSyncedAt: payment.lastSyncedAt,
+            groupId: payment.groupId
         )
     }
 
@@ -74,7 +76,8 @@ struct PaymentMapper {
             category: paymentCategory,
             eventIdentifier: dto.eventIdentifier,
             syncStatus: .synced, // Remote payments are always synced
-            lastSyncedAt: Date()
+            lastSyncedAt: Date(),
+            groupId: dto.groupId
         )
     }
 

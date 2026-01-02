@@ -22,6 +22,7 @@ struct PaymentUI: Identifiable, Equatable {
     let eventIdentifier: String?
     let syncStatus: SyncStatus
     let lastSyncedAt: Date?
+    let groupId: UUID?
 
     // MARK: - Computed Properties for UI
 
@@ -84,7 +85,8 @@ extension PaymentUI {
             category: payment.category,
             eventIdentifier: payment.eventIdentifier,
             syncStatus: payment.syncStatus,
-            lastSyncedAt: payment.lastSyncedAt
+            lastSyncedAt: payment.lastSyncedAt,
+            groupId: payment.groupId
         )
     }
 
@@ -100,7 +102,8 @@ extension PaymentUI {
             category: category,
             eventIdentifier: eventIdentifier,
             syncStatus: syncStatus,
-            lastSyncedAt: lastSyncedAt
+            lastSyncedAt: lastSyncedAt,
+            groupId: groupId
         )
     }
 }

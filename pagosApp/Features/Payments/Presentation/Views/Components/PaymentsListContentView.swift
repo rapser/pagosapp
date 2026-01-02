@@ -10,7 +10,7 @@ struct PaymentsListContentView: View {
                 LoadingIndicator()
             } else {
                 PaymentsList(
-                    payments: viewModel.filteredPayments,
+                    viewModel: viewModel,
                     onToggleStatus: { payment in
                         Task {
                             await viewModel.togglePaymentStatus(payment)
@@ -43,7 +43,14 @@ struct PaymentsListContentView: View {
         }
         .sheet(isPresented: $showingAddPaymentSheet) {
             AddPaymentView()
-            // Removed onDisappear refresh - SwiftData + @Observable handle updates automatically
+        }
+        .onChange(of: showingAddPaymentSheet) { _, isPresented in
+            // Refresh when sheet is dismissed
+            if !isPresented {
+                Task {
+                    await viewModel.fetchPayments(showLoading: false)
+                }
+            }
         }
     }
 }
@@ -68,24 +75,48 @@ private struct LoadingIndicator: View {
 }
 
 private struct PaymentsList: View {
-    let payments: [PaymentUI]
+    @Bindable var viewModel: PaymentsListViewModel
     let onToggleStatus: (PaymentUI) -> Void
     let onDelete: (PaymentUI) -> Void
     let onRefresh: () -> Void
 
     var body: some View {
+        let items = viewModel.groupedPayments
+
         List {
-            ForEach(payments) { payment in
-                NavigationLink(destination: EditPaymentView(payment: payment)) {
-                    PaymentRowView(payment: payment, onToggleStatus: {
-                        onToggleStatus(payment)
-                    })
-                }
-                .swipeActions {
-                    Button(role: .destructive) {
-                        onDelete(payment)
-                    } label: {
-                        Label("Borrar", systemImage: "trash.fill")
+            ForEach(items) { item in
+                switch item {
+                case .group(let group):
+                    // For grouped payments, navigate to first payment in group
+                    NavigationLink(destination: editViewForGroup(group)) {
+                        PaymentGroupRowView(group: group, onToggleStatus: {
+                            Task {
+                                await viewModel.toggleGroupStatus(group)
+                            }
+                        })
+                    }
+                    .swipeActions {
+                        Button(role: .destructive) {
+                            Task {
+                                await viewModel.deleteGroup(group)
+                            }
+                        } label: {
+                            Label("Borrar", systemImage: "trash.fill")
+                        }
+                    }
+
+                case .individual(let payment):
+                    NavigationLink(destination: EditPaymentView(payment: payment)) {
+                        PaymentRowView(payment: payment, onToggleStatus: {
+                            onToggleStatus(payment)
+                        })
+                    }
+                    .swipeActions {
+                        Button(role: .destructive) {
+                            onDelete(payment)
+                        } label: {
+                            Label("Borrar", systemImage: "trash.fill")
+                        }
                     }
                 }
             }
@@ -93,6 +124,16 @@ private struct PaymentsList: View {
         .listStyle(.plain)
         .refreshable {
             onRefresh()
+        }
+    }
+
+    @ViewBuilder
+    private func editViewForGroup(_ group: PaymentGroup) -> some View {
+        // Navigate to the first available payment in the group
+        if let firstPayment = group.penPayment ?? group.usdPayment {
+            EditPaymentView(payment: firstPayment)
+        } else {
+            EmptyView()
         }
     }
 }

@@ -21,6 +21,7 @@ struct Payment: Sendable, Identifiable {
     let eventIdentifier: String?
     let syncStatus: SyncStatus
     let lastSyncedAt: Date?
+    let groupId: UUID?  // Links dual-currency credit card payments (PEN + USD)
 }
 
 // MARK: - Mapper Extensions

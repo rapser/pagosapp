@@ -109,7 +109,8 @@ final class EditPaymentViewModel {
             category: category,
             eventIdentifier: paymentEntity.eventIdentifier,
             syncStatus: paymentEntity.syncStatus,
-            lastSyncedAt: paymentEntity.lastSyncedAt
+            lastSyncedAt: paymentEntity.lastSyncedAt,
+            groupId: paymentEntity.groupId
         )
 
         // Delegate to Use Case
@@ -152,7 +153,8 @@ final class EditPaymentViewModel {
             category: category,
             eventIdentifier: paymentEntity.eventIdentifier,
             syncStatus: paymentEntity.syncStatus,
-            lastSyncedAt: paymentEntity.lastSyncedAt
+            lastSyncedAt: paymentEntity.lastSyncedAt,
+            groupId: paymentEntity.groupId
         )
 
         // Delegate to Use Case

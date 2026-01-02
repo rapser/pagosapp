@@ -49,6 +49,56 @@ final class PaymentsListViewModel {
         }
     }
 
+    /// Group dual-currency credit card payments for display
+    /// Returns sorted items (groups and individuals mixed by due date)
+    var groupedPayments: [PaymentListItem] {
+        var items: [PaymentListItem] = []
+        var processedIds: Set<UUID> = []
+
+        // Group payments by groupId (only for credit cards)
+        let paymentsByGroupId = Dictionary(grouping: filteredPayments.filter { $0.groupId != nil }) { $0.groupId! }
+
+        for (groupId, groupedPayments) in paymentsByGroupId {
+            // Only group credit card payments
+            guard groupedPayments.first?.category == .tarjetaCredito else {
+                // If not credit card, treat as individuals
+                for payment in groupedPayments {
+                    items.append(.individual(payment))
+                    processedIds.insert(payment.id)
+                }
+                continue
+            }
+
+            let penPayment = groupedPayments.first { $0.currency == .pen }
+            let usdPayment = groupedPayments.first { $0.currency == .usd }
+
+            // Create group
+            if let group = PaymentGroup.from(penPayment: penPayment, usdPayment: usdPayment, groupId: groupId) {
+                items.append(.group(group))
+                if let pen = penPayment {
+                    processedIds.insert(pen.id)
+                }
+                if let usd = usdPayment {
+                    processedIds.insert(usd.id)
+                }
+            }
+        }
+
+        // Add ungrouped payments
+        for payment in filteredPayments where !processedIds.contains(payment.id) {
+            items.append(.individual(payment))
+        }
+
+        // Sort all items by due date
+        items.sort { item1, item2 in
+            let date1 = item1.dueDate
+            let date2 = item2.dueDate
+            return date1 < date2
+        }
+
+        return items
+    }
+
     // MARK: - Initialization
 
     init(
@@ -135,7 +185,8 @@ final class PaymentsListViewModel {
                 category: payment.category,
                 eventIdentifier: payment.eventIdentifier,
                 syncStatus: payment.syncStatus,
-                lastSyncedAt: payment.lastSyncedAt
+                lastSyncedAt: payment.lastSyncedAt,
+                groupId: payment.groupId
             )
             payments[index] = updatedPayment
         }
@@ -155,6 +206,28 @@ final class PaymentsListViewModel {
                 payments[index] = payment
             }
             showError(for: error)
+        }
+    }
+
+    /// Toggle payment group status (both PEN and USD payments)
+    func toggleGroupStatus(_ group: PaymentGroup) async {
+        // Toggle all payments in the group
+        if let penPayment = group.penPayment {
+            await togglePaymentStatus(penPayment)
+        }
+        if let usdPayment = group.usdPayment {
+            await togglePaymentStatus(usdPayment)
+        }
+    }
+
+    /// Delete payment group (both PEN and USD payments)
+    func deleteGroup(_ group: PaymentGroup) async {
+        // Delete all payments in the group
+        if let penPayment = group.penPayment {
+            await deletePayment(penPayment)
+        }
+        if let usdPayment = group.usdPayment {
+            await deletePayment(usdPayment)
         }
     }
 
