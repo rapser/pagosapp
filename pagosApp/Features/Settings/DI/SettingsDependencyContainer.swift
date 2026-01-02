@@ -15,16 +15,16 @@ final class SettingsDependencyContainer {
 
     private let paymentSyncCoordinator: PaymentSyncCoordinator
     private let authDependencyContainer: AuthDependencyContainer
-    private let sessionCoordinator: SessionCoordinator
+    private let userProfileDependencyContainer: UserProfileDependencyContainer
 
     init(
         paymentSyncCoordinator: PaymentSyncCoordinator,
         authDependencyContainer: AuthDependencyContainer,
-        sessionCoordinator: SessionCoordinator
+        userProfileDependencyContainer: UserProfileDependencyContainer
     ) {
         self.paymentSyncCoordinator = paymentSyncCoordinator
         self.authDependencyContainer = authDependencyContainer
-        self.sessionCoordinator = sessionCoordinator
+        self.userProfileDependencyContainer = userProfileDependencyContainer
     }
 
     // MARK: - Repositories
@@ -63,7 +63,11 @@ final class SettingsDependencyContainer {
             clearLocalDatabaseUseCase: makeClearLocalDatabaseUseCase(),
             updatePendingSyncCountUseCase: makeUpdatePendingSyncCountUseCase(),
             syncRepository: makeSettingsSyncRepository(),
-            sessionCoordinator: sessionCoordinator
+            logoutUseCase: authDependencyContainer.makeLogoutUseCase(),
+            unlinkDeviceUseCase: authDependencyContainer.makeUnlinkDeviceUseCase(
+                clearLocalDatabaseUseCase: makeClearLocalDatabaseUseCase(),
+                deleteLocalProfileUseCase: userProfileDependencyContainer.makeDeleteLocalProfileUseCase()
+            )
         )
     }
 }

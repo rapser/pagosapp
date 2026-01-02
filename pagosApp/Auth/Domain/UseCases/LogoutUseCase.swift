@@ -35,6 +35,9 @@ final class LogoutUseCase {
         // End session
         await sessionRepository.endSession()
 
+        // Notify that user logged out - SessionCoordinator will update UI state
+        NotificationCenter.default.post(name: NSNotification.Name("UserDidLogout"), object: nil)
+
         return signOutResult
     }
 }

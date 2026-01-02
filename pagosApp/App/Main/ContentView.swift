@@ -26,7 +26,7 @@ struct ContentView: View {
         @Bindable var session = sessionCoordinator
         @Bindable var alert = alertManager
         ZStack {
-            if sessionCoordinator.isSessionActive {
+            if sessionCoordinator.isAuthenticated {
                 TabView {
                     PaymentsListView()
                         .tabItem {
@@ -82,12 +82,24 @@ struct ContentView: View {
                 stopForegroundCheckTimer()
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UserDidLogin"))) { _ in
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UserDidLogin"))) { notification in
             // Fetch user profile when user logs in (respects Clean Architecture - no direct coupling)
             Task {
-                if let userId = await dependencies.authDependencyContainer.makeGetCurrentUserIdUseCase().execute() {
-                    let fetchProfileUseCase = dependencies.userProfileDependencyContainer.makeFetchUserProfileUseCase()
-                    _ = await fetchProfileUseCase.execute(userId: userId)
+                // Extract userId from notification
+                guard let userInfo = notification.userInfo,
+                      let userId = userInfo["userId"] as? UUID else {
+                    logger.warning("⚠️ UserDidLogin notification received but no userId found")
+                    return
+                }
+
+                logger.info("📥 Fetching user profile for userId: \(userId.uuidString)")
+                let fetchProfileUseCase = dependencies.userProfileDependencyContainer.makeFetchUserProfileUseCase()
+                let result = await fetchProfileUseCase.execute(userId: userId)
+
+                if case .success = result {
+                    logger.info("✅ User profile fetched and saved during login")
+                } else {
+                    logger.error("❌ Failed to fetch user profile during login")
                 }
             }
         }

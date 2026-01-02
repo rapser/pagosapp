@@ -93,7 +93,7 @@ final class AppDependencies {
         self.settingsDependencyContainer = SettingsDependencyContainer(
             paymentSyncCoordinator: paymentSyncCoordinator,
             authDependencyContainer: authDependencyContainer,
-            sessionCoordinator: sessionCoordinator
+            userProfileDependencyContainer: userProfileDependencyContainer
         )
     }
 

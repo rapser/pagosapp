@@ -21,13 +21,14 @@ final class SettingsViewModel {
     var syncError: PaymentSyncError? = nil
     var isLoading = false
 
-    // MARK: - Dependencies
+    // MARK: - Dependencies (Use Cases only - Clean Architecture)
 
     private let performSyncUseCase: PerformSyncUseCase
     private let clearLocalDatabaseUseCase: ClearLocalDatabaseUseCase
     private let updatePendingSyncCountUseCase: UpdatePendingSyncCountUseCase
     private let syncRepository: SettingsSyncRepositoryProtocol
-    private let sessionCoordinator: SessionCoordinator
+    private let logoutUseCase: LogoutUseCase
+    private let unlinkDeviceUseCase: UnlinkDeviceUseCase
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "SettingsViewModel")
 
@@ -38,13 +39,15 @@ final class SettingsViewModel {
         clearLocalDatabaseUseCase: ClearLocalDatabaseUseCase,
         updatePendingSyncCountUseCase: UpdatePendingSyncCountUseCase,
         syncRepository: SettingsSyncRepositoryProtocol,
-        sessionCoordinator: SessionCoordinator
+        logoutUseCase: LogoutUseCase,
+        unlinkDeviceUseCase: UnlinkDeviceUseCase
     ) {
         self.performSyncUseCase = performSyncUseCase
         self.clearLocalDatabaseUseCase = clearLocalDatabaseUseCase
         self.updatePendingSyncCountUseCase = updatePendingSyncCountUseCase
         self.syncRepository = syncRepository
-        self.sessionCoordinator = sessionCoordinator
+        self.logoutUseCase = logoutUseCase
+        self.unlinkDeviceUseCase = unlinkDeviceUseCase
 
         Task {
             await updatePendingSyncCount()
@@ -107,7 +110,13 @@ final class SettingsViewModel {
         defer { isLoading = false }
 
         logger.info("🚪 Logging out")
-        await sessionCoordinator.logout()
+        let result = await logoutUseCase.execute()
+
+        if case .failure(let error) = result {
+            logger.error("❌ Logout failed: \(error.errorCode)")
+            syncErrorMessage = "Error al cerrar sesión"
+            showingSyncError = true
+        }
     }
 
     func unlinkDevice() async {
@@ -115,6 +124,12 @@ final class SettingsViewModel {
         defer { isLoading = false }
 
         logger.info("🔓 Unlinking device")
-        await sessionCoordinator.unlinkDevice()
+        let result = await unlinkDeviceUseCase.execute()
+
+        if case .failure(let error) = result {
+            logger.error("❌ Unlink device failed: \(error.errorCode)")
+            syncErrorMessage = "Error al desvincular dispositivo"
+            showingSyncError = true
+        }
     }
 }

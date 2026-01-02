@@ -108,7 +108,7 @@ struct SettingsView: View {
             title: Text("Cerrar Sesión"),
             message: Text("Tu sesión se cerrará pero tus datos permanecerán en este dispositivo. Al volver a iniciar sesión con la misma cuenta, todo estará aquí."),
             buttons: [
-                AlertButton(title: Text("Cerrar Sesión"), role: .cancel) {
+                AlertButton(title: Text("Cerrar Sesión"), role: .destructive) {
                     Task {
                         await viewModel.logout()
                     }
