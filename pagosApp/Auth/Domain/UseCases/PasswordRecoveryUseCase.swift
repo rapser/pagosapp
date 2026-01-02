@@ -3,14 +3,12 @@
 //  pagosApp
 //
 //  Created by miguel tomairo on 1/12/25.
-//  Modern iOS 18+ using @Observable macro
+//  Clean Architecture - Domain Layer
 //
 
 import Foundation
-import Observation
 
 @MainActor
-@Observable
 final class PasswordRecoveryUseCase {
     private let authRepository: AuthRepositoryProtocol
 

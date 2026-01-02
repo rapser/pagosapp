@@ -92,6 +92,6 @@ final class ResetPasswordViewModel {
     }
 
     var isPasswordStrong: Bool {
-        newPassword.count >= 6
+        PasswordValidator.isValid(newPassword)
     }
 }
