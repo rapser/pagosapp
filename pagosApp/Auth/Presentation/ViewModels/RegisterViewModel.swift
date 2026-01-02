@@ -86,7 +86,7 @@ final class RegisterViewModel {
         !password.isEmpty &&
         !confirmPassword.isEmpty &&
         password == confirmPassword &&
-        password.count >= 6
+        PasswordValidator.isValid(password)
     }
 
     var passwordsMatch: Bool {
@@ -94,7 +94,7 @@ final class RegisterViewModel {
     }
 
     var isPasswordStrong: Bool {
-        password.count >= 6
+        PasswordValidator.isValid(password)
     }
 
     // MARK: - Error Mapping

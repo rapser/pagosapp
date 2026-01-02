@@ -61,6 +61,10 @@ final class ForgotPasswordViewModel {
     // MARK: - Validation
 
     var isFormValid: Bool {
-        !email.isEmpty
+        !email.isEmpty && EmailValidator.isValid(email)
+    }
+
+    var isEmailValid: Bool {
+        EmailValidator.isValid(email)
     }
 }

@@ -19,10 +19,6 @@ struct ResetPasswordView: View {
         self.viewModel = viewModel
     }
 
-    private var passwordsMatch: Bool {
-        !viewModel.newPassword.isEmpty && viewModel.newPassword == viewModel.confirmPassword
-    }
-
     var body: some View {
         ZStack {
             Color("AppBackground").edgesIgnoringSafeArea(.all)
@@ -54,7 +50,7 @@ struct ResetPasswordView: View {
                     .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 5)
                     .disabled(viewModel.isLoading)
 
-                if !passwordsMatch && !viewModel.confirmPassword.isEmpty {
+                if !viewModel.passwordsMatch && !viewModel.confirmPassword.isEmpty {
                     Text("Las contraseñas no coinciden")
                         .foregroundColor(.red)
                         .font(.caption)
@@ -80,7 +76,7 @@ struct ResetPasswordView: View {
                         .cornerRadius(10)
                         .shadow(color: Color("AppPrimary").opacity(0.5), radius: 10, x: 0, y: 5)
                 }
-                .disabled(viewModel.isLoading || !passwordsMatch)
+                .disabled(viewModel.isLoading || !viewModel.passwordsMatch)
 
                 Spacer()
             }
