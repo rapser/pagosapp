@@ -50,15 +50,19 @@ final class UserProfileViewModel {
     func loadLocalProfile() async {
         errorMessage = nil
 
+        logger.info("🔍 [ViewModel] Starting loadLocalProfile")
         let result = await getLocalProfileUseCase.execute()
 
         switch result {
         case .success(let loadedProfile):
+            logger.info("🔍 [ViewModel] Got result - profile is \(loadedProfile == nil ? "nil" : "not nil")")
             profile = loadedProfile
-            if loadedProfile != nil {
-                logger.info("✅ Profile loaded from local storage")
+            logger.info("🔍 [ViewModel] Assigned to self.profile - self.profile is now \(self.profile == nil ? "nil" : "not nil")")
+
+            if let loadedProfile = loadedProfile {
+                logger.info("✅ Profile loaded from local storage - Name: \(loadedProfile.fullName), Email: \(loadedProfile.email)")
             } else {
-                logger.info("⚠️ No local profile found")
+                logger.warning("⚠️ No local profile found in SwiftData")
             }
 
         case .failure(let error):

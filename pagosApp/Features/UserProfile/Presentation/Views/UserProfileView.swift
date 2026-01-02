@@ -9,7 +9,7 @@ import SwiftUI
 
 struct UserProfileView: View {
     @Environment(\.dismiss) var dismiss
-    @Bindable var viewModel: UserProfileViewModel
+    @State var viewModel: UserProfileViewModel
 
     var body: some View {
         NavigationStack {
@@ -86,8 +86,17 @@ struct UserProfileView: View {
                 }
             }
         }
-        .task {
-            await viewModel.loadLocalProfile()
+        .onAppear {
+            // Always load profile when view appears (reads from local SwiftData - fast)
+            Task {
+                await viewModel.loadLocalProfile()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UserProfileDidUpdate"))) { _ in
+            // Reload profile when it's updated (e.g., after login or edit)
+            Task {
+                await viewModel.loadLocalProfile()
+            }
         }
     }
 }

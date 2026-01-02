@@ -70,7 +70,15 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
 
     func saveLocalProfile(_ profile: UserProfileEntity) async -> Result<Void, UserProfileError> {
         logger.debug("💾 Saving profile locally")
-        return await _saveLocalProfile(profile)
+        let result = await _saveLocalProfile(profile)
+
+        // Notify that profile was saved
+        if case .success = result {
+            NotificationCenter.default.post(name: NSNotification.Name("UserProfileDidUpdate"), object: nil)
+            logger.debug("📢 Posted UserProfileDidUpdate notification")
+        }
+
+        return result
     }
 
     func deleteLocalProfile() async -> Result<Void, UserProfileError> {
