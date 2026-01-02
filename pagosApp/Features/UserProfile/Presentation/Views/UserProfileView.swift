@@ -33,9 +33,7 @@ struct UserProfileView: View {
                 ZStack {
                     Color("AppBackground").ignoresSafeArea()
 
-                    if viewModel.isLoading {
-                        ProgressView("Cargando perfil...")
-                    } else if let profile = viewModel.profile {
+                    if let profile = viewModel.profile {
                         // Convert to SwiftData model for UI components
                         let profileModel = UserProfileMapper.toModel(from: profile)
 

@@ -78,9 +78,17 @@ struct ContentView: View {
                 startForegroundCheckTimer()
 
                 // Removed duplicate sync - SessionCoordinator.startSession() already handles sync
-                // Removed UserProfile fetch - will be loaded lazily when needed
             } else if oldValue == true && newValue == false {
                 stopForegroundCheckTimer()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UserDidLogin"))) { _ in
+            // Fetch user profile when user logs in (respects Clean Architecture - no direct coupling)
+            Task {
+                if let userId = await dependencies.authDependencyContainer.makeGetCurrentUserIdUseCase().execute() {
+                    let fetchProfileUseCase = dependencies.userProfileDependencyContainer.makeFetchUserProfileUseCase()
+                    _ = await fetchProfileUseCase.execute(userId: userId)
+                }
             }
         }
         .onChange(of: scenePhase) { oldValue, newPhase in

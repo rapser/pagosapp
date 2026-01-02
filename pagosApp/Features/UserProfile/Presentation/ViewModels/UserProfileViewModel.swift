@@ -46,9 +46,8 @@ final class UserProfileViewModel {
 
     // MARK: - Data Operations
 
-    /// Load user profile from local storage (offline-first)
+    /// Load user profile from local storage (offline-first, fast - no loading indicator)
     func loadLocalProfile() async {
-        isLoading = true
         errorMessage = nil
 
         let result = await getLocalProfileUseCase.execute()
@@ -66,8 +65,6 @@ final class UserProfileViewModel {
             logger.error("❌ Error loading local profile: \(error.errorCode)")
             errorMessage = "Error al cargar el perfil local"
         }
-
-        isLoading = false
     }
 
     /// Fetch user profile from remote and save to local
