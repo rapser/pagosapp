@@ -70,9 +70,10 @@ final class LoginViewModel {
         switch result {
         case .success(let session):
             logger.info("✅ Login successful")
-            // Disable local loading - SessionCoordinator will show global loading during startSession
-            isLoading = false
+            // Keep isLoading = true until navigation completes
+            // LoginView will disappear when SessionCoordinator sets isAuthenticated = true
             onLoginSuccess?(session)
+            // Note: isLoading stays true - prevents flash of login button before home appears
 
         case .failure(let error):
             logger.error("❌ Login failed: \(error.errorCode)")
@@ -97,9 +98,10 @@ final class LoginViewModel {
         switch result {
         case .success(let session):
             logger.info("✅ Biometric login successful")
-            // Disable local loading - SessionCoordinator will show global loading during startSession
-            isLoading = false
+            // Keep isLoading = true until navigation completes
+            // LoginView will disappear when SessionCoordinator sets isAuthenticated = true
             onLoginSuccess?(session)
+            // Note: isLoading stays true - prevents flash of login button before home appears
 
         case .failure(let error):
             logger.error("❌ Biometric login failed: \(error.errorCode)")
