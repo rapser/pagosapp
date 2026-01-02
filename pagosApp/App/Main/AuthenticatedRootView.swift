@@ -30,7 +30,9 @@ struct AuthenticatedRootView: View {
                     Label("Historial", systemImage: "clock.arrow.circlepath")
                 }
 
-            StatisticsView()
+            StatisticsView(
+                viewModel: dependencies.statisticsDependencyContainer.makeStatisticsViewModel()
+            )
                 .tabItem {
                     Label("Estadísticas", systemImage: "chart.pie.fill")
                 }

@@ -86,11 +86,9 @@ struct UserProfileView: View {
                 }
             }
         }
-        .onAppear {
-            // Always load profile when view appears (reads from local SwiftData - fast)
-            Task {
-                await viewModel.loadLocalProfile()
-            }
+        .task {
+            // Load profile from local SwiftData (fast - no loader needed)
+            await viewModel.loadLocalProfile()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UserProfileDidUpdate"))) { _ in
             // Reload profile when it's updated (e.g., after login or edit)
