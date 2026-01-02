@@ -37,6 +37,7 @@ final class SessionCoordinator {
     private let passwordRecoveryUseCase: PasswordRecoveryUseCase
     private let ensureValidSessionUseCase: EnsureValidSessionUseCase
     private let getAuthenticationStatusUseCase: GetAuthenticationStatusUseCase
+    private let getCurrentUserIdUseCase: GetCurrentUserIdUseCase
     private let clearBiometricCredentialsUseCase: ClearBiometricCredentialsUseCase
     private let hasBiometricCredentialsUseCase: HasBiometricCredentialsUseCase
     private let errorHandler: ErrorHandler
@@ -66,6 +67,7 @@ final class SessionCoordinator {
         self.passwordRecoveryUseCase = authDependencyContainer.makePasswordRecoveryUseCase()
         self.ensureValidSessionUseCase = authDependencyContainer.makeEnsureValidSessionUseCase()
         self.getAuthenticationStatusUseCase = authDependencyContainer.makeGetAuthenticationStatusUseCase()
+        self.getCurrentUserIdUseCase = authDependencyContainer.makeGetCurrentUserIdUseCase()
         self.clearBiometricCredentialsUseCase = authDependencyContainer.makeClearBiometricCredentialsUseCase()
         self.hasBiometricCredentialsUseCase = authDependencyContainer.makeHasBiometricCredentialsUseCase()
 
@@ -73,6 +75,15 @@ final class SessionCoordinator {
 
         // Initialize to false until we verify
         self.isAuthenticated = false
+
+        // Listen for logout notifications
+        Task {
+            for await _ in NotificationCenter.default.notifications(named: NSNotification.Name("UserDidLogout")) {
+                logger.info("📢 Received UserDidLogout notification - updating UI state")
+                self.isAuthenticated = false
+                self.isSessionActive = false
+            }
+        }
 
         Task {
             // Only perform initial check once
@@ -129,10 +140,17 @@ final class SessionCoordinator {
         await sessionRepository.startSession()
         await sessionRepository.updateLastActiveTimestamp()
 
+        // Get current user ID to include in notification
+        let userId = await getCurrentUserIdUseCase.execute()
+
         // Notify that user logged in - other features can react (e.g., fetch user profile)
         // This respects Clean Architecture by not creating direct dependencies between features
-        NotificationCenter.default.post(name: NSNotification.Name("UserDidLogin"), object: nil)
-        logger.info("📢 Posted UserDidLogin notification")
+        NotificationCenter.default.post(
+            name: NSNotification.Name("UserDidLogin"),
+            object: nil,
+            userInfo: userId != nil ? ["userId": userId!] : nil
+        )
+        logger.info("📢 Posted UserDidLogin notification with userId: \(userId?.uuidString ?? "nil")")
 
         // Sync payments in background (non-blocking)
         // User will see local SwiftData immediately, sync updates in background
@@ -283,9 +301,7 @@ final class SessionCoordinator {
 
         logger.info("🔐 Delegating biometric authentication to BiometricLoginUseCase")
 
-        isLoading = true
-        defer { isLoading = false }
-
+        // No loading indicator - Face ID shows its own system UI
         let result = await biometricLoginUseCase.execute()
 
         switch result {

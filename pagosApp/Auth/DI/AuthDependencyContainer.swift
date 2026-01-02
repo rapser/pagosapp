@@ -143,6 +143,19 @@ final class AuthDependencyContainer {
         )
     }
 
+    func makeUnlinkDeviceUseCase(
+        clearLocalDatabaseUseCase: ClearLocalDatabaseUseCase,
+        deleteLocalProfileUseCase: DeleteLocalProfileUseCase
+    ) -> UnlinkDeviceUseCase {
+        UnlinkDeviceUseCase(
+            logoutUseCase: makeLogoutUseCase(),
+            clearLocalDatabaseUseCase: clearLocalDatabaseUseCase,
+            deleteLocalProfileUseCase: deleteLocalProfileUseCase,
+            clearBiometricCredentialsUseCase: makeClearBiometricCredentialsUseCase(),
+            sessionRepository: makeSessionRepository()
+        )
+    }
+
     // MARK: - Coordinators
 
     func makeSessionCoordinator(
