@@ -129,6 +129,11 @@ final class SessionCoordinator {
         await sessionRepository.startSession()
         await sessionRepository.updateLastActiveTimestamp()
 
+        // Notify that user logged in - other features can react (e.g., fetch user profile)
+        // This respects Clean Architecture by not creating direct dependencies between features
+        NotificationCenter.default.post(name: NSNotification.Name("UserDidLogin"), object: nil)
+        logger.info("📢 Posted UserDidLogin notification")
+
         // Sync payments in background (non-blocking)
         // User will see local SwiftData immediately, sync updates in background
         Task.detached { @MainActor in
