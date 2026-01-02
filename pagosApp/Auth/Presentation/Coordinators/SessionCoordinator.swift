@@ -73,8 +73,29 @@ final class SessionCoordinator {
 
         self.isSessionActive = sessionRepository.hasActiveSession
 
-        // Initialize to false until we verify
-        self.isAuthenticated = false
+        // IMPORTANT: Initialize isAuthenticated synchronously to avoid flash of login screen
+        // Check if user should be authenticated based on local session state
+        let hasCredentials = hasBiometricCredentialsUseCase.execute()
+
+        #if targetEnvironment(simulator)
+        self.canUseBiometrics = true
+        #endif
+
+        let shouldShowBiometric = settingsStore.isBiometricLockEnabled && hasCredentials && isSessionActive
+
+        if shouldShowBiometric {
+            // User is logged in but needs Face ID unlock
+            self.isAuthenticated = false
+            logger.info("🔐 Init: Biometric lock enabled - will show Face ID screen")
+        } else if isSessionActive {
+            // Has active session, no biometric needed - authenticate immediately
+            self.isAuthenticated = true
+            logger.info("✅ Init: Has active session - authenticated immediately (no flash)")
+        } else {
+            // No session - show login
+            self.isAuthenticated = false
+            logger.info("📱 Init: No active session - showing login screen")
+        }
 
         // Listen for logout notifications
         Task {
@@ -85,8 +106,8 @@ final class SessionCoordinator {
             }
         }
 
+        // Background verification and biometric check
         Task {
-            // Only perform initial check once
             guard !hasPerformedInitialCheck else {
                 logger.debug("⏭️ Skipping duplicate initial check")
                 return
@@ -95,28 +116,16 @@ final class SessionCoordinator {
 
             await checkBiometricAvailability()
 
-            // Check if there's an active authenticated session
+            // Verify session remotely (background check - won't change UI unless expired)
             let hasActiveSession = await getAuthenticationStatusUseCase.execute()
 
-            // Check if biometric is enabled AND credentials exist AND has active session
-            let hasCredentials = hasBiometricCredentialsUseCase.execute()
+            logger.debug("🔍 Background check - Local session: \(self.isSessionActive), Remote session: \(hasActiveSession)")
 
-            logger.info("🔐 Biometric check - Settings: \(settingsStore.isBiometricLockEnabled), CanUse: \(self.canUseBiometrics), HasCreds: \(hasCredentials), HasSession: \(hasActiveSession)")
-
-            let shouldShowBiometric = settingsStore.isBiometricLockEnabled && canUseBiometrics && hasCredentials && hasActiveSession
-
-            if shouldShowBiometric {
-                // Show Face ID lock screen (user is logged in but needs to unlock)
-                logger.info("✅ Showing Face ID lock screen")
+            // Only logout if session is NOT valid remotely but we think it is locally
+            if !hasActiveSession && self.isAuthenticated {
+                logger.warning("⚠️ Session expired remotely - logging out")
                 self.isAuthenticated = false
-            } else if hasActiveSession {
-                // Has session but no biometric - already authenticated
-                logger.info("✅ Has active session without biometric - authenticated")
-                self.isAuthenticated = true
-            } else {
-                // No session - show login screen
-                logger.info("📱 No active session - showing login screen")
-                self.isAuthenticated = false
+                self.isSessionActive = false
             }
         }
     }

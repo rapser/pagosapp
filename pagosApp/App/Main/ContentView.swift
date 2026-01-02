@@ -68,7 +68,7 @@ struct ContentView: View {
             }
 
             if sessionCoordinator.isLoading {
-                LoadingView()
+                LoadingView(message: nil)
             }
         }
         // Removed onAppear for calendar permissions - moved to App init
