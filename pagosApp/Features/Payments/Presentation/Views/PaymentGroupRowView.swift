@@ -32,12 +32,22 @@ struct PaymentGroupRowView: View {
                     .foregroundColor(Color("AppTextSecondary"))
             }
             Spacer()
-            VStack(alignment: .trailing, spacing: 4) {
-                // Show both amounts: "$10.00 - S/ 1,200.00"
-                Text(group.formattedAmount)
-                    .fontWeight(.semibold)
-                    .strikethrough(group.isPaid, color: Color("AppTextSecondary"))
-                    .foregroundColor(group.displayColor)
+            VStack(alignment: .trailing, spacing: 2) {
+                // Show amounts vertically with compact font (PEN first, then USD)
+                if let pen = group.penPayment {
+                    Text("S/\(String(format: "%.2f", pen.amount))")
+                        .font(.callout)
+                        .fontWeight(.semibold)
+                        .strikethrough(group.isPaid, color: Color("AppTextSecondary"))
+                        .foregroundColor(group.displayColor)
+                }
+                if let usd = group.usdPayment {
+                    Text("$\(String(format: "%.2f", usd.amount))")
+                        .font(.callout)
+                        .fontWeight(.semibold)
+                        .strikethrough(group.isPaid, color: Color("AppTextSecondary"))
+                        .foregroundColor(group.displayColor)
+                }
                 Text(group.formattedDate)
                     .font(.caption)
                     .foregroundColor(Color("AppTextSecondary"))
