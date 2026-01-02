@@ -61,7 +61,7 @@ final class UnlinkDeviceUseCase {
         }
 
         // 4. Clear biometric credentials
-        clearBiometricCredentialsUseCase.execute()
+        _ = clearBiometricCredentialsUseCase.execute()
         logger.info("✅ Cleared biometric credentials")
 
         // 5. Clear session
