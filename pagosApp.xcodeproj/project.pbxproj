@@ -30,7 +30,7 @@
 		464D59912E6BB35300DE10FF /* Exceptions for "pagosApp" folder in "pagosApp" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Info.plist,
+				Resources/Info.plist,
 			);
 			target = 464D59302E6B336D00DE10FF /* pagosApp */;
 		};
@@ -352,6 +352,8 @@
 		};
 		464D593F2E6B337000DE10FF /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 464D59332E6B336D00DE10FF /* pagosApp */;
+			baseConfigurationReferenceRelativePath = Config/Secrets.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -361,7 +363,7 @@
 				DEVELOPMENT_TEAM = 8AJBS923B3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = pagosApp/Info.plist;
+				INFOPLIST_FILE = pagosApp/Resources/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_NSCalendarsUsageDescription = "Tu aplicación necesita acceder a tu calendario para añadir y sincronizar los pagos registrados.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Usamos Face ID para que puedas iniciar sesión de forma rápida y segura.";
@@ -386,6 +388,8 @@
 		};
 		464D59402E6B337000DE10FF /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 464D59332E6B336D00DE10FF /* pagosApp */;
+			baseConfigurationReferenceRelativePath = Config/Secrets.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -395,7 +399,7 @@
 				DEVELOPMENT_TEAM = 8AJBS923B3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = pagosApp/Info.plist;
+				INFOPLIST_FILE = pagosApp/Resources/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_NSCalendarsUsageDescription = "Tu aplicación necesita acceder a tu calendario para añadir y sincronizar los pagos registrados.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Usamos Face ID para que puedas iniciar sesión de forma rápida y segura.";
