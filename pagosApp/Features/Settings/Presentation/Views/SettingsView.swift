@@ -12,22 +12,30 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                // Perfil del usuario
+                ProfileSectionView()
+
+                // Seguridad (Biometría)
+                SecuritySectionView()
+
+                // Sincronización
                 SyncSectionView(
                     onSyncTapped: handleSyncTapped,
                     onRetrySyncTapped: handleRetrySyncTapped,
                     onDatabaseResetTapped: showDatabaseResetAlert
                 )
 
-                ProfileSectionView()
+                // Legal (Políticas, Términos)
+                LegalSectionView()
 
-                SecuritySectionView()
-
+                // Acerca de la app
                 AboutSectionView()
 
-                SessionSectionView(
-                    onLogoutTapped: showLogoutAlert,
-                    onUnlinkDeviceTapped: showUnlinkDeviceAlert
-                )
+                // Datos del dispositivo (Desvincular - PELIGROSO)
+                DataSectionView(onUnlinkDeviceTapped: showUnlinkDeviceAlert)
+
+                // Sesión (Cerrar sesión)
+                SessionSectionView(onLogoutTapped: showLogoutAlert)
             }
             .navigationTitle("Ajustes")
             .alert("Error de sincronización", isPresented: $viewModel.showingSyncError) {
