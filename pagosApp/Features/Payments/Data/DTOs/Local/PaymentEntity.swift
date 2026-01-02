@@ -24,8 +24,10 @@ final class PaymentEntity {
     var syncStatus: SyncStatus
     // Última fecha de sincronización exitosa
     var lastSyncedAt: Date?
+    // Links dual-currency credit card payments (PEN + USD with same groupId)
+    var groupId: UUID?
 
-    init(name: String, amount: Double, dueDate: Date, isPaid: Bool = false, category: PaymentCategory, currency: Currency = .pen) {
+    init(name: String, amount: Double, dueDate: Date, isPaid: Bool = false, category: PaymentCategory, currency: Currency = .pen, groupId: UUID? = nil) {
         self.id = UUID()
         self.name = name
         self.amount = amount
@@ -36,10 +38,11 @@ final class PaymentEntity {
         self.eventIdentifier = nil
         self.syncStatus = .local
         self.lastSyncedAt = nil
+        self.groupId = groupId
     }
 
     /// Full initializer for syncing with backend
-    init(id: UUID, name: String, amount: Double, currency: Currency = .pen, dueDate: Date, isPaid: Bool, category: PaymentCategory, eventIdentifier: String?, syncStatus: SyncStatus = .local, lastSyncedAt: Date? = nil) {
+    init(id: UUID, name: String, amount: Double, currency: Currency = .pen, dueDate: Date, isPaid: Bool, category: PaymentCategory, eventIdentifier: String?, syncStatus: SyncStatus = .local, lastSyncedAt: Date? = nil, groupId: UUID? = nil) {
         self.id = id
         self.name = name
         self.amount = amount
@@ -50,5 +53,6 @@ final class PaymentEntity {
         self.eventIdentifier = eventIdentifier
         self.syncStatus = syncStatus
         self.lastSyncedAt = lastSyncedAt
+        self.groupId = groupId
     }
 }

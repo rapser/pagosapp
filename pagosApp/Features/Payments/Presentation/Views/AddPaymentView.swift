@@ -15,23 +15,51 @@ struct AddPaymentView: View {
                     Form {
                         Section(header: Text("Detalles del Pago")) {
                             TextField("Nombre del pago", text: $vm.name)
-                            
-                            Picker("Moneda", selection: $vm.currency) {
-                                Text("Soles").tag(Currency.pen)
-                                Text("Dólares").tag(Currency.usd)
-                            }
-                            
-                            HStack {
-                                Text(vm.currency.symbol)
-                                TextField("Monto", text: $vm.amount)
-                                    .keyboardType(.decimalPad)
-                            }
-                            
-                            DatePicker("Fecha de Vencimiento", selection: $vm.dueDate, displayedComponents: .date)
-                            
+
                             Picker("Categoría", selection: $vm.category) {
                                 ForEach(PaymentCategory.allCases) { category in
                                     Text(category.rawValue).tag(category)
+                                }
+                            }
+
+                            DatePicker("Fecha de Vencimiento", selection: $vm.dueDate, displayedComponents: .date)
+                        }
+
+                        Section(header: Text("Montos")) {
+                            if vm.showDualCurrency {
+                                // Dual-currency fields for credit cards
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Tarjeta Bimoneda")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+
+                                    HStack {
+                                        Text("S/")
+                                        TextField("Soles (opcional)", text: $vm.amount)
+                                            .keyboardType(.decimalPad)
+                                    }
+
+                                    HStack {
+                                        Text("$")
+                                        TextField("Dólares (opcional)", text: $vm.amountUSD)
+                                            .keyboardType(.decimalPad)
+                                    }
+
+                                    Text("Ingresa al menos un monto. Si usas ambas monedas, se crearán 2 pagos vinculados.")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            } else {
+                                // Single currency for other categories
+                                Picker("Moneda", selection: $vm.currency) {
+                                    Text("Soles").tag(Currency.pen)
+                                    Text("Dólares").tag(Currency.usd)
+                                }
+
+                                HStack {
+                                    Text(vm.currency.symbol)
+                                    TextField("Monto", text: $vm.amount)
+                                        .keyboardType(.decimalPad)
                                 }
                             }
                         }

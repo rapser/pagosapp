@@ -51,7 +51,8 @@ final class UpdatePaymentUseCase {
                 category: payment.category,
                 eventIdentifier: payment.eventIdentifier,
                 syncStatus: .modified,
-                lastSyncedAt: payment.lastSyncedAt
+                lastSyncedAt: payment.lastSyncedAt,
+                groupId: payment.groupId
             )
         }
 
