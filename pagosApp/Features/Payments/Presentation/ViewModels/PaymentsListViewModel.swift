@@ -66,7 +66,8 @@ final class PaymentsListViewModel {
     private func setupNotificationObserver() {
         Task { @MainActor in
             for await _ in NotificationCenter.default.notifications(named: NSNotification.Name("PaymentsDidSync")) {
-                await fetchPayments()
+                // Sync notifications trigger silent refresh (no loading indicator)
+                await fetchPayments(showLoading: false)
             }
         }
     }
@@ -74,9 +75,16 @@ final class PaymentsListViewModel {
     // MARK: - Data Operations
 
     /// Fetch all payments from repository (reads from local SwiftData - fast)
-    func fetchPayments() async {
-        isLoading = true
-        defer { isLoading = false }
+    /// - Parameter showLoading: Whether to show loading indicator (default: true). Set to false for silent background refreshes.
+    func fetchPayments(showLoading: Bool = true) async {
+        if showLoading {
+            isLoading = true
+        }
+        defer {
+            if showLoading {
+                isLoading = false
+            }
+        }
 
         let result = await getAllPaymentsUseCase.execute()
 
@@ -84,7 +92,7 @@ final class PaymentsListViewModel {
         case .success(let fetchedPayments):
             // Convert Domain -> UI
             payments = fetchedPayments.toUI()
-            logger.info("✅ Fetched \(fetchedPayments.count) payments from local storage")
+            logger.info("✅ Fetched \(fetchedPayments.count) payments from local storage (showLoading: \(showLoading))")
 
         case .failure(let error):
             logger.error("❌ Failed to fetch payments: \(error.errorCode)")
