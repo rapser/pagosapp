@@ -58,6 +58,11 @@ struct SettingsView: View {
                     await viewModel.updatePendingSyncCount()
                 }
             }
+            .overlay {
+                if viewModel.isLoading {
+                    LoadingView(message: "Cerrando sesión...")
+                }
+            }
         }
     }
 
