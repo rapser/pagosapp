@@ -33,10 +33,7 @@ struct PaymentUI: Identifiable, Equatable {
 
     /// Formatted date for display
     var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "es_PE")
-        formatter.dateStyle = .medium
-        return formatter.string(from: dueDate)
+        DateFormattingService.formatMedium(dueDate)
     }
 
     /// Color for status indicator
