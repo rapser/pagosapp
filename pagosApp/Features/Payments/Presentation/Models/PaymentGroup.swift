@@ -43,10 +43,7 @@ struct PaymentGroup: Identifiable {
 
     /// Formatted date
     var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "es_PE")
-        formatter.dateStyle = .medium
-        return formatter.string(from: dueDate)
+        DateFormattingService.formatMedium(dueDate)
     }
 
     /// Color for status indicator
@@ -96,11 +93,8 @@ struct PaymentGroup: Identifiable {
 
     /// Create PaymentGroup from two related payments
     static func from(penPayment: PaymentUI?, usdPayment: PaymentUI?, groupId: UUID) -> PaymentGroup? {
-        // Need at least one payment
-        guard penPayment != nil || usdPayment != nil else { return nil }
-
         // Use first available payment for common properties
-        let firstPayment = penPayment ?? usdPayment!
+        guard let firstPayment = penPayment ?? usdPayment else { return nil }
 
         return PaymentGroup(
             id: groupId,

@@ -79,6 +79,25 @@ final class AddPaymentViewModel {
         self.createPaymentUseCase = createPaymentUseCase
     }
 
+    // MARK: - Private Helpers
+
+    /// Create a Payment entity with common properties
+    private func createPayment(amount: Double, currency: Currency, groupId: UUID? = nil) -> Payment {
+        Payment(
+            id: UUID(),
+            name: name,
+            amount: amount,
+            currency: currency,
+            dueDate: dueDate,
+            isPaid: false,
+            category: category,
+            eventIdentifier: nil,
+            syncStatus: .local,
+            lastSyncedAt: nil,
+            groupId: groupId
+        )
+    }
+
     // MARK: - Actions
 
     func savePayment() async {
@@ -117,19 +136,7 @@ final class AddPaymentViewModel {
             return
         }
 
-        let payment = Payment(
-            id: UUID(),
-            name: name,
-            amount: finalAmount,
-            currency: finalCurrency,
-            dueDate: dueDate,
-            isPaid: false,
-            category: category,
-            eventIdentifier: nil,
-            syncStatus: .local,
-            lastSyncedAt: nil,
-            groupId: nil
-        )
+        let payment = createPayment(amount: finalAmount, currency: finalCurrency)
 
         let result = await createPaymentUseCase.execute(payment)
 
@@ -158,35 +165,9 @@ final class AddPaymentViewModel {
         // Generate shared groupId for linking both payments
         let sharedGroupId = UUID()
 
-        // Create PEN payment
-        let paymentPEN = Payment(
-            id: UUID(),
-            name: name,
-            amount: penAmount,
-            currency: .pen,
-            dueDate: dueDate,
-            isPaid: false,
-            category: category,
-            eventIdentifier: nil,
-            syncStatus: .local,
-            lastSyncedAt: nil,
-            groupId: sharedGroupId
-        )
-
-        // Create USD payment
-        let paymentUSD = Payment(
-            id: UUID(),
-            name: name,
-            amount: usdAmount,
-            currency: .usd,
-            dueDate: dueDate,
-            isPaid: false,
-            category: category,
-            eventIdentifier: nil,
-            syncStatus: .local,
-            lastSyncedAt: nil,
-            groupId: sharedGroupId
-        )
+        // Create PEN and USD payments using helper method
+        let paymentPEN = createPayment(amount: penAmount, currency: .pen, groupId: sharedGroupId)
+        let paymentUSD = createPayment(amount: usdAmount, currency: .usd, groupId: sharedGroupId)
 
         // Save both payments
         let resultPEN = await createPaymentUseCase.execute(paymentPEN)
@@ -222,6 +203,8 @@ final class AddPaymentViewModel {
 
     private func showError(for error: PaymentError) {
         switch error {
+        case .invalidName:
+            errorMessage = "El nombre del pago es requerido"
         case .invalidAmount:
             errorMessage = "El monto debe ser mayor a cero"
         case .invalidDate:

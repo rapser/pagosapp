@@ -181,6 +181,8 @@ final class EditPaymentViewModel {
 
     private func showError(for error: PaymentError) {
         switch error {
+        case .invalidName:
+            errorMessage = "El nombre del pago es requerido"
         case .invalidAmount:
             errorMessage = "El monto debe ser mayor a cero"
         case .invalidDate:
