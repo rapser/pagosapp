@@ -17,7 +17,7 @@ final class PaymentsListViewModel {
     // MARK: - Observable Properties (UI State)
 
     var payments: [PaymentUI] = []
-    var selectedFilter: PaymentFilter = .currentMonth
+    var selectedFilter: PaymentFilterUI = .currentMonth
     var isLoading = false
     var errorMessage: String?
     var showError = false
@@ -52,8 +52,8 @@ final class PaymentsListViewModel {
 
     /// Group dual-currency credit card payments for display
     /// Returns sorted items (groups and individuals mixed by due date)
-    var groupedPayments: [PaymentListItem] {
-        var items: [PaymentListItem] = []
+    var groupedPayments: [PaymentListItemUI] {
+        var items: [PaymentListItemUI] = []
         var processedIds: Set<UUID> = []
 
         // Group payments by groupId (only for credit cards)
@@ -74,7 +74,7 @@ final class PaymentsListViewModel {
             let usdPayment = groupedPayments.first { $0.currency == .usd }
 
             // Create group
-            if let group = PaymentGroup.from(penPayment: penPayment, usdPayment: usdPayment, groupId: groupId) {
+            if let group = PaymentGroupUI.from(penPayment: penPayment, usdPayment: usdPayment, groupId: groupId) {
                 items.append(.group(group))
                 if let pen = penPayment {
                     processedIds.insert(pen.id)
@@ -213,7 +213,7 @@ final class PaymentsListViewModel {
     }
 
     /// Toggle payment group status (both PEN and USD payments)
-    func toggleGroupStatus(_ group: PaymentGroup) async {
+    func toggleGroupStatus(_ group: PaymentGroupUI) async {
         // Toggle all payments in the group
         if let penPayment = group.penPayment {
             await togglePaymentStatus(penPayment)
@@ -224,7 +224,7 @@ final class PaymentsListViewModel {
     }
 
     /// Delete payment group (both PEN and USD payments)
-    func deleteGroup(_ group: PaymentGroup) async {
+    func deleteGroup(_ group: PaymentGroupUI) async {
         // Delete all payments in the group
         if let penPayment = group.penPayment {
             await deletePayment(penPayment)

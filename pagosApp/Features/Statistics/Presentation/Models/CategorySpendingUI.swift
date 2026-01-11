@@ -9,7 +9,7 @@
 import Foundation
 
 /// Presentation model for category spending statistics (used in Charts)
-struct CategorySpending: Identifiable {
+struct CategorySpendingUI: Identifiable {
     let id = UUID()
     let category: PaymentCategory
     let totalAmount: Double

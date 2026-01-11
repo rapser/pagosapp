@@ -56,11 +56,11 @@ struct PaymentsListContentView: View {
 }
 
 private struct FilterPicker: View {
-    @Binding var selectedFilter: PaymentFilter
+    @Binding var selectedFilter: PaymentFilterUI
 
     var body: some View {
         Picker("Filtrar", selection: $selectedFilter) {
-            ForEach(PaymentFilter.allCases) { filter in
+            ForEach(PaymentFilterUI.allCases) { filter in
                 Text(filter.rawValue).tag(filter)
             }
         }
@@ -128,7 +128,7 @@ private struct PaymentsList: View {
     }
 
     @ViewBuilder
-    private func editViewForGroup(_ group: PaymentGroup) -> some View {
+    private func editViewForGroup(_ group: PaymentGroupUI) -> some View {
         // Navigate to the first available payment in the group
         if let firstPayment = group.penPayment ?? group.usdPayment {
             EditPaymentView(payment: firstPayment)

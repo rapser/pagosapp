@@ -11,7 +11,7 @@ import SwiftUI
 
 /// Represents a group of related payments (dual-currency credit cards)
 /// Used only in PaymentsListView for visual grouping
-struct PaymentGroup: Identifiable {
+struct PaymentGroupUI: Identifiable {
     let id: UUID  // groupId shared by both payments
     let name: String
     let penPayment: PaymentUI?
@@ -92,11 +92,11 @@ struct PaymentGroup: Identifiable {
     // MARK: - Factory Methods
 
     /// Create PaymentGroup from two related payments
-    static func from(penPayment: PaymentUI?, usdPayment: PaymentUI?, groupId: UUID) -> PaymentGroup? {
+    static func from(penPayment: PaymentUI?, usdPayment: PaymentUI?, groupId: UUID) -> PaymentGroupUI? {
         // Use first available payment for common properties
         guard let firstPayment = penPayment ?? usdPayment else { return nil }
 
-        return PaymentGroup(
+        return PaymentGroupUI(
             id: groupId,
             name: firstPayment.name,
             penPayment: penPayment,
