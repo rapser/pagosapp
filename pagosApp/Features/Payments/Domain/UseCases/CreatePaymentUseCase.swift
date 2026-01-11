@@ -46,6 +46,11 @@ final class CreatePaymentUseCase {
         do {
             try await paymentRepository.savePayment(newPayment)
             logger.info("✅ Payment created successfully: \(payment.name)")
+
+            // Notify that payments have been updated so UI can refresh
+            NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
+            logger.debug("📢 Posted PaymentsDidSync notification")
+
             return .success(newPayment)
         } catch {
             logger.error("❌ Failed to create payment: \(error.localizedDescription)")
