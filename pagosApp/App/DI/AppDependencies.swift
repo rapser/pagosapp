@@ -101,7 +101,7 @@ final class AppDependencies {
 
     static func mock() -> AppDependencies {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try! ModelContainer(for: PaymentEntity.self, UserProfile.self, configurations: config)
+        let container = try! ModelContainer(for: PaymentLocalDTO.self, UserProfileLocalDTO.self, configurations: config)
         let mockSupabase = SupabaseClient(
             supabaseURL: URL(string: "https://mock.supabase.co")!,
             supabaseKey: "mock_key"

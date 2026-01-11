@@ -23,8 +23,8 @@ final class CalculateMonthlyStatsUseCase {
     /// - Parameters:
     ///   - monthCount: Number of months to include (default: 6)
     ///   - currency: Currency filter
-    /// - Returns: Result with array of MonthlyStatsEntity or PaymentError
-    func execute(monthCount: Int = 6, currency: Currency) async -> Result<[MonthlyStatsEntity], PaymentError> {
+    /// - Returns: Result with array of MonthlyStats or PaymentError
+    func execute(monthCount: Int = 6, currency: Currency) async -> Result<[MonthlyStats], PaymentError> {
         logger.debug("📊 Calculating monthly stats for last \(monthCount) months, currency: \(currency.rawValue)")
 
         // Get payments for last N months
@@ -51,7 +51,7 @@ final class CalculateMonthlyStatsUseCase {
         }
 
         // Create stats for each month (last 6 completed months)
-        var monthlyStats: [MonthlyStatsEntity] = []
+        var monthlyStats: [MonthlyStats] = []
         for i in 0..<monthCount {
             guard let monthDate = calendar.date(byAdding: .month, value: -i, to: endOfPreviousMonth),
                   let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: monthDate)) else {
@@ -61,7 +61,7 @@ final class CalculateMonthlyStatsUseCase {
             let monthPayments = groupedByMonth[startOfMonth] ?? []
             let total = monthPayments.reduce(0) { $0 + $1.amount }
 
-            monthlyStats.append(MonthlyStatsEntity(
+            monthlyStats.append(MonthlyStats(
                 month: startOfMonth,
                 totalAmount: total,
                 currency: currency,

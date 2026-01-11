@@ -26,7 +26,7 @@ struct PaymentDetailsSection: View {
             TextField("Nombre del pago", text: $name)
 
             Picker("Categoría", selection: $category) {
-                ForEach(PaymentCategory.allCases) { category in
+                ForEach(PaymentCategory.allCases, id: \.self) { category in
                     Text(category.rawValue).tag(category)
                 }
             }

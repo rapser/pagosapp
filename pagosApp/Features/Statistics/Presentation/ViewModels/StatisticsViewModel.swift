@@ -15,8 +15,8 @@ import OSLog
 final class StatisticsViewModel {
     // MARK: - Observable Properties (UI State)
 
-    var categoryStats: [CategoryStatsEntity] = []
-    var monthlyStats: [MonthlyStatsEntity] = []
+    var categoryStats: [CategoryStats] = []
+    var monthlyStats: [MonthlyStats] = []
     var totalSpending: Double = 0
     var selectedFilter: StatsFilter = .all
     var selectedCurrency: Currency = .pen

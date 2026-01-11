@@ -46,7 +46,7 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
         logger.info("📤 Uploading \(payments.count) payments")
 
         // Convert entities to DTOs
-        let dtos = mapper.toDTO(from: payments, userId: userId)
+        let dtos = mapper.toRemoteDTO(from: payments, userId: userId)
 
         // Upload to remote
         try await remoteDataSource.upsertAll(dtos, userId: userId)

@@ -13,17 +13,17 @@ import OSLog
 final class PaymentRepositoryImpl: PaymentRepositoryProtocol {
     private let remoteDataSource: PaymentRemoteDataSource
     private let localDataSource: PaymentLocalDataSource
-    private let mapper: PaymentMapper.Type
+    private let remoteDTOMapper: PaymentRemoteDTOMapping
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentRepositoryImpl")
 
     init(
         remoteDataSource: PaymentRemoteDataSource,
         localDataSource: PaymentLocalDataSource,
-        mapper: PaymentMapper.Type = PaymentMapper.self
+        remoteDTOMapper: PaymentRemoteDTOMapping
     ) {
         self.remoteDataSource = remoteDataSource
         self.localDataSource = localDataSource
-        self.mapper = mapper
+        self.remoteDTOMapper = remoteDTOMapper
     }
 
     // MARK: - Remote Operations

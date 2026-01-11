@@ -1,5 +1,5 @@
 //
-//  UserProfile.swift
+//  UserProfileLocalDTO.swift
 //  pagosApp
 //
 //  SwiftData model for user profile local persistence
@@ -9,12 +9,12 @@
 import Foundation
 import SwiftData
 
-/// SwiftData model for user profile persistence
+/// Local DTO for UserProfile persistence with SwiftData
+/// Clean Architecture: DTOs handle serialization, Domain models are pure
 /// SwiftData manages thread-safety internally through ModelContext.
 /// All access must go through ModelContext on @MainActor.
-/// For thread-safe operations, use UserProfileEntity instead.
 @Model
-final class UserProfile {
+final class UserProfileLocalDTO {
     @Attribute(.unique) var userId: UUID
     var fullName: String
     var email: String
@@ -25,7 +25,17 @@ final class UserProfile {
     var city: String?
     var preferredCurrencyRawValue: String
 
-    init(userId: UUID, fullName: String, email: String, phone: String? = nil, dateOfBirth: Date? = nil, gender: Gender? = nil, country: String? = nil, city: String? = nil, preferredCurrency: Currency) {
+    init(
+        userId: UUID,
+        fullName: String,
+        email: String,
+        phone: String? = nil,
+        dateOfBirth: Date? = nil,
+        gender: UserProfile.Gender? = nil,
+        country: String? = nil,
+        city: String? = nil,
+        preferredCurrency: Currency
+    ) {
         self.userId = userId
         self.fullName = fullName
         self.email = email
@@ -37,23 +47,15 @@ final class UserProfile {
         self.preferredCurrencyRawValue = preferredCurrency.rawValue
     }
 
-    // Computed properties
-    var gender: Gender? {
-        get { genderRawValue.flatMap(Gender.init) }
+    // MARK: - Computed Properties
+
+    var gender: UserProfile.Gender? {
+        get { genderRawValue.flatMap(UserProfile.Gender.init) }
         set { genderRawValue = newValue?.rawValue }
     }
 
     var preferredCurrency: Currency {
         get { Currency(rawValue: preferredCurrencyRawValue) ?? .pen }
         set { preferredCurrencyRawValue = newValue.rawValue }
-    }
-
-    enum Gender: String, CaseIterable {
-        case masculino = "Masculino"
-        case femenino = "Femenino"
-        case otro = "Otro"
-        case prefierNoDecir = "Prefiero no decir"
-
-        var displayName: String { rawValue }
     }
 }

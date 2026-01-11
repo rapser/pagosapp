@@ -27,6 +27,7 @@ final class PaymentsListViewModel {
     private let getAllPaymentsUseCase: GetAllPaymentsUseCase
     private let deletePaymentUseCase: DeletePaymentUseCase
     private let togglePaymentStatusUseCase: TogglePaymentStatusUseCase
+    private let mapper: PaymentUIMapping
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentsListViewModel")
 
     // MARK: - Computed Properties
@@ -104,11 +105,13 @@ final class PaymentsListViewModel {
     init(
         getAllPaymentsUseCase: GetAllPaymentsUseCase,
         deletePaymentUseCase: DeletePaymentUseCase,
-        togglePaymentStatusUseCase: TogglePaymentStatusUseCase
+        togglePaymentStatusUseCase: TogglePaymentStatusUseCase,
+        mapper: PaymentUIMapping
     ) {
         self.getAllPaymentsUseCase = getAllPaymentsUseCase
         self.deletePaymentUseCase = deletePaymentUseCase
         self.togglePaymentStatusUseCase = togglePaymentStatusUseCase
+        self.mapper = mapper
 
         setupNotificationObserver()
     }
@@ -140,8 +143,8 @@ final class PaymentsListViewModel {
 
         switch result {
         case .success(let fetchedPayments):
-            // Convert Domain -> UI
-            payments = fetchedPayments.toUI()
+            // Convert Domain -> UI using mapper
+            payments = mapper.toUI(fetchedPayments)
             logger.info("✅ Fetched \(fetchedPayments.count) payments from local storage (showLoading: \(showLoading))")
 
         case .failure(let error):
@@ -192,7 +195,7 @@ final class PaymentsListViewModel {
         }
 
         // Perform actual update in background (no loading state to avoid flicker)
-        let result = await togglePaymentStatusUseCase.execute(payment.toDomain())
+        let result = await togglePaymentStatusUseCase.execute(mapper.toDomain(payment))
 
         switch result {
         case .success(let updatedPayment):
