@@ -46,9 +46,11 @@ struct LocationSection: View {
 #Preview("View Mode") {
     @Previewable @State var editableProfile: EditableProfileUI? = nil
 
+    let mockProfile = UserProfileUIMapper().toDomain(UserProfileUI.mock)
+
     Form {
         LocationSection(
-            profile: .mock,
+            profile: mockProfile,
             isEditing: false,
             editableProfile: $editableProfile
         )
@@ -57,11 +59,13 @@ struct LocationSection: View {
 }
 
 #Preview("Edit Mode") {
-    @Previewable @State var editableProfile: EditableProfileUI? = EditableProfileUI(from: .mock)
+    @Previewable @State var editableProfile: EditableProfileUI? = EditableProfileUI(from: UserProfileUI.mock)
+
+    let mockProfile = UserProfileUIMapper().toDomain(UserProfileUI.mock)
 
     Form {
         LocationSection(
-            profile: .mock,
+            profile: mockProfile,
             isEditing: true,
             editableProfile: $editableProfile
         )

@@ -70,10 +70,10 @@ final class SessionRepositoryImpl: SessionRepositoryProtocol {
         }
 
         let elapsedTime = Date().timeIntervalSince(lastActive)
-        let isExpired = elapsedTime > sessionTimeoutInSeconds
+        let isExpired = elapsedTime > self.sessionTimeoutInSeconds
 
         if isExpired {
-            logger.warning("⏰ Session expired - elapsed: \(elapsedTime)s, timeout: \(sessionTimeoutInSeconds)s")
+            logger.warning("⏰ Session expired - elapsed: \(elapsedTime)s, timeout: \(self.sessionTimeoutInSeconds)s")
         }
 
         return isExpired

@@ -37,9 +37,11 @@ struct PreferencesSection: View {
 #Preview("View Mode") {
     @Previewable @State var editableProfile: EditableProfileUI? = nil
 
+    let mockProfile = UserProfileUIMapper().toDomain(UserProfileUI.mock)
+
     Form {
         PreferencesSection(
-            profile: .mock,
+            profile: mockProfile,
             isEditing: false,
             editableProfile: $editableProfile
         )
@@ -48,11 +50,13 @@ struct PreferencesSection: View {
 }
 
 #Preview("Edit Mode - PEN") {
-    @Previewable @State var editableProfile: EditableProfileUI? = EditableProfileUI(from: .mock)
+    @Previewable @State var editableProfile: EditableProfileUI? = EditableProfileUI(from: UserProfileUI.mock)
+
+    let mockProfile = UserProfileUIMapper().toDomain(UserProfileUI.mock)
 
     Form {
         PreferencesSection(
-            profile: .mock,
+            profile: mockProfile,
             isEditing: true,
             editableProfile: $editableProfile
         )
@@ -61,11 +65,13 @@ struct PreferencesSection: View {
 }
 
 #Preview("Edit Mode - USD") {
-    @Previewable @State var editableProfile: EditableProfileUI? = EditableProfileUI(from: .mockMinimal)
+    @Previewable @State var editableProfile: EditableProfileUI? = EditableProfileUI(from: UserProfileUI.mockMinimal)
+
+    let mockProfile = UserProfileUIMapper().toDomain(UserProfileUI.mockMinimal)
 
     Form {
         PreferencesSection(
-            profile: .mockMinimal,
+            profile: mockProfile,
             isEditing: true,
             editableProfile: $editableProfile
         )
