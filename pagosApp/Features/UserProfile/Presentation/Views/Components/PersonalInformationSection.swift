@@ -103,9 +103,11 @@ struct PersonalInformationSection: View {
     @Previewable @State var editableProfile: EditableProfileUI? = nil
     @Previewable @State var showDatePicker = false
 
+    let mockProfile = UserProfileUIMapper().toDomain(UserProfileUI.mock)
+
     Form {
         PersonalInformationSection(
-            profile: .mock,
+            profile: mockProfile,
             isEditing: false,
             editableProfile: $editableProfile,
             showDatePicker: $showDatePicker
@@ -115,12 +117,14 @@ struct PersonalInformationSection: View {
 }
 
 #Preview("Edit Mode") {
-    @Previewable @State var editableProfile: EditableProfileUI? = EditableProfileUI(from: .mock)
+    @Previewable @State var editableProfile: EditableProfileUI? = EditableProfileUI(from: UserProfileUI.mock)
     @Previewable @State var showDatePicker = false
+
+    let mockProfile = UserProfileUIMapper().toDomain(UserProfileUI.mock)
 
     Form {
         PersonalInformationSection(
-            profile: .mock,
+            profile: mockProfile,
             isEditing: true,
             editableProfile: $editableProfile,
             showDatePicker: $showDatePicker
