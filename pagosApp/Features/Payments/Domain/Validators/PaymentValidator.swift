@@ -14,7 +14,7 @@ struct PaymentValidator {
     /// Validate payment amount
     /// - Parameter amount: The amount to validate
     /// - Throws: PaymentError.invalidAmount if amount is not valid
-    func validateAmount(_ amount: Double) throws {
+    func validateAmount(_ amount: Decimal) throws {
         guard amount > 0 else {
             throw PaymentError.invalidAmount
         }

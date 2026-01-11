@@ -15,11 +15,11 @@ struct EditableProfile {
     var phone: String
     var city: String
     var dateOfBirth: Date?
-    var gender: UserProfileEntity.Gender?
+    var gender: UserProfile.Gender?
     var preferredCurrency: Currency
 
-    /// Initialize from UserProfileEntity
-    init(from profile: UserProfileEntity) {
+    /// Initialize from UserProfileUI
+    init(from profile: UserProfileUI) {
         self.fullName = profile.fullName
         self.phone = profile.phone ?? ""
         self.city = profile.city ?? ""
@@ -28,9 +28,9 @@ struct EditableProfile {
         self.preferredCurrency = profile.preferredCurrency
     }
 
-    /// Apply changes to UserProfileEntity and create new instance
-    func applyTo(_ profile: UserProfileEntity) -> UserProfileEntity {
-        UserProfileEntity(
+    /// Apply changes to UserProfileUI and create new instance
+    func applyTo(_ profile: UserProfileUI) -> UserProfileUI {
+        UserProfileUI(
             userId: profile.userId,
             fullName: fullName,
             email: profile.email,

@@ -11,35 +11,35 @@ import Foundation
 /// Mapper for Payment conversions between layers
 struct PaymentMapper {
 
-    // MARK: - SwiftData Entity → Domain
+    // MARK: - SwiftData DTO → Domain
 
-    /// Convert from SwiftData entity to domain
-    static func toDomain(from entity: PaymentEntity) -> Payment {
+    /// Convert from SwiftData DTO to domain
+    static func toDomain(from dto: PaymentLocalDTO) -> Payment {
         return Payment(
-            id: entity.id,
-            name: entity.name,
-            amount: entity.amount,
-            currency: entity.currency,
-            dueDate: entity.dueDate,
-            isPaid: entity.isPaid,
-            category: entity.category,
-            eventIdentifier: entity.eventIdentifier,
-            syncStatus: entity.syncStatus,
-            lastSyncedAt: entity.lastSyncedAt,
-            groupId: entity.groupId
+            id: dto.id,
+            name: dto.name,
+            amount: dto.amount,
+            currency: dto.currency,
+            dueDate: dto.dueDate,
+            isPaid: dto.isPaid,
+            category: dto.category,
+            eventIdentifier: dto.eventIdentifier,
+            syncStatus: dto.syncStatus,
+            lastSyncedAt: dto.lastSyncedAt,
+            groupId: dto.groupId
         )
     }
 
-    /// Convert array of entities to domain
-    static func toDomain(from entities: [PaymentEntity]) -> [Payment] {
-        return entities.map { toDomain(from: $0) }
+    /// Convert array of DTOs to domain
+    static func toDomain(from dtos: [PaymentLocalDTO]) -> [Payment] {
+        return dtos.map { toDomain(from: $0) }
     }
 
-    // MARK: - Domain → SwiftData Entity
+    // MARK: - Domain → SwiftData DTO
 
-    /// Convert from domain to SwiftData entity
-    static func toEntity(from payment: Payment) -> PaymentEntity {
-        return PaymentEntity(
+    /// Convert from domain to SwiftData DTO
+    static func toLocalDTO(from payment: Payment) -> PaymentLocalDTO {
+        return PaymentLocalDTO(
             id: payment.id,
             name: payment.name,
             amount: payment.amount,
@@ -54,9 +54,9 @@ struct PaymentMapper {
         )
     }
 
-    /// Convert array of domain to entities
-    static func toEntity(from payments: [Payment]) -> [PaymentEntity] {
-        return payments.map { toEntity(from: $0) }
+    /// Convert array of domain to DTOs
+    static func toLocalDTO(from payments: [Payment]) -> [PaymentLocalDTO] {
+        return payments.map { toLocalDTO(from: $0) }
     }
 
     // MARK: - Remote DTO → Domain
@@ -69,7 +69,7 @@ struct PaymentMapper {
         return Payment(
             id: dto.id,
             name: dto.name,
-            amount: dto.amount,
+            amount: Decimal(dto.amount),  // Convert Double to Decimal
             currency: paymentCurrency,
             dueDate: dto.dueDate,
             isPaid: dto.isPaid,
@@ -89,14 +89,25 @@ struct PaymentMapper {
     // MARK: - Domain → Remote DTO
 
     /// Convert from domain to remote DTO
-    static func toDTO(from payment: Payment, userId: UUID) -> PaymentDTO {
-        // First convert to SwiftData entity, then to DTO
-        let entity = toEntity(from: payment)
-        return PaymentDTO(from: entity, userId: userId)
+    static func toRemoteDTO(from payment: Payment, userId: UUID) -> PaymentDTO {
+        return PaymentDTO(
+            id: payment.id,
+            userId: userId,
+            name: payment.name,
+            amount: NSDecimalNumber(decimal: payment.amount).doubleValue,
+            currency: payment.currency.rawValue,
+            dueDate: payment.dueDate,
+            isPaid: payment.isPaid,
+            category: payment.category.rawValue,
+            eventIdentifier: payment.eventIdentifier,
+            groupId: payment.groupId,
+            createdAt: nil,
+            updatedAt: payment.lastSyncedAt
+        )
     }
 
     /// Convert array of domain to remote DTOs
-    static func toDTO(from payments: [Payment], userId: UUID) -> [PaymentDTO] {
-        return payments.map { toDTO(from: $0, userId: userId) }
+    static func toRemoteDTO(from payments: [Payment], userId: UUID) -> [PaymentDTO] {
+        return payments.map { toRemoteDTO(from: $0, userId: userId) }
     }
 }

@@ -24,8 +24,8 @@ struct EditPaymentView: View {
                 if viewModel == nil {
                     // Get Use Cases from DI Container
                     let container = dependencies.paymentDependencyContainer
-                    // Convert UI -> Domain for ViewModel
-                    viewModel = container.makeEditPaymentViewModel(for: payment.toDomain())
+                    // Pass PaymentUI directly to ViewModel
+                    viewModel = container.makeEditPaymentViewModel(for: payment)
                 }
             }
         }

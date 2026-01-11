@@ -22,8 +22,8 @@ final class CalculateCategoryStatsUseCase {
     /// - Parameters:
     ///   - filter: Time period filter
     ///   - currency: Currency filter
-    /// - Returns: Result with array of CategoryStatsEntity or PaymentError
-    func execute(filter: StatsFilter, currency: Currency) async -> Result<[CategoryStatsEntity], PaymentError> {
+    /// - Returns: Result with array of CategoryStats or PaymentError
+    func execute(filter: StatsFilter, currency: Currency) async -> Result<[CategoryStats], PaymentError> {
         logger.debug("📊 Calculating category stats for filter: \(filter.rawValue), currency: \(currency.rawValue)")
 
         // Get filtered payments
@@ -41,7 +41,7 @@ final class CalculateCategoryStatsUseCase {
 
         let categoryStats = groupedByCategory.map { (category, categoryPayments) in
             let total = categoryPayments.reduce(0) { $0 + $1.amount }
-            return CategoryStatsEntity(
+            return CategoryStats(
                 category: category,
                 totalAmount: total,
                 currency: currency,

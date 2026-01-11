@@ -13,13 +13,13 @@ import OSLog
 @MainActor
 @Observable
 final class UserProfileViewModel {
-    // MARK: - Domain State
-    var profile: UserProfileEntity?
+    // MARK: - UI State
+    var profile: UserProfileUI?
     var isLoading = false
     var errorMessage: String?
     var isSaving = false
 
-    // MARK: - UI State
+    // MARK: - Editing State
     var isEditing = false
     var showSuccessAlert = false
     var showDatePicker = false
@@ -30,18 +30,21 @@ final class UserProfileViewModel {
     private let getLocalProfileUseCase: GetLocalProfileUseCase
     private let updateUserProfileUseCase: UpdateUserProfileUseCase
     private let deleteLocalProfileUseCase: DeleteLocalProfileUseCase
+    private let mapper: UserProfileUIMapping
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "UserProfileViewModel")
 
     init(
         fetchUserProfileUseCase: FetchUserProfileUseCase,
         getLocalProfileUseCase: GetLocalProfileUseCase,
         updateUserProfileUseCase: UpdateUserProfileUseCase,
-        deleteLocalProfileUseCase: DeleteLocalProfileUseCase
+        deleteLocalProfileUseCase: DeleteLocalProfileUseCase,
+        mapper: UserProfileUIMapping
     ) {
         self.fetchUserProfileUseCase = fetchUserProfileUseCase
         self.getLocalProfileUseCase = getLocalProfileUseCase
         self.updateUserProfileUseCase = updateUserProfileUseCase
         self.deleteLocalProfileUseCase = deleteLocalProfileUseCase
+        self.mapper = mapper
     }
 
     // MARK: - Data Operations
@@ -56,7 +59,8 @@ final class UserProfileViewModel {
         switch result {
         case .success(let loadedProfile):
             logger.info("🔍 [ViewModel] Got result - profile is \(loadedProfile == nil ? "nil" : "not nil")")
-            profile = loadedProfile
+            // Convert Domain -> UI
+            profile = loadedProfile.map { mapper.toUI($0) }
             logger.info("🔍 [ViewModel] Assigned to self.profile - self.profile is now \(self.profile == nil ? "nil" : "not nil")")
 
             if let loadedProfile = loadedProfile {
@@ -81,7 +85,8 @@ final class UserProfileViewModel {
 
         switch result {
         case .success(let fetchedProfile):
-            profile = fetchedProfile
+            // Convert Domain -> UI
+            profile = mapper.toUI(fetchedProfile)
             logger.info("✅ Profile fetched and saved successfully")
             isLoading = false
             return true
@@ -104,14 +109,16 @@ final class UserProfileViewModel {
         isSaving = true
         errorMessage = nil
 
-        // Apply changes to create updated entity
-        let updatedProfile = editableProfile.applyTo(currentProfile)
+        // Apply changes to create updated UI entity
+        let updatedProfileUI = editableProfile.applyTo(currentProfile)
 
-        let result = await updateUserProfileUseCase.execute(updatedProfile)
+        // Convert UI -> Domain and execute
+        let result = await updateUserProfileUseCase.execute(mapper.toDomain(updatedProfileUI))
 
         switch result {
         case .success(let savedProfile):
-            profile = savedProfile
+            // Convert Domain -> UI
+            profile = mapper.toUI(savedProfile)
             logger.info("✅ Profile updated successfully")
             isSaving = false
             return true

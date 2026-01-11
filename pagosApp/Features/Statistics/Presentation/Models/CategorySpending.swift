@@ -16,9 +16,9 @@ struct CategorySpending: Identifiable {
     let currency: Currency
 
     /// Initialize from domain entity
-    init(from entity: CategoryStatsEntity) {
+    init(from entity: CategoryStats) {
         self.category = entity.category
-        self.totalAmount = entity.totalAmount
+        self.totalAmount = Double(truncating: NSDecimalNumber(decimal: entity.totalAmount))
         self.currency = entity.currency
     }
 

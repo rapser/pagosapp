@@ -14,19 +14,26 @@ import OSLog
 final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
     private let remoteDataSource: UserProfileRemoteDataSource
     private let localDataSource: UserProfileLocalDataSource
-    private let mapper: UserProfileMapper.Type
+    private let domainMapper: UserProfileDomainMapping
+    private let remoteDTOMapper: UserProfileRemoteDTOMapping
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "UserProfileRepositoryImpl")
 
-    init(remoteDataSource: UserProfileRemoteDataSource, localDataSource: UserProfileLocalDataSource, mapper: UserProfileMapper.Type = UserProfileMapper.self) {
+    init(
+        remoteDataSource: UserProfileRemoteDataSource,
+        localDataSource: UserProfileLocalDataSource,
+        domainMapper: UserProfileDomainMapping,
+        remoteDTOMapper: UserProfileRemoteDTOMapping
+    ) {
         self.remoteDataSource = remoteDataSource
         self.localDataSource = localDataSource
-        self.mapper = mapper
+        self.domainMapper = domainMapper
+        self.remoteDTOMapper = remoteDTOMapper
         logger.info("✅ UserProfileRepositoryImpl initialized")
     }
 
     // MARK: - Remote Operations
 
-    func fetchProfile(userId: UUID) async -> Result<UserProfileEntity, UserProfileError> {
+    func fetchProfile(userId: UUID) async -> Result<UserProfile, UserProfileError> {
         logger.info("📥 Fetching profile for user: \(userId)")
 
         do {
@@ -35,9 +42,9 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
                 return .failure(.profileNotFound)
             }
 
-            let profileEntity = mapper.toDomain(from: profileDTO)
+            let profileDomain = remoteDTOMapper.toDomain(profileDTO)
             logger.info("✅ Profile fetched and mapped to domain entity")
-            return .success(profileEntity)
+            return .success(profileDomain)
 
         } catch {
             logger.error("❌ Failed to fetch profile: \(error.localizedDescription)")
@@ -45,11 +52,11 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
         }
     }
 
-    func updateProfile(_ profile: UserProfileEntity) async -> Result<UserProfileEntity, UserProfileError> {
+    func updateProfile(_ profile: UserProfile) async -> Result<UserProfile, UserProfileError> {
         logger.info("📤 Updating profile for user: \(profile.userId)")
 
         do {
-            let profileDTO = mapper.toRemoteDTO(from: profile)
+            let profileDTO = remoteDTOMapper.toRemoteDTO(profile)
             try await remoteDataSource.updateProfile(profileDTO)
 
             logger.info("✅ Profile updated successfully")
@@ -63,12 +70,12 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
 
     // MARK: - Local Operations
 
-    func getLocalProfile() async -> Result<UserProfileEntity?, UserProfileError> {
+    func getLocalProfile() async -> Result<UserProfile?, UserProfileError> {
         logger.debug("📱 Fetching local profile")
         return await _getLocalProfile()
     }
 
-    func saveLocalProfile(_ profile: UserProfileEntity) async -> Result<Void, UserProfileError> {
+    func saveLocalProfile(_ profile: UserProfile) async -> Result<Void, UserProfileError> {
         logger.debug("💾 Saving profile locally")
         let result = await _saveLocalProfile(profile)
 
@@ -88,18 +95,18 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
 
     // MARK: - Private @MainActor methods for SwiftData operations
 
-    private func _getLocalProfile() async -> Result<UserProfileEntity?, UserProfileError> {
+    private func _getLocalProfile() async -> Result<UserProfile?, UserProfileError> {
         do {
-            let profiles = try await localDataSource.fetchAll()
-            let profileEntity = profiles.first
+            let profileDTOs = try await localDataSource.fetchAll()
+            let profileDomain = profileDTOs.first.map { domainMapper.toDomain($0) }
 
-            if profileEntity != nil {
+            if profileDomain != nil {
                 logger.debug("✅ Local profile found")
             } else {
                 logger.debug("ℹ️ No local profile found")
             }
 
-            return .success(profileEntity)
+            return .success(profileDomain)
 
         } catch {
             logger.error("❌ Failed to fetch local profile: \(error.localizedDescription)")
@@ -107,7 +114,7 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
         }
     }
 
-    private func _saveLocalProfile(_ profile: UserProfileEntity) async -> Result<Void, UserProfileError> {
+    private func _saveLocalProfile(_ profile: UserProfile) async -> Result<Void, UserProfileError> {
         do {
             // Delete existing profiles (single profile per user)
             let existingProfiles = try await localDataSource.fetchAll()
@@ -115,8 +122,9 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
                 try await localDataSource.deleteAll(existingProfiles)
             }
 
-            // Save new profile
-            try await localDataSource.save(profile)
+            // Convert Domain -> LocalDTO and save
+            let profileDTO = domainMapper.toLocalDTO(profile)
+            try await localDataSource.save(profileDTO)
 
             logger.info("✅ Profile saved to local storage")
             return .success(())

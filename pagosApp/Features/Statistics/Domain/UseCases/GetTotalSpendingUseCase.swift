@@ -36,9 +36,10 @@ final class GetTotalSpendingUseCase {
             return .success(0)
         }
 
-        let total = payments.reduce(0) { $0 + $1.amount }
+        let total = payments.reduce(Decimal(0)) { $0 + $1.amount }
+        let totalDouble = Double(truncating: NSDecimalNumber(decimal: total))
         logger.info("✅ Total spending: \(total) from \(payments.count) payments")
 
-        return .success(total)
+        return .success(totalDouble)
     }
 }

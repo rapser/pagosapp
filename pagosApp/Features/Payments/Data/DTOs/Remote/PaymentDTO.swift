@@ -37,20 +37,20 @@ struct PaymentDTO: Codable, Identifiable {
         case updatedAt = "updated_at"
     }
 
-    /// Initialize from local PaymentEntity model
-    init(from entity: PaymentEntity, userId: UUID) {
-        self.id = entity.id
+    /// Memberwise initializer for creating DTOs
+    init(id: UUID, userId: UUID, name: String, amount: Double, currency: String, dueDate: Date, isPaid: Bool, category: String, eventIdentifier: String?, groupId: UUID?, createdAt: Date?, updatedAt: Date?) {
+        self.id = id
         self.userId = userId
-        self.name = entity.name
-        self.amount = entity.amount
-        self.currency = entity.currency.rawValue
-        self.dueDate = entity.dueDate
-        self.isPaid = entity.isPaid
-        self.category = entity.category.rawValue
-        self.eventIdentifier = entity.eventIdentifier
-        self.groupId = entity.groupId
-        self.createdAt = nil
-        self.updatedAt = nil
+        self.name = name
+        self.amount = amount
+        self.currency = currency
+        self.dueDate = dueDate
+        self.isPaid = isPaid
+        self.category = category
+        self.eventIdentifier = eventIdentifier
+        self.groupId = groupId
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
     }
 
     /// Initialize from Codable (for API responses)
@@ -189,33 +189,5 @@ struct PaymentDTO: Codable, Identifiable {
         }
 
         return nil
-    }
-
-    /// Convert to local PaymentEntity model
-    func toEntity() -> PaymentEntity {
-        let paymentCategory = PaymentCategory(rawValue: category) ?? .otro
-        let paymentCurrency = Currency(rawValue: currency) ?? .pen
-        return PaymentEntity(
-            id: id,
-            name: name,
-            amount: amount,
-            currency: paymentCurrency,
-            dueDate: dueDate,
-            isPaid: isPaid,
-            category: paymentCategory,
-            eventIdentifier: eventIdentifier,
-            syncStatus: .synced,
-            lastSyncedAt: Date(),
-            groupId: groupId
-        )
-    }
-}
-
-// MARK: - PaymentEntity Extension
-
-extension PaymentEntity {
-    /// Convert to DTO for API communication
-    func toDTO(userId: UUID) -> PaymentDTO {
-        PaymentDTO(from: self, userId: userId)
     }
 }

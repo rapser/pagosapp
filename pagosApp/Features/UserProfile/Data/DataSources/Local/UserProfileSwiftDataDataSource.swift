@@ -11,35 +11,34 @@ final class UserProfileSwiftDataDataSource: UserProfileLocalDataSource {
         self.modelContext = modelContext
     }
 
-    func fetchAll() async throws -> [UserProfileEntity] {
+    func fetchAll() async throws -> [UserProfileLocalDTO] {
         logger.debug("📱 Fetching all profiles from SwiftData")
 
-        let descriptor = FetchDescriptor<UserProfile>()
+        let descriptor = FetchDescriptor<UserProfileLocalDTO>()
         let profiles = try modelContext.fetch(descriptor)
 
         logger.debug("✅ Fetched \(profiles.count) profiles from SwiftData")
-        return profiles.map { UserProfileMapper.toDomain(from: $0) }
+        return profiles
     }
 
-    func save(_ profile: UserProfileEntity) async throws {
+    func save(_ profileDTO: UserProfileLocalDTO) async throws {
         logger.debug("💾 Saving profile to SwiftData")
 
-        let descriptor = FetchDescriptor<UserProfile>()
+        let descriptor = FetchDescriptor<UserProfileLocalDTO>()
         let existingProfiles = try modelContext.fetch(descriptor)
 
-        if let existing = existingProfiles.first(where: { $0.userId == profile.userId }) {
-            existing.email = profile.email
-            existing.fullName = profile.fullName
-            existing.phone = profile.phone
-            existing.dateOfBirth = profile.dateOfBirth
-            existing.genderRawValue = profile.gender?.rawValue
-            existing.country = profile.country
-            existing.city = profile.city
-            existing.preferredCurrencyRawValue = profile.preferredCurrency.rawValue
+        if let existing = existingProfiles.first(where: { $0.userId == profileDTO.userId }) {
+            existing.email = profileDTO.email
+            existing.fullName = profileDTO.fullName
+            existing.phone = profileDTO.phone
+            existing.dateOfBirth = profileDTO.dateOfBirth
+            existing.genderRawValue = profileDTO.genderRawValue
+            existing.country = profileDTO.country
+            existing.city = profileDTO.city
+            existing.preferredCurrencyRawValue = profileDTO.preferredCurrencyRawValue
             logger.debug("🔄 Updated existing profile")
         } else {
-            let newProfile = UserProfileMapper.toModel(from: profile)
-            modelContext.insert(newProfile)
+            modelContext.insert(profileDTO)
             logger.debug("➕ Inserted new profile")
         }
 
@@ -47,14 +46,14 @@ final class UserProfileSwiftDataDataSource: UserProfileLocalDataSource {
         logger.info("✅ Profile saved to SwiftData")
     }
 
-    func deleteAll(_ profiles: [UserProfileEntity]) async throws {
-        logger.debug("🗑️ Deleting \(profiles.count) profiles from SwiftData")
+    func deleteAll(_ profileDTOs: [UserProfileLocalDTO]) async throws {
+        logger.debug("🗑️ Deleting \(profileDTOs.count) profiles from SwiftData")
 
-        let descriptor = FetchDescriptor<UserProfile>()
+        let descriptor = FetchDescriptor<UserProfileLocalDTO>()
         let existingProfiles = try modelContext.fetch(descriptor)
 
-        for profile in profiles {
-            if let existing = existingProfiles.first(where: { $0.userId == profile.userId }) {
+        for profileDTO in profileDTOs {
+            if let existing = existingProfiles.first(where: { $0.userId == profileDTO.userId }) {
                 modelContext.delete(existing)
             }
         }
@@ -66,7 +65,7 @@ final class UserProfileSwiftDataDataSource: UserProfileLocalDataSource {
     func clear() async throws {
         logger.debug("🗑️ Clearing all profiles from SwiftData")
 
-        try modelContext.delete(model: UserProfile.self)
+        try modelContext.delete(model: UserProfileLocalDTO.self)
         try modelContext.save()
 
         logger.info("✅ All profiles cleared from SwiftData")

@@ -10,10 +10,11 @@ import Foundation
 
 /// Sendable domain entity for Payment
 /// This is the thread-safe version used in business logic
-struct Payment: Sendable, Identifiable {
+/// Clean Architecture: Domain models are pure, no UI dependencies
+struct Payment: Sendable {
     let id: UUID
     let name: String
-    let amount: Double
+    let amount: Decimal  // Changed from Double for precision
     let currency: Currency
     let dueDate: Date
     var isPaid: Bool  // Mutable for status updates

@@ -29,6 +29,7 @@ final class AddPaymentViewModel {
     // MARK: - Dependencies (Use Cases)
 
     private let createPaymentUseCase: CreatePaymentUseCase
+    private let mapper: PaymentUIMapping
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "AddPaymentViewModel")
 
     // Callback for successful creation
@@ -75,15 +76,16 @@ final class AddPaymentViewModel {
 
     // MARK: - Initialization
 
-    init(createPaymentUseCase: CreatePaymentUseCase) {
+    init(createPaymentUseCase: CreatePaymentUseCase, mapper: PaymentUIMapping) {
         self.createPaymentUseCase = createPaymentUseCase
+        self.mapper = mapper
     }
 
     // MARK: - Private Helpers
 
-    /// Create a Payment entity with common properties
-    private func createPayment(amount: Double, currency: Currency, groupId: UUID? = nil) -> Payment {
-        Payment(
+    /// Create a PaymentUI with common properties
+    private func createPaymentUI(amount: Double, currency: Currency, groupId: UUID? = nil) -> PaymentUI {
+        PaymentUI(
             id: UUID(),
             name: name,
             amount: amount,
@@ -136,13 +138,14 @@ final class AddPaymentViewModel {
             return
         }
 
-        let payment = createPayment(amount: finalAmount, currency: finalCurrency)
+        let paymentUI = createPaymentUI(amount: finalAmount, currency: finalCurrency)
 
-        let result = await createPaymentUseCase.execute(payment)
+        // Convert to Domain and execute
+        let result = await createPaymentUseCase.execute(mapper.toDomain(paymentUI))
 
         switch result {
         case .success:
-            logger.info("✅ Payment created: \(payment.name)")
+            logger.info("✅ Payment created: \(paymentUI.name)")
             clearForm()
             onPaymentCreated?()
 
@@ -166,12 +169,12 @@ final class AddPaymentViewModel {
         let sharedGroupId = UUID()
 
         // Create PEN and USD payments using helper method
-        let paymentPEN = createPayment(amount: penAmount, currency: .pen, groupId: sharedGroupId)
-        let paymentUSD = createPayment(amount: usdAmount, currency: .usd, groupId: sharedGroupId)
+        let paymentPEN_UI = createPaymentUI(amount: penAmount, currency: .pen, groupId: sharedGroupId)
+        let paymentUSD_UI = createPaymentUI(amount: usdAmount, currency: .usd, groupId: sharedGroupId)
 
-        // Save both payments
-        let resultPEN = await createPaymentUseCase.execute(paymentPEN)
-        let resultUSD = await createPaymentUseCase.execute(paymentUSD)
+        // Convert to Domain and save both payments
+        let resultPEN = await createPaymentUseCase.execute(mapper.toDomain(paymentPEN_UI))
+        let resultUSD = await createPaymentUseCase.execute(mapper.toDomain(paymentUSD_UI))
 
         switch (resultPEN, resultUSD) {
         case (.success, .success):

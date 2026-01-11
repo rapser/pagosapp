@@ -33,26 +33,26 @@ struct UserProfileView: View {
                 ZStack {
                     Color("AppBackground").ignoresSafeArea()
 
-                    if let profile = viewModel.profile {
-                        // Convert to SwiftData model for UI components
-                        let profileModel = UserProfileMapper.toModel(from: profile)
+                    if let profileUI = viewModel.profile {
+                        // Convert UI model to Domain for components
+                        let profile = UserProfileUIMapper().toDomain(profileUI)
 
                         Form {
                             PersonalInformationSection(
-                                profile: profileModel,
+                                profile: profile,
                                 isEditing: viewModel.isEditing,
                                 editableProfile: $viewModel.editableProfile,
                                 showDatePicker: $viewModel.showDatePicker
                             )
 
                             LocationSection(
-                                profile: profileModel,
+                                profile: profile,
                                 isEditing: viewModel.isEditing,
                                 editableProfile: $viewModel.editableProfile
                             )
 
                             PreferencesSection(
-                                profile: profileModel,
+                                profile: profile,
                                 isEditing: viewModel.isEditing,
                                 editableProfile: $viewModel.editableProfile
                             )

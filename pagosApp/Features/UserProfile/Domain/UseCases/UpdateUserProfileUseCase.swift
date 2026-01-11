@@ -21,9 +21,9 @@ final class UpdateUserProfileUseCase {
     }
 
     /// Execute: Update profile in remote and local
-    /// - Parameter profile: Updated UserProfileEntity
-    /// - Returns: Result with updated UserProfileEntity or UserProfileError
-    func execute(_ profile: UserProfileEntity) async -> Result<UserProfileEntity, UserProfileError> {
+    /// - Parameter profile: Updated UserProfile
+    /// - Returns: Result with updated UserProfile or UserProfileError
+    func execute(_ profile: UserProfile) async -> Result<UserProfile, UserProfileError> {
         logger.info("📤 Updating profile for user: \(profile.userId)")
 
         // 1. Validate profile

@@ -11,11 +11,11 @@ import Foundation
 /// Protocol defining UserProfile repository operations
 protocol UserProfileRepositoryProtocol {
     // Remote operations
-    func fetchProfile(userId: UUID) async -> Result<UserProfileEntity, UserProfileError>
-    func updateProfile(_ profile: UserProfileEntity) async -> Result<UserProfileEntity, UserProfileError>
+    func fetchProfile(userId: UUID) async -> Result<UserProfile, UserProfileError>
+    func updateProfile(_ profile: UserProfile) async -> Result<UserProfile, UserProfileError>
 
     // Local operations
-    func getLocalProfile() async -> Result<UserProfileEntity?, UserProfileError>
-    func saveLocalProfile(_ profile: UserProfileEntity) async -> Result<Void, UserProfileError>
+    func getLocalProfile() async -> Result<UserProfile?, UserProfileError>
+    func saveLocalProfile(_ profile: UserProfile) async -> Result<Void, UserProfileError>
     func deleteLocalProfile() async -> Result<Void, UserProfileError>
 }

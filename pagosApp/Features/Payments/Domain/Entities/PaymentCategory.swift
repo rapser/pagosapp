@@ -9,7 +9,8 @@
 import Foundation
 
 /// Payment category for organizing payments
-enum PaymentCategory: String, Codable, CaseIterable, Identifiable, Sendable {
+/// Clean Architecture: Domain enums are pure, serialization happens in Data layer
+enum PaymentCategory: String, Sendable, CaseIterable {
     case servicios = "Servicios"
     case tarjetaCredito = "Tarjeta de Crédito"
     case vivienda = "Vivienda"
@@ -19,6 +20,4 @@ enum PaymentCategory: String, Codable, CaseIterable, Identifiable, Sendable {
     case impuestos = "Impuestos"
     case suscripcion = "Suscripción"
     case otro = "Otro"
-
-    var id: String { self.rawValue }
 }
