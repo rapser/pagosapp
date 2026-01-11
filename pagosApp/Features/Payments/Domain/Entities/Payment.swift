@@ -24,6 +24,3 @@ struct Payment: Sendable {
     let lastSyncedAt: Date?
     let groupId: UUID?  // Links dual-currency credit card payments (PEN + USD)
 }
-
-// MARK: - Mapper Extensions
-// NOTE: Mappers will be moved to PaymentMapper.swift after renaming SwiftData model

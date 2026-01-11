@@ -23,7 +23,7 @@ final class UserProfileViewModel {
     var isEditing = false
     var showSuccessAlert = false
     var showDatePicker = false
-    var editableProfile: EditableProfile?
+    var editableProfile: EditableProfileUI?
 
     // MARK: - Dependencies (Use Cases)
     private let fetchUserProfileUseCase: FetchUserProfileUseCase
@@ -100,7 +100,7 @@ final class UserProfileViewModel {
     }
 
     /// Update user profile
-    func updateProfile(with editableProfile: EditableProfile) async -> Bool {
+    func updateProfile(with editableProfile: EditableProfileUI) async -> Bool {
         guard let currentProfile = profile else {
             errorMessage = "No hay perfil cargado"
             return false
@@ -150,7 +150,7 @@ final class UserProfileViewModel {
     /// Start editing mode
     func startEditing() {
         guard let profile = profile else { return }
-        editableProfile = EditableProfile(from: profile)
+        editableProfile = EditableProfileUI(from: profile)
         isEditing = true
     }
 

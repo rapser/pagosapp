@@ -10,7 +10,7 @@ import SwiftUI
 struct PreferencesSection: View {
     let profile: UserProfile
     let isEditing: Bool
-    @Binding var editableProfile: EditableProfile?
+    @Binding var editableProfile: EditableProfileUI?
 
     var body: some View {
         Section(header: Text("Preferencias").foregroundColor(Color("AppTextPrimary"))) {
@@ -35,7 +35,7 @@ struct PreferencesSection: View {
 }
 
 #Preview("View Mode") {
-    @Previewable @State var editableProfile: EditableProfile? = nil
+    @Previewable @State var editableProfile: EditableProfileUI? = nil
 
     Form {
         PreferencesSection(
@@ -48,7 +48,7 @@ struct PreferencesSection: View {
 }
 
 #Preview("Edit Mode - PEN") {
-    @Previewable @State var editableProfile: EditableProfile? = EditableProfile(from: .mock)
+    @Previewable @State var editableProfile: EditableProfileUI? = EditableProfileUI(from: .mock)
 
     Form {
         PreferencesSection(
@@ -61,7 +61,7 @@ struct PreferencesSection: View {
 }
 
 #Preview("Edit Mode - USD") {
-    @Previewable @State var editableProfile: EditableProfile? = EditableProfile(from: .mockMinimal)
+    @Previewable @State var editableProfile: EditableProfileUI? = EditableProfileUI(from: .mockMinimal)
 
     Form {
         PreferencesSection(

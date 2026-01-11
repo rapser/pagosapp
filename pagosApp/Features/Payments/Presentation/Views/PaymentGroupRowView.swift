@@ -9,7 +9,7 @@ import SwiftUI
 
 /// Row view for displaying grouped payments (PEN + USD credit cards)
 struct PaymentGroupRowView: View {
-    let group: PaymentGroup
+    let group: PaymentGroupUI
     var onToggleStatus: () -> Void
 
     var body: some View {

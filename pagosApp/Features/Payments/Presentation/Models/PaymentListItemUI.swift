@@ -9,8 +9,8 @@
 import Foundation
 
 /// Represents an item in the payments list - either a group or individual payment
-enum PaymentListItem: Identifiable {
-    case group(PaymentGroup)
+enum PaymentListItemUI: Identifiable {
+    case group(PaymentGroupUI)
     case individual(PaymentUI)
 
     var id: UUID {

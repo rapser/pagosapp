@@ -9,7 +9,7 @@
 import Foundation
 
 /// Presentation model for monthly spending statistics (used in Charts)
-struct MonthlySpending: Identifiable {
+struct MonthlySpendingUI: Identifiable {
     let id = UUID()
     let month: Date
     let totalAmount: Double

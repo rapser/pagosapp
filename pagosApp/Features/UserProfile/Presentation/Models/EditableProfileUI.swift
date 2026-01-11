@@ -10,7 +10,7 @@ import Foundation
 
 /// ViewModel for profile editing
 /// Maintains the state of editable fields
-struct EditableProfile {
+struct EditableProfileUI {
     var fullName: String
     var phone: String
     var city: String
