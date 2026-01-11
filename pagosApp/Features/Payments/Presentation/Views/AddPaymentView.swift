@@ -13,69 +13,22 @@ struct AddPaymentView: View {
                     @Bindable var vm = viewModel
 
                     Form {
-                        Section(header: Text("Detalles del Pago")) {
-                            TextField("Nombre del pago", text: $vm.name)
+                        PaymentDetailsSection(
+                            name: $vm.name,
+                            category: $vm.category,
+                            dueDate: $vm.dueDate
+                        )
 
-                            Picker("Categoría", selection: $vm.category) {
-                                ForEach(PaymentCategory.allCases) { category in
-                                    Text(category.rawValue).tag(category)
-                                }
-                            }
-
-                            DatePicker("Fecha de Vencimiento", selection: $vm.dueDate, displayedComponents: .date)
-                        }
-
-                        Section(header: Text("Montos")) {
-                            if vm.showDualCurrency {
-                                // Dual-currency fields for credit cards
-                                VStack(alignment: .leading, spacing: 16) {
-                                    Text("Tarjeta Bimoneda")
-                                        .font(.subheadline)
-                                        .fontWeight(.semibold)
-
-                                    // PEN Card
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Label("Soles (S/)", systemImage: "banknote")
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                        TextField("0.00", text: $vm.amount)
-                                            .keyboardType(.decimalPad)
-                                            .font(.title3)
-                                            .padding()
-                                            .background(Color(.systemGray6))
-                                            .cornerRadius(8)
-                                    }
-
-                                    // USD Card
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Label("Dólares ($)", systemImage: "dollarsign.circle")
-                                            .font(.subheadline)
-                                            .foregroundColor(.secondary)
-                                        TextField("0.00", text: $vm.amountUSD)
-                                            .keyboardType(.decimalPad)
-                                            .font(.title3)
-                                            .padding()
-                                            .background(Color(.systemGray6))
-                                            .cornerRadius(8)
-                                    }
-
-                                    Text("💡 Ingresa al menos un monto")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                            } else {
-                                // Single currency for other categories
-                                Picker("Moneda", selection: $vm.currency) {
-                                    Text("Soles").tag(Currency.pen)
-                                    Text("Dólares").tag(Currency.usd)
-                                }
-
-                                HStack {
-                                    Text(vm.currency.symbol)
-                                    TextField("Monto", text: $vm.amount)
-                                        .keyboardType(.decimalPad)
-                                }
-                            }
+                        if vm.showDualCurrency {
+                            DualCurrencyAmountSection(
+                                amountPEN: $vm.amount,
+                                amountUSD: $vm.amountUSD
+                            )
+                        } else {
+                            SingleCurrencyAmountSection(
+                                currency: $vm.currency,
+                                amount: $vm.amount
+                            )
                         }
                     }
                     .navigationTitle("Nuevo Pago")
