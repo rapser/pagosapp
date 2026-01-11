@@ -25,6 +25,11 @@ final class UserProfileDependencyContainer {
         UserProfileSwiftDataDataSource(modelContext: modelContext)
     }()
 
+    // Mappers
+    private let domainMapper: UserProfileDomainMapping = UserProfileDomainMapper()
+    private let remoteDTOMapper: UserProfileRemoteDTOMapping = UserProfileRemoteDTOMapper()
+    private let uiMapper: UserProfileUIMapping = UserProfileUIMapper()
+
     // MARK: - Initialization
 
     init(supabaseClient: SupabaseClient, modelContext: ModelContext) {
@@ -37,7 +42,9 @@ final class UserProfileDependencyContainer {
     func makeUserProfileRepository() -> UserProfileRepositoryProtocol {
         return UserProfileRepositoryImpl(
             remoteDataSource: remoteDataSource,
-            localDataSource: localDataSource
+            localDataSource: localDataSource,
+            domainMapper: domainMapper,
+            remoteDTOMapper: remoteDTOMapper
         )
     }
 
@@ -74,7 +81,8 @@ final class UserProfileDependencyContainer {
             fetchUserProfileUseCase: makeFetchUserProfileUseCase(),
             getLocalProfileUseCase: makeGetLocalProfileUseCase(),
             updateUserProfileUseCase: makeUpdateUserProfileUseCase(),
-            deleteLocalProfileUseCase: makeDeleteLocalProfileUseCase()
+            deleteLocalProfileUseCase: makeDeleteLocalProfileUseCase(),
+            mapper: uiMapper
         )
     }
 }

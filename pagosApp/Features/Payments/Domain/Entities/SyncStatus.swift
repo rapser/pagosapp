@@ -9,7 +9,8 @@
 import Foundation
 
 /// Sync status for tracking payment synchronization state
-enum SyncStatus: String, Codable, Sendable {
+/// Clean Architecture: Domain enums are pure, serialization happens in Data layer
+enum SyncStatus: String, Sendable {
     case local      // Solo existe localmente, nunca sincronizado
     case syncing    // En proceso de sincronización
     case synced     // Sincronizado correctamente con Supabase

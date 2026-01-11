@@ -12,10 +12,12 @@ final class PaymentHistoryViewModel {
     var errorMessage: String?
 
     private let getPaymentHistoryUseCase: GetPaymentHistoryUseCase
+    private let mapper: PaymentUIMapping
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentHistoryViewModel")
 
-    init(getPaymentHistoryUseCase: GetPaymentHistoryUseCase) {
+    init(getPaymentHistoryUseCase: GetPaymentHistoryUseCase, mapper: PaymentUIMapping) {
         self.getPaymentHistoryUseCase = getPaymentHistoryUseCase
+        self.mapper = mapper
         Task {
             await fetchPayments()
         }
@@ -39,7 +41,7 @@ final class PaymentHistoryViewModel {
         switch result {
         case .success(let payments):
             // Convert Domain -> UI
-            filteredPayments = payments.toUI()
+            filteredPayments = mapper.toUI(payments)
             errorMessage = nil
             logger.info("✅ Fetched \(self.filteredPayments.count) payments for history (filter: \(self.selectedFilter.rawValue))")
         case .failure(let error):

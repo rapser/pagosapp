@@ -1,5 +1,5 @@
 //
-//  MonthlyStatsEntity.swift
+//  MonthlyStats.swift
 //  pagosApp
 //
 //  Domain entity for monthly statistics
@@ -9,17 +9,18 @@
 import Foundation
 
 /// Sendable domain entity for monthly spending statistics
-struct MonthlyStatsEntity: Sendable, Identifiable {
+/// Clean Architecture: Domain models are pure, no UI dependencies
+struct MonthlyStats: Sendable {
     let id: UUID
     let month: Date
-    let totalAmount: Double
+    let totalAmount: Decimal
     let currency: Currency
     let paymentCount: Int
 
     init(
         id: UUID = UUID(),
         month: Date,
-        totalAmount: Double,
+        totalAmount: Decimal,
         currency: Currency,
         paymentCount: Int
     ) {

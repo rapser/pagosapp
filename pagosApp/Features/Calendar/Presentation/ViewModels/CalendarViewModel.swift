@@ -27,18 +27,21 @@ final class CalendarViewModel {
     private let getPaymentsByDateUseCase: GetPaymentsByDateUseCase
     private let getPaymentsByMonthUseCase: GetPaymentsByMonthUseCase
     private let calendarEventDataSource: CalendarEventDataSource
+    private let mapper: PaymentUIMapping
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "CalendarViewModel")
 
     init(
         getAllPaymentsUseCase: GetAllPaymentsForCalendarUseCase,
         getPaymentsByDateUseCase: GetPaymentsByDateUseCase,
         getPaymentsByMonthUseCase: GetPaymentsByMonthUseCase,
-        calendarEventDataSource: CalendarEventDataSource
+        calendarEventDataSource: CalendarEventDataSource,
+        mapper: PaymentUIMapping
     ) {
         self.getAllPaymentsUseCase = getAllPaymentsUseCase
         self.getPaymentsByDateUseCase = getPaymentsByDateUseCase
         self.getPaymentsByMonthUseCase = getPaymentsByMonthUseCase
         self.calendarEventDataSource = calendarEventDataSource
+        self.mapper = mapper
     }
 
     // MARK: - Data Operations
@@ -53,7 +56,7 @@ final class CalendarViewModel {
         switch result {
         case .success(let payments):
             // Convert Domain -> UI
-            allPayments = payments.toUI()
+            allPayments = mapper.toUI(payments)
             logger.info("✅ Loaded \(payments.count) payments for calendar")
 
         case .failure(let error):
@@ -69,7 +72,7 @@ final class CalendarViewModel {
         switch result {
         case .success(let payments):
             // Convert Domain -> UI
-            paymentsForSelectedDate = payments.toUI()
+            paymentsForSelectedDate = mapper.toUI(payments)
             logger.info("✅ Loaded \(payments.count) payments for selected date")
 
         case .failure(let error):

@@ -13,27 +13,22 @@ struct AddPaymentView: View {
                     @Bindable var vm = viewModel
 
                     Form {
-                        Section(header: Text("Detalles del Pago")) {
-                            TextField("Nombre del pago", text: $vm.name)
-                            
-                            Picker("Moneda", selection: $vm.currency) {
-                                Text("Soles").tag(Currency.pen)
-                                Text("Dólares").tag(Currency.usd)
-                            }
-                            
-                            HStack {
-                                Text(vm.currency.symbol)
-                                TextField("Monto", text: $vm.amount)
-                                    .keyboardType(.decimalPad)
-                            }
-                            
-                            DatePicker("Fecha de Vencimiento", selection: $vm.dueDate, displayedComponents: .date)
-                            
-                            Picker("Categoría", selection: $vm.category) {
-                                ForEach(PaymentCategory.allCases) { category in
-                                    Text(category.rawValue).tag(category)
-                                }
-                            }
+                        PaymentDetailsSection(
+                            name: $vm.name,
+                            category: $vm.category,
+                            dueDate: $vm.dueDate
+                        )
+
+                        if vm.showDualCurrency {
+                            DualCurrencyAmountSection(
+                                amountPEN: $vm.amount,
+                                amountUSD: $vm.amountUSD
+                            )
+                        } else {
+                            SingleCurrencyAmountSection(
+                                currency: $vm.currency,
+                                amount: $vm.amount
+                            )
                         }
                     }
                     .navigationTitle("Nuevo Pago")
@@ -74,7 +69,7 @@ struct AddPaymentView: View {
     }
 }
 
-#Preview {
-    AddPaymentView()
-        .modelContainer(for: [PaymentEntity.self], inMemory: true)
-}
+//#Preview {
+//    AddPaymentView()
+//        .modelContainer(for: [Payment.self], inMemory: true)
+//}
