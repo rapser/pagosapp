@@ -17,7 +17,7 @@ enum ModelContainerFactory {
     /// Creates a configured ModelContainer for the app's data models
     /// Implements automatic recovery on database corruption
     static func create() -> ModelContainer {
-        let schema = Schema([PaymentEntity.self, UserProfile.self])
+        let schema = Schema([PaymentLocalDTO.self, UserProfileLocalDTO.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {

@@ -7,7 +7,7 @@ struct RegistrationView: View {
     init(registerViewModel: RegisterViewModel) {
         _viewModel = State(wrappedValue: registerViewModel)
     }
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
@@ -27,67 +27,35 @@ struct RegistrationView: View {
                     .cornerRadius(10)
                     .disabled(viewModel.isLoading)
 
-                HStack {
-                    if viewModel.showPassword {
-                        TextField("Contraseña", text: $viewModel.password)
-                            .textContentType(.newPassword)
-                    } else {
-                        SecureField("Contraseña", text: $viewModel.password)
-                            .textContentType(.newPassword)
-                    }
+                SecureTextFieldWithToggle(
+                    placeholder: "Contraseña",
+                    text: $viewModel.password,
+                    isSecure: $viewModel.showPassword,
+                    textContentType: .newPassword,
+                    isDisabled: viewModel.isLoading
+                )
 
-                    Button(action: {
-                        viewModel.showPassword.toggle()
-                    }) {
-                        Image(systemName: viewModel.showPassword ? "eye.slash.fill" : "eye.fill")
-                            .foregroundColor(Color("AppTextSecondary"))
-                    }
-                }
-                .padding()
-                .background(Color("AppBackground"))
-                .cornerRadius(10)
-                .disabled(viewModel.isLoading)
-
-                HStack {
-                    if viewModel.showConfirmPassword {
-                        TextField("Confirmar Contraseña", text: $viewModel.confirmPassword)
-                            .textContentType(.newPassword)
-                    } else {
-                        SecureField("Confirmar Contraseña", text: $viewModel.confirmPassword)
-                            .textContentType(.newPassword)
-                    }
-
-                    Button(action: {
-                        viewModel.showConfirmPassword.toggle()
-                    }) {
-                        Image(systemName: viewModel.showConfirmPassword ? "eye.slash.fill" : "eye.fill")
-                            .foregroundColor(Color("AppTextSecondary"))
-                    }
-                }
-                .padding()
-                .background(Color("AppBackground"))
-                .cornerRadius(10)
-                .disabled(viewModel.isLoading)
+                SecureTextFieldWithToggle(
+                    placeholder: "Confirmar Contraseña",
+                    text: $viewModel.confirmPassword,
+                    isSecure: $viewModel.showConfirmPassword,
+                    textContentType: .newPassword,
+                    isDisabled: viewModel.isLoading
+                )
 
                 // Password validation hints
                 if !viewModel.password.isEmpty {
-                    HStack(spacing: 5) {
-                        Image(systemName: viewModel.isPasswordStrong ? "checkmark.circle.fill" : "xmark.circle.fill")
-                            .foregroundColor(viewModel.isPasswordStrong ? .green : .red)
-                        Text("Mínimo 6 caracteres")
-                            .font(.caption)
-                            .foregroundColor(Color("AppTextSecondary"))
-                    }
+                    ValidationHintRow(
+                        isValid: viewModel.isPasswordStrong,
+                        message: "Mínimo 6 caracteres"
+                    )
                 }
 
                 if !viewModel.confirmPassword.isEmpty {
-                    HStack(spacing: 5) {
-                        Image(systemName: viewModel.passwordsMatch ? "checkmark.circle.fill" : "xmark.circle.fill")
-                            .foregroundColor(viewModel.passwordsMatch ? .green : .red)
-                        Text("Las contraseñas coinciden")
-                            .font(.caption)
-                            .foregroundColor(Color("AppTextSecondary"))
-                    }
+                    ValidationHintRow(
+                        isValid: viewModel.passwordsMatch,
+                        message: "Las contraseñas coinciden"
+                    )
                 }
 
                 if let errorMessage = viewModel.errorMessage {
@@ -131,7 +99,6 @@ struct RegistrationView: View {
             .navigationTitle("")
             .navigationBarHidden(true)
             .onAppear {
-                // Set callback to dismiss on success
                 viewModel.onRegistrationSuccess = { _ in
                     dismiss()
                 }

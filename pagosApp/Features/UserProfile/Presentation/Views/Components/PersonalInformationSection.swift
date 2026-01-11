@@ -10,7 +10,7 @@ import SwiftUI
 struct PersonalInformationSection: View {
     let profile: UserProfile
     let isEditing: Bool
-    @Binding var editableProfile: EditableProfile?
+    @Binding var editableProfile: EditableProfileUI?
     @Binding var showDatePicker: Bool
 
     var body: some View {
@@ -100,12 +100,14 @@ struct PersonalInformationSection: View {
 }
 
 #Preview("View Mode") {
-    @Previewable @State var editableProfile: EditableProfile? = nil
+    @Previewable @State var editableProfile: EditableProfileUI? = nil
     @Previewable @State var showDatePicker = false
+
+    let mockProfile = UserProfileUIMapper().toDomain(UserProfileUI.mock)
 
     Form {
         PersonalInformationSection(
-            profile: .mock,
+            profile: mockProfile,
             isEditing: false,
             editableProfile: $editableProfile,
             showDatePicker: $showDatePicker
@@ -115,12 +117,14 @@ struct PersonalInformationSection: View {
 }
 
 #Preview("Edit Mode") {
-    @Previewable @State var editableProfile: EditableProfile? = EditableProfile(from: .mock)
+    @Previewable @State var editableProfile: EditableProfileUI? = EditableProfileUI(from: UserProfileUI.mock)
     @Previewable @State var showDatePicker = false
+
+    let mockProfile = UserProfileUIMapper().toDomain(UserProfileUI.mock)
 
     Form {
         PersonalInformationSection(
-            profile: .mock,
+            profile: mockProfile,
             isEditing: true,
             editableProfile: $editableProfile,
             showDatePicker: $showDatePicker

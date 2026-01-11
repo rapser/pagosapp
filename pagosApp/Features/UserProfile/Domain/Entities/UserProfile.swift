@@ -1,5 +1,5 @@
 //
-//  UserProfileEntity.swift
+//  UserProfile.swift
 //  pagosApp
 //
 //  Domain entity for UserProfile (Sendable, thread-safe)
@@ -10,7 +10,8 @@ import Foundation
 
 /// Sendable domain entity for UserProfile
 /// This is the thread-safe version used in business logic
-struct UserProfileEntity: Sendable {
+/// Clean Architecture: Domain models are pure, no UI dependencies
+struct UserProfile: Sendable {
     let userId: UUID
     let fullName: String
     let email: String
@@ -20,8 +21,9 @@ struct UserProfileEntity: Sendable {
     let country: String?
     let city: String?
     let preferredCurrency: Currency
-    
-    enum Gender: String, Codable, Sendable, CaseIterable {
+
+    /// Gender enum - Clean Architecture: No Codable in Domain
+    enum Gender: String, Sendable, CaseIterable {
         case masculino = "Masculino"
         case femenino = "Femenino"
         case otro = "Otro"
@@ -35,9 +37,9 @@ struct UserProfileEntity: Sendable {
 
 // MARK: - Preview Helpers
 #if DEBUG
-extension UserProfileEntity {
-    static var mock: UserProfileEntity {
-        UserProfileEntity(
+extension UserProfile {
+    static var mock: UserProfile {
+        UserProfile(
             userId: UUID(),
             fullName: "Juan Pérez",
             email: "juan.perez@example.com",
@@ -50,8 +52,8 @@ extension UserProfileEntity {
         )
     }
 
-    static var mockMinimal: UserProfileEntity {
-        UserProfileEntity(
+    static var mockMinimal: UserProfile {
+        UserProfile(
             userId: UUID(),
             fullName: "María García",
             email: "maria.garcia@example.com",

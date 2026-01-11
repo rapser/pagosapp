@@ -28,9 +28,10 @@ final class EditPaymentViewModel {
 
     // MARK: - Dependencies (Use Cases)
 
-    private let paymentEntity: Payment
+    private let paymentUI: PaymentUI
     private let updatePaymentUseCase: UpdatePaymentUseCase
     private let togglePaymentStatusUseCase: TogglePaymentStatusUseCase
+    private let mapper: PaymentUIMapping
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "EditPaymentViewModel")
 
     // Callback for successful update
@@ -47,24 +48,26 @@ final class EditPaymentViewModel {
     }
 
     var hasChanges: Bool {
-        name != paymentEntity.name ||
-        amountValue != paymentEntity.amount ||
-        currency != paymentEntity.currency ||
-        !Calendar.current.isDate(dueDate, inSameDayAs: paymentEntity.dueDate) ||
-        category != paymentEntity.category ||
-        isPaid != paymentEntity.isPaid
+        name != paymentUI.name ||
+        amountValue != paymentUI.amount ||
+        currency != paymentUI.currency ||
+        !Calendar.current.isDate(dueDate, inSameDayAs: paymentUI.dueDate) ||
+        category != paymentUI.category ||
+        isPaid != paymentUI.isPaid
     }
 
     // MARK: - Initialization
 
     init(
-        payment: Payment,
+        payment: PaymentUI,
         updatePaymentUseCase: UpdatePaymentUseCase,
-        togglePaymentStatusUseCase: TogglePaymentStatusUseCase
+        togglePaymentStatusUseCase: TogglePaymentStatusUseCase,
+        mapper: PaymentUIMapping
     ) {
-        self.paymentEntity = payment
+        self.paymentUI = payment
         self.updatePaymentUseCase = updatePaymentUseCase
         self.togglePaymentStatusUseCase = togglePaymentStatusUseCase
+        self.mapper = mapper
 
         // Initialize with current payment values
         self.name = payment.name
@@ -98,26 +101,27 @@ final class EditPaymentViewModel {
         isLoading = true
         defer { isLoading = false }
 
-        // Create updated payment entity
-        let updatedPayment = Payment(
-            id: paymentEntity.id,
+        // Create updated payment UI model
+        let updatedPaymentUI = PaymentUI(
+            id: paymentUI.id,
             name: name,
             amount: amountValue,
             currency: currency,
             dueDate: dueDate,
             isPaid: isPaid,
             category: category,
-            eventIdentifier: paymentEntity.eventIdentifier,
-            syncStatus: paymentEntity.syncStatus,
-            lastSyncedAt: paymentEntity.lastSyncedAt
+            eventIdentifier: paymentUI.eventIdentifier,
+            syncStatus: paymentUI.syncStatus,
+            lastSyncedAt: paymentUI.lastSyncedAt,
+            groupId: paymentUI.groupId
         )
 
-        // Delegate to Use Case
-        let result = await updatePaymentUseCase.execute(updatedPayment)
+        // Convert to Domain and delegate to Use Case
+        let result = await updatePaymentUseCase.execute(mapper.toDomain(updatedPaymentUI))
 
         switch result {
         case .success:
-            logger.info("✅ Payment updated: \(updatedPayment.name)")
+            logger.info("✅ Payment updated: \(updatedPaymentUI.name)")
             onPaymentUpdated?()
             onSuccess?()
 
@@ -129,34 +133,35 @@ final class EditPaymentViewModel {
 
     func resetChanges() {
         // Reset to original payment values
-        self.name = paymentEntity.name
-        self.amount = String(format: "%.2f", paymentEntity.amount)
-        self.currency = paymentEntity.currency
-        self.dueDate = paymentEntity.dueDate
-        self.category = paymentEntity.category
-        self.isPaid = paymentEntity.isPaid
+        self.name = paymentUI.name
+        self.amount = String(format: "%.2f", paymentUI.amount)
+        self.currency = paymentUI.currency
+        self.dueDate = paymentUI.dueDate
+        self.category = paymentUI.category
+        self.isPaid = paymentUI.isPaid
     }
 
     func togglePaidStatus() async {
         isLoading = true
         defer { isLoading = false }
 
-        // Create current payment entity with current UI values
-        let currentPayment = Payment(
-            id: paymentEntity.id,
+        // Create current payment UI with current values
+        let currentPaymentUI = PaymentUI(
+            id: paymentUI.id,
             name: name,
-            amount: amountValue ?? paymentEntity.amount,
+            amount: amountValue ?? paymentUI.amount,
             currency: currency,
             dueDate: dueDate,
             isPaid: isPaid,
             category: category,
-            eventIdentifier: paymentEntity.eventIdentifier,
-            syncStatus: paymentEntity.syncStatus,
-            lastSyncedAt: paymentEntity.lastSyncedAt
+            eventIdentifier: paymentUI.eventIdentifier,
+            syncStatus: paymentUI.syncStatus,
+            lastSyncedAt: paymentUI.lastSyncedAt,
+            groupId: paymentUI.groupId
         )
 
-        // Delegate to Use Case
-        let result = await togglePaymentStatusUseCase.execute(currentPayment)
+        // Convert to Domain and delegate to Use Case
+        let result = await togglePaymentStatusUseCase.execute(mapper.toDomain(currentPaymentUI))
 
         switch result {
         case .success(let updatedPayment):
@@ -179,6 +184,8 @@ final class EditPaymentViewModel {
 
     private func showError(for error: PaymentError) {
         switch error {
+        case .invalidName:
+            errorMessage = "El nombre del pago es requerido"
         case .invalidAmount:
             errorMessage = "El monto debe ser mayor a cero"
         case .invalidDate:

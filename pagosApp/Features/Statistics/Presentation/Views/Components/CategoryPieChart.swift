@@ -10,7 +10,7 @@ import SwiftUI
 import Charts
 
 struct CategoryPieChart: View {
-    let categoryData: [CategorySpending]
+    let categoryData: [CategorySpendingUI]
     let totalSpending: Double
     let selectedCurrency: Currency
     

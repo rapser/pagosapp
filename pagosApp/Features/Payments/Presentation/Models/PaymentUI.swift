@@ -11,10 +11,10 @@ import SwiftUI
 
 /// UI representation of a Payment
 /// Contains display-specific logic and computed properties for the view layer
-struct PaymentUI: Identifiable, Equatable {
+struct PaymentUI: Identifiable, Equatable, Sendable {
     let id: UUID
     let name: String
-    let amount: Double
+    let amount: Double  // Double for UI binding (converted from Decimal in Domain)
     let currency: Currency
     let dueDate: Date
     let isPaid: Bool
@@ -22,6 +22,7 @@ struct PaymentUI: Identifiable, Equatable {
     let eventIdentifier: String?
     let syncStatus: SyncStatus
     let lastSyncedAt: Date?
+    let groupId: UUID?
 
     // MARK: - Computed Properties for UI
 
@@ -32,9 +33,7 @@ struct PaymentUI: Identifiable, Equatable {
 
     /// Formatted date for display
     var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter.string(from: dueDate)
+        DateFormattingService.formatMedium(dueDate)
     }
 
     /// Color for status indicator
@@ -66,57 +65,5 @@ struct PaymentUI: Identifiable, Equatable {
         } else {
             return Color("AppTextPrimary")
         }
-    }
-}
-
-// MARK: - Mapper from Domain to Presentation
-
-extension PaymentUI {
-    /// Create PaymentUI from Domain Payment
-    static func from(domain payment: Payment) -> PaymentUI {
-        return PaymentUI(
-            id: payment.id,
-            name: payment.name,
-            amount: payment.amount,
-            currency: payment.currency,
-            dueDate: payment.dueDate,
-            isPaid: payment.isPaid,
-            category: payment.category,
-            eventIdentifier: payment.eventIdentifier,
-            syncStatus: payment.syncStatus,
-            lastSyncedAt: payment.lastSyncedAt
-        )
-    }
-
-    /// Convert back to Domain Payment
-    func toDomain() -> Payment {
-        return Payment(
-            id: id,
-            name: name,
-            amount: amount,
-            currency: currency,
-            dueDate: dueDate,
-            isPaid: isPaid,
-            category: category,
-            eventIdentifier: eventIdentifier,
-            syncStatus: syncStatus,
-            lastSyncedAt: lastSyncedAt
-        )
-    }
-}
-
-// MARK: - Array Extensions
-
-extension Array where Element == Payment {
-    /// Convert array of Domain Payments to PaymentUI
-    func toUI() -> [PaymentUI] {
-        return self.map { PaymentUI.from(domain: $0) }
-    }
-}
-
-extension Array where Element == PaymentUI {
-    /// Convert array of PaymentUI to Domain Payments
-    func toDomain() -> [Payment] {
-        return self.map { $0.toDomain() }
     }
 }

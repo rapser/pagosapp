@@ -24,8 +24,8 @@ struct EditPaymentView: View {
                 if viewModel == nil {
                     // Get Use Cases from DI Container
                     let container = dependencies.paymentDependencyContainer
-                    // Convert UI -> Domain for ViewModel
-                    viewModel = container.makeEditPaymentViewModel(for: payment.toDomain())
+                    // Pass PaymentUI directly to ViewModel
+                    viewModel = container.makeEditPaymentViewModel(for: payment)
                 }
             }
         }
@@ -39,32 +39,18 @@ private struct EditPaymentFormView: View {
 
     var body: some View {
         Form {
-            Section(header: Text("Detalles del Pago")) {
-                TextField("Nombre del pago", text: $viewModel.name)
+            PaymentDetailsSection(
+                name: $viewModel.name,
+                category: $viewModel.category,
+                dueDate: $viewModel.dueDate,
+                showPaidToggle: true,
+                isPaid: $viewModel.isPaid
+            )
 
-                Picker("Moneda", selection: $viewModel.currency) {
-                    Text("Soles").tag(Currency.pen)
-                    Text("Dólares").tag(Currency.usd)
-                }
-
-                HStack {
-                    Text(viewModel.currency.symbol)
-                    TextField("Monto", text: $viewModel.amount)
-                        .keyboardType(.decimalPad)
-                }
-
-                DatePicker("Fecha de Vencimiento", selection: $viewModel.dueDate, displayedComponents: .date)
-
-                Picker("Categoría", selection: $viewModel.category) {
-                    ForEach(PaymentCategory.allCases) { category in
-                        Text(category.rawValue).tag(category)
-                    }
-                }
-
-                Toggle(isOn: $viewModel.isPaid) {
-                    Text("Pagado")
-                }
-            }
+            SingleCurrencyAmountSection(
+                currency: $viewModel.currency,
+                amount: $viewModel.amount
+            )
 
             if viewModel.hasChanges {
                 Section {
@@ -111,7 +97,8 @@ private struct EditPaymentFormView: View {
             category: .servicios,
             eventIdentifier: nil,
             syncStatus: .synced,
-            lastSyncedAt: Date()
+            lastSyncedAt: Date(),
+            groupId: nil
         )
     )
 }

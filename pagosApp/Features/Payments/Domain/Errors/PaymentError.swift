@@ -11,6 +11,7 @@ import Foundation
 /// Domain errors for payment operations
 /// Error mapping to user-friendly messages happens at Presentation layer
 enum PaymentError: Error, Equatable {
+    case invalidName
     case invalidAmount
     case invalidDate
     case saveFailed(String)
@@ -25,6 +26,8 @@ enum PaymentError: Error, Equatable {
 
     var errorCode: String {
         switch self {
+        case .invalidName:
+            return "PAYMENT_INVALID_NAME"
         case .invalidAmount:
             return "PAYMENT_INVALID_AMOUNT"
         case .invalidDate:

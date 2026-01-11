@@ -20,8 +20,8 @@ final class FetchUserProfileUseCase {
 
     /// Execute: Fetch profile from remote and save locally
     /// - Parameter userId: User ID to fetch profile for
-    /// - Returns: Result with UserProfileEntity or UserProfileError
-    func execute(userId: UUID) async -> Result<UserProfileEntity, UserProfileError> {
+    /// - Returns: Result with UserProfile or UserProfileError
+    func execute(userId: UUID) async -> Result<UserProfile, UserProfileError> {
         logger.info("📥 Fetching profile for user: \(userId)")
 
         // 1. Fetch from remote

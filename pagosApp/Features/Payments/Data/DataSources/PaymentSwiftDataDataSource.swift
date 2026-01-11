@@ -12,12 +12,10 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
     }
 
     func fetchAll() async throws -> [Payment] {
-        logger.debug("📱 Fetching all payments from SwiftData")
-        let descriptor = FetchDescriptor<PaymentEntity>()
+        let descriptor = FetchDescriptor<PaymentLocalDTO>()
 
         do {
             let payments = try modelContext.fetch(descriptor)
-            logger.debug("✅ Fetched \(payments.count) payments from SwiftData")
             return payments.map { PaymentMapper.toDomain(from: $0) }
         } catch {
             logger.error("❌ Failed to fetch payments from SwiftData: \(error.localizedDescription)")
@@ -27,21 +25,17 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
     }
 
     func fetch(id: UUID) async throws -> Payment? {
-        logger.debug("📱 Fetching payment by ID: \(id)")
-        let descriptor = FetchDescriptor<PaymentEntity>()
+        let descriptor = FetchDescriptor<PaymentLocalDTO>()
         let payments = try modelContext.fetch(descriptor)
         guard let payment = payments.first(where: { $0.id == id }) else {
-            logger.debug("❌ Payment not found: \(id)")
             return nil
         }
-        logger.debug("✅ Found payment: \(id)")
         return PaymentMapper.toDomain(from: payment)
     }
 
     func save(_ payment: Payment) async throws {
-        logger.debug("💾 Saving payment: \(payment.name)")
 
-        let descriptor = FetchDescriptor<PaymentEntity>()
+        let descriptor = FetchDescriptor<PaymentLocalDTO>()
         let existingPayments = try modelContext.fetch(descriptor)
 
         if let existing = existingPayments.first(where: { $0.id == payment.id }) {
@@ -54,36 +48,27 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
             existing.eventIdentifier = payment.eventIdentifier
             existing.syncStatus = payment.syncStatus
             existing.lastSyncedAt = payment.lastSyncedAt
-            logger.debug("🔄 Updated existing payment: \(payment.name)")
         } else {
-            let newPayment = PaymentMapper.toEntity(from: payment)
+            let newPayment = PaymentMapper.toLocalDTO(from: payment)
             modelContext.insert(newPayment)
-            logger.debug("➕ Inserted new payment: \(payment.name)")
         }
 
         try modelContext.save()
-        logger.debug("✅ Payment saved: \(payment.name)")
     }
 
     func saveAll(_ payments: [Payment]) async throws {
         guard !payments.isEmpty else {
-            logger.debug("⚠️ No payments to save")
             return
         }
-
-        logger.debug("💾 Saving \(payments.count) payments")
 
         for payment in payments {
             try await save(payment)
         }
-
-        logger.debug("✅ \(payments.count) payments saved")
     }
 
     func delete(_ payment: Payment) async throws {
-        logger.debug("🗑️ Deleting payment: \(payment.name)")
 
-        let descriptor = FetchDescriptor<PaymentEntity>()
+        let descriptor = FetchDescriptor<PaymentLocalDTO>()
         let existingPayments = try modelContext.fetch(descriptor)
 
         guard let existing = existingPayments.first(where: { $0.id == payment.id }) else {
@@ -114,7 +99,7 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
     func clear() async throws {
         logger.info("🗑️ Clearing all payments from SwiftData")
 
-        let descriptor = FetchDescriptor<PaymentEntity>()
+        let descriptor = FetchDescriptor<PaymentLocalDTO>()
         let allPayments = try modelContext.fetch(descriptor)
 
         for payment in allPayments {

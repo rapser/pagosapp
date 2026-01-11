@@ -19,8 +19,8 @@ final class GetLocalProfileUseCase {
     }
 
     /// Execute: Get profile from local storage
-    /// - Returns: Result with optional UserProfileEntity or UserProfileError
-    func execute() async -> Result<UserProfileEntity?, UserProfileError> {
+    /// - Returns: Result with optional UserProfile or UserProfileError
+    func execute() async -> Result<UserProfile?, UserProfileError> {
         logger.debug("📱 Fetching profile from local storage")
 
         let result = await userProfileRepository.getLocalProfile()
