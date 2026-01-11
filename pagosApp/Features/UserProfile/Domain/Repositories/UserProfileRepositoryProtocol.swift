@@ -9,6 +9,7 @@
 import Foundation
 
 /// Protocol defining UserProfile repository operations
+@MainActor
 protocol UserProfileRepositoryProtocol {
     // Remote operations
     func fetchProfile(userId: UUID) async -> Result<UserProfile, UserProfileError>
