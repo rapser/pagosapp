@@ -1,85 +1,565 @@
-# PagosApp 🚀
+# PagosApp 💰
 
-> **Aplicación iOS moderna para gestión de pagos recurrentes con autenticación segura y sincronización en la nube.**
+> **Aplicación iOS moderna para gestión de pagos recurrentes con Clean Architecture, autenticación segura y sincronización en la nube.**
 
 [![iOS](https://img.shields.io/badge/iOS-18.5%2B-blue.svg)](https://www.apple.com/ios/)
 [![Swift](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
 [![Xcode](https://img.shields.io/badge/Xcode-16.4%2B-blue.svg)](https://developer.apple.com/xcode/)
-[![Architecture](https://img.shields.io/badge/Architecture-MVVM-green.svg)](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93viewmodel)
-[![Quality](https://img.shields.io/badge/Quality-100%25-brightgreen.svg)](MODERNIZATION_REPORT.md)
-
-## ✨ Características
-
-### 🔐 Seguridad
-- ✅ Autenticación con Supabase (Email/Password)
-- ✅ Face ID / Touch ID para acceso rápido
-- ✅ Recuperación de contraseña
-- ✅ Keychain para almacenamiento seguro
-
-### 💰 Gestión de Pagos
-- ✅ Crear, editar y eliminar pagos
-- ✅ Categorización de pagos
-- ✅ Soporte multi-moneda (PEN/USD)
-- ✅ Historial completo de pagos
-- ✅ Estadísticas y reportes
-
-### 📅 Organización
-- ✅ Sincronización con calendario iOS
-- ✅ Notificaciones de recordatorio
-- ✅ Vista de calendario integrada
-- ✅ Pagos recurrentes
-
-### ☁️ Cloud
-- ✅ Sincronización automática con Supabase
-- ✅ Backup en la nube
-- ✅ Acceso desde múltiples dispositivos
-- ✅ Offline-first con SwiftData
+[![Architecture](https://img.shields.io/badge/Architecture-Clean-green.svg)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+[![Version](https://img.shields.io/badge/Version-1.0.0(10)-blue.svg)](CHANGELOG.md)
 
 ---
 
-## 🏗 Arquitectura Moderna iOS 18.5
+## 📱 Descripción del Proyecto
 
-### Stack Tecnológico
+**PagosApp** es una aplicación iOS moderna y profesional para la gestión integral de pagos recurrentes. Diseñada con **Clean Architecture 100%**, ofrece una experiencia offline-first con sincronización en la nube, autenticación segura mediante biometría, y sincronización automática con el calendario de iOS.
 
-- **iOS**: 18.5+ (Latest features)
-- **Swift**: 6.0 (Strict concurrency)
-- **SwiftUI**: @Observable + @State + @Environment
-- **SwiftData**: Local persistence
-- **Supabase**: Cloud backend
-- **Async/Await**: Modern concurrency
-- **Actor Isolation**: Thread-safe by design
+### 🎯 ¿Qué hace la App?
 
-### Patrones de Diseño
+- **Gestión de Pagos Recurrentes**: Crea, edita y organiza todos tus pagos mensuales (Netflix, tarjetas de crédito, servicios, etc.)
+- **Sincronización con Calendario iOS**: Cada pago se registra automáticamente como evento en tu calendario nativo
+- **Recordatorios Inteligentes**: Notificaciones automáticas antes de la fecha de vencimiento
+- **Multi-moneda**: Soporte para PEN (Soles) y USD (Dólares) con conversión automática
+- **Estadísticas Visuales**: Gráficos de gastos por categoría y tendencias mensuales
+- **Offline-First**: Funciona completamente sin internet, sincroniza cuando estés online
+- **Autenticación Segura**: Face ID/Touch ID + Email/Password
+- **Sincronización Cloud**: Tus datos se sincronizan entre todos tus dispositivos iOS
+
+---
+
+## ✨ Features Principales
+
+### 🔐 Autenticación & Seguridad
+- ✅ Registro e inicio de sesión con Supabase (Email/Password)
+- ✅ Face ID / Touch ID para acceso rápido y seguro
+- ✅ Recuperación de contraseña por email
+- ✅ Almacenamiento seguro de credenciales en Keychain
+- ✅ Row Level Security (RLS) en base de datos
+- ✅ Sesiones persistentes con renovación automática
+
+### 💰 Gestión de Pagos
+- ✅ CRUD completo de pagos (Crear, Leer, Actualizar, Eliminar)
+- ✅ Categorización flexible (Entretenimiento, Tarjetas, Servicios, etc.)
+- ✅ Soporte multi-moneda (PEN/USD)
+- ✅ Estados de pago (Pendiente/Completado)
+- ✅ Edición en tiempo real con validación
+- ✅ Búsqueda y filtros avanzados
+- ✅ Duplicación de pagos recurrentes
+
+### 📅 Integración con Calendario iOS
+- ✅ Sincronización automática bidireccional con Calendar.app
+- ✅ Cada pago genera un evento en el calendario nativo
+- ✅ Actualización automática al modificar pagos
+- ✅ Eliminación sincronizada de eventos
+- ✅ Selección de calendario destino
+- ✅ Soporte para calendarios compartidos
+
+### 🔔 Notificaciones y Recordatorios
+- ✅ Notificaciones push locales antes del vencimiento
+- ✅ Personalización de días de anticipación
+- ✅ Notificaciones de sincronización exitosa
+- ✅ Alertas de errores con sugerencias de recuperación
+
+### 📊 Estadísticas y Visualización
+- ✅ Dashboard con métricas en tiempo real
+- ✅ Gráficos de gastos por categoría (Pie Charts)
+- ✅ Tendencias mensuales (Line Charts)
+- ✅ Total gastado por mes y categoría
+- ✅ Proyección de gastos futuros
+- ✅ Comparativas mes a mes
+
+### ☁️ Sincronización Cloud
+- ✅ Sincronización automática con Supabase
+- ✅ Backup completo en la nube
+- ✅ Sincronización incremental eficiente
+- ✅ Resolución de conflictos inteligente
+- ✅ Offline-first: todo funciona sin internet
+- ✅ Multi-dispositivo: mismo usuario, múltiples iPhones/iPads
+
+### 👤 Perfil de Usuario
+- ✅ Gestión completa de perfil personal
+- ✅ Configuración de moneda preferida
+- ✅ Personalización de notificaciones
+- ✅ Ajustes de sincronización
+- ✅ Activación/desactivación de Face ID
+- ✅ Cierre de sesión seguro
+
+---
+
+## 🏗 Arquitectura
+
+### Clean Architecture al 100%
+
+PagosApp implementa **Clean Architecture** de forma estricta, siguiendo los principios de Uncle Bob Martin. Esta arquitectura garantiza:
+
+- **Independencia de Frameworks**: La lógica de negocio no depende de SwiftUI, SwiftData o Supabase
+- **Testabilidad**: Cada capa se puede testear independientemente
+- **Independencia de UI**: La UI es un detalle, puede cambiar sin afectar el negocio
+- **Independencia de Base de Datos**: Puedes cambiar de SwiftData a CoreData sin afectar el Domain
+- **Mantenibilidad**: Código organizado y fácil de entender
+
+### ¿Por qué Clean Architecture?
+
+**Problema típico en apps iOS**: El código se mezcla (lógica de negocio en Views, llamadas a API en ViewModels, validaciones dispersas). Esto genera:
+- ❌ Código difícil de testear
+- ❌ Cambios en UI rompen lógica de negocio
+- ❌ Duplicación de código
+- ❌ Acoplamiento alto entre componentes
+
+**Solución con Clean Architecture**:
+- ✅ **Separación de Responsabilidades**: Cada capa tiene un propósito claro
+- ✅ **Dependency Rule**: Las dependencias apuntan hacia adentro (Domain nunca depende de Data o Presentation)
+- ✅ **Inversión de Dependencias**: Domain define interfaces (protocols), Data las implementa
+- ✅ **Testing Simplificado**: Mocks e inyección de dependencias en todas las capas
+
+### Estructura de Capas
 
 ```
-┌─────────────────────────────────────────┐
-│         Views (@State/@Environment)      │
-├─────────────────────────────────────────┤
-│    ViewModels (@Observable @MainActor)  │
-├─────────────────────────────────────────┤
-│      Managers (Business Logic)          │
-├─────────────────────────────────────────┤
-│    Services (Async/Await Operations)    │
-├─────────────────────────────────────────┤
-│   Repositories (Protocol-Based)         │
-├─────────────────────────────────────────┤
-│    Storage (SwiftData + Supabase)       │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│                   PRESENTATION LAYER                     │
+│  ┌────────────┬────────────────┬─────────────────────┐  │
+│  │   Views    │   ViewModels   │   UI Models (UI)    │  │
+│  │  (SwiftUI) │  (@Observable) │   (PaymentUI, etc)  │  │
+│  └────────────┴────────────────┴─────────────────────┘  │
+│         ▲                   │                            │
+│         │                   ▼                            │
+└─────────┼───────────────────────────────────────────────┘
+          │
+          │  Usa Use Cases via Dependency Injection
+          │
+┌─────────┼───────────────────────────────────────────────┐
+│         │             DOMAIN LAYER                       │
+│  ┌──────┴──────┬─────────────┬────────────┬──────────┐  │
+│  │  Entities   │  Use Cases  │Repositories│  Errors  │  │
+│  │  (Payment,  │ (Business   │ (Protocols)│(Payment  │  │
+│  │   User)     │   Logic)    │            │  Error)  │  │
+│  └─────────────┴─────────────┴────────────┴──────────┘  │
+│                          ▲                                │
+│                          │                                │
+└──────────────────────────┼────────────────────────────────┘
+                           │
+                           │  Repository implementations
+                           │
+┌──────────────────────────┼────────────────────────────────┐
+│                          │       DATA LAYER                │
+│  ┌───────────────────────┴────┬────────────┬───────────┐  │
+│  │   Repository Impl          │  Mappers   │    DTOs   │  │
+│  │  (PaymentRepositoryImpl)   │ (DTO↔Domain│(Local/    │  │
+│  └────────┬───────────────────┴────────────┴──Remote)─┘  │
+│           │                                                │
+│           ▼                                                │
+│  ┌────────────────────┬────────────────────────────────┐  │
+│  │   Data Sources     │      Data Sources              │  │
+│  │   (Local)          │      (Remote)                  │  │
+│  │  SwiftData DTOs    │   Supabase DTOs                │  │
+│  └────────────────────┴────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────┘
 ```
 
-**Principios SOLID** + **MVVM** + **Repository Pattern** + **Dependency Injection**
+### Capas Detalladas
+
+#### 1. **Domain Layer** (Corazón del negocio)
+
+**Entities** - Modelos de negocio puros:
+```swift
+struct Payment {
+    let id: UUID
+    let name: String
+    let amount: Decimal        // ✅ Decimal para precisión financiera
+    let currency: Currency
+    let dueDate: Date
+    let isPaid: Bool
+    let category: PaymentCategory
+    let syncStatus: SyncStatus
+}
+```
+
+**Use Cases** - Lógica de negocio encapsulada:
+- `CreatePaymentUseCase`: Valida y crea pagos
+- `UpdatePaymentUseCase`: Actualiza pagos + pagos hermanos (grupos)
+- `DeletePaymentUseCase`: Elimina pagos y eventos asociados
+- `GetAllPaymentsUseCase`: Recupera todos los pagos
+- `CalculateMonthlyStatsUseCase`: Calcula estadísticas mensuales
+- `SyncPaymentsUseCase`: Sincroniza local ↔ remoto
+
+**Repository Protocols** - Contratos que Data debe cumplir:
+```swift
+protocol PaymentRepositoryProtocol {
+    func getAllLocalPayments() async throws -> [Payment]
+    func savePayment(_ payment: Payment) async throws
+    func deleteLocalPayment(id: UUID) async throws
+    func syncWithRemote(userId: UUID) async throws
+}
+```
+
+**¿Por qué Use Cases?**
+- ✅ Encapsulan lógica de negocio compleja (ej: al actualizar un pago, también actualizar su evento de calendario)
+- ✅ Reutilizables desde múltiples ViewModels
+- ✅ Fáciles de testear con mocks
+- ✅ Cambios en la lógica de negocio no afectan Views
+
+#### 2. **Data Layer** (Acceso a datos)
+
+**Repository Implementations**:
+```swift
+final class PaymentRepositoryImpl: PaymentRepositoryProtocol {
+    private let localDataSource: PaymentLocalDataSource
+    private let remoteDataSource: PaymentRemoteDataSource
+    private let mapper: PaymentMapper
+
+    func getAllLocalPayments() async throws -> [Payment] {
+        let dtos = try await localDataSource.fetchAll()
+        return dtos.map { mapper.toDomain($0) }
+    }
+}
+```
+
+**Data Sources**:
+- `PaymentSwiftDataDataSource`: Persistencia local con SwiftData
+- `PaymentSupabaseDataSource`: API remota con Supabase
+- `KeychainAuthDataSource`: Credenciales seguras
+
+**Mappers** - Conversiones entre capas:
+- `PaymentMapper`: `PaymentLocalDTO` ↔ `Payment` ↔ `PaymentRemoteDTO`
+- `PaymentUIMapper`: `Payment` ↔ `PaymentUI`
+- `UserProfileMapper`: Similar para perfiles
+
+**DTOs (Data Transfer Objects)**:
+```swift
+// SwiftData DTO (Local)
+@Model
+final class PaymentLocalDTO {
+    var id: UUID
+    var name: String
+    var amount: Double         // ✅ Double para SwiftData
+    var currency: String
+    var dueDate: Date
+    var isPaid: Bool
+    // ...
+}
+
+// Supabase DTO (Remote)
+struct PaymentRemoteDTO: Codable {
+    let id: UUID
+    let userId: UUID
+    let name: String
+    let amount: Double        // ✅ Double para JSON
+    let currency: String
+    let dueDate: Date
+    let isPaid: Bool
+    // ...
+}
+```
+
+**¿Por qué DTOs separados?**
+- ✅ SwiftData requiere `@Model` classes con `Double`
+- ✅ Supabase necesita `Codable` structs con snake_case
+- ✅ Domain usa `Decimal` para precisión financiera
+- ✅ Cambios en API no rompen el Domain
+- ✅ Cambios en persistencia local no afectan Domain
+
+#### 3. **Presentation Layer** (UI)
+
+**Views** - SwiftUI puro sin lógica:
+```swift
+struct PaymentsListView: View {
+    @State private var viewModel: PaymentsListViewModel
+
+    var body: some View {
+        List(viewModel.payments) { payment in
+            PaymentRowView(payment: payment)
+        }
+        .task { await viewModel.fetchPayments() }
+    }
+}
+```
+
+**ViewModels** - Estado UI + coordinación:
+```swift
+@MainActor
+@Observable
+final class PaymentsListViewModel {
+    var payments: [PaymentUI] = []
+    var isLoading = false
+    var errorMessage: String?
+
+    private let getAllPaymentsUseCase: GetAllPaymentsUseCase
+    private let mapper: PaymentUIMapping
+
+    func fetchPayments() async {
+        isLoading = true
+        let result = await getAllPaymentsUseCase.execute()
+        switch result {
+        case .success(let domainPayments):
+            payments = mapper.toUI(domainPayments)
+        case .failure(let error):
+            errorMessage = error.localizedDescription
+        }
+        isLoading = false
+    }
+}
+```
+
+**UI Models** - Modelos optimizados para presentación:
+```swift
+struct PaymentUI: Identifiable {
+    let id: UUID
+    let name: String
+    let amount: Double          // ✅ Double para SwiftUI bindings
+    let currency: Currency
+    let dueDate: Date
+    let isPaid: Bool
+
+    // ✅ Computed properties para UI (lógica de presentación)
+    var formattedAmount: String {
+        "\(currency.symbol) \(String(format: "%.2f", amount))"
+    }
+
+    var statusColor: Color {
+        isPaid ? .green : .gray
+    }
+
+    var isOverdue: Bool {
+        !isPaid && dueDate < Date()
+    }
+
+    var displayOpacity: Double {
+        isPaid ? 0.7 : 1.0
+    }
+}
+```
+
+**¿Por qué PaymentUI separado de Payment?**
+- ✅ Views NO deben tener lógica inline (`Text(isPaid ? "Pagado" : "Pendiente")`)
+- ✅ Lógica de presentación centralizada y reutilizable
+- ✅ Domain `Payment` usa `Decimal`, UI usa `Double` (bindings SwiftUI)
+- ✅ Computed properties testables independientemente
+- ✅ Cambios en formateo no afectan Domain
+
+---
+
+### Dependency Injection
+
+**Factory Pattern con Containers por Feature**:
+
+```swift
+@MainActor
+final class PaymentDependencyContainer {
+    private let modelContext: ModelContext
+    private let supabaseClient: SupabaseClient
+
+    // Data Sources
+    private func makeLocalDataSource() -> PaymentLocalDataSource {
+        PaymentSwiftDataDataSource(modelContext: modelContext)
+    }
+
+    private func makeRemoteDataSource() -> PaymentRemoteDataSource {
+        PaymentSupabaseDataSource(client: supabaseClient)
+    }
+
+    // Repository
+    private func makeRepository() -> PaymentRepositoryProtocol {
+        PaymentRepositoryImpl(
+            localDataSource: makeLocalDataSource(),
+            remoteDataSource: makeRemoteDataSource(),
+            mapper: PaymentMapper()
+        )
+    }
+
+    // Use Cases
+    func makeGetAllPaymentsUseCase() -> GetAllPaymentsUseCase {
+        GetAllPaymentsUseCase(repository: makeRepository())
+    }
+
+    func makeCreatePaymentUseCase() -> CreatePaymentUseCase {
+        CreatePaymentUseCase(
+            repository: makeRepository(),
+            validator: PaymentValidator()
+        )
+    }
+
+    // ViewModels
+    func makePaymentsListViewModel() -> PaymentsListViewModel {
+        PaymentsListViewModel(
+            getAllPaymentsUseCase: makeGetAllPaymentsUseCase(),
+            mapper: PaymentUIMapper()
+        )
+    }
+}
+```
+
+**Beneficios**:
+- ✅ Testeo fácil: inyecta mocks en lugar de dependencias reales
+- ✅ Desacoplamiento: componentes no crean sus dependencias
+- ✅ Configuración centralizada por feature
+- ✅ Facilita cambios (cambiar SwiftData por CoreData solo toca el container)
+
+---
+
+### Offline-First Architecture
+
+**Principio**: SwiftData es la única fuente de verdad. Supabase es un backup remoto.
+
+**Flujo de Lectura**:
+```
+User taps "Mis Pagos"
+  → View calls ViewModel.fetchPayments()
+    → ViewModel calls GetAllPaymentsUseCase.execute()
+      → Use Case calls Repository.getAllLocalPayments()
+        → Repository calls SwiftDataDataSource.fetchAll()
+          → SwiftData returns [PaymentLocalDTO]
+        ← Repository converts DTOs → [Payment] (Domain)
+      ← Use Case returns [Payment]
+    ← ViewModel converts [Payment] → [PaymentUI]
+  ← View displays [PaymentUI]
+```
+
+**Flujo de Escritura + Notificación**:
+```
+User creates/updates/deletes payment
+  → View calls ViewModel.createPayment()
+    → ViewModel calls CreatePaymentUseCase.execute(payment)
+      → Use Case validates payment
+      → Use Case calls Repository.savePayment(payment)
+        → Repository converts Payment → PaymentLocalDTO
+        → Repository saves to SwiftData
+        ← SwiftData persists successfully
+      ← Use Case sends NotificationCenter "PaymentsDidSync"
+    ← ViewModel receives success
+  ← View shows success
+
+  [Simultaneously]
+  All ViewModels observing "PaymentsDidSync"
+    → Auto-refresh their data from SwiftData
+    ← UI updates automatically
+```
+
+**Flujo de Sincronización**:
+```
+User logs in
+  → SessionCoordinator.startSession()
+    → Calls PaymentSyncCoordinator.performSync()
+      ┌─ Upload: SwiftData → Supabase (local changes)
+      └─ Download: Supabase → SwiftData (remote changes)
+    ← Sync complete, sends notification "PaymentsDidSync"
+  ← All ViewModels auto-refresh
+  ← UI shows latest data
+```
+
+**¿Por qué Offline-First?**
+- ✅ App funciona 100% sin internet
+- ✅ Performance: lectura local instantánea
+- ✅ Mejor UX: sin spinners esperando red
+- ✅ Eventual consistency: sincroniza cuando hay conexión
+
+**¿Por qué NotificationCenter?**
+
+Aunque NotificationCenter es un patrón antiguo, lo usamos estratégicamente porque:
+- ✅ **Simplicidad**: Funciona bien para este caso de uso específico
+- ✅ **Desacoplamiento**: ViewModels no necesitan conocerse entre sí
+- ✅ **Broadcasting**: Un solo evento notifica a múltiples pantallas
+- ✅ **Proven pattern**: Confiable y bien entendido
+
+**Alternativa moderna considerada**:
+- `@Query` directo en vistas (reactividad automática con SwiftData)
+- Decisión: Mantener Clean Architecture 100% (lógica fuera de Views) fue prioritario
+
+---
+
+### Swift 6 & Concurrency
+
+**Actor Isolation Optimizado**:
+
+```swift
+// ✅ @MainActor SOLO en ViewModels y UI Managers
+@MainActor
+@Observable
+final class PaymentsListViewModel { /* UI state */ }
+
+// ✅ @MainActor en Repositories que usan SwiftData (requiere main thread)
+@MainActor
+protocol UserProfileRepositoryProtocol {
+    func getLocalProfile() async -> Result<UserProfile?, UserProfileError>
+}
+
+// ✅ Sin @MainActor en Services (operaciones I/O puras)
+final class PaymentSyncService {
+    func syncPayments() async throws {
+        // Can be called from any actor
+    }
+}
+```
+
+**Sendable Types**:
+```swift
+// ✅ Domain entities son Sendable (immutable value types)
+struct Payment: Sendable {
+    let id: UUID
+    // All properties are immutable and Sendable
+}
+
+// ✅ DTOs conform Sendable cuando es posible
+struct PaymentRemoteDTO: Codable, Sendable { /* ... */ }
+```
+
+**¿Por qué este diseño de concurrencia?**
+- ✅ @MainActor solo donde realmente necesitas UI updates o SwiftData access
+- ✅ Swift 6 strict concurrency compliance
+- ✅ Menos context switches = mejor performance
+- ✅ Type-safe concurrency sin data races
+
+---
+
+## 📋 Stack Tecnológico
+
+### Core Technologies
+- **Swift 6.0**: Strict concurrency, modern syntax
+- **iOS 18.5+**: Latest features
+- **SwiftUI**: 100% declarative UI con @Observable
+- **SwiftData**: Local persistence (reemplaza CoreData)
+- **Async/Await**: Modern concurrency (sin Combine)
+
+### Frameworks iOS
+- **EventKit**: Sincronización con Calendar.app
+- **UserNotifications**: Notificaciones locales
+- **LocalAuthentication**: Face ID / Touch ID
+- **Security (Keychain)**: Almacenamiento seguro de credenciales
+- **OSLog**: Logging estructurado
+
+### Backend & Cloud
+- **Supabase**: Backend as a Service
+  - PostgreSQL database
+  - Row Level Security (RLS)
+  - Authentication & User Management
+- **Supabase Swift SDK** (v2.5.1+): Cliente oficial
+
+### Arquitectura & Patrones
+- **Clean Architecture**: Domain/Data/Presentation (100%)
+- **MVVM**: ViewModels con @Observable
+- **Repository Pattern**: Abstracción de datos
+- **Use Cases Pattern**: Business logic encapsulation
+- **Dependency Injection**: Factory pattern con containers
+- **Mapper Pattern**: Conversiones entre capas
+- **DTO Pattern**: Separación de modelos por capa
+
+### Observability
+- **OSLog**: Logging estructurado por categorías
+- **Logger**: Subsystems específicos (App, Auth, Payments, Sync, Calendar, etc.)
+- **NotificationCenter**: Broadcasting de eventos de datos
 
 ---
 
 ## 📋 Requisitos
 
 - **iOS**: 18.5 o superior
-- **Xcode**: 16.4 o superior  
+- **Xcode**: 16.4 o superior
 - **Swift**: 6.0
-- **macOS**: Sequoia 15.0+ (para desarrollo)
-- **Cuenta Supabase**: [Crear cuenta gratis](https://supabase.com)
+- **macOS**: Sequoia 15.0+ (desarrollo)
+- **Cuenta Supabase**: [Crear gratis](https://supabase.com)
 
-## 🚀 Quick Start
+---
+
+## 🚀 Instalación y Configuración
 
 ### 1️⃣ Clonar Repositorio
 
@@ -132,212 +612,130 @@ open pagosApp.xcodeproj
 
 ---
 
-## 📱 Setup Inicial en la App
-
-### Primera Vez
-
-1. **Registro**: Crea una cuenta con email/password
-2. **Face ID**: Configura acceso biométrico (opcional)
-3. **Permisos**: 
-   - 📅 Calendario (para sincronización)
-   - 🔔 Notificaciones (para recordatorios)
-4. **¡Listo!**: Comienza a agregar pagos
-
----
-
-## 🗄 Base de Datos
-
-### Setup de Supabase
-
-El proyecto incluye scripts SQL en la carpeta `Database/`:
-
-```bash
-Database/
-├── supabase_schema.sql              # Schema completo
-├── migration_add_currency.sql       # Migración de monedas
-└── verify_currency_migration.sql    # Verificación
-```
-
-#### Ejecutar en Supabase Dashboard
-
-1. Ve a **SQL Editor** en tu proyecto Supabase
-2. Ejecuta `supabase_schema.sql` primero
-3. Ejecuta las migraciones si es necesario
-4. Verifica con `verify_currency_migration.sql`
-
-#### Tablas Creadas
-
-- **`payments`**: Información de pagos
-- **Row Level Security (RLS)**: Habilitado para seguridad
-- **Policies**: Solo el usuario autenticado ve sus pagos
-
----
-
-## 🏗 Estructura del Proyecto
+## 📁 Estructura del Proyecto
 
 ```
 pagosApp/
-├── App/                        # Entry point
-│   └── pagosAppApp.swift
-├── Views/                      # SwiftUI Views
-│   ├── LoginView.swift
-│   ├── PaymentsListView.swift
-│   └── ...
-├── ViewModels/                 # @Observable ViewModels
-│   ├── PaymentsListViewModel.swift
-│   └── ...
-├── Managers/                   # Business Logic
-│   ├── AuthenticationManager.swift
-│   ├── PaymentSyncManager.swift
-│   └── ...
-├── Services/                   # Async Operations
-│   ├── PaymentSyncService.swift
-│   └── ...
-├── Repositories/               # Data Layer
-│   ├── PaymentRepository.swift
-│   └── ...
-├── Models/                     # Data Models
-│   ├── Payment.swift
-│   └── ...
-├── Auth/                       # Authentication Module
-│   ├── Services/
-│   ├── Repositories/
-│   └── README.md
-└── Config/                     # Configuration
-    └── Secrets.xcconfig
+├── App/
+│   └── pagosAppApp.swift                    # Entry point + DI setup
+│
+├── Features/                                # ✅ Organización por feature
+│   ├── Auth/
+│   │   ├── Domain/
+│   │   │   ├── Entities/                    # User, AuthSession
+│   │   │   ├── Repositories/               # AuthRepositoryProtocol
+│   │   │   ├── UseCases/                   # LoginUseCase, RegisterUseCase, etc.
+│   │   │   └── Errors/                     # AuthError
+│   │   ├── Data/
+│   │   │   ├── DTOs/
+│   │   │   │   ├── Remote/                 # SupabaseAuthDTO
+│   │   │   │   └── Local/                  # KeychainAuthDTO
+│   │   │   ├── Mappers/                    # AuthMapper
+│   │   │   ├── Repositories/               # AuthRepositoryImpl
+│   │   │   └── DataSources/
+│   │   │       ├── Remote/                 # SupabaseAuthDataSource
+│   │   │       └── Local/                  # KeychainAuthDataSource
+│   │   └── Presentation/
+│   │       ├── ViewModels/                 # LoginViewModel, RegisterViewModel
+│   │       ├── Views/                      # LoginView, RegisterView
+│   │       ├── Coordinators/               # SessionCoordinator
+│   │       └── DI/                         # AuthDependencyContainer
+│   │
+│   ├── Payments/
+│   │   ├── Domain/
+│   │   │   ├── Entities/                   # Payment, Currency, Category
+│   │   │   ├── Repositories/               # PaymentRepositoryProtocol
+│   │   │   ├── UseCases/                   # CreatePaymentUseCase, UpdatePaymentUseCase, etc.
+│   │   │   └── Errors/                     # PaymentError
+│   │   ├── Data/
+│   │   │   ├── DTOs/
+│   │   │   │   ├── Local/                  # PaymentLocalDTO (@Model)
+│   │   │   │   └── Remote/                 # PaymentRemoteDTO (Codable)
+│   │   │   ├── Mappers/                    # PaymentMapper
+│   │   │   ├── Repositories/               # PaymentRepositoryImpl
+│   │   │   └── DataSources/
+│   │   │       ├── Local/                  # PaymentSwiftDataDataSource
+│   │   │       └── Remote/                 # PaymentSupabaseDataSource
+│   │   └── Presentation/
+│   │       ├── ViewModels/                 # PaymentsListViewModel, EditPaymentViewModel
+│   │       ├── Views/                      # PaymentsListView, AddPaymentView, etc.
+│   │       ├── Models/                     # PaymentUI (presentation model)
+│   │       ├── Coordinators/               # PaymentSyncCoordinator
+│   │       └── DI/                         # PaymentDependencyContainer
+│   │
+│   ├── Calendar/                           # Feature: Calendar integration
+│   ├── Statistics/                         # Feature: Stats & charts
+│   ├── History/                            # Feature: Payment history
+│   └── UserProfile/                        # Feature: User profile
+│
+├── Shared/                                 # Código compartido entre features
+│   ├── Models/                             # Currency, SyncStatus, etc.
+│   ├── Extensions/                         # String+, Date+, etc.
+│   ├── Managers/                           # ErrorHandler, NotificationManager
+│   └── Utils/                              # Validators, Formatters
+│
+├── Config/
+│   ├── Secrets.xcconfig                    # ❌ NO commitear (gitignored)
+│   ├── Secrets.template.xcconfig           # ✅ Template público
+│   └── README.md                           # Instrucciones de configuración
+│
+└── Database/
+    ├── supabase_schema.sql                 # Schema completo
+    ├── migration_add_currency.sql          # Migraciones
+    └── README.md                           # Setup de Supabase
 
 Tests/
-└── pagosAppTests/              # Unit Tests
-    ├── AuthenticationManagerTests.swift
-    └── ...
+└── pagosAppTests/
+    ├── Domain/
+    │   └── UseCases/                       # Tests de Use Cases
+    ├── Data/
+    │   ├── Repositories/                   # Tests de Repositories
+    │   └── Mappers/                        # Tests de Mappers
+    └── Presentation/
+        └── ViewModels/                     # Tests de ViewModels
 ```
 
 ---
 
 ## 🧪 Testing
 
-### Ejecutar Tests
-
 ```bash
-# Todos los tests
+# Ejecutar todos los tests
 ⌘ + U
 
 # O desde terminal
 xcodebuild test -scheme pagosApp -destination 'platform=iOS Simulator,name=iPhone 15 Pro'
 ```
 
-### Coverage
+**Cobertura Actual**: ~50-60%
 
-- ✅ Authentication Manager: 85%+
-- ✅ ViewModels: 70%+
-- ✅ Configuration Manager: 90%+
-- ✅ Email Validator: 100%
+**Tests Implementados**:
+- ✅ Use Cases: Lógica de negocio
+- ✅ Mappers: Conversiones DTO ↔ Domain ↔ UI
+- ✅ Validators: Email, Payment, UserProfile
+- ✅ ViewModels: Estados y flujos UI
+- ✅ Repositories (mocks): Inyección de dependencias
 
 ---
 
 ## 📚 Documentación Adicional
 
-- **[CHANGELOG.md](CHANGELOG.md)**: Historial completo de cambios
-- **[MODERNIZATION_REPORT.md](MODERNIZATION_REPORT.md)**: Reporte de modernización iOS 18.5
-- **[Auth/README.md](pagosApp/Auth/README.md)**: Módulo de autenticación
-- **[Config/README.md](Config/README.md)**: Configuración de credenciales
-
----
-
-## 🔧 Configuración Avanzada
-
-### Obtener Credenciales Supabase
-
-1. Ve a [supabase.com](https://supabase.com)
-2. Crea proyecto o selecciona existente
-3. **Project Settings** → **API**:
-   - 📋 Copia **Project URL** → `SUPABASE_URL`
-   - 🔑 Copia **anon/public key** → `SUPABASE_KEY`
-
-### Variables de Entorno
-
-**Agregar nueva variable**:
-
-1. En `Config/Secrets.xcconfig`:
-   ```xcconfig
-   MI_NUEVA_KEY = valor_secreto
-   ```
-
-2. En `Config/Secrets.template.xcconfig` (para otros devs):
-   ```xcconfig
-   MI_NUEVA_KEY = TU_VALOR_AQUI
-   ```
-
-3. En `Info.plist` (si necesitas acceder desde Swift):
-   ```xml
-   <key>MI_NUEVA_KEY</key>
-   <string>$(MI_NUEVA_KEY)</string>
-   ```
-
-4. Leer en Swift:
-   ```swift
-   let miKey = Bundle.main.infoDictionary?["MI_NUEVA_KEY"] as? String
-   ```
+- **[CHANGELOG.md](CHANGELOG.md)**: Historial completo de cambios (versión 1.0.0 build 10)
+- **[Config/README.md](Config/README.md)**: Setup de credenciales
+- **[Database/README.md](Database/README.md)**: Configuración de Supabase
 
 ---
 
 ## 🔒 Seguridad
 
-### ✅ Buenas Prácticas Implementadas
+### Implementaciones de Seguridad
 
-- 🔐 **Keychain**: Tokens almacenados de forma segura
-- 🚫 **Git**: `Secrets.xcconfig` en `.gitignore`
-- 🔑 **Build-time**: Credenciales inyectadas en compilación
-- 🛡 **RLS**: Row Level Security en Supabase
-- 👤 **Auth**: Solo datos del usuario autenticado
+- 🔐 **Keychain**: Tokens y credenciales almacenados de forma segura
+- 🚫 **Secrets.xcconfig**: Credenciales nunca en código
+- 🛡 **RLS (Row Level Security)**: Cada usuario solo ve sus datos
+- 👤 **Session Management**: Sesiones seguras con renovación automática
 - 📱 **Biometrics**: Face ID/Touch ID opcional
-
-### ⚠️ IMPORTANTE
-
-- ❌ **NUNCA** commitear `Config/Secrets.xcconfig`
-- ❌ **NUNCA** hardcodear credenciales en código
-- ✅ **SIEMPRE** usar `Secrets.template.xcconfig` como referencia
-- ✅ **SIEMPRE** rotar keys si se exponen
-
----
-
-## 🛠 Desarrollo
-
-### Pre-requisitos
-
-```bash
-# Verificar versiones
-swift --version        # Swift 6.0+
-xcodebuild -version    # Xcode 16.4+
-```
-
-### Debug Build
-
-```bash
-# Build debug
-xcodebuild -scheme pagosApp -configuration Debug
-
-# Run tests
-xcodebuild test -scheme pagosApp -destination 'platform=iOS Simulator,name=iPhone 15 Pro'
-```
-
-### Release Build
-
-```bash
-# Archive for distribution
-xcodebuild -scheme pagosApp -configuration Release archive \
-  -archivePath ./build/pagosApp.xcarchive
-```
-
-### Code Quality
-
-```bash
-# SwiftLint (si lo usas)
-swiftlint
-
-# SwiftFormat (si lo usas)
-swiftformat .
-```
+- 🔑 **Build-time Injection**: Credenciales inyectadas en compilación
 
 ---
 
@@ -354,7 +752,7 @@ swiftformat .
 ### Estándares de Código
 
 - ✅ Swift 6 strict concurrency
-- ✅ MVVM + SOLID principles
+- ✅ Clean Architecture (Domain/Data/Presentation)
 - ✅ @Observable para state management
 - ✅ async/await (no Combine)
 - ✅ Tests para nueva funcionalidad
@@ -368,15 +766,16 @@ Ver [CHANGELOG.md](CHANGELOG.md) para historial completo de cambios.
 
 ### Highlights
 
-- **2025-01**: 🚀 Modernización completa iOS 18.5 + Swift 6
-- **2024-11**: 🔐 Módulo de autenticación con patrones de diseño
-- **2024-10**: 📱 Release inicial v1.0
+- **2025-01 (v1.0.0 build 10)**: Clean Architecture completa + Entity renaming + Swift 6 concurrency
+- **2025-01**: Modernización completa iOS 18.5 + Swift 6
+- **2024-11**: Módulo de autenticación con patrones de diseño
+- **2024-10**: Release inicial v1.0
 
 ---
 
 ## 📄 Licencia
 
-Este proyecto es de código abierto bajo licencia MIT.
+MIT License - Ver archivo LICENSE para detalles.
 
 ---
 
@@ -384,7 +783,6 @@ Este proyecto es de código abierto bajo licencia MIT.
 
 **rapser**
 - GitHub: [@rapser](https://github.com/rapser)
-- Proyecto: pagosApp
 
 ---
 
@@ -392,18 +790,9 @@ Este proyecto es de código abierto bajo licencia MIT.
 
 - [Supabase](https://supabase.com) - Backend as a Service
 - [Swift Community](https://swift.org) - Amazing language
-- Apple Developer Team - iOS SDK
+- Apple Developer Team - iOS SDK y frameworks
+- Uncle Bob Martin - Clean Architecture principles
 
 ---
 
-## 📞 Soporte
-
-¿Problemas? ¿Preguntas?
-
-1. 📖 Revisa la [documentación](docs/)
-2. 🐛 [Abre un issue](../../issues)
-3. 💬 [Discusiones](../../discussions)
-
----
-
-**Made with ❤️ and Swift 6**
+**Made with ❤️, Swift 6, and Clean Architecture**

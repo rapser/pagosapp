@@ -44,7 +44,7 @@ struct UserProfileValidator {
     }
 
     /// Validate complete profile entity
-    func validate(_ profile: UserProfileEntity) throws {
+    func validate(_ profile: UserProfile) throws {
         try validateEmail(profile.email)
         try validatePhoneNumber(profile.phone)
         try validateFullName(profile.fullName)

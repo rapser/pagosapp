@@ -1,5 +1,5 @@
 //
-//  CategoryStatsEntity.swift
+//  CategoryStats.swift
 //  pagosApp
 //
 //  Domain entity for category statistics
@@ -9,17 +9,18 @@
 import Foundation
 
 /// Sendable domain entity for category spending statistics
-struct CategoryStatsEntity: Sendable, Identifiable {
+/// Clean Architecture: Domain models are pure, no UI dependencies
+struct CategoryStats: Sendable {
     let id: UUID
     let category: PaymentCategory
-    let totalAmount: Double
+    let totalAmount: Decimal
     let currency: Currency
     let paymentCount: Int
 
     init(
         id: UUID = UUID(),
         category: PaymentCategory,
-        totalAmount: Double,
+        totalAmount: Decimal,
         currency: Currency,
         paymentCount: Int
     ) {
@@ -31,8 +32,8 @@ struct CategoryStatsEntity: Sendable, Identifiable {
     }
 
     /// Calculate percentage of total
-    func percentage(of total: Double) -> Double {
+    func percentage(of total: Decimal) -> Double {
         guard total > 0 else { return 0 }
-        return (totalAmount / total) * 100
+        return NSDecimalNumber(decimal: (totalAmount / total) * 100).doubleValue
     }
 }

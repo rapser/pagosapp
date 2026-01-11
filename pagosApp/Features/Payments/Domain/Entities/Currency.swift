@@ -9,11 +9,10 @@
 import Foundation
 
 /// Currency enum for payment amounts
-enum Currency: String, Codable, CaseIterable, Identifiable, Sendable {
+/// Clean Architecture: Domain enums are pure, serialization happens in Data layer
+enum Currency: String, Sendable, CaseIterable {
     case pen = "PEN" // Soles peruanos
     case usd = "USD" // Dólares americanos
-
-    var id: String { self.rawValue }
 
     var symbol: String {
         switch self {

@@ -1,8 +1,9 @@
 import Foundation
 
+@MainActor
 protocol UserProfileLocalDataSource {
-    func fetchAll() async throws -> [UserProfileEntity]
-    func save(_ profile: UserProfileEntity) async throws
-    func deleteAll(_ profiles: [UserProfileEntity]) async throws
+    func fetchAll() async throws -> [UserProfileLocalDTO]
+    func save(_ profileDTO: UserProfileLocalDTO) async throws
+    func deleteAll(_ profileDTOs: [UserProfileLocalDTO]) async throws
     func clear() async throws
 }

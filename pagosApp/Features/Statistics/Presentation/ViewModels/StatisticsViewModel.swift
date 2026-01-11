@@ -15,8 +15,8 @@ import OSLog
 final class StatisticsViewModel {
     // MARK: - Observable Properties (UI State)
 
-    var categoryStats: [CategoryStatsEntity] = []
-    var monthlyStats: [MonthlyStatsEntity] = []
+    var categoryStats: [CategoryStats] = []
+    var monthlyStats: [MonthlyStats] = []
     var totalSpending: Double = 0
     var selectedFilter: StatsFilter = .all
     var selectedCurrency: Currency = .pen
@@ -134,12 +134,12 @@ final class StatisticsViewModel {
     // MARK: - Computed Properties for Presentation
 
     /// Convert domain entities to presentation models for Charts
-    var categorySpendingData: [CategorySpending] {
-        categoryStats.map { CategorySpending(from: $0) }
+    var categorySpendingData: [CategorySpendingUI] {
+        categoryStats.map { CategorySpendingUI(from: $0) }
     }
 
     /// Convert domain entities to presentation models for Charts
-    var monthlySpendingData: [MonthlySpending] {
-        monthlyStats.map { MonthlySpending(from: $0) }
+    var monthlySpendingData: [MonthlySpendingUI] {
+        monthlyStats.map { MonthlySpendingUI(from: $0) }
     }
 }
