@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 protocol UserProfileLocalDataSource {
     func fetchAll() async throws -> [UserProfileLocalDTO]
     func save(_ profileDTO: UserProfileLocalDTO) async throws

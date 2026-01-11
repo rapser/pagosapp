@@ -11,6 +11,7 @@ import SwiftData
 import OSLog
 
 /// Repository implementation for UserProfile
+@MainActor
 final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
     private let remoteDataSource: UserProfileRemoteDataSource
     private let localDataSource: UserProfileLocalDataSource
