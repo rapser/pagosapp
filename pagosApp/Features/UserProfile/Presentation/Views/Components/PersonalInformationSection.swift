@@ -10,7 +10,7 @@ import SwiftUI
 struct PersonalInformationSection: View {
     let profile: UserProfile
     let isEditing: Bool
-    @Binding var editableProfile: EditableProfile?
+    @Binding var editableProfile: EditableProfileUI?
     @Binding var showDatePicker: Bool
 
     var body: some View {
@@ -100,7 +100,7 @@ struct PersonalInformationSection: View {
 }
 
 #Preview("View Mode") {
-    @Previewable @State var editableProfile: EditableProfile? = nil
+    @Previewable @State var editableProfile: EditableProfileUI? = nil
     @Previewable @State var showDatePicker = false
 
     Form {
@@ -115,7 +115,7 @@ struct PersonalInformationSection: View {
 }
 
 #Preview("Edit Mode") {
-    @Previewable @State var editableProfile: EditableProfile? = EditableProfile(from: .mock)
+    @Previewable @State var editableProfile: EditableProfileUI? = EditableProfileUI(from: .mock)
     @Previewable @State var showDatePicker = false
 
     Form {

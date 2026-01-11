@@ -9,16 +9,16 @@
 import Foundation
 
 /// Presentation model for monthly spending statistics (used in Charts)
-struct MonthlySpending: Identifiable {
+struct MonthlySpendingUI: Identifiable {
     let id = UUID()
     let month: Date
     let totalAmount: Double
     let currency: Currency
 
     /// Initialize from domain entity
-    init(from entity: MonthlyStatsEntity) {
+    init(from entity: MonthlyStats) {
         self.month = entity.month
-        self.totalAmount = entity.totalAmount
+        self.totalAmount = Double(truncating: NSDecimalNumber(decimal: entity.totalAmount))
         self.currency = entity.currency
     }
 

@@ -59,7 +59,8 @@ final class CalendarDependencyContainer {
             getAllPaymentsUseCase: makeGetAllPaymentsForCalendarUseCase(),
             getPaymentsByDateUseCase: makeGetPaymentsByDateUseCase(),
             getPaymentsByMonthUseCase: makeGetPaymentsByMonthUseCase(),
-            calendarEventDataSource: calendarEventDataSource
+            calendarEventDataSource: calendarEventDataSource,
+            mapper: PaymentUIMapper()
         )
     }
 }

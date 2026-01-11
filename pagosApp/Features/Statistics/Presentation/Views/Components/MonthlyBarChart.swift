@@ -10,7 +10,7 @@ import SwiftUI
 import Charts
 
 struct MonthlyBarChart: View {
-    let monthlyData: [MonthlySpending]
+    let monthlyData: [MonthlySpendingUI]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {

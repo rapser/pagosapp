@@ -8,7 +8,7 @@
 
 import Foundation
 
-enum PaymentFilter: String, CaseIterable, Identifiable {
+enum PaymentFilterUI: String, CaseIterable, Identifiable {
     case currentMonth = "Próximos"
     case futureMonths = "Futuros"
 

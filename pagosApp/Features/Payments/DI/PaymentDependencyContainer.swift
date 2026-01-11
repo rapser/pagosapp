@@ -25,6 +25,10 @@ final class PaymentDependencyContainer {
         PaymentSwiftDataDataSource(modelContext: modelContext)
     }()
 
+    // Mappers
+    private let remoteDTOMapper: PaymentRemoteDTOMapping = PaymentRemoteDTOMapper()
+    private let uiMapper: PaymentUIMapping = PaymentUIMapper()
+
     // MARK: - Initialization
 
     init(supabaseClient: SupabaseClient, modelContext: ModelContext) {
@@ -37,7 +41,8 @@ final class PaymentDependencyContainer {
     func makePaymentRepository() -> PaymentRepositoryProtocol {
         return PaymentRepositoryImpl(
             remoteDataSource: remoteDataSource,
-            localDataSource: localDataSource
+            localDataSource: localDataSource,
+            remoteDTOMapper: remoteDTOMapper
         )
     }
 
@@ -132,15 +137,17 @@ final class PaymentDependencyContainer {
 
     func makeAddPaymentViewModel() -> AddPaymentViewModel {
         return AddPaymentViewModel(
-            createPaymentUseCase: makeCreatePaymentUseCase()
+            createPaymentUseCase: makeCreatePaymentUseCase(),
+            mapper: uiMapper
         )
     }
 
-    func makeEditPaymentViewModel(for payment: Payment) -> EditPaymentViewModel {
+    func makeEditPaymentViewModel(for payment: PaymentUI) -> EditPaymentViewModel {
         return EditPaymentViewModel(
             payment: payment,
             updatePaymentUseCase: makeUpdatePaymentUseCase(),
-            togglePaymentStatusUseCase: makeTogglePaymentStatusUseCase()
+            togglePaymentStatusUseCase: makeTogglePaymentStatusUseCase(),
+            mapper: uiMapper
         )
     }
 
@@ -148,7 +155,8 @@ final class PaymentDependencyContainer {
         return PaymentsListViewModel(
             getAllPaymentsUseCase: makeGetAllPaymentsUseCase(),
             deletePaymentUseCase: makeDeletePaymentUseCase(),
-            togglePaymentStatusUseCase: makeTogglePaymentStatusUseCase()
+            togglePaymentStatusUseCase: makeTogglePaymentStatusUseCase(),
+            mapper: uiMapper
         )
     }
 }

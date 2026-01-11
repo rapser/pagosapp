@@ -18,6 +18,7 @@ struct PaymentDTO: Codable, Identifiable {
     let isPaid: Bool
     let category: String
     let eventIdentifier: String?
+    let groupId: UUID?
     let createdAt: Date?
     let updatedAt: Date?
 
@@ -31,33 +32,36 @@ struct PaymentDTO: Codable, Identifiable {
         case isPaid = "is_paid"
         case category
         case eventIdentifier = "event_identifier"
+        case groupId = "group_id"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
 
-    /// Initialize from local PaymentEntity model
-    init(from entity: PaymentEntity, userId: UUID) {
-        self.id = entity.id
+    /// Memberwise initializer for creating DTOs
+    init(id: UUID, userId: UUID, name: String, amount: Double, currency: String, dueDate: Date, isPaid: Bool, category: String, eventIdentifier: String?, groupId: UUID?, createdAt: Date?, updatedAt: Date?) {
+        self.id = id
         self.userId = userId
-        self.name = entity.name
-        self.amount = entity.amount
-        self.currency = entity.currency.rawValue
-        self.dueDate = entity.dueDate
-        self.isPaid = entity.isPaid
-        self.category = entity.category.rawValue
-        self.eventIdentifier = entity.eventIdentifier
-        self.createdAt = nil
-        self.updatedAt = nil
+        self.name = name
+        self.amount = amount
+        self.currency = currency
+        self.dueDate = dueDate
+        self.isPaid = isPaid
+        self.category = category
+        self.eventIdentifier = eventIdentifier
+        self.groupId = groupId
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
     }
 
     /// Initialize from Codable (for API responses)
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+
         id = try container.decode(UUID.self, forKey: .id)
         userId = try container.decode(UUID.self, forKey: .userId)
         name = try container.decode(String.self, forKey: .name)
         amount = try container.decode(Double.self, forKey: .amount)
-        currency = try container.decodeIfPresent(String.self, forKey: .currency) ?? "PEN" // Default to PEN for backward compatibility
+        currency = try container.decodeIfPresent(String.self, forKey: .currency) ?? "PEN"
 
         // Handle date decoding with multiple format support
         let dueDateString = try container.decode(String.self, forKey: .dueDate)
@@ -65,7 +69,7 @@ struct PaymentDTO: Codable, Identifiable {
             throw DecodingError.dataCorruptedError(
                 forKey: .dueDate,
                 in: container,
-                debugDescription: "Date string does not match expected format"
+                debugDescription: "Date string '\(dueDateString)' does not match any expected format"
             )
         }
         dueDate = date
@@ -73,6 +77,7 @@ struct PaymentDTO: Codable, Identifiable {
         isPaid = try container.decode(Bool.self, forKey: .isPaid)
         category = try container.decode(String.self, forKey: .category)
         eventIdentifier = try container.decodeIfPresent(String.self, forKey: .eventIdentifier)
+        groupId = try container.decodeIfPresent(UUID.self, forKey: .groupId)
 
         // Decode timestamps if present
         if let createdAtString = try container.decodeIfPresent(String.self, forKey: .createdAt) {
@@ -97,21 +102,63 @@ struct PaymentDTO: Codable, Identifiable {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = TimeZone(secondsFromGMT: 0)
 
-        // PostgreSQL timestamp with timezone (most common in Supabase)
-        // Format: "2025-12-12 20:27:00+00"
+        // ISO8601 with milliseconds (3 digits) and timezone with colon
+        // Format: "2026-01-02T20:59:38.015+00:00"
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"
+        if let date = formatter.date(from: cleanString) {
+            return date
+        }
+
+        // ISO8601 with milliseconds and timezone without colon
+        // Format: "2026-01-02T20:59:38.015+00"
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSxx"
+        if let date = formatter.date(from: cleanString) {
+            return date
+        }
+
+        // ISO8601 without fractional seconds with timezone colon
+        // Format: "2025-11-30T17:05:00+00:00"
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
+        if let date = formatter.date(from: cleanString) {
+            return date
+        }
+
+        // PostgreSQL timestamp with fractional seconds and timezone (no T separator)
+        // Format: "2026-01-02 20:59:38.015+00"
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSxx"
+        if let date = formatter.date(from: cleanString) {
+            return date
+        }
+
+        // PostgreSQL timestamp with timezone (no fractional seconds)
+        // Format: "2026-01-30 21:01:00+00"
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ssxx"
+        if let date = formatter.date(from: cleanString) {
+            return date
+        }
+
+        // PostgreSQL timestamp with timezone colon format
+        // Format: "2025-12-12 20:27:00+00:00"
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ssZZZ"
         if let date = formatter.date(from: cleanString) {
             return date
         }
 
-        // PostgreSQL timestamp with fractional seconds and timezone
-        // Format: "2025-12-03 20:30:48.731+00"
+        // PostgreSQL timestamp with fractional seconds and timezone colon format
+        // Format: "2025-12-03 20:30:48.731+00:00"
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSZZZ"
         if let date = formatter.date(from: cleanString) {
             return date
         }
 
-        // Try ISO8601 first (most common)
+        // Try ISO8601 with microseconds (6 digits)
+        // Format: "2025-11-15T17:15:12.926568+00:00"
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZZZZZ"
+        if let date = formatter.date(from: cleanString) {
+            return date
+        }
+
+        // Try ISO8601 formatter (handles various ISO formats)
         if let date = ISO8601DateFormatter().date(from: cleanString) {
             return date
         }
@@ -120,12 +167,6 @@ struct PaymentDTO: Codable, Identifiable {
         let isoFormatter = ISO8601DateFormatter()
         isoFormatter.formatOptions = [.withInternetDateTime]
         if let date = isoFormatter.date(from: cleanString) {
-            return date
-        }
-
-        // Try RFC3339 (similar to ISO8601 but more flexible)
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
-        if let date = formatter.date(from: cleanString) {
             return date
         }
 
@@ -148,32 +189,5 @@ struct PaymentDTO: Codable, Identifiable {
         }
 
         return nil
-    }
-
-    /// Convert to local PaymentEntity model
-    func toEntity() -> PaymentEntity {
-        let paymentCategory = PaymentCategory(rawValue: category) ?? .otro
-        let paymentCurrency = Currency(rawValue: currency) ?? .pen
-        return PaymentEntity(
-            id: id,
-            name: name,
-            amount: amount,
-            currency: paymentCurrency,
-            dueDate: dueDate,
-            isPaid: isPaid,
-            category: paymentCategory,
-            eventIdentifier: eventIdentifier,
-            syncStatus: .synced,
-            lastSyncedAt: Date()
-        )
-    }
-}
-
-// MARK: - PaymentEntity Extension
-
-extension PaymentEntity {
-    /// Convert to DTO for API communication
-    func toDTO(userId: UUID) -> PaymentDTO {
-        PaymentDTO(from: self, userId: userId)
     }
 }

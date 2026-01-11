@@ -12,7 +12,7 @@ struct LoginView: View {
         _viewModel = State(wrappedValue: loginViewModel)
         self.onLoginSuccess = onLoginSuccess
     }
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
@@ -23,131 +23,57 @@ struct LoginView: View {
                     .foregroundColor(Color("AppTextPrimary"))
 
                 if viewModel.canUseBiometric && !showEmailPasswordLogin {
-                    Image(systemName: biometricIcon)
-                        .font(.system(size: 80))
-                        .foregroundColor(Color("AppPrimary"))
-
-                    Text("Usa \(biometricName) para acceder")
-                        .font(.headline)
-                        .foregroundColor(Color("AppTextPrimary"))
-                        .padding(.top, 8)
-
-                    Button(action: {
-                        Task {
-                            await viewModel.loginWithBiometric()
-                        }
-                    }) {
-                        HStack {
-                            Image(systemName: biometricIcon)
-                            Text("Ingresar con \(biometricName)")
-                        }
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color("AppPrimary"))
-                        .cornerRadius(10)
-                    }
-                    .padding(.top, 20)
-                    .disabled(viewModel.isLoading)
-                } else {
-                    Image(systemName: "lock.shield.fill")
-                        .font(.system(size: 80))
-                        .foregroundColor(Color("AppTextSecondary"))
-
-                    TextField("Correo electrónico", text: $viewModel.email)
-                        .keyboardType(.emailAddress)
-                        .textContentType(.emailAddress)
-                        .autocapitalization(.none)
-                        .autocorrectionDisabled()
-                        .padding()
-                        .background(Color("AppBackground"))
-                        .cornerRadius(10)
-                        .disabled(viewModel.isLoading)
-
-                    HStack {
-                        if viewModel.showPassword {
-                            TextField("Contraseña", text: $viewModel.password)
-                                .textContentType(.password)
-                        } else {
-                            SecureField("Contraseña", text: $viewModel.password)
-                                .textContentType(.password)
-                        }
-
-                        Button(action: {
-                            viewModel.showPassword.toggle()
-                        }) {
-                            Image(systemName: viewModel.showPassword ? "eye.slash.fill" : "eye.fill")
-                                .foregroundColor(Color("AppTextSecondary"))
-                        }
-                    }
-                    .padding()
-                    .background(Color("AppBackground"))
-                    .cornerRadius(10)
-                    .disabled(viewModel.isLoading)
-
-                    if let errorMessage = viewModel.errorMessage {
-                        Text(errorMessage)
-                            .foregroundColor(.red)
-                            .font(.caption)
-                    }
-
-                    Button(action: {
-                        Task {
-                            await viewModel.login()
-                        }
-                    }) {
-                        HStack {
-                            if viewModel.isLoading {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                    .scaleEffect(0.8)
+                    BiometricLoginSection(
+                        biometricIcon: biometricIcon,
+                        biometricName: biometricName,
+                        isLoading: viewModel.isLoading,
+                        onBiometricLogin: {
+                            Task {
+                                await viewModel.loginWithBiometric()
                             }
-                            Text(viewModel.isLoading ? "Iniciando sesión..." : "Iniciar Sesión")
                         }
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(viewModel.isFormValid ? Color("AppPrimary") : Color("AppPrimary").opacity(0.5))
-                        .cornerRadius(10)
-                    }
-                    .disabled(viewModel.isLoading || !viewModel.isFormValid)
-
-                    // Registration Link
-                    NavigationLink(
-                        destination: RegistrationView(
-                            registerViewModel: dependencies.authDependencyContainer.makeRegisterViewModel()
-                        )
-                    ) {
-                        Text("¿No tienes cuenta? Regístrate aquí")
-                            .font(.callout)
-                            .padding(.top)
-                            .foregroundColor(Color("AppPrimary"))
-                    }
-                    .disabled(viewModel.isLoading)
-
-                    NavigationLink(destination: ForgotPasswordView(passwordRecoveryUseCase: viewModel.getPasswordRecoveryUseCase())) {
-                        Text("¿Olvidaste tu contraseña?")
-                            .font(.callout)
-                            .padding(.top, 5)
-                            .foregroundColor(Color("AppTextSecondary"))
-                    }
-                    .disabled(viewModel.isLoading)
-
-                    if viewModel.canUseBiometric {
-                        Button(action: {
+                    )
+                } else {
+                    EmailPasswordLoginForm(
+                        email: $viewModel.email,
+                        password: $viewModel.password,
+                        showPassword: $viewModel.showPassword,
+                        errorMessage: viewModel.errorMessage,
+                        isLoading: viewModel.isLoading,
+                        isFormValid: viewModel.isFormValid,
+                        canUseBiometric: viewModel.canUseBiometric,
+                        biometricName: biometricName,
+                        onLogin: {
+                            Task {
+                                await viewModel.login()
+                            }
+                        },
+                        onSwitchToBiometric: {
                             showEmailPasswordLogin = false
-                        }) {
-                            Text("Usar \(biometricName)")
-                                .font(.callout)
-                                .padding(.top, 5)
-                                .foregroundColor(Color("AppTextSecondary"))
-                        }
-                        .disabled(viewModel.isLoading)
-                    }
+                        },
+                        forgotPasswordView: AnyView(
+                            NavigationLink(destination: ForgotPasswordView(passwordRecoveryUseCase: viewModel.getPasswordRecoveryUseCase())) {
+                                Text("¿Olvidaste tu contraseña?")
+                                    .font(.callout)
+                                    .padding(.top, 5)
+                                    .foregroundColor(Color("AppTextSecondary"))
+                            }
+                        ),
+                        registrationView: AnyView(
+                            NavigationLink(
+                                destination: RegistrationView(
+                                    registerViewModel: dependencies.authDependencyContainer.makeRegisterViewModel()
+                                )
+                            ) {
+                                Text("¿No tienes cuenta? Regístrate aquí")
+                                    .font(.callout)
+                                    .padding(.top)
+                                    .foregroundColor(Color("AppPrimary"))
+                            }
+                        )
+                    )
                 }
-                
+
                 Spacer()
             }
             .padding()
@@ -159,14 +85,8 @@ struct LoginView: View {
                 }
             }
             .onAppear {
-                // Check if should show biometric option (without calling use cases again)
-                // Use cached values from ViewModel state
                 let hasCredentials = viewModel.hasBiometricCredentials()
-
-                // Only show biometric if credentials exist (device capability already checked by SessionCoordinator)
                 showEmailPasswordLogin = !hasCredentials
-
-                // Set callback
                 viewModel.onLoginSuccess = onLoginSuccess
             }
             .alert("Error", isPresented: $viewModel.showError) {

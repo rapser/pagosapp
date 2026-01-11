@@ -51,18 +51,68 @@ final class UpdatePaymentUseCase {
                 category: payment.category,
                 eventIdentifier: payment.eventIdentifier,
                 syncStatus: .modified,
-                lastSyncedAt: payment.lastSyncedAt
+                lastSyncedAt: payment.lastSyncedAt,
+                groupId: payment.groupId
             )
         }
 
-        // 3. Save to repository
+        // 3. Save the main payment to repository
         do {
             try await paymentRepository.savePayment(updatedPayment)
             logger.info("✅ Payment updated successfully: \(payment.name)")
-            return .success(updatedPayment)
         } catch {
             logger.error("❌ Failed to update payment: \(error.localizedDescription)")
             return .failure(.updateFailed(error.localizedDescription))
+        }
+
+        // 4. If this payment is part of a group, update the sibling payment with shared fields
+        if let groupId = payment.groupId {
+            logger.info("🔗 Payment is part of group: \(groupId)")
+            await updateSiblingPayment(groupId: groupId, updatedPayment: updatedPayment)
+        }
+
+        // 5. Notify that payments have been updated so UI can refresh
+        NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
+        logger.debug("📢 Posted PaymentsDidSync notification")
+
+        return .success(updatedPayment)
+    }
+
+    /// Update sibling payment in the same group with shared fields
+    private func updateSiblingPayment(groupId: UUID, updatedPayment: Payment) async {
+        do {
+            // Get all local payments in the group
+            let allPayments = try await paymentRepository.getAllLocalPayments()
+            let groupPayments = allPayments.filter { $0.groupId == groupId && $0.id != updatedPayment.id }
+
+            guard let siblingPayment = groupPayments.first else {
+                logger.debug("ℹ️ No sibling payment found in group")
+                return
+            }
+
+            logger.info("🔄 Updating sibling payment: \(siblingPayment.name)")
+
+            // Update sibling with shared fields: name, dueDate, category
+            // Keep sibling's own fields: amount, currency, isPaid, eventIdentifier
+            let updatedSibling = Payment(
+                id: siblingPayment.id,
+                name: updatedPayment.name,  // Shared: same name
+                amount: siblingPayment.amount,  // Keep original amount
+                currency: siblingPayment.currency,  // Keep original currency
+                dueDate: updatedPayment.dueDate,  // Shared: same due date
+                isPaid: siblingPayment.isPaid,  // Keep original paid status
+                category: updatedPayment.category,  // Shared: same category
+                eventIdentifier: siblingPayment.eventIdentifier,  // Keep original event
+                syncStatus: siblingPayment.syncStatus == SyncStatus.synced ? SyncStatus.modified : siblingPayment.syncStatus,
+                lastSyncedAt: siblingPayment.lastSyncedAt,
+                groupId: siblingPayment.groupId
+            )
+
+            try await paymentRepository.savePayment(updatedSibling)
+            logger.info("✅ Sibling payment updated successfully: \(updatedSibling.name)")
+        } catch {
+            logger.error("❌ Failed to update sibling payment: \(error.localizedDescription)")
+            // Don't fail the whole operation if sibling update fails
         }
     }
 }
