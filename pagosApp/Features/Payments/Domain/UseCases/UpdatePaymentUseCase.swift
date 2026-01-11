@@ -71,6 +71,10 @@ final class UpdatePaymentUseCase {
             await updateSiblingPayment(groupId: groupId, updatedPayment: updatedPayment)
         }
 
+        // 5. Notify that payments have been updated so UI can refresh
+        NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
+        logger.debug("📢 Posted PaymentsDidSync notification")
+
         return .success(updatedPayment)
     }
 

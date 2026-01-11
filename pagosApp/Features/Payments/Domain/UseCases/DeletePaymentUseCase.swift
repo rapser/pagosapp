@@ -27,6 +27,11 @@ final class DeletePaymentUseCase {
         do {
             try await paymentRepository.deleteLocalPayment(id: paymentId)
             logger.info("✅ Payment deleted successfully: \(paymentId)")
+
+            // Notify that payments have been updated so UI can refresh
+            NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
+            logger.debug("📢 Posted PaymentsDidSync notification")
+
             return .success(())
         } catch {
             logger.error("❌ Failed to delete payment: \(error.localizedDescription)")

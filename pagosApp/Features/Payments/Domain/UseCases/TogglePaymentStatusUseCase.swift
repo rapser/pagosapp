@@ -42,6 +42,11 @@ final class TogglePaymentStatusUseCase {
         do {
             try await paymentRepository.savePayment(updatedPayment)
             logger.info("✅ Payment status toggled successfully: \(payment.name)")
+
+            // Notify that payments have been updated so UI can refresh
+            NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
+            logger.debug("📢 Posted PaymentsDidSync notification")
+
             return .success(updatedPayment)
         } catch {
             logger.error("❌ Failed to toggle payment status: \(error.localizedDescription)")
