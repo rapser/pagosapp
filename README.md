@@ -6,7 +6,7 @@
 [![Swift](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
 [![Xcode](https://img.shields.io/badge/Xcode-16.4%2B-blue.svg)](https://developer.apple.com/xcode/)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean-green.svg)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
-[![Version](https://img.shields.io/badge/Version-1.0.0(10)-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.0.0(11)-blue.svg)](CHANGELOG.md)
 
 ---
 
@@ -41,22 +41,27 @@
 - ✅ CRUD completo de pagos (Crear, Leer, Actualizar, Eliminar)
 - ✅ Categorización flexible (Entretenimiento, Tarjetas, Servicios, etc.)
 - ✅ Soporte multi-moneda (PEN/USD)
+- ✅ **Pagos Agrupados**: Tarjetas de crédito bimoneda (PEN + USD) agrupadas automáticamente
+- ✅ **Edición de Pagos Agrupados**: Edita ambos montos (PEN y USD) desde un solo formulario
 - ✅ Estados de pago (Pendiente/Completado)
 - ✅ Edición en tiempo real con validación
 - ✅ Búsqueda y filtros avanzados
 - ✅ Duplicación de pagos recurrentes
 
 ### 📅 Integración con Calendario iOS
-- ✅ Sincronización automática bidireccional con Calendar.app
+- ✅ **Sincronización Automática**: Los eventos se crean/actualizan/eliminan automáticamente
 - ✅ Cada pago genera un evento en el calendario nativo
 - ✅ Actualización automática al modificar pagos
 - ✅ Eliminación sincronizada de eventos
+- ✅ **Pagos Agrupados**: Un solo evento compartido para pagos PEN + USD (evita duplicados)
 - ✅ Selección de calendario destino
 - ✅ Soporte para calendarios compartidos
 
 ### 🔔 Notificaciones y Recordatorios
-- ✅ Notificaciones push locales antes del vencimiento
-- ✅ Personalización de días de anticipación
+- ✅ **Notificaciones Locales Automáticas**: Se programan automáticamente al crear/actualizar pagos
+- ✅ Recordatorios inteligentes: 2 días antes, 1 día antes y el mismo día a las 9:00 AM
+- ✅ **Restauración Automática**: Las notificaciones se restauran al iniciar sesión
+- ✅ Cancelación automática cuando se marca como pagado o se elimina
 - ✅ Notificaciones de sincronización exitosa
 - ✅ Alertas de errores con sugerencias de recuperación
 
@@ -175,12 +180,15 @@ struct Payment {
 ```
 
 **Use Cases** - Lógica de negocio encapsulada:
-- `CreatePaymentUseCase`: Valida y crea pagos
-- `UpdatePaymentUseCase`: Actualiza pagos + pagos hermanos (grupos)
-- `DeletePaymentUseCase`: Elimina pagos y eventos asociados
+- `CreatePaymentUseCase`: Valida y crea pagos + sincroniza calendario + programa notificaciones
+- `UpdatePaymentUseCase`: Actualiza pagos + pagos hermanos (grupos) + sincroniza calendario + reprograma notificaciones
+- `DeletePaymentUseCase`: Elimina pagos y eventos asociados + cancela notificaciones
 - `GetAllPaymentsUseCase`: Recupera todos los pagos
 - `CalculateMonthlyStatsUseCase`: Calcula estadísticas mensuales
 - `SyncPaymentsUseCase`: Sincroniza local ↔ remoto
+- `SyncPaymentWithCalendarUseCase`: Sincroniza pagos con calendario iOS (crear/actualizar/eliminar eventos)
+- `SchedulePaymentNotificationsUseCase`: Programa y cancela notificaciones locales
+- `TogglePaymentStatusUseCase`: Cambia estado de pago + actualiza notificaciones
 
 **Repository Protocols** - Contratos que Data debe cumplir:
 ```swift
@@ -645,7 +653,9 @@ pagosApp/
 │   │   ├── Domain/
 │   │   │   ├── Entities/                   # Payment, Currency, Category
 │   │   │   ├── Repositories/               # PaymentRepositoryProtocol
-│   │   │   ├── UseCases/                   # CreatePaymentUseCase, UpdatePaymentUseCase, etc.
+│   │   │   ├── UseCases/                   # CreatePaymentUseCase, UpdatePaymentUseCase, 
+│   │   │   │                                 # SyncPaymentWithCalendarUseCase,
+│   │   │   │                                 # SchedulePaymentNotificationsUseCase, etc.
 │   │   │   └── Errors/                     # PaymentError
 │   │   ├── Data/
 │   │   │   ├── DTOs/
@@ -720,7 +730,7 @@ xcodebuild test -scheme pagosApp -destination 'platform=iOS Simulator,name=iPhon
 
 ## 📚 Documentación Adicional
 
-- **[CHANGELOG.md](CHANGELOG.md)**: Historial completo de cambios (versión 1.0.0 build 10)
+- **[CHANGELOG.md](CHANGELOG.md)**: Historial completo de cambios (versión 1.0.0 build 11)
 - **[Config/README.md](Config/README.md)**: Setup de credenciales
 - **[Database/README.md](Database/README.md)**: Configuración de Supabase
 
@@ -766,7 +776,8 @@ Ver [CHANGELOG.md](CHANGELOG.md) para historial completo de cambios.
 
 ### Highlights
 
-- **2025-01 (v1.0.0 build 10)**: Clean Architecture completa + Entity renaming + Swift 6 concurrency
+- **2026-01 (v1.0.0 build 11)**: Edición de pagos agrupados + Sincronización automática con calendario + Notificaciones locales restauradas
+- **2026-01 (v1.0.0 build 10)**: Clean Architecture completa + Entity renaming + Swift 6 concurrency
 - **2025-01**: Modernización completa iOS 18.5 + Swift 6
 - **2024-11**: Módulo de autenticación con patrones de diseño
 - **2024-10**: Release inicial v1.0

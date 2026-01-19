@@ -20,7 +20,7 @@ struct SecureTextFieldWithToggle: View {
             Button(action: {
                 isSecure.toggle()
             }) {
-                Image(systemName: isSecure ? "eye.fill" : "eye.slash.fill")
+                Image(systemName: isSecure ? "eye.slash.fill" : "eye.fill")
                     .foregroundColor(Color("AppTextSecondary"))
             }
         }
