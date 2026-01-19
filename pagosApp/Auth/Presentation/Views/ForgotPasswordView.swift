@@ -17,14 +17,12 @@ struct ForgotPasswordView: View {
     }
     
     var body: some View {
-        ZStack {
-            Color("AppBackground").edgesIgnoringSafeArea(.all)
-            
+        NavigationStack {
             VStack(spacing: 20) {
+                Spacer()
                 
                 Text("Restablecer Contraseña")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+                    .font(.largeTitle).bold()
                     .foregroundColor(Color("AppTextPrimary"))
                 
                 Text("Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.")
@@ -33,39 +31,70 @@ struct ForgotPasswordView: View {
                     .foregroundColor(Color("AppTextSecondary"))
                     .padding(.horizontal)
                 
-                TextField("Correo Electrónico", text: $viewModel.email)
+                TextField("Correo electrónico", text: $viewModel.email)
+                    .keyboardType(.emailAddress)
+                    .textContentType(.emailAddress)
+                    .autocapitalization(.none)
+                    .autocorrectionDisabled()
                     .padding()
                     .background(Color("AppBackground"))
                     .cornerRadius(10)
-                    .autocapitalization(.none)
-                    .keyboardType(.emailAddress)
-                    .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 5)
                     .disabled(viewModel.isLoading)
+                
+                if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                }
                 
                 Button(action: {
                     Task {
                         await viewModel.sendPasswordReset()
                     }
                 }) {
-                    Text("Enviar Enlace")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color("AppPrimary"))
-                        .cornerRadius(10)
-                        .shadow(color: Color("AppPrimary").opacity(0.5), radius: 10, x: 0, y: 5)
+                    HStack {
+                        if viewModel.isLoading {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(0.8)
+                        }
+                        Text(viewModel.isLoading ? "Enviando..." : "Enviar Enlace")
+                    }
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(viewModel.isFormValid ? Color("AppPrimary") : Color("AppPrimary").opacity(0.5))
+                    .cornerRadius(10)
                 }
-                .disabled(viewModel.isLoading)
+                .disabled(viewModel.isLoading || !viewModel.isFormValid)
                 
                 Spacer()
             }
             .padding()
+            .overlay {
+                if viewModel.isLoading {
+                    Color.black.opacity(0.1)
+                        .ignoresSafeArea()
+                        .allowsHitTesting(true)
+                }
+            }
             .navigationTitle("¿Olvidaste tu contraseña?")
             .navigationBarTitleDisplayMode(.inline)
-            
-            if viewModel.isLoading {
-                LoadingView()
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 17, weight: .semibold))
+                            Text("Atrás")
+                        }
+                        .foregroundColor(Color("AppTextPrimary"))
+                    }
+                }
             }
         }
         .onChange(of: viewModel.didSendResetLink) { oldValue, newValue in
