@@ -51,7 +51,12 @@ final class AddPaymentViewModel {
     }
 
     // MARK: - Validation
-
+    
+    /// UI-level validation for immediate user feedback
+    /// Note: This is separate from PaymentValidator in Use Cases.
+    /// - ViewModel validation: Fast, UI-focused, for enabling/disabling buttons
+    /// - Use Case validation: Business rules, data integrity, server-side rules
+    /// Both validations serve different purposes and are intentionally duplicated.
     var isValid: Bool {
         guard !name.isEmpty else { return false }
 

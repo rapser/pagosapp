@@ -10,11 +10,18 @@ import Foundation
 import EventKit
 
 /// Protocol for calendar event operations
+/// Supports both async/await (preferred) and callback-based APIs for compatibility
 protocol CalendarEventDataSource {
-    /// Request calendar access permission
+    /// Request calendar access permission (async/await - preferred)
+    func requestAccess() async -> Bool
+    
+    /// Request calendar access permission (callback-based - for compatibility)
     func requestAccess(completion: @escaping (Bool) -> Void)
 
-    /// Add calendar event for a payment
+    /// Add calendar event for a payment (async/await - preferred)
+    func addEvent(title: String, dueDate: Date) async -> String?
+    
+    /// Add calendar event for a payment (callback-based - for compatibility)
     func addEvent(title: String, dueDate: Date, completion: @escaping (String?) -> Void)
 
     /// Update existing calendar event
@@ -28,23 +35,23 @@ protocol CalendarEventDataSource {
 final class EventKitCalendarDataSource: CalendarEventDataSource {
     private let eventStore = EKEventStore()
 
-    func requestAccess(completion: @escaping (Bool) -> Void) {
-        if #available(iOS 17.0, *) {
-            eventStore.requestFullAccessToEvents { granted, _ in
-                Task { @MainActor in
-                    completion(granted)
+    // MARK: - Async/Await Methods (Preferred)
+    
+    func requestAccess() async -> Bool {
+        await withCheckedContinuation { continuation in
+            if #available(iOS 17.0, *) {
+                eventStore.requestFullAccessToEvents { granted, _ in
+                    continuation.resume(returning: granted)
                 }
-            }
-        } else {
-            eventStore.requestAccess(to: .event) { granted, _ in
-                Task { @MainActor in
-                    completion(granted)
+            } else {
+                eventStore.requestAccess(to: .event) { granted, _ in
+                    continuation.resume(returning: granted)
                 }
             }
         }
     }
-
-    func addEvent(title: String, dueDate: Date, completion: @escaping (String?) -> Void) {
+    
+    func addEvent(title: String, dueDate: Date) async -> String? {
         let event = EKEvent(eventStore: eventStore)
         event.title = title
         event.startDate = dueDate
@@ -56,9 +63,29 @@ final class EventKitCalendarDataSource: CalendarEventDataSource {
 
         do {
             try eventStore.save(event, span: .thisEvent)
-            completion(event.eventIdentifier)
+            return event.eventIdentifier
         } catch {
-            completion(nil)
+            return nil
+        }
+    }
+
+    // MARK: - Callback-based Methods (For Compatibility)
+    
+    func requestAccess(completion: @escaping (Bool) -> Void) {
+        Task {
+            let granted = await requestAccess()
+            await MainActor.run {
+                completion(granted)
+            }
+        }
+    }
+
+    func addEvent(title: String, dueDate: Date, completion: @escaping (String?) -> Void) {
+        Task {
+            let identifier = await addEvent(title: title, dueDate: dueDate)
+            await MainActor.run {
+                completion(identifier)
+            }
         }
     }
 
