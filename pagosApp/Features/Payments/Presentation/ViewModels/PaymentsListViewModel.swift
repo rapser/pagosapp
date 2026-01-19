@@ -27,8 +27,12 @@ final class PaymentsListViewModel {
     private let getAllPaymentsUseCase: GetAllPaymentsUseCase
     private let deletePaymentUseCase: DeletePaymentUseCase
     private let togglePaymentStatusUseCase: TogglePaymentStatusUseCase
+    private let scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase?
     private let mapper: PaymentUIMapping
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentsListViewModel")
+    
+    // Track if we've already rescheduled notifications on first load
+    private var hasRescheduledNotifications = false
 
     // MARK: - Computed Properties
 
@@ -106,11 +110,13 @@ final class PaymentsListViewModel {
         getAllPaymentsUseCase: GetAllPaymentsUseCase,
         deletePaymentUseCase: DeletePaymentUseCase,
         togglePaymentStatusUseCase: TogglePaymentStatusUseCase,
+        scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase? = nil,
         mapper: PaymentUIMapping
     ) {
         self.getAllPaymentsUseCase = getAllPaymentsUseCase
         self.deletePaymentUseCase = deletePaymentUseCase
         self.togglePaymentStatusUseCase = togglePaymentStatusUseCase
+        self.scheduleNotificationsUseCase = scheduleNotificationsUseCase
         self.mapper = mapper
 
         setupNotificationObserver()
@@ -146,6 +152,15 @@ final class PaymentsListViewModel {
             // Convert Domain -> UI using mapper
             payments = mapper.toUI(fetchedPayments)
             logger.info("✅ Fetched \(fetchedPayments.count) payments from local storage (showLoading: \(showLoading))")
+
+            // Reschedule notifications for all payments on first load (to restore after app updates)
+            if !hasRescheduledNotifications, let notificationsUseCase = scheduleNotificationsUseCase {
+                hasRescheduledNotifications = true
+                Task { @MainActor in
+                    notificationsUseCase.rescheduleAll(fetchedPayments)
+                    logger.info("✅ Rescheduled notifications for \(fetchedPayments.count) payments")
+                }
+            }
 
         case .failure(let error):
             logger.error("❌ Failed to fetch payments: \(error.errorCode)")
