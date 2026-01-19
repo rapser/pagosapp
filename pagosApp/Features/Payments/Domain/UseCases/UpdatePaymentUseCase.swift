@@ -14,16 +14,19 @@ final class UpdatePaymentUseCase {
     private let paymentRepository: PaymentRepositoryProtocol
     private let validator: PaymentValidator
     private let syncCalendarUseCase: SyncPaymentWithCalendarUseCase?
+    private let scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase?
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "UpdatePaymentUseCase")
 
     init(
         paymentRepository: PaymentRepositoryProtocol,
         validator: PaymentValidator = PaymentValidator(),
-        syncCalendarUseCase: SyncPaymentWithCalendarUseCase? = nil
+        syncCalendarUseCase: SyncPaymentWithCalendarUseCase? = nil,
+        scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase? = nil
     ) {
         self.paymentRepository = paymentRepository
         self.validator = validator
         self.syncCalendarUseCase = syncCalendarUseCase
+        self.scheduleNotificationsUseCase = scheduleNotificationsUseCase
     }
 
     /// Execute the update payment use case
@@ -44,7 +47,7 @@ final class UpdatePaymentUseCase {
         }
 
         // 2. Update sync status if needed
-        var updatedPayment = payment
+        let updatedPayment: Payment
         if payment.syncStatus == .synced {
             // Mark as modified when updating a synced payment
             updatedPayment = Payment(
@@ -60,6 +63,8 @@ final class UpdatePaymentUseCase {
                 lastSyncedAt: payment.lastSyncedAt,
                 groupId: payment.groupId
             )
+        } else {
+            updatedPayment = payment
         }
 
         // 3. Save the main payment to repository
@@ -102,7 +107,14 @@ final class UpdatePaymentUseCase {
             }
         }
 
-        // 6. Notify that payments have been updated so UI can refresh (on main thread)
+        // 6. Reschedule notifications (if use case is available)
+        if let notificationsUseCase = scheduleNotificationsUseCase {
+            await MainActor.run {
+                notificationsUseCase.execute(updatedPayment)
+            }
+        }
+
+        // 7. Notify that payments have been updated so UI can refresh (on main thread)
         await MainActor.run {
             NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
             logger.debug("📢 Posted PaymentsDidSync notification")

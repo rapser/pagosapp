@@ -14,16 +14,19 @@ final class CreatePaymentUseCase {
     private let paymentRepository: PaymentRepositoryProtocol
     private let validator: PaymentValidator
     private let syncCalendarUseCase: SyncPaymentWithCalendarUseCase?
+    private let scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase?
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "CreatePaymentUseCase")
 
     init(
         paymentRepository: PaymentRepositoryProtocol,
         validator: PaymentValidator = PaymentValidator(),
-        syncCalendarUseCase: SyncPaymentWithCalendarUseCase? = nil
+        syncCalendarUseCase: SyncPaymentWithCalendarUseCase? = nil,
+        scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase? = nil
     ) {
         self.paymentRepository = paymentRepository
         self.validator = validator
         self.syncCalendarUseCase = syncCalendarUseCase
+        self.scheduleNotificationsUseCase = scheduleNotificationsUseCase
     }
 
     /// Execute the create payment use case
@@ -76,6 +79,13 @@ final class CreatePaymentUseCase {
                             continuation.resume()
                         }
                     }
+                }
+            }
+
+            // 5. Schedule notifications (if use case is available)
+            if let notificationsUseCase = scheduleNotificationsUseCase {
+                await MainActor.run {
+                    notificationsUseCase.execute(newPayment)
                 }
             }
 
