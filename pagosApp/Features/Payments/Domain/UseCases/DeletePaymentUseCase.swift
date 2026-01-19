@@ -13,14 +13,17 @@ import OSLog
 final class DeletePaymentUseCase {
     private let paymentRepository: PaymentRepositoryProtocol
     private let syncCalendarUseCase: SyncPaymentWithCalendarUseCase?
+    private let scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase?
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "DeletePaymentUseCase")
 
     init(
         paymentRepository: PaymentRepositoryProtocol,
-        syncCalendarUseCase: SyncPaymentWithCalendarUseCase? = nil
+        syncCalendarUseCase: SyncPaymentWithCalendarUseCase? = nil,
+        scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase? = nil
     ) {
         self.paymentRepository = paymentRepository
         self.syncCalendarUseCase = syncCalendarUseCase
+        self.scheduleNotificationsUseCase = scheduleNotificationsUseCase
     }
 
     /// Execute the delete payment use case
@@ -44,6 +47,13 @@ final class DeletePaymentUseCase {
             // Remove calendar event if payment had one
             if let payment = paymentToDelete, let syncUseCase = syncCalendarUseCase {
                 await syncUseCase.removeEvent(for: payment)
+            }
+
+            // Cancel notifications if payment had any
+            if let payment = paymentToDelete, let notificationsUseCase = scheduleNotificationsUseCase {
+                await MainActor.run {
+                    notificationsUseCase.cancel(for: payment.id)
+                }
             }
 
             // Notify that payments have been updated so UI can refresh (on main thread)

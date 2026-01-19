@@ -56,33 +56,64 @@ final class PaymentDependencyContainer {
 
     // MARK: - Use Cases (CRUD)
 
-    func makeCreatePaymentUseCase(calendarEventDataSource: CalendarEventDataSource? = nil) -> CreatePaymentUseCase {
+    func makeCreatePaymentUseCase(
+        calendarEventDataSource: CalendarEventDataSource? = nil,
+        notificationDataSource: NotificationDataSource? = nil
+    ) -> CreatePaymentUseCase {
         let syncCalendarUseCase = calendarEventDataSource.map { dataSource in
             makeSyncPaymentWithCalendarUseCase(calendarEventDataSource: dataSource)
+        }
+        let scheduleNotificationsUseCase = notificationDataSource.map { dataSource in
+            makeSchedulePaymentNotificationsUseCase(notificationDataSource: dataSource)
         }
         return CreatePaymentUseCase(
             paymentRepository: makePaymentRepository(),
-            syncCalendarUseCase: syncCalendarUseCase
+            syncCalendarUseCase: syncCalendarUseCase,
+            scheduleNotificationsUseCase: scheduleNotificationsUseCase
         )
     }
 
-    func makeUpdatePaymentUseCase(calendarEventDataSource: CalendarEventDataSource? = nil) -> UpdatePaymentUseCase {
+    func makeUpdatePaymentUseCase(
+        calendarEventDataSource: CalendarEventDataSource? = nil,
+        notificationDataSource: NotificationDataSource? = nil
+    ) -> UpdatePaymentUseCase {
         let syncCalendarUseCase = calendarEventDataSource.map { dataSource in
             makeSyncPaymentWithCalendarUseCase(calendarEventDataSource: dataSource)
+        }
+        let scheduleNotificationsUseCase = notificationDataSource.map { dataSource in
+            makeSchedulePaymentNotificationsUseCase(notificationDataSource: dataSource)
         }
         return UpdatePaymentUseCase(
             paymentRepository: makePaymentRepository(),
-            syncCalendarUseCase: syncCalendarUseCase
+            syncCalendarUseCase: syncCalendarUseCase,
+            scheduleNotificationsUseCase: scheduleNotificationsUseCase
         )
     }
 
-    func makeDeletePaymentUseCase(calendarEventDataSource: CalendarEventDataSource? = nil) -> DeletePaymentUseCase {
+    func makeDeletePaymentUseCase(
+        calendarEventDataSource: CalendarEventDataSource? = nil,
+        notificationDataSource: NotificationDataSource? = nil
+    ) -> DeletePaymentUseCase {
         let syncCalendarUseCase = calendarEventDataSource.map { dataSource in
             makeSyncPaymentWithCalendarUseCase(calendarEventDataSource: dataSource)
         }
+        let scheduleNotificationsUseCase = notificationDataSource.map { dataSource in
+            makeSchedulePaymentNotificationsUseCase(notificationDataSource: dataSource)
+        }
         return DeletePaymentUseCase(
             paymentRepository: makePaymentRepository(),
-            syncCalendarUseCase: syncCalendarUseCase
+            syncCalendarUseCase: syncCalendarUseCase,
+            scheduleNotificationsUseCase: scheduleNotificationsUseCase
+        )
+    }
+
+    func makeTogglePaymentStatusUseCase(notificationDataSource: NotificationDataSource? = nil) -> TogglePaymentStatusUseCase {
+        let scheduleNotificationsUseCase = notificationDataSource.map { dataSource in
+            makeSchedulePaymentNotificationsUseCase(notificationDataSource: dataSource)
+        }
+        return TogglePaymentStatusUseCase(
+            paymentRepository: makePaymentRepository(),
+            scheduleNotificationsUseCase: scheduleNotificationsUseCase
         )
     }
 
@@ -109,6 +140,10 @@ final class PaymentDependencyContainer {
             calendarEventDataSource: calendarEventDataSource,
             paymentRepository: makePaymentRepository()
         )
+    }
+
+    func makeSchedulePaymentNotificationsUseCase(notificationDataSource: NotificationDataSource) -> SchedulePaymentNotificationsUseCase {
+        return SchedulePaymentNotificationsUseCase(notificationDataSource: notificationDataSource)
     }
 
     // MARK: - Use Cases (Sync)
@@ -154,9 +189,15 @@ final class PaymentDependencyContainer {
 
     // MARK: - ViewModels
 
-    func makeAddPaymentViewModel(calendarEventDataSource: CalendarEventDataSource? = nil) -> AddPaymentViewModel {
+    func makeAddPaymentViewModel(
+        calendarEventDataSource: CalendarEventDataSource? = nil,
+        notificationDataSource: NotificationDataSource? = nil
+    ) -> AddPaymentViewModel {
         return AddPaymentViewModel(
-            createPaymentUseCase: makeCreatePaymentUseCase(calendarEventDataSource: calendarEventDataSource),
+            createPaymentUseCase: makeCreatePaymentUseCase(
+                calendarEventDataSource: calendarEventDataSource,
+                notificationDataSource: notificationDataSource
+            ),
             mapper: uiMapper
         )
     }
@@ -164,22 +205,36 @@ final class PaymentDependencyContainer {
     func makeEditPaymentViewModel(
         for payment: PaymentUI,
         otherPayment: PaymentUI? = nil,
-        calendarEventDataSource: CalendarEventDataSource? = nil
+        calendarEventDataSource: CalendarEventDataSource? = nil,
+        notificationDataSource: NotificationDataSource? = nil
     ) -> EditPaymentViewModel {
         return EditPaymentViewModel(
             payment: payment,
             otherPayment: otherPayment,
-            updatePaymentUseCase: makeUpdatePaymentUseCase(calendarEventDataSource: calendarEventDataSource),
-            togglePaymentStatusUseCase: makeTogglePaymentStatusUseCase(),
+            updatePaymentUseCase: makeUpdatePaymentUseCase(
+                calendarEventDataSource: calendarEventDataSource,
+                notificationDataSource: notificationDataSource
+            ),
+            togglePaymentStatusUseCase: makeTogglePaymentStatusUseCase(notificationDataSource: notificationDataSource),
             mapper: uiMapper
         )
     }
 
-    func makePaymentsListViewModel(calendarEventDataSource: CalendarEventDataSource? = nil) -> PaymentsListViewModel {
+    func makePaymentsListViewModel(
+        calendarEventDataSource: CalendarEventDataSource? = nil,
+        notificationDataSource: NotificationDataSource? = nil
+    ) -> PaymentsListViewModel {
+        let scheduleNotificationsUseCase = notificationDataSource.map { dataSource in
+            makeSchedulePaymentNotificationsUseCase(notificationDataSource: dataSource)
+        }
         return PaymentsListViewModel(
             getAllPaymentsUseCase: makeGetAllPaymentsUseCase(),
-            deletePaymentUseCase: makeDeletePaymentUseCase(calendarEventDataSource: calendarEventDataSource),
-            togglePaymentStatusUseCase: makeTogglePaymentStatusUseCase(),
+            deletePaymentUseCase: makeDeletePaymentUseCase(
+                calendarEventDataSource: calendarEventDataSource,
+                notificationDataSource: notificationDataSource
+            ),
+            togglePaymentStatusUseCase: makeTogglePaymentStatusUseCase(notificationDataSource: notificationDataSource),
+            scheduleNotificationsUseCase: scheduleNotificationsUseCase,
             mapper: uiMapper
         )
     }

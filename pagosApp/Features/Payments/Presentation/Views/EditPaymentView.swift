@@ -64,14 +64,16 @@ struct EditPaymentView: View {
                 viewModel = container.makeEditPaymentViewModel(
                     for: payment,
                     otherPayment: otherPaymentFound,
-                    calendarEventDataSource: dependencies.calendarEventDataSource
+                    calendarEventDataSource: dependencies.calendarEventDataSource,
+                    notificationDataSource: dependencies.notificationDataSource
                 )
                 
             case .failure:
                 // If we can't find the other payment, just edit the single payment
                 viewModel = container.makeEditPaymentViewModel(
                     for: payment,
-                    calendarEventDataSource: dependencies.calendarEventDataSource
+                    calendarEventDataSource: dependencies.calendarEventDataSource,
+                    notificationDataSource: dependencies.notificationDataSource
                 )
             }
         } else {
@@ -79,7 +81,8 @@ struct EditPaymentView: View {
             let container = dependencies.paymentDependencyContainer
             viewModel = container.makeEditPaymentViewModel(
                 for: payment,
-                calendarEventDataSource: dependencies.calendarEventDataSource
+                calendarEventDataSource: dependencies.calendarEventDataSource,
+                notificationDataSource: dependencies.notificationDataSource
             )
         }
     }
