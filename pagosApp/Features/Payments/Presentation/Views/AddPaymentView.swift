@@ -62,7 +62,10 @@ struct AddPaymentView: View {
             }
             .onAppear {
                 if viewModel == nil {
-                    viewModel = dependencies.paymentDependencyContainer.makeAddPaymentViewModel()
+                    viewModel = dependencies.paymentDependencyContainer.makeAddPaymentViewModel(
+                        calendarEventDataSource: dependencies.calendarEventDataSource,
+                        notificationDataSource: dependencies.notificationDataSource
+                    )
                 }
             }
         }

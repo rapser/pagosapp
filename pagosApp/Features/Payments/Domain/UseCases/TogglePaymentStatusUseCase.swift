@@ -12,10 +12,15 @@ import OSLog
 /// Use case for toggling a payment's paid status
 final class TogglePaymentStatusUseCase {
     private let paymentRepository: PaymentRepositoryProtocol
+    private let scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase?
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "TogglePaymentStatusUseCase")
 
-    init(paymentRepository: PaymentRepositoryProtocol) {
+    init(
+        paymentRepository: PaymentRepositoryProtocol,
+        scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase? = nil
+    ) {
         self.paymentRepository = paymentRepository
+        self.scheduleNotificationsUseCase = scheduleNotificationsUseCase
     }
 
     /// Execute the toggle payment status use case
@@ -43,9 +48,18 @@ final class TogglePaymentStatusUseCase {
             try await paymentRepository.savePayment(updatedPayment)
             logger.info("✅ Payment status toggled successfully: \(payment.name)")
 
-            // Notify that payments have been updated so UI can refresh
-            NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
-            logger.debug("📢 Posted PaymentsDidSync notification")
+            // Update notifications (cancel if paid, reschedule if unpaid)
+            if let notificationsUseCase = scheduleNotificationsUseCase {
+                await MainActor.run {
+                    notificationsUseCase.execute(updatedPayment)
+                }
+            }
+
+            // Notify that payments have been updated so UI can refresh (on main thread)
+            await MainActor.run {
+                NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
+                logger.debug("📢 Posted PaymentsDidSync notification")
+            }
 
             return .success(updatedPayment)
         } catch {
