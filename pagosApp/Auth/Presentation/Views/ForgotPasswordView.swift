@@ -63,6 +63,21 @@ struct ForgotPasswordView: View {
             .padding()
             .navigationTitle("¿Olvidaste tu contraseña?")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 17, weight: .semibold))
+                            Text("Atrás")
+                        }
+                        .foregroundColor(Color("AppTextPrimary"))
+                    }
+                }
+            }
             
             if viewModel.isLoading {
                 LoadingView()

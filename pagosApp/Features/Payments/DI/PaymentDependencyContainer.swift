@@ -107,6 +107,9 @@ final class PaymentDependencyContainer {
         )
     }
 
+    /// Create TogglePaymentStatusUseCase with optional notification support
+    /// - Parameter notificationDataSource: Optional notification data source for scheduling notifications
+    /// - Returns: Configured TogglePaymentStatusUseCase
     func makeTogglePaymentStatusUseCase(notificationDataSource: NotificationDataSource? = nil) -> TogglePaymentStatusUseCase {
         let scheduleNotificationsUseCase = notificationDataSource.map { dataSource in
             makeSchedulePaymentNotificationsUseCase(notificationDataSource: dataSource)
@@ -114,12 +117,6 @@ final class PaymentDependencyContainer {
         return TogglePaymentStatusUseCase(
             paymentRepository: makePaymentRepository(),
             scheduleNotificationsUseCase: scheduleNotificationsUseCase
-        )
-    }
-
-    func makeTogglePaymentStatusUseCase() -> TogglePaymentStatusUseCase {
-        return TogglePaymentStatusUseCase(
-            paymentRepository: makePaymentRepository()
         )
     }
 

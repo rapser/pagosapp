@@ -81,7 +81,7 @@ struct RegistrationView: View {
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(viewModel.isFormValid ? Color("AppSuccess") : Color("AppSuccess").opacity(0.5))
+                    .background(viewModel.isFormValid ? Color("AppPrimary") : Color("AppPrimary").opacity(0.5))
                     .cornerRadius(10)
                 }
                 .disabled(viewModel.isLoading || !viewModel.isFormValid)
@@ -96,8 +96,23 @@ struct RegistrationView: View {
                         .allowsHitTesting(true)
                 }
             }
-            .navigationTitle("")
-            .navigationBarHidden(true)
+            .navigationTitle("Crear Cuenta")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 17, weight: .semibold))
+                            Text("Atrás")
+                        }
+                        .foregroundColor(Color("AppTextPrimary"))
+                    }
+                }
+            }
             .onAppear {
                 viewModel.onRegistrationSuccess = { _ in
                     dismiss()
