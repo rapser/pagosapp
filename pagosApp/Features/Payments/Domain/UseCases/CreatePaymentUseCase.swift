@@ -59,26 +59,19 @@ final class CreatePaymentUseCase {
             // 4. Sync with calendar (if use case is available)
             if let syncUseCase = syncCalendarUseCase {
                 // Request calendar access first
-                await withCheckedContinuation { continuation in
-                    syncUseCase.requestAccess { granted in
-                        if granted {
-                            Task {
-                                // Sync payment with calendar
-                                let syncResult = await syncUseCase.execute(newPayment)
-                                switch syncResult {
-                                case .success(let updatedPayment):
-                                    self.logger.info("✅ Payment synced with calendar: \(updatedPayment.name)")
-                                case .failure(let error):
-                                    self.logger.warning("⚠️ Failed to sync payment with calendar: \(error.errorCode)")
-                                    // Don't fail the whole operation if calendar sync fails
-                                }
-                                continuation.resume()
-                            }
-                        } else {
-                            self.logger.info("ℹ️ Calendar access denied, skipping calendar sync")
-                            continuation.resume()
-                        }
+                let granted = await syncUseCase.requestAccess()
+                if granted {
+                    // Sync payment with calendar
+                    let syncResult = await syncUseCase.execute(newPayment)
+                    switch syncResult {
+                    case .success(let updatedPayment):
+                        logger.info("✅ Payment synced with calendar: \(updatedPayment.name)")
+                    case .failure(let error):
+                        logger.warning("⚠️ Failed to sync payment with calendar: \(error.errorCode)")
+                        // Don't fail the whole operation if calendar sync fails
                     }
+                } else {
+                    logger.info("ℹ️ Calendar access denied, skipping calendar sync")
                 }
             }
 
