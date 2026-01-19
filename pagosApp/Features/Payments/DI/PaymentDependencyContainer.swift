@@ -56,21 +56,33 @@ final class PaymentDependencyContainer {
 
     // MARK: - Use Cases (CRUD)
 
-    func makeCreatePaymentUseCase() -> CreatePaymentUseCase {
+    func makeCreatePaymentUseCase(calendarEventDataSource: CalendarEventDataSource? = nil) -> CreatePaymentUseCase {
+        let syncCalendarUseCase = calendarEventDataSource.map { dataSource in
+            makeSyncPaymentWithCalendarUseCase(calendarEventDataSource: dataSource)
+        }
         return CreatePaymentUseCase(
-            paymentRepository: makePaymentRepository()
+            paymentRepository: makePaymentRepository(),
+            syncCalendarUseCase: syncCalendarUseCase
         )
     }
 
-    func makeUpdatePaymentUseCase() -> UpdatePaymentUseCase {
+    func makeUpdatePaymentUseCase(calendarEventDataSource: CalendarEventDataSource? = nil) -> UpdatePaymentUseCase {
+        let syncCalendarUseCase = calendarEventDataSource.map { dataSource in
+            makeSyncPaymentWithCalendarUseCase(calendarEventDataSource: dataSource)
+        }
         return UpdatePaymentUseCase(
-            paymentRepository: makePaymentRepository()
+            paymentRepository: makePaymentRepository(),
+            syncCalendarUseCase: syncCalendarUseCase
         )
     }
 
-    func makeDeletePaymentUseCase() -> DeletePaymentUseCase {
+    func makeDeletePaymentUseCase(calendarEventDataSource: CalendarEventDataSource? = nil) -> DeletePaymentUseCase {
+        let syncCalendarUseCase = calendarEventDataSource.map { dataSource in
+            makeSyncPaymentWithCalendarUseCase(calendarEventDataSource: dataSource)
+        }
         return DeletePaymentUseCase(
-            paymentRepository: makePaymentRepository()
+            paymentRepository: makePaymentRepository(),
+            syncCalendarUseCase: syncCalendarUseCase
         )
     }
 
@@ -88,6 +100,13 @@ final class PaymentDependencyContainer {
 
     func makeGetPaymentUseCase() -> GetPaymentUseCase {
         return GetPaymentUseCase(
+            paymentRepository: makePaymentRepository()
+        )
+    }
+
+    func makeSyncPaymentWithCalendarUseCase(calendarEventDataSource: CalendarEventDataSource) -> SyncPaymentWithCalendarUseCase {
+        return SyncPaymentWithCalendarUseCase(
+            calendarEventDataSource: calendarEventDataSource,
             paymentRepository: makePaymentRepository()
         )
     }
@@ -135,27 +154,31 @@ final class PaymentDependencyContainer {
 
     // MARK: - ViewModels
 
-    func makeAddPaymentViewModel() -> AddPaymentViewModel {
+    func makeAddPaymentViewModel(calendarEventDataSource: CalendarEventDataSource? = nil) -> AddPaymentViewModel {
         return AddPaymentViewModel(
-            createPaymentUseCase: makeCreatePaymentUseCase(),
+            createPaymentUseCase: makeCreatePaymentUseCase(calendarEventDataSource: calendarEventDataSource),
             mapper: uiMapper
         )
     }
 
-    func makeEditPaymentViewModel(for payment: PaymentUI, otherPayment: PaymentUI? = nil) -> EditPaymentViewModel {
+    func makeEditPaymentViewModel(
+        for payment: PaymentUI,
+        otherPayment: PaymentUI? = nil,
+        calendarEventDataSource: CalendarEventDataSource? = nil
+    ) -> EditPaymentViewModel {
         return EditPaymentViewModel(
             payment: payment,
             otherPayment: otherPayment,
-            updatePaymentUseCase: makeUpdatePaymentUseCase(),
+            updatePaymentUseCase: makeUpdatePaymentUseCase(calendarEventDataSource: calendarEventDataSource),
             togglePaymentStatusUseCase: makeTogglePaymentStatusUseCase(),
             mapper: uiMapper
         )
     }
 
-    func makePaymentsListViewModel() -> PaymentsListViewModel {
+    func makePaymentsListViewModel(calendarEventDataSource: CalendarEventDataSource? = nil) -> PaymentsListViewModel {
         return PaymentsListViewModel(
             getAllPaymentsUseCase: makeGetAllPaymentsUseCase(),
-            deletePaymentUseCase: makeDeletePaymentUseCase(),
+            deletePaymentUseCase: makeDeletePaymentUseCase(calendarEventDataSource: calendarEventDataSource),
             togglePaymentStatusUseCase: makeTogglePaymentStatusUseCase(),
             mapper: uiMapper
         )
