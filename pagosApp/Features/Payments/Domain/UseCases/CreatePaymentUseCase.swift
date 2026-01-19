@@ -13,11 +13,17 @@ import OSLog
 final class CreatePaymentUseCase {
     private let paymentRepository: PaymentRepositoryProtocol
     private let validator: PaymentValidator
+    private let syncCalendarUseCase: SyncPaymentWithCalendarUseCase?
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "CreatePaymentUseCase")
 
-    init(paymentRepository: PaymentRepositoryProtocol, validator: PaymentValidator = PaymentValidator()) {
+    init(
+        paymentRepository: PaymentRepositoryProtocol,
+        validator: PaymentValidator = PaymentValidator(),
+        syncCalendarUseCase: SyncPaymentWithCalendarUseCase? = nil
+    ) {
         self.paymentRepository = paymentRepository
         self.validator = validator
+        self.syncCalendarUseCase = syncCalendarUseCase
     }
 
     /// Execute the create payment use case
@@ -46,6 +52,32 @@ final class CreatePaymentUseCase {
         do {
             try await paymentRepository.savePayment(newPayment)
             logger.info("✅ Payment created successfully: \(payment.name)")
+
+            // 4. Sync with calendar (if use case is available)
+            if let syncUseCase = syncCalendarUseCase {
+                // Request calendar access first
+                await withCheckedContinuation { continuation in
+                    syncUseCase.requestAccess { granted in
+                        if granted {
+                            Task {
+                                // Sync payment with calendar
+                                let syncResult = await syncUseCase.execute(newPayment)
+                                switch syncResult {
+                                case .success(let updatedPayment):
+                                    self.logger.info("✅ Payment synced with calendar: \(updatedPayment.name)")
+                                case .failure(let error):
+                                    self.logger.warning("⚠️ Failed to sync payment with calendar: \(error.errorCode)")
+                                    // Don't fail the whole operation if calendar sync fails
+                                }
+                                continuation.resume()
+                            }
+                        } else {
+                            self.logger.info("ℹ️ Calendar access denied, skipping calendar sync")
+                            continuation.resume()
+                        }
+                    }
+                }
+            }
 
             // Notify that payments have been updated so UI can refresh
             NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)

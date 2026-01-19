@@ -61,16 +61,26 @@ struct EditPaymentView: View {
                 otherPayment = otherPaymentFound
                 
                 // Create ViewModel with both payments using the container method
-                viewModel = container.makeEditPaymentViewModel(for: payment, otherPayment: otherPaymentFound)
+                viewModel = container.makeEditPaymentViewModel(
+                    for: payment,
+                    otherPayment: otherPaymentFound,
+                    calendarEventDataSource: dependencies.calendarEventDataSource
+                )
                 
             case .failure:
                 // If we can't find the other payment, just edit the single payment
-                viewModel = container.makeEditPaymentViewModel(for: payment)
+                viewModel = container.makeEditPaymentViewModel(
+                    for: payment,
+                    calendarEventDataSource: dependencies.calendarEventDataSource
+                )
             }
         } else {
             // No groupId, just edit the single payment
             let container = dependencies.paymentDependencyContainer
-            viewModel = container.makeEditPaymentViewModel(for: payment)
+            viewModel = container.makeEditPaymentViewModel(
+                for: payment,
+                calendarEventDataSource: dependencies.calendarEventDataSource
+            )
         }
     }
 }

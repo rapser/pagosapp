@@ -44,7 +44,9 @@ struct PaymentsListView: View {
         }
         .onAppear {
             if viewModel == nil {
-                viewModel = dependencies.paymentDependencyContainer.makePaymentsListViewModel()
+                viewModel = dependencies.paymentDependencyContainer.makePaymentsListViewModel(
+                    calendarEventDataSource: dependencies.calendarEventDataSource
+                )
 
                 // Fetch local SwiftData immediately (fast, from device storage)
                 // Background sync will update data via NotificationCenter if needed
