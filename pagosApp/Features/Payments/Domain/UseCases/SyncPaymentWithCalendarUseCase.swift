@@ -23,9 +23,19 @@ final class SyncPaymentWithCalendarUseCase {
         self.paymentRepository = paymentRepository
     }
 
-    /// Request calendar access
+    /// Request calendar access (async/await - preferred)
+    func requestAccess() async -> Bool {
+        await calendarEventDataSource.requestAccess()
+    }
+    
+    /// Request calendar access (callback-based - for compatibility)
     func requestAccess(completion: @escaping (Bool) -> Void) {
-        calendarEventDataSource.requestAccess(completion: completion)
+        Task {
+            let granted = await requestAccess()
+            await MainActor.run {
+                completion(granted)
+            }
+        }
     }
 
     /// Sync a payment with calendar (create or update event)
@@ -136,16 +146,9 @@ final class SyncPaymentWithCalendarUseCase {
 
     /// Create a calendar event for a single payment
     private func createCalendarEvent(for payment: Payment, title: String) async -> Result<Payment, PaymentError> {
-        var eventId: String?
+        let eventIdentifier = await calendarEventDataSource.addEvent(title: title, dueDate: payment.dueDate)
 
-        await withCheckedContinuation { continuation in
-            calendarEventDataSource.addEvent(title: title, dueDate: payment.dueDate) { identifier in
-                eventId = identifier
-                continuation.resume()
-            }
-        }
-
-        guard let eventIdentifier = eventId else {
+        guard let eventIdentifier = eventIdentifier else {
             logger.error("❌ Failed to create calendar event")
             return .failure(.calendarSyncFailed("No se pudo crear el evento en el calendario"))
         }
@@ -181,16 +184,9 @@ final class SyncPaymentWithCalendarUseCase {
         groupPayments: [Payment],
         title: String
     ) async -> Result<Payment, PaymentError> {
-        var eventId: String?
+        let eventIdentifier = await calendarEventDataSource.addEvent(title: title, dueDate: payment.dueDate)
 
-        await withCheckedContinuation { continuation in
-            calendarEventDataSource.addEvent(title: title, dueDate: payment.dueDate) { identifier in
-                eventId = identifier
-                continuation.resume()
-            }
-        }
-
-        guard let eventIdentifier = eventId else {
+        guard let eventIdentifier = eventIdentifier else {
             logger.error("❌ Failed to create calendar event for group")
             return .failure(.calendarSyncFailed("No se pudo crear el evento en el calendario"))
         }
