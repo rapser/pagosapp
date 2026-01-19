@@ -142,9 +142,10 @@ final class PaymentDependencyContainer {
         )
     }
 
-    func makeEditPaymentViewModel(for payment: PaymentUI) -> EditPaymentViewModel {
+    func makeEditPaymentViewModel(for payment: PaymentUI, otherPayment: PaymentUI? = nil) -> EditPaymentViewModel {
         return EditPaymentViewModel(
             payment: payment,
+            otherPayment: otherPayment,
             updatePaymentUseCase: makeUpdatePaymentUseCase(),
             togglePaymentStatusUseCase: makeTogglePaymentStatusUseCase(),
             mapper: uiMapper

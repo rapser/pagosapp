@@ -5,6 +5,8 @@ struct EditPaymentView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(AppDependencies.self) private var dependencies
     @State private var viewModel: EditPaymentViewModel?
+    @State private var otherPayment: PaymentUI?
+    @State private var isLoadingOtherPayment = false
     let payment: PaymentUI
 
     init(payment: PaymentUI) {
@@ -22,12 +24,53 @@ struct EditPaymentView: View {
             }
             .onAppear {
                 if viewModel == nil {
-                    // Get Use Cases from DI Container
-                    let container = dependencies.paymentDependencyContainer
-                    // Pass PaymentUI directly to ViewModel
-                    viewModel = container.makeEditPaymentViewModel(for: payment)
+                    Task {
+                        await loadPaymentGroup()
+                    }
                 }
             }
+        }
+    }
+
+    private func loadPaymentGroup() async {
+        // If payment has a groupId, find the other payment in the group
+        if let groupId = payment.groupId {
+            isLoadingOtherPayment = true
+            defer { isLoadingOtherPayment = false }
+
+            let container = dependencies.paymentDependencyContainer
+            let getAllPaymentsUseCase = container.makeGetAllPaymentsUseCase()
+            
+            let result = await getAllPaymentsUseCase.execute()
+            
+            switch result {
+            case .success(let allPayments):
+                // Convert to UI models - we need to use the mapper from the container
+                // Since we can't access it directly, we'll use the PaymentsListViewModel's mapper
+                // Actually, let's create a temporary mapper instance
+                let mapper = PaymentUIMapper()
+                let allPaymentsUI = mapper.toUI(allPayments)
+                
+                // Find the other payment in the group (different currency)
+                let otherPaymentFound = allPaymentsUI.first { paymentUI in
+                    paymentUI.groupId == groupId &&
+                    paymentUI.id != payment.id &&
+                    paymentUI.currency != payment.currency
+                }
+                
+                otherPayment = otherPaymentFound
+                
+                // Create ViewModel with both payments using the container method
+                viewModel = container.makeEditPaymentViewModel(for: payment, otherPayment: otherPaymentFound)
+                
+            case .failure:
+                // If we can't find the other payment, just edit the single payment
+                viewModel = container.makeEditPaymentViewModel(for: payment)
+            }
+        } else {
+            // No groupId, just edit the single payment
+            let container = dependencies.paymentDependencyContainer
+            viewModel = container.makeEditPaymentViewModel(for: payment)
         }
     }
 }
@@ -47,10 +90,18 @@ private struct EditPaymentFormView: View {
                 isPaid: $viewModel.isPaid
             )
 
-            SingleCurrencyAmountSection(
-                currency: $viewModel.currency,
-                amount: $viewModel.amount
-            )
+            // Show dual-currency section for grouped credit card payments
+            if viewModel.isDualCurrencyPayment {
+                DualCurrencyAmountSection(
+                    amountPEN: $viewModel.amount,
+                    amountUSD: $viewModel.amountUSD
+                )
+            } else {
+                SingleCurrencyAmountSection(
+                    currency: $viewModel.currency,
+                    amount: $viewModel.amount
+                )
+            }
 
             if viewModel.hasChanges {
                 Section {
