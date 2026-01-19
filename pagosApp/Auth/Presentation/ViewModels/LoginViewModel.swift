@@ -21,7 +21,7 @@ final class LoginViewModel {
     var email: String = ""
     var password: String = ""
     var rememberMe: Bool = false
-    var showPassword: Bool = false
+    var showPassword: Bool = true  // Por defecto la contraseña está oculta (solo puntos)
     var isLoading: Bool = false
     var errorMessage: String?
     var showError: Bool = false

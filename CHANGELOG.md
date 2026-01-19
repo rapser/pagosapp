@@ -6,6 +6,121 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [1.0.0] - Build 11 - 2026-01-18
+
+### 🎯 Resumen Ejecutivo
+
+**EDICIÓN DE PAGOS AGRUPADOS + SINCRONIZACIÓN AUTOMÁTICA CON CALENDARIO + NOTIFICACIONES RESTAURADAS** - Implementación completa de edición de pagos agrupados (PEN + USD), sincronización automática con calendario iOS, restauración de notificaciones locales, y correcciones de threading para Swift 6.
+
+### ✨ Nuevas Funcionalidades
+
+#### 1. Edición de Pagos Agrupados (PEN + USD)
+**Problema**: Al crear un pago agrupado (tarjeta de crédito con soles y dólares), solo se podía editar el pago en soles, no el de dólares.
+
+**Solución Implementada**:
+- ✅ `EditPaymentViewModel` ahora detecta pagos agrupados y carga ambos pagos (PEN y USD)
+- ✅ `EditPaymentView` muestra formulario de doble moneda cuando es un pago agrupado
+- ✅ Al guardar, actualiza ambos pagos simultáneamente
+- ✅ Validación mejorada para pagos agrupados
+
+**Archivos Modificados**:
+- `EditPaymentViewModel.swift` - Soporte para pagos agrupados
+- `EditPaymentView.swift` - Detección y carga de pagos agrupados
+- `PaymentDependencyContainer.swift` - Método actualizado para aceptar pagos agrupados
+
+**Beneficio**: Ahora puedes editar completamente los pagos agrupados, igual que cuando los creas.
+
+#### 2. Sincronización Automática con Calendario iOS
+**Problema**: Los eventos del calendario no se creaban/actualizaban automáticamente al crear o modificar pagos.
+
+**Solución Implementada**:
+- ✅ Creado `SyncPaymentWithCalendarUseCase` para manejar sincronización con calendario
+- ✅ Integrado en `CreatePaymentUseCase`: crea eventos automáticamente
+- ✅ Integrado en `UpdatePaymentUseCase`: actualiza eventos automáticamente
+- ✅ Integrado en `DeletePaymentUseCase`: elimina eventos automáticamente
+- ✅ **Pagos Agrupados**: Un solo evento compartido para evitar duplicados
+
+**Archivos Creados**:
+- `SyncPaymentWithCalendarUseCase.swift` - Use case para sincronización con calendario
+
+**Archivos Modificados**:
+- `CreatePaymentUseCase.swift` - Integración de sincronización con calendario
+- `UpdatePaymentUseCase.swift` - Integración de sincronización con calendario
+- `DeletePaymentUseCase.swift` - Integración de eliminación de eventos
+- `PaymentDependencyContainer.swift` - Factory methods actualizados
+
+**Beneficio**: Los eventos del calendario se sincronizan automáticamente sin intervención manual.
+
+#### 3. Restauración de Notificaciones Locales
+**Problema**: Las notificaciones locales se perdieron durante actualizaciones de la app y no se restauraban automáticamente.
+
+**Solución Implementada**:
+- ✅ Creado `SchedulePaymentNotificationsUseCase` para programar notificaciones
+- ✅ Integrado en `CreatePaymentUseCase`: programa notificaciones al crear
+- ✅ Integrado en `UpdatePaymentUseCase`: reprograma notificaciones al actualizar
+- ✅ Integrado en `DeletePaymentUseCase`: cancela notificaciones al eliminar
+- ✅ Integrado en `TogglePaymentStatusUseCase`: actualiza notificaciones al cambiar estado
+- ✅ **Restauración Automática**: Reprograma todas las notificaciones al iniciar sesión
+
+**Archivos Creados**:
+- `SchedulePaymentNotificationsUseCase.swift` - Use case para programar notificaciones
+
+**Archivos Modificados**:
+- `CreatePaymentUseCase.swift` - Integración de notificaciones
+- `UpdatePaymentUseCase.swift` - Integración de notificaciones
+- `DeletePaymentUseCase.swift` - Integración de cancelación de notificaciones
+- `TogglePaymentStatusUseCase.swift` - Integración de actualización de notificaciones
+- `PaymentsListViewModel.swift` - Restauración automática en primera carga
+- `PaymentDependencyContainer.swift` - Factory methods actualizados
+
+**Notificaciones Programadas**:
+- 2 días antes del vencimiento a las 9:00 AM
+- 1 día antes del vencimiento a las 9:00 AM
+- El mismo día del vencimiento a las 9:00 AM
+
+**Beneficio**: Las notificaciones funcionan correctamente y se restauran automáticamente al iniciar sesión.
+
+### 🐛 Bug Fixes
+
+#### 1. Corrección de Threading en Use Cases (Swift 6)
+**Problema**: Warnings de Swift 6 sobre publicación de cambios desde hilos en segundo plano.
+
+**Solución**: Envuelto todas las notificaciones `NotificationCenter` en `MainActor.run`:
+- ✅ `CreatePaymentUseCase.swift` - Notificaciones en main thread
+- ✅ `UpdatePaymentUseCase.swift` - Notificaciones en main thread
+- ✅ `DeletePaymentUseCase.swift` - Notificaciones en main thread
+- ✅ `TogglePaymentStatusUseCase.swift` - Notificaciones en main thread
+
+**Beneficio**: 0 warnings de threading, cumplimiento total con Swift 6 strict concurrency.
+
+#### 2. Corrección de Captura de Variables en Código Concurrente
+**Problema**: Error "Reference to captured var 'updatedPayment' in concurrently-executing code" en `UpdatePaymentUseCase`.
+
+**Solución**: Cambiado `var updatedPayment` a `let updatedPayment` con asignación condicional.
+
+**Beneficio**: Código thread-safe y sin errores de compilación.
+
+#### 3. Corrección de Campo de Contraseña en Login
+**Problema**: El campo de contraseña mostraba el texto por defecto en lugar de estar oculto.
+
+**Solución**:
+- ✅ `LoginViewModel.swift` - `showPassword` inicializado en `true` (oculto por defecto)
+- ✅ `SecureTextFieldWithToggle.swift` - Corregida lógica del ícono del ojo
+
+**Beneficio**: La contraseña inicia oculta (solo puntos) con ícono de ojo cerrado/bloqueado.
+
+### 📊 Métricas
+
+| Componente | Antes | Después | Mejora |
+|-----------|--------|---------|--------|
+| Edición pagos agrupados | ❌ No disponible | ✅ Completa | ✅ 100% |
+| Sincronización calendario | ⚠️ Manual | ✅ Automática | ✅ 100% |
+| Notificaciones locales | ❌ Perdidas | ✅ Restauradas | ✅ 100% |
+| Warnings threading | 2 | 0 | ✅ 100% |
+| Errores Swift 6 | 1 | 0 | ✅ 100% |
+
+---
+
 ## [1.0.0] - Build 10 - 2026-01-11
 
 ### 🎯 Resumen Ejecutivo
@@ -372,8 +487,14 @@ Ver sección "Changelog - Fase 1: Fixes Críticos" en archivo original para deta
 
 ---
 
-**Versión**: 1.0.0 (Build 10)
-**Fecha**: 2026-01-11
-**Estado**: ✅ Production Ready
+---
+
+**Versión**: 1.0.0 (Build 11)
+**Fecha**: 2026-01-18
+**Estado**: ✅ Production Ready (TestFlight)
 **Swift**: 6.0
 **iOS**: 18.5+
+
+---
+
+## [1.0.0] - Build 10 - 2026-01-11
