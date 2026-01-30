@@ -43,10 +43,9 @@ struct SettingsView: View {
             } message: {
                 Text(viewModel.syncErrorMessage)
             }
-            .onAppear {
-                Task {
-                    await viewModel.updatePendingSyncCount()
-                }
+            .task {
+                // Modern iOS 18 pattern: use .task for async operations
+                await viewModel.updatePendingSyncCount()
             }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PaymentsDidSync"))) { _ in
                 Task {

@@ -49,9 +49,7 @@ final class SettingsViewModel {
         self.logoutUseCase = logoutUseCase
         self.unlinkDeviceUseCase = unlinkDeviceUseCase
 
-        Task {
-            await updatePendingSyncCount()
-        }
+        // Note: Initial data fetch moved to .task in View (iOS 18 best practice)
     }
 
     // MARK: - Sync Operations

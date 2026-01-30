@@ -36,6 +36,22 @@ final class PaymentDependencyContainer {
         self.modelContext = modelContext
     }
 
+    // MARK: - Mappers (Helper methods)
+
+    /// Map Domain Payment models to UI Payment models
+    /// - Parameter payments: Array of domain Payment models
+    /// - Returns: Array of PaymentUI models
+    func mapToUI(_ payments: [Payment]) -> [PaymentUI] {
+        return uiMapper.toUI(payments)
+    }
+
+    /// Map single Domain Payment model to UI Payment model
+    /// - Parameter payment: Domain Payment model
+    /// - Returns: PaymentUI model
+    func mapToUI(_ payment: Payment) -> PaymentUI {
+        return uiMapper.toUI(payment)
+    }
+
     // MARK: - Repositories
 
     func makePaymentRepository() -> PaymentRepositoryProtocol {
