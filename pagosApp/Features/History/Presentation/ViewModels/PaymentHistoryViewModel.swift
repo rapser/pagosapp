@@ -12,19 +12,44 @@ final class PaymentHistoryViewModel {
     var errorMessage: String?
 
     private let getPaymentHistoryUseCase: GetPaymentHistoryUseCase
+    private let eventBus: EventBus
     private let mapper: PaymentUIMapping
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentHistoryViewModel")
 
-    init(getPaymentHistoryUseCase: GetPaymentHistoryUseCase, mapper: PaymentUIMapping) {
+    init(getPaymentHistoryUseCase: GetPaymentHistoryUseCase, eventBus: EventBus, mapper: PaymentUIMapping) {
         self.getPaymentHistoryUseCase = getPaymentHistoryUseCase
+        self.eventBus = eventBus
         self.mapper = mapper
         // Note: Initial data fetch moved to .task in View (iOS 18 best practice)
-        setupNotificationObserver()
+        setupEventListeners()
     }
 
-    private func setupNotificationObserver() {
-        Task {
-            for await _ in NotificationCenter.default.notifications(named: NSNotification.Name("PaymentsDidSync")) {
+    private func setupEventListeners() {
+        // Listen to any payment changes and refresh history
+        Task { @MainActor in
+            for await _ in eventBus.subscribe(to: PaymentCreatedEvent.self) {
+                logger.debug("📬 Received PaymentCreatedEvent")
+                await fetchPayments()
+            }
+        }
+
+        Task { @MainActor in
+            for await _ in eventBus.subscribe(to: PaymentUpdatedEvent.self) {
+                logger.debug("📬 Received PaymentUpdatedEvent")
+                await fetchPayments()
+            }
+        }
+
+        Task { @MainActor in
+            for await _ in eventBus.subscribe(to: PaymentDeletedEvent.self) {
+                logger.debug("📬 Received PaymentDeletedEvent")
+                await fetchPayments()
+            }
+        }
+
+        Task { @MainActor in
+            for await _ in eventBus.subscribe(to: PaymentStatusToggledEvent.self) {
+                logger.debug("📬 Received PaymentStatusToggledEvent")
                 await fetchPayments()
             }
         }

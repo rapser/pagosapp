@@ -15,6 +15,7 @@ import Supabase
 final class PaymentDependencyContainer {
     private let supabaseClient: SupabaseClient
     private let modelContext: ModelContext
+    let eventBus: EventBus
 
     // Lazy-loaded data sources
     private lazy var remoteDataSource: PaymentRemoteDataSource = {
@@ -31,9 +32,10 @@ final class PaymentDependencyContainer {
 
     // MARK: - Initialization
 
-    init(supabaseClient: SupabaseClient, modelContext: ModelContext) {
+    init(supabaseClient: SupabaseClient, modelContext: ModelContext, eventBus: EventBus) {
         self.supabaseClient = supabaseClient
         self.modelContext = modelContext
+        self.eventBus = eventBus
     }
 
     // MARK: - Mappers (Helper methods)
@@ -84,6 +86,7 @@ final class PaymentDependencyContainer {
         }
         return CreatePaymentUseCase(
             paymentRepository: makePaymentRepository(),
+            eventBus: eventBus,
             syncCalendarUseCase: syncCalendarUseCase,
             scheduleNotificationsUseCase: scheduleNotificationsUseCase
         )
@@ -101,6 +104,7 @@ final class PaymentDependencyContainer {
         }
         return UpdatePaymentUseCase(
             paymentRepository: makePaymentRepository(),
+            eventBus: eventBus,
             syncCalendarUseCase: syncCalendarUseCase,
             scheduleNotificationsUseCase: scheduleNotificationsUseCase
         )
@@ -118,6 +122,7 @@ final class PaymentDependencyContainer {
         }
         return DeletePaymentUseCase(
             paymentRepository: makePaymentRepository(),
+            eventBus: eventBus,
             syncCalendarUseCase: syncCalendarUseCase,
             scheduleNotificationsUseCase: scheduleNotificationsUseCase
         )
@@ -132,6 +137,7 @@ final class PaymentDependencyContainer {
         }
         return TogglePaymentStatusUseCase(
             paymentRepository: makePaymentRepository(),
+            eventBus: eventBus,
             scheduleNotificationsUseCase: scheduleNotificationsUseCase
         )
     }
@@ -196,7 +202,8 @@ final class PaymentDependencyContainer {
             uploadLocalChangesUseCase: makeUploadLocalChangesUseCase(),
             downloadRemoteChangesUseCase: makeDownloadRemoteChangesUseCase(),
             paymentRepository: makePaymentRepository(),
-            syncRepository: makePaymentSyncRepository()
+            syncRepository: makePaymentSyncRepository(),
+            eventBus: eventBus
         )
     }
 
@@ -248,6 +255,7 @@ final class PaymentDependencyContainer {
             ),
             togglePaymentStatusUseCase: makeTogglePaymentStatusUseCase(notificationDataSource: notificationDataSource),
             scheduleNotificationsUseCase: scheduleNotificationsUseCase,
+            eventBus: eventBus,
             mapper: uiMapper
         )
     }
