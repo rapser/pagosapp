@@ -71,13 +71,12 @@ struct CalendarPaymentsView: View {
                 }
             }
         }
-        .onAppear {
-            if viewModel == nil {
-                viewModel = dependencies.calendarDependencyContainer.makeCalendarViewModel()
-                Task {
-                    await viewModel?.refresh()
-                }
-            }
+        .task {
+            // Modern iOS 18 pattern: use .task for async initialization
+            guard viewModel == nil else { return }
+
+            viewModel = dependencies.calendarDependencyContainer.makeCalendarViewModel()
+            await viewModel?.refresh()
         }
     }
 

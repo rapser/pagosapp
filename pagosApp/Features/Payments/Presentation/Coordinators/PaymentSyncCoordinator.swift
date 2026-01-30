@@ -24,6 +24,7 @@ final class PaymentSyncCoordinator {
     private let downloadRemoteChangesUseCase: DownloadRemoteChangesUseCase
     private let paymentRepository: PaymentRepositoryProtocol
     private let syncRepository: PaymentSyncRepositoryProtocol
+    private let eventBus: EventBus
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentSyncCoordinator")
 
@@ -44,7 +45,8 @@ final class PaymentSyncCoordinator {
         uploadLocalChangesUseCase: UploadLocalChangesUseCase,
         downloadRemoteChangesUseCase: DownloadRemoteChangesUseCase,
         paymentRepository: PaymentRepositoryProtocol,
-        syncRepository: PaymentSyncRepositoryProtocol
+        syncRepository: PaymentSyncRepositoryProtocol,
+        eventBus: EventBus
     ) {
         self.syncPaymentsUseCase = syncPaymentsUseCase
         self.getPendingSyncCountUseCase = getPendingSyncCountUseCase
@@ -52,6 +54,7 @@ final class PaymentSyncCoordinator {
         self.downloadRemoteChangesUseCase = downloadRemoteChangesUseCase
         self.paymentRepository = paymentRepository
         self.syncRepository = syncRepository
+        self.eventBus = eventBus
 
         self.lastSyncDate = UserDefaults.standard.object(forKey: lastSyncKey) as? Date
     }
@@ -83,8 +86,9 @@ final class PaymentSyncCoordinator {
             // Update pending count
             await updatePendingSyncCount()
 
-            // Notify views to refresh
-            NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
+            // Publish domain event to notify views
+            eventBus.publish(PaymentsSyncedEvent(syncedCount: 0))
+            logger.debug("📢 Published PaymentsSyncedEvent")
 
             logger.info("✅ Synchronization completed successfully")
 
@@ -160,8 +164,9 @@ final class PaymentSyncCoordinator {
             lastSyncDate = nil
             UserDefaults.standard.removeObject(forKey: lastSyncKey)
 
-            // Notify views to refresh
-            NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
+            // Publish domain event to notify views
+            eventBus.publish(PaymentsSyncedEvent(syncedCount: 0))
+            logger.debug("📢 Published PaymentsSyncedEvent (database cleared)")
 
             logger.info("✅ Local database cleared successfully")
             return true

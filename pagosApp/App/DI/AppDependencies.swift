@@ -24,6 +24,7 @@ final class AppDependencies {
     let notificationDataSource: NotificationDataSource
     let calendarEventDataSource: CalendarEventDataSource
     let alertManager: AlertManager
+    let eventBus: EventBus
 
     // MARK: - Feature Containers (Clean Architecture)
 
@@ -54,13 +55,15 @@ final class AppDependencies {
         self.notificationDataSource = UserNotificationsDataSource()
         self.calendarEventDataSource = EventKitCalendarDataSource()
         self.alertManager = AlertManager()
+        self.eventBus = InMemoryEventBus()
 
         // Feature Dependency Containers (Clean Architecture)
         self.authDependencyContainer = AuthDependencyContainer(supabaseClient: supabaseClient)
 
         self.paymentDependencyContainer = PaymentDependencyContainer(
             supabaseClient: supabaseClient,
-            modelContext: modelContext
+            modelContext: modelContext,
+            eventBus: eventBus
         )
 
         self.userProfileDependencyContainer = UserProfileDependencyContainer(
@@ -93,7 +96,8 @@ final class AppDependencies {
         self.settingsDependencyContainer = SettingsDependencyContainer(
             paymentSyncCoordinator: paymentSyncCoordinator,
             authDependencyContainer: authDependencyContainer,
-            userProfileDependencyContainer: userProfileDependencyContainer
+            userProfileDependencyContainer: userProfileDependencyContainer,
+            eventBus: eventBus
         )
     }
 

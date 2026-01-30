@@ -14,14 +14,17 @@ final class DeletePaymentUseCase {
     private let paymentRepository: PaymentRepositoryProtocol
     private let syncCalendarUseCase: SyncPaymentWithCalendarUseCase?
     private let scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase?
+    private let eventBus: EventBus
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "DeletePaymentUseCase")
 
     init(
         paymentRepository: PaymentRepositoryProtocol,
+        eventBus: EventBus,
         syncCalendarUseCase: SyncPaymentWithCalendarUseCase? = nil,
         scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase? = nil
     ) {
         self.paymentRepository = paymentRepository
+        self.eventBus = eventBus
         self.syncCalendarUseCase = syncCalendarUseCase
         self.scheduleNotificationsUseCase = scheduleNotificationsUseCase
     }
@@ -56,10 +59,10 @@ final class DeletePaymentUseCase {
                 }
             }
 
-            // Notify that payments have been updated so UI can refresh (on main thread)
+            // Publish domain event (type-safe, reactive)
             await MainActor.run {
-                NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
-                logger.debug("📢 Posted PaymentsDidSync notification")
+                eventBus.publish(PaymentDeletedEvent(paymentId: paymentId))
+                logger.debug("📢 Published PaymentDeletedEvent")
             }
 
             return .success(())
