@@ -16,15 +16,18 @@ final class SettingsDependencyContainer {
     private let paymentSyncCoordinator: PaymentSyncCoordinator
     private let authDependencyContainer: AuthDependencyContainer
     private let userProfileDependencyContainer: UserProfileDependencyContainer
+    private let eventBus: EventBus
 
     init(
         paymentSyncCoordinator: PaymentSyncCoordinator,
         authDependencyContainer: AuthDependencyContainer,
-        userProfileDependencyContainer: UserProfileDependencyContainer
+        userProfileDependencyContainer: UserProfileDependencyContainer,
+        eventBus: EventBus
     ) {
         self.paymentSyncCoordinator = paymentSyncCoordinator
         self.authDependencyContainer = authDependencyContainer
         self.userProfileDependencyContainer = userProfileDependencyContainer
+        self.eventBus = eventBus
     }
 
     // MARK: - Repositories
@@ -55,6 +58,12 @@ final class SettingsDependencyContainer {
         )
     }
 
+    func makeGetSyncStatusUseCase() -> GetSyncStatusUseCase {
+        GetSyncStatusUseCase(
+            syncRepository: makeSettingsSyncRepository()
+        )
+    }
+
     // MARK: - ViewModels
 
     func makeSettingsViewModel() -> SettingsViewModel {
@@ -62,12 +71,13 @@ final class SettingsDependencyContainer {
             performSyncUseCase: makePerformSyncUseCase(),
             clearLocalDatabaseUseCase: makeClearLocalDatabaseUseCase(),
             updatePendingSyncCountUseCase: makeUpdatePendingSyncCountUseCase(),
-            syncRepository: makeSettingsSyncRepository(),
+            getSyncStatusUseCase: makeGetSyncStatusUseCase(),
             logoutUseCase: authDependencyContainer.makeLogoutUseCase(),
             unlinkDeviceUseCase: authDependencyContainer.makeUnlinkDeviceUseCase(
                 clearLocalDatabaseUseCase: makeClearLocalDatabaseUseCase(),
                 deleteLocalProfileUseCase: userProfileDependencyContainer.makeDeleteLocalProfileUseCase()
-            )
+            ),
+            eventBus: eventBus
         )
     }
 }

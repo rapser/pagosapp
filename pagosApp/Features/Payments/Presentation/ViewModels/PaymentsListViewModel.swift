@@ -28,9 +28,10 @@ final class PaymentsListViewModel {
     private let deletePaymentUseCase: DeletePaymentUseCase
     private let togglePaymentStatusUseCase: TogglePaymentStatusUseCase
     private let scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase?
+    private let eventBus: EventBus
     private let mapper: PaymentUIMapping
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentsListViewModel")
-    
+
     // Track if we've already rescheduled notifications on first load
     private var hasRescheduledNotifications = false
 
@@ -111,21 +112,45 @@ final class PaymentsListViewModel {
         deletePaymentUseCase: DeletePaymentUseCase,
         togglePaymentStatusUseCase: TogglePaymentStatusUseCase,
         scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase? = nil,
+        eventBus: EventBus,
         mapper: PaymentUIMapping
     ) {
         self.getAllPaymentsUseCase = getAllPaymentsUseCase
         self.deletePaymentUseCase = deletePaymentUseCase
         self.togglePaymentStatusUseCase = togglePaymentStatusUseCase
         self.scheduleNotificationsUseCase = scheduleNotificationsUseCase
+        self.eventBus = eventBus
         self.mapper = mapper
 
-        setupNotificationObserver()
+        setupEventListeners()
     }
 
-    private func setupNotificationObserver() {
+    private func setupEventListeners() {
+        // Listen to payment events and refresh UI
         Task { @MainActor in
-            for await _ in NotificationCenter.default.notifications(named: NSNotification.Name("PaymentsDidSync")) {
-                // Sync notifications trigger silent refresh (no loading indicator)
+            for await _ in eventBus.subscribe(to: PaymentCreatedEvent.self) {
+                logger.debug("📬 Received PaymentCreatedEvent")
+                await fetchPayments(showLoading: false)
+            }
+        }
+
+        Task { @MainActor in
+            for await _ in eventBus.subscribe(to: PaymentUpdatedEvent.self) {
+                logger.debug("📬 Received PaymentUpdatedEvent")
+                await fetchPayments(showLoading: false)
+            }
+        }
+
+        Task { @MainActor in
+            for await _ in eventBus.subscribe(to: PaymentDeletedEvent.self) {
+                logger.debug("📬 Received PaymentDeletedEvent")
+                await fetchPayments(showLoading: false)
+            }
+        }
+
+        Task { @MainActor in
+            for await _ in eventBus.subscribe(to: PaymentStatusToggledEvent.self) {
+                logger.debug("📬 Received PaymentStatusToggledEvent")
                 await fetchPayments(showLoading: false)
             }
         }
