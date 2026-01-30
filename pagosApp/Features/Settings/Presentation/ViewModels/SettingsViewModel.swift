@@ -26,9 +26,10 @@ final class SettingsViewModel {
     private let performSyncUseCase: PerformSyncUseCase
     private let clearLocalDatabaseUseCase: ClearLocalDatabaseUseCase
     private let updatePendingSyncCountUseCase: UpdatePendingSyncCountUseCase
-    private let syncRepository: SettingsSyncRepositoryProtocol
+    private let getSyncStatusUseCase: GetSyncStatusUseCase
     private let logoutUseCase: LogoutUseCase
     private let unlinkDeviceUseCase: UnlinkDeviceUseCase
+    private let eventBus: EventBus
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "SettingsViewModel")
 
@@ -38,19 +39,60 @@ final class SettingsViewModel {
         performSyncUseCase: PerformSyncUseCase,
         clearLocalDatabaseUseCase: ClearLocalDatabaseUseCase,
         updatePendingSyncCountUseCase: UpdatePendingSyncCountUseCase,
-        syncRepository: SettingsSyncRepositoryProtocol,
+        getSyncStatusUseCase: GetSyncStatusUseCase,
         logoutUseCase: LogoutUseCase,
-        unlinkDeviceUseCase: UnlinkDeviceUseCase
+        unlinkDeviceUseCase: UnlinkDeviceUseCase,
+        eventBus: EventBus
     ) {
         self.performSyncUseCase = performSyncUseCase
         self.clearLocalDatabaseUseCase = clearLocalDatabaseUseCase
         self.updatePendingSyncCountUseCase = updatePendingSyncCountUseCase
-        self.syncRepository = syncRepository
+        self.getSyncStatusUseCase = getSyncStatusUseCase
         self.logoutUseCase = logoutUseCase
         self.unlinkDeviceUseCase = unlinkDeviceUseCase
+        self.eventBus = eventBus
 
-        Task {
-            await updatePendingSyncCount()
+        // Note: Initial data fetch moved to .task in View (iOS 18 best practice)
+
+        // Setup event listeners
+        setupEventListeners()
+    }
+
+    // MARK: - Event Listeners
+
+    /// Setup event listeners for domain events
+    private func setupEventListeners() {
+        // Listen to PaymentsSyncedEvent
+        Task { @MainActor in
+            for await _ in eventBus.subscribe(to: PaymentsSyncedEvent.self) {
+                logger.debug("📢 Received PaymentsSyncedEvent, updating pending sync count")
+                await updatePendingSyncCount()
+            }
+        }
+
+        // Listen to payment changes for sync count updates
+        Task { @MainActor in
+            for await _ in eventBus.subscribe(to: PaymentCreatedEvent.self) {
+                await updatePendingSyncCount()
+            }
+        }
+
+        Task { @MainActor in
+            for await _ in eventBus.subscribe(to: PaymentUpdatedEvent.self) {
+                await updatePendingSyncCount()
+            }
+        }
+
+        Task { @MainActor in
+            for await _ in eventBus.subscribe(to: PaymentDeletedEvent.self) {
+                await updatePendingSyncCount()
+            }
+        }
+
+        Task { @MainActor in
+            for await _ in eventBus.subscribe(to: PaymentStatusToggledEvent.self) {
+                await updatePendingSyncCount()
+            }
         }
     }
 
@@ -81,8 +123,11 @@ final class SettingsViewModel {
 
     func updatePendingSyncCount() async {
         await updatePendingSyncCountUseCase.execute()
-        pendingSyncCount = syncRepository.pendingSyncCount
-        syncError = syncRepository.syncError
+
+        // Get sync status through UseCase (Clean Architecture)
+        let status = getSyncStatusUseCase.execute()
+        pendingSyncCount = status.pendingSyncCount
+        syncError = status.syncError
     }
 
     // MARK: - Database Operations

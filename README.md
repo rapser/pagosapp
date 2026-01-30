@@ -6,7 +6,7 @@
 [![Swift](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
 [![Xcode](https://img.shields.io/badge/Xcode-16.4%2B-blue.svg)](https://developer.apple.com/xcode/)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean-green.svg)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
-[![Version](https://img.shields.io/badge/Version-1.0.0(11)-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.0.0(14)-blue.svg)](CHANGELOG.md)
 
 ---
 
@@ -126,31 +126,39 @@ PagosApp implementa **Clean Architecture** de forma estricta, siguiendo los prin
 │  │   Views    │   ViewModels   │   UI Models (UI)    │  │
 │  │  (SwiftUI) │  (@Observable) │   (PaymentUI, etc)  │  │
 │  └────────────┴────────────────┴─────────────────────┘  │
-│         ▲                   │                            │
-│         │                   ▼                            │
-└─────────┼───────────────────────────────────────────────┘
-          │
-          │  Usa Use Cases via Dependency Injection
-          │
-┌─────────┼───────────────────────────────────────────────┐
-│         │             DOMAIN LAYER                       │
-│  ┌──────┴──────┬─────────────┬────────────┬──────────┐  │
-│  │  Entities   │  Use Cases  │Repositories│  Errors  │  │
-│  │  (Payment,  │ (Business   │ (Protocols)│(Payment  │  │
-│  │   User)     │   Logic)    │            │  Error)  │  │
-│  └─────────────┴─────────────┴────────────┴──────────┘  │
-│                          ▲                                │
-│                          │                                │
-└──────────────────────────┼────────────────────────────────┘
-                           │
-                           │  Repository implementations
-                           │
-┌──────────────────────────┼────────────────────────────────┐
-│                          │       DATA LAYER                │
-│  ┌───────────────────────┴────┬────────────┬───────────┐  │
-│  │   Repository Impl          │  Mappers   │    DTOs   │  │
-│  │  (PaymentRepositoryImpl)   │ (DTO↔Domain│(Local/    │  │
-│  └────────┬───────────────────┴────────────┴──Remote)─┘  │
+│         ▲                   │        ▲                   │
+│         │                   ▼        │                   │
+│         │            Use Cases       │                   │
+│         │                   │        │ EventBus          │
+│         │                   │        │ Subscribe         │
+└─────────┼───────────────────┼────────┼───────────────────┘
+          │                   │        │
+          │                   ▼        │
+┌─────────┼───────────────────────────┼───────────────────┐
+│         │             DOMAIN LAYER  │                    │
+│  ┌──────┴──────┬─────────────┬──────┴──────┬──────────┐ │
+│  │  Entities   │  Use Cases  │  EventBus   │  Events  │ │
+│  │  (Payment,  │ (Business   │  (Protocol) │ (Domain  │ │
+│  │   User)     │   Logic)    │             │  Events) │ │
+│  └─────────────┴─────┬───────┴─────────────┴──────────┘ │
+│                      │ Publish                            │
+│                      │                                    │
+│  ┌───────────────────┴────┬────────────┬───────────┐     │
+│  │  Repositories          │  Errors    │ Validators│     │
+│  │  (Protocols)           │ (Payment   │           │     │
+│  │                        │  Error)    │           │     │
+│  └───────────────────▲────┴────────────┴───────────┘     │
+│                      │                                    │
+└──────────────────────┼────────────────────────────────────┘
+                       │
+                       │  Repository implementations
+                       │
+┌──────────────────────┼────────────────────────────────────┐
+│                      │       DATA LAYER                    │
+│  ┌───────────────────┴────┬────────────┬───────────┐      │
+│  │   Repository Impl      │  Mappers   │    DTOs   │      │
+│  │(PaymentRepositoryImpl) │(DTO↔Domain)│(Local/    │      │
+│  └────────┬───────────────┴────────────┴──Remote)─┘      │
 │           │                                                │
 │           ▼                                                │
 │  ┌────────────────────┬────────────────────────────────┐  │
@@ -159,6 +167,21 @@ PagosApp implementa **Clean Architecture** de forma estricta, siguiendo los prin
 │  │  SwiftData DTOs    │   Supabase DTOs                │  │
 │  └────────────────────┴────────────────────────────────┘  │
 └────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│                 INFRASTRUCTURE LAYER                     │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │           InMemoryEventBus                        │   │
+│  │  (EventBus Implementation - AsyncStream based)   │   │
+│  └──────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+
+Flujo de Comunicación con EventBus:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. User Action → View → ViewModel → Use Case
+2. Use Case → Repository → Save Data
+3. Use Case → EventBus.publish(Event) ← TIPO SEGURO
+4. EventBus → All Subscribed ViewModels ← ASYNC STREAMS
+5. ViewModels → Refresh Data → UI Updates
 ```
 
 ### Capas Detalladas
@@ -460,17 +483,132 @@ User logs in
 - ✅ Mejor UX: sin spinners esperando red
 - ✅ Eventual consistency: sincroniza cuando hay conexión
 
-**¿Por qué NotificationCenter?**
+**EventBus - Sistema de Eventos Reactivo**
 
-Aunque NotificationCenter es un patrón antiguo, lo usamos estratégicamente porque:
-- ✅ **Simplicidad**: Funciona bien para este caso de uso específico
-- ✅ **Desacoplamiento**: ViewModels no necesitan conocerse entre sí
-- ✅ **Broadcasting**: Un solo evento notifica a múltiples pantallas
-- ✅ **Proven pattern**: Confiable y bien entendido
+**Migración completa de NotificationCenter a EventBus Type-Safe**
+
+La aplicación usa un **EventBus** personalizado basado en `AsyncStream` para la comunicación entre capas, reemplazando completamente `NotificationCenter`:
+
+**¿Por qué EventBus sobre NotificationCenter?**
+- ✅ **Type-Safe**: Eventos tipados (no `Any?`)
+- ✅ **Clean Architecture**: EventBus es Domain, NotificationCenter es Infrastructure
+- ✅ **Moderno**: AsyncStream + Swift Concurrency
+- ✅ **Testeable**: Fácil de mockear
+- ✅ **Thread-Safe**: @MainActor isolation automático
+- ✅ **Sendable**: Cumple Swift 6 strict concurrency
+
+**Arquitectura del EventBus**:
+
+```swift
+// 1. Protocol en Domain Layer
+@MainActor
+protocol EventBus: Sendable {
+    func publish<T: DomainEvent>(_ event: T)
+    func subscribe<T: DomainEvent>(to eventType: T.Type) -> AsyncStream<T>
+}
+
+// 2. Eventos de Dominio Type-Safe
+protocol DomainEvent: Sendable {
+    var timestamp: Date { get }
+    var eventId: UUID { get }
+}
+
+struct PaymentCreatedEvent: DomainEvent {
+    let timestamp: Date
+    let paymentId: UUID
+}
+
+struct PaymentUpdatedEvent: DomainEvent {
+    let timestamp: Date
+    let paymentId: UUID
+}
+
+struct PaymentDeletedEvent: DomainEvent {
+    let timestamp: Date
+    let paymentId: UUID
+}
+
+struct PaymentsSyncedEvent: DomainEvent {
+    let timestamp: Date
+    let syncedCount: Int
+}
+
+// 3. Implementación en Infrastructure Layer
+@MainActor
+final class InMemoryEventBus: EventBus {
+    private var continuations: [String: [any Continuation]] = [:]
+
+    func publish<T: DomainEvent>(_ event: T) {
+        let typeName = String(describing: T.self)
+        continuations[typeName]?.forEach { $0.yield(event) }
+    }
+
+    func subscribe<T: DomainEvent>(to eventType: T.Type) -> AsyncStream<T> {
+        // Returns AsyncStream with automatic cleanup
+    }
+}
+```
+
+**Uso en Use Cases** (Publicadores):
+
+```swift
+final class CreatePaymentUseCase {
+    private let eventBus: EventBus
+
+    func execute(_ payment: Payment) async -> Result<Payment, PaymentError> {
+        // Save payment
+        try await repository.savePayment(payment)
+
+        // Publish type-safe event
+        eventBus.publish(PaymentCreatedEvent(paymentId: payment.id))
+
+        return .success(payment)
+    }
+}
+```
+
+**Uso en ViewModels** (Suscriptores):
+
+```swift
+@MainActor
+@Observable
+final class PaymentsListViewModel {
+    private let eventBus: EventBus
+
+    init(eventBus: EventBus, ...) {
+        self.eventBus = eventBus
+        setupEventListeners()
+    }
+
+    private func setupEventListeners() {
+        // Listen to PaymentCreatedEvent
+        Task { @MainActor in
+            for await event in eventBus.subscribe(to: PaymentCreatedEvent.self) {
+                await fetchPayments(showLoading: false)
+            }
+        }
+
+        // Listen to PaymentUpdatedEvent
+        Task { @MainActor in
+            for await event in eventBus.subscribe(to: PaymentUpdatedEvent.self) {
+                await fetchPayments(showLoading: false)
+            }
+        }
+    }
+}
+```
+
+**Beneficios sobre NotificationCenter**:
+1. **Type Safety**: Imposible enviar datos incorrectos
+2. **Clean Architecture**: Domain no depende de Foundation
+3. **Mejor Testing**: Mocks fáciles de crear
+4. **Async Native**: Integración natural con async/await
+5. **Auto-cleanup**: AsyncStream maneja cleanup automáticamente
+6. **Swift 6 Compliant**: Sendable + @MainActor isolation
 
 **Alternativa moderna considerada**:
 - `@Query` directo en vistas (reactividad automática con SwiftData)
-- Decisión: Mantener Clean Architecture 100% (lógica fuera de Views) fue prioritario
+- Decisión: Mantener Clean Architecture 100% (lógica fuera de Views) + EventBus type-safe fue prioritario
 
 ---
 
@@ -550,10 +688,11 @@ struct PaymentRemoteDTO: Codable, Sendable { /* ... */ }
 - **Mapper Pattern**: Conversiones entre capas
 - **DTO Pattern**: Separación de modelos por capa
 
-### Observability
+### Observability & Reactive Systems
 - **OSLog**: Logging estructurado por categorías
 - **Logger**: Subsystems específicos (App, Auth, Payments, Sync, Calendar, etc.)
-- **NotificationCenter**: Broadcasting de eventos de datos
+- **EventBus**: Sistema reactivo type-safe con AsyncStream (reemplaza NotificationCenter)
+- **DomainEvent**: Eventos de dominio (PaymentCreated, PaymentUpdated, PaymentDeleted, PaymentsSynced, etc.)
 
 ---
 
@@ -730,7 +869,7 @@ xcodebuild test -scheme pagosApp -destination 'platform=iOS Simulator,name=iPhon
 
 ## 📚 Documentación Adicional
 
-- **[CHANGELOG.md](CHANGELOG.md)**: Historial completo de cambios (versión 1.0.0 build 11)
+- **[CHANGELOG.md](CHANGELOG.md)**: Historial completo de cambios (versión 1.0.0 build 14)
 - **[Config/README.md](Config/README.md)**: Setup de credenciales
 - **[Database/README.md](Database/README.md)**: Configuración de Supabase
 
@@ -776,6 +915,7 @@ Ver [CHANGELOG.md](CHANGELOG.md) para historial completo de cambios.
 
 ### Highlights
 
+- **2026-01 (v1.0.0 build 14)**: EventBus type-safe + Migración completa de NotificationCenter + Clean Architecture 100%
 - **2026-01 (v1.0.0 build 11)**: Edición de pagos agrupados + Sincronización automática con calendario + Notificaciones locales restauradas
 - **2026-01 (v1.0.0 build 10)**: Clean Architecture completa + Entity renaming + Swift 6 concurrency
 - **2025-01**: Modernización completa iOS 18.5 + Swift 6

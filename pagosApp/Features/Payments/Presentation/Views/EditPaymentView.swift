@@ -22,12 +22,10 @@ struct EditPaymentView: View {
                     ProgressView()
                 }
             }
-            .onAppear {
-                if viewModel == nil {
-                    Task {
-                        await loadPaymentGroup()
-                    }
-                }
+            .task {
+                // Modern iOS 18 pattern: use .task for async initialization
+                guard viewModel == nil else { return }
+                await loadPaymentGroup()
             }
         }
     }
@@ -45,12 +43,9 @@ struct EditPaymentView: View {
             
             switch result {
             case .success(let allPayments):
-                // Convert to UI models - we need to use the mapper from the container
-                // Since we can't access it directly, we'll use the PaymentsListViewModel's mapper
-                // Actually, let's create a temporary mapper instance
-                let mapper = PaymentUIMapper()
-                let allPaymentsUI = mapper.toUI(allPayments)
-                
+                // Convert to UI models using the mapper from the container (DI)
+                let allPaymentsUI = container.mapToUI(allPayments)
+
                 // Find the other payment in the group (different currency)
                 let otherPaymentFound = allPaymentsUI.first { paymentUI in
                     paymentUI.groupId == groupId &&

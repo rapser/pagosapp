@@ -40,6 +40,7 @@ final class HistoryDependencyContainer {
     func makePaymentHistoryViewModel() -> PaymentHistoryViewModel {
         PaymentHistoryViewModel(
             getPaymentHistoryUseCase: makeGetPaymentHistoryUseCase(),
+            eventBus: paymentDependencyContainer.eventBus,
             mapper: PaymentUIMapper()
         )
     }
