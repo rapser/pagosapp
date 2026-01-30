@@ -44,18 +44,9 @@ struct SettingsView: View {
                 Text(viewModel.syncErrorMessage)
             }
             .task {
-                // Modern iOS 18 pattern: use .task for async operations
+                // Initial sync count update
+                // Note: EventBus listeners are set up in ViewModel init
                 await viewModel.updatePendingSyncCount()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PaymentsDidSync"))) { _ in
-                Task {
-                    await viewModel.updatePendingSyncCount()
-                }
-            }
-            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PaymentDidChange"))) { _ in
-                Task {
-                    await viewModel.updatePendingSyncCount()
-                }
             }
             .overlay {
                 if viewModel.isLoading {

@@ -15,15 +15,18 @@ final class CreatePaymentUseCase {
     private let validator: PaymentValidator
     private let syncCalendarUseCase: SyncPaymentWithCalendarUseCase?
     private let scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase?
+    private let eventBus: EventBus
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "CreatePaymentUseCase")
 
     init(
         paymentRepository: PaymentRepositoryProtocol,
+        eventBus: EventBus,
         validator: PaymentValidator = PaymentValidator(),
         syncCalendarUseCase: SyncPaymentWithCalendarUseCase? = nil,
         scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase? = nil
     ) {
         self.paymentRepository = paymentRepository
+        self.eventBus = eventBus
         self.validator = validator
         self.syncCalendarUseCase = syncCalendarUseCase
         self.scheduleNotificationsUseCase = scheduleNotificationsUseCase
@@ -82,10 +85,10 @@ final class CreatePaymentUseCase {
                 }
             }
 
-            // Notify that payments have been updated so UI can refresh (on main thread)
+            // Publish domain event (type-safe, reactive)
             await MainActor.run {
-                NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
-                logger.debug("📢 Posted PaymentsDidSync notification")
+                eventBus.publish(PaymentCreatedEvent(paymentId: newPayment.id))
+                logger.debug("📢 Published PaymentCreatedEvent")
             }
 
             return .success(newPayment)
