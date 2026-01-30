@@ -18,9 +18,7 @@ final class PaymentHistoryViewModel {
     init(getPaymentHistoryUseCase: GetPaymentHistoryUseCase, mapper: PaymentUIMapping) {
         self.getPaymentHistoryUseCase = getPaymentHistoryUseCase
         self.mapper = mapper
-        Task {
-            await fetchPayments()
-        }
+        // Note: Initial data fetch moved to .task in View (iOS 18 best practice)
         setupNotificationObserver()
     }
 
