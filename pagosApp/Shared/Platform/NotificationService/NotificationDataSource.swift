@@ -68,10 +68,15 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
         isPaid: Bool
     ) {
         guard !isPaid else {
-            logger.info("🚫 Payment \(name) is already paid, cancelling notifications")
+            logger.info("🚫 Payment \(name) is already paid, cancelling all pending notifications (including same-day 9 AM and 2 PM notifications)")
             cancelNotifications(paymentId: paymentId)
             return
         }
+
+        // Always cancel existing notifications first to ensure clean state
+        // This is especially important when updating payment dates
+        logger.info("🔄 Cancelling existing notifications for \(name) before rescheduling")
+        cancelNotifications(paymentId: paymentId)
 
         // Check authorization status before scheduling
         UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
@@ -93,66 +98,98 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
                         continue
                     }
 
-                    // Create the full date with time (3:00 PM) - TEMPORAL PARA PRUEBAS
-                    var dateComponents = calendar.dateComponents([.year, .month, .day], from: notificationDate)
-                    dateComponents.hour = 9
-                    dateComponents.minute = 0
-                    dateComponents.second = 0
+                    // For same day (daysBefore == 0), schedule two notifications: 9 AM and 2 PM
+                    if daysBefore == 0 {
+                        // Schedule 9 AM notification
+                        var dateComponents9AM = calendar.dateComponents([.year, .month, .day], from: notificationDate)
+                        dateComponents9AM.hour = 9
+                        dateComponents9AM.minute = 0
+                        dateComponents9AM.second = 0
 
-                    guard let notificationDateTime = calendar.date(from: dateComponents) else {
-                        continue
-                    }
+                        guard let notificationDateTime9AM = calendar.date(from: dateComponents9AM) else {
+                            continue
+                        }
 
-                    // Check if notification time has passed
-                    if notificationDateTime <= now {
-                        // Special case: if it's the same day (daysBefore == 0) and we're past 3 PM,
-                        // schedule an immediate notification (5 seconds from now) as a fallback
-                        if daysBefore == 0 && calendar.isDate(dueDate, inSameDayAs: now) {
-                            self.logger.warning("⚠️ Payment \(name) vence hoy y ya pasó la hora de notificación (3 PM). Programando notificación inmediata como fallback")
-                            
-                            let immediateContent = UNMutableNotificationContent()
-                            immediateContent.title = "Recordatorio de Pago"
-                            immediateContent.subtitle = "¡Hoy vence \(name)!"
-                            immediateContent.body = "No olvides pagar \(currencySymbol)\(String(format: "%.2f", amount))."
-                            immediateContent.sound = .default
-                            
-                            // Schedule immediate notification (5 seconds from now)
-                            let immediateTrigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
-                            let immediateIdentifier = "\(paymentId.uuidString)-0days-immediate"
-                            let immediateRequest = UNNotificationRequest(identifier: immediateIdentifier, content: immediateContent, trigger: immediateTrigger)
-                            
-                            Task {
-                                do {
-                                    try await UNUserNotificationCenter.current().add(immediateRequest)
-                                    scheduledCount += 1
-                                    self.logger.info("✅ Scheduled immediate notification for \(name) (due today, past 3 PM)")
-                                } catch {
-                                    self.logger.error("❌ Failed to schedule immediate notification for \(name): \(error.localizedDescription)")
-                                }
+                        if notificationDateTime9AM > now {
+                            let identifier9AM = "\(paymentId.uuidString)-0days-9am"
+                            let content9AM = UNMutableNotificationContent()
+                            content9AM.title = "Recordatorio de Pago"
+                            content9AM.subtitle = "¡Hoy vence \(name)!"
+                            content9AM.body = "No olvides pagar \(currencySymbol)\(String(format: "%.2f", amount))."
+                            content9AM.sound = .default
+
+                            let trigger9AM = UNCalendarNotificationTrigger(dateMatching: dateComponents9AM, repeats: false)
+                            let request9AM = UNNotificationRequest(identifier: identifier9AM, content: content9AM, trigger: trigger9AM)
+
+                            do {
+                                try await UNUserNotificationCenter.current().add(request9AM)
+                                scheduledCount += 1
+                                self.logger.info("✅ Scheduled 9 AM notification for \(name) - due today (notification: \(notificationDateTime9AM))")
+                            } catch {
+                                self.logger.error("❌ Failed to schedule 9 AM notification for \(name): \(error.localizedDescription)")
                             }
                         } else {
-                            self.logger.info("⏭️ Skipping notification for \(name) - \(daysBefore) days before (already passed: \(notificationDateTime))")
+                            self.logger.info("⏭️ Skipping 9 AM notification for \(name) - already passed")
                         }
-                        continue
-                    }
 
-                    let content = UNMutableNotificationContent()
-                    content.title = "Recordatorio de Pago"
+                        // Schedule 2 PM notification
+                        var dateComponents2PM = calendar.dateComponents([.year, .month, .day], from: notificationDate)
+                        dateComponents2PM.hour = 14
+                        dateComponents2PM.minute = 0
+                        dateComponents2PM.second = 0
 
-                    if daysBefore == 0 {
-                        content.subtitle = "¡Hoy vence \(name)!"
-                        content.body = "No olvides pagar \(currencySymbol)\(String(format: "%.2f", amount))."
+                        guard let notificationDateTime2PM = calendar.date(from: dateComponents2PM) else {
+                            continue
+                        }
+
+                        if notificationDateTime2PM > now {
+                            let identifier2PM = "\(paymentId.uuidString)-0days-2pm"
+                            let content2PM = UNMutableNotificationContent()
+                            content2PM.title = "Recordatorio de Pago"
+                            content2PM.subtitle = "¡Hoy vence \(name)!"
+                            content2PM.body = "No olvides pagar \(currencySymbol)\(String(format: "%.2f", amount))."
+                            content2PM.sound = .default
+
+                            let trigger2PM = UNCalendarNotificationTrigger(dateMatching: dateComponents2PM, repeats: false)
+                            let request2PM = UNNotificationRequest(identifier: identifier2PM, content: content2PM, trigger: trigger2PM)
+
+                            do {
+                                try await UNUserNotificationCenter.current().add(request2PM)
+                                scheduledCount += 1
+                                self.logger.info("✅ Scheduled 2 PM notification for \(name) - due today (notification: \(notificationDateTime2PM))")
+                            } catch {
+                                self.logger.error("❌ Failed to schedule 2 PM notification for \(name): \(error.localizedDescription)")
+                            }
+                        } else {
+                            self.logger.info("⏭️ Skipping 2 PM notification for \(name) - already passed")
+                        }
                     } else {
+                        // For 1 day before and 2 days before, schedule only 9 AM notification
+                        var dateComponents = calendar.dateComponents([.year, .month, .day], from: notificationDate)
+                        dateComponents.hour = 9
+                        dateComponents.minute = 0
+                        dateComponents.second = 0
+
+                        guard let notificationDateTime = calendar.date(from: dateComponents) else {
+                            continue
+                        }
+
+                        // Check if notification time has passed
+                        if notificationDateTime <= now {
+                            self.logger.info("⏭️ Skipping notification for \(name) - \(daysBefore) days before (already passed: \(notificationDateTime))")
+                            continue
+                        }
+
+                        let identifier = "\(paymentId.uuidString)-\(daysBefore)days"
+                        let content = UNMutableNotificationContent()
+                        content.title = "Recordatorio de Pago"
                         content.subtitle = "Vence en \(daysBefore) día(s): \(name)"
                         content.body = "Recuerda que tienes un pago de \(currencySymbol)\(String(format: "%.2f", amount)) pendiente."
-                    }
-                    content.sound = .default
+                        content.sound = .default
 
-                    let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
-                    let identifier = "\(paymentId.uuidString)-\(daysBefore)days"
-                    let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+                        let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: false)
+                        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
 
-                    Task {
                         do {
                             try await UNUserNotificationCenter.current().add(request)
                             scheduledCount += 1
@@ -165,6 +202,8 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
 
                 if scheduledCount == 0 {
                     self.logger.warning("⚠️ No notifications scheduled for \(name) - all notification times have already passed")
+                } else {
+                    self.logger.info("✅ Successfully scheduled \(scheduledCount) notification(s) for \(name) with new due date: \(dueDate)")
                 }
             }
         }
@@ -172,9 +211,12 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
 
     func cancelNotifications(paymentId: UUID) {
         let identifiers = [
-            "\(paymentId.uuidString)-0days",
-            "\(paymentId.uuidString)-1days",
-            "\(paymentId.uuidString)-2days"
+            "\(paymentId.uuidString)-0days-9am",      // Same day 9 AM
+            "\(paymentId.uuidString)-0days-2pm",      // Same day 2 PM
+            "\(paymentId.uuidString)-1days",          // 1 day before
+            "\(paymentId.uuidString)-2days",          // 2 days before
+            "\(paymentId.uuidString)-0days",          // Legacy identifier (por si quedó alguno)
+            "\(paymentId.uuidString)-0days-immediate" // Legacy identifier (por si quedó alguno)
         ]
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
         logger.info("🚫 Cancelled notifications for payment: \(paymentId)")

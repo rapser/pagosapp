@@ -13,13 +13,16 @@ import OSLog
 final class TogglePaymentStatusUseCase {
     private let paymentRepository: PaymentRepositoryProtocol
     private let scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase?
+    private let eventBus: EventBus
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "TogglePaymentStatusUseCase")
 
     init(
         paymentRepository: PaymentRepositoryProtocol,
+        eventBus: EventBus,
         scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase? = nil
     ) {
         self.paymentRepository = paymentRepository
+        self.eventBus = eventBus
         self.scheduleNotificationsUseCase = scheduleNotificationsUseCase
     }
 
@@ -55,10 +58,10 @@ final class TogglePaymentStatusUseCase {
                 }
             }
 
-            // Notify that payments have been updated so UI can refresh (on main thread)
+            // Publish domain event (type-safe, reactive)
             await MainActor.run {
-                NotificationCenter.default.post(name: NSNotification.Name("PaymentsDidSync"), object: nil)
-                logger.debug("📢 Posted PaymentsDidSync notification")
+                eventBus.publish(PaymentStatusToggledEvent(paymentId: updatedPayment.id, isPaid: updatedPayment.isPaid))
+                logger.debug("📢 Published PaymentStatusToggledEvent")
             }
 
             return .success(updatedPayment)

@@ -62,8 +62,15 @@ struct PaymentGroupUI: Identifiable {
     }
 
     /// Whether the payment is overdue
+    /// A payment is considered overdue only after midnight of the due date
+    /// (i.e., if due date is Jan 15, it becomes overdue on Jan 16 at 00:00:00)
     var isOverdue: Bool {
-        !isPaid && dueDate < Date()
+        guard !isPaid else { return false }
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let dueDateStart = calendar.startOfDay(for: dueDate)
+        // Overdue only if due date is before today (not same day)
+        return dueDateStart < today
     }
 
     /// Display color based on state

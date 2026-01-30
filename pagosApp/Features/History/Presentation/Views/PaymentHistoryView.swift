@@ -40,10 +40,13 @@ struct PaymentHistoryView: View {
                 }
             }
         }
-        .onAppear {
-            if viewModel == nil {
-                viewModel = dependencies.historyDependencyContainer.makePaymentHistoryViewModel()
-            }
+        .task {
+            // Modern iOS 18 pattern: use .task for async initialization
+            guard viewModel == nil else { return }
+
+            viewModel = dependencies.historyDependencyContainer.makePaymentHistoryViewModel()
+            // Fetch initial data (moved from ViewModel init)
+            await viewModel?.fetchPayments()
         }
         .onChange(of: viewModel?.selectedFilter) { oldValue, newValue in
             if let newValue = newValue, let vm = viewModel {
