@@ -26,7 +26,7 @@ final class SettingsViewModel {
     private let performSyncUseCase: PerformSyncUseCase
     private let clearLocalDatabaseUseCase: ClearLocalDatabaseUseCase
     private let updatePendingSyncCountUseCase: UpdatePendingSyncCountUseCase
-    private let syncRepository: SettingsSyncRepositoryProtocol
+    private let getSyncStatusUseCase: GetSyncStatusUseCase
     private let logoutUseCase: LogoutUseCase
     private let unlinkDeviceUseCase: UnlinkDeviceUseCase
 
@@ -38,14 +38,14 @@ final class SettingsViewModel {
         performSyncUseCase: PerformSyncUseCase,
         clearLocalDatabaseUseCase: ClearLocalDatabaseUseCase,
         updatePendingSyncCountUseCase: UpdatePendingSyncCountUseCase,
-        syncRepository: SettingsSyncRepositoryProtocol,
+        getSyncStatusUseCase: GetSyncStatusUseCase,
         logoutUseCase: LogoutUseCase,
         unlinkDeviceUseCase: UnlinkDeviceUseCase
     ) {
         self.performSyncUseCase = performSyncUseCase
         self.clearLocalDatabaseUseCase = clearLocalDatabaseUseCase
         self.updatePendingSyncCountUseCase = updatePendingSyncCountUseCase
-        self.syncRepository = syncRepository
+        self.getSyncStatusUseCase = getSyncStatusUseCase
         self.logoutUseCase = logoutUseCase
         self.unlinkDeviceUseCase = unlinkDeviceUseCase
 
@@ -81,8 +81,11 @@ final class SettingsViewModel {
 
     func updatePendingSyncCount() async {
         await updatePendingSyncCountUseCase.execute()
-        pendingSyncCount = syncRepository.pendingSyncCount
-        syncError = syncRepository.syncError
+
+        // Get sync status through UseCase (Clean Architecture)
+        let status = getSyncStatusUseCase.execute()
+        pendingSyncCount = status.pendingSyncCount
+        syncError = status.syncError
     }
 
     // MARK: - Database Operations

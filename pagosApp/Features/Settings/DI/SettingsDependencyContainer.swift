@@ -55,6 +55,12 @@ final class SettingsDependencyContainer {
         )
     }
 
+    func makeGetSyncStatusUseCase() -> GetSyncStatusUseCase {
+        GetSyncStatusUseCase(
+            syncRepository: makeSettingsSyncRepository()
+        )
+    }
+
     // MARK: - ViewModels
 
     func makeSettingsViewModel() -> SettingsViewModel {
@@ -62,7 +68,7 @@ final class SettingsDependencyContainer {
             performSyncUseCase: makePerformSyncUseCase(),
             clearLocalDatabaseUseCase: makeClearLocalDatabaseUseCase(),
             updatePendingSyncCountUseCase: makeUpdatePendingSyncCountUseCase(),
-            syncRepository: makeSettingsSyncRepository(),
+            getSyncStatusUseCase: makeGetSyncStatusUseCase(),
             logoutUseCase: authDependencyContainer.makeLogoutUseCase(),
             unlinkDeviceUseCase: authDependencyContainer.makeUnlinkDeviceUseCase(
                 clearLocalDatabaseUseCase: makeClearLocalDatabaseUseCase(),
