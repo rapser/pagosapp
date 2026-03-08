@@ -13,11 +13,8 @@ struct CategoryPieChart: View {
     let categoryData: [CategorySpendingUI]
     let totalSpending: Double
     let selectedCurrency: Currency
-    
-    /// Charts require positive finite total to avoid layout/NaN crashes when data source changes
-    private var canShowChart: Bool {
-        totalSpending > 0 && totalSpending.isFinite && !categoryData.isEmpty
-    }
+    /// From ViewModel (single source of truth); avoids rendering Chart with invalid data
+    let shouldShowChart: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -33,7 +30,7 @@ struct CategoryPieChart: View {
             }
             .padding(.horizontal)
 
-            if canShowChart {
+            if shouldShowChart {
                 Chart(categoryData) { data in
                     SectorMark(
                         angle: .value("Monto", data.totalAmount),

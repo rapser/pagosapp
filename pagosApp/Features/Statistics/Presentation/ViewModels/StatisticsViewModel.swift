@@ -137,6 +137,11 @@ final class StatisticsViewModel {
 
     // MARK: - Computed Properties for Presentation
 
+    /// Single source of truth: charts are safe to show only when we have data and a valid total (avoids Swift Charts crash)
+    var hasValidChartData: Bool {
+        !categoryStats.isEmpty && totalSpending > 0 && totalSpending.isFinite
+    }
+
     /// Convert domain entities to presentation models for Charts
     var categorySpendingData: [CategorySpendingUI] {
         categoryStats.map { CategorySpendingUI(from: $0) }
