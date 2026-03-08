@@ -200,6 +200,7 @@ enum L10n {
             case .membership: key = "reminders.type.membership"
             case .subscription: key = "reminders.type.subscription"
             case .pension: key = "reminders.type.pension"
+            case .savings: key = "reminders.type.savings"
             case .deposit: key = "reminders.type.deposit"
             case .documents: key = "reminders.type.documents"
             case .taxes: key = "reminders.type.taxes"

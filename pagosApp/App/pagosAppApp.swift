@@ -37,6 +37,7 @@ struct pagosAppApp: App {
                 .environment(dependencies)
                 .environment(dependencies.sessionCoordinator)
                 .environment(dependencies.paymentSyncCoordinator)
+                .environment(dependencies.reminderSyncCoordinator)
                 .environment(dependencies.settingsStore)
                 .environment(dependencies.alertManager)
                 .tint(Color("AppPrimary"))

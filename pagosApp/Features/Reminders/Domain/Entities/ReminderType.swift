@@ -9,15 +9,16 @@
 import Foundation
 
 /// Generic type of reminder (for display and filtering).
-/// Localized display names via L10n. Covers: card renewal, membership, subscription, pension, deposit, documents, taxes.
+/// Localized display names via L10n. Covers: card renewal, membership, subscription, cobro, savings, deposit, documents, taxes.
 enum ReminderType: String, Sendable, CaseIterable, Codable {
     case cardRenewal    // Tarjeta crédito/débito
     case membership     // Membresía anual, club, etc.
-    case subscription  // Suscripción a cortar o renovar
-    case pension       // Pensión, cobro de pago
-    case deposit       // Depósito
-    case documents     // DNI, pasaporte, vencimiento documentos
-    case taxes         // Impuestos municipal, anual, etc.
+    case subscription   // Suscripción a cortar o renovar
+    case pension        // Cobro (p. ej. cobro de pago)
+    case savings        // Ahorro
+    case deposit        // Depósito
+    case documents      // DNI, pasaporte, vencimiento documentos
+    case taxes          // Impuestos municipal, anual, etc.
     case other
 }
 
