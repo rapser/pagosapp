@@ -112,6 +112,32 @@
 "history.filter.all" = "All";
 "history.error.load" = "Error loading payment history";
 
+// MARK: - Reminders
+"reminders.listTitle" = "Reminders";
+"reminders.emptyTitle" = "No reminders";
+"reminders.emptyDescription" = "Add reminders for renewals, expirations or payments to collect.";
+"reminders.addTitle" = "New reminder";
+"reminders.editTitle" = "Edit reminder";
+"reminders.typeLabel" = "Type";
+"reminders.titleLabel" = "Title";
+"reminders.dueDateLabel" = "Date";
+"reminders.type.creditCardRenewal" = "Renew credit card";
+"reminders.type.debitCardRenewal" = "Renew debit card";
+"reminders.type.annualMembership" = "Annual membership";
+"reminders.type.subscriptionToCancel" = "Subscription to cancel";
+"reminders.type.collectPayment" = "Collect payment";
+"reminders.type.idExpiration" = "ID/document expiration";
+"reminders.type.passportRenewal" = "Renew passport";
+"reminders.type.municipalTaxes" = "Municipal taxes";
+"reminders.type.annualTaxes" = "Annual taxes";
+"reminders.type.other" = "Other";
+"reminders.error.invalidTitle" = "Title is required";
+"reminders.error.invalidDate" = "Date is not valid";
+"reminders.error.saveFailed" = "Could not save: %@";
+"reminders.error.deleteFailed" = "Could not delete: %@";
+"reminders.error.notFound" = "Reminder not found";
+"reminders.error.unknown" = "Error: %@";
+
 // MARK: - Calendar
 "calendar.title" = "Calendar";
 "calendar.sync" = "Sync";
@@ -145,6 +171,7 @@
 "settings.unlink.warningWithPending" = "⚠️ You have %d payment(s) not synced.\n\nThis will permanently delete ALL your local data (payments, profile, notifications) on this device.\n\nAre you sure?";
 "settings.unlink.warning" = "This will permanently delete ALL your local data (payments, profile, notifications) on this device.\n\nYour cloud data is safe and you can download it again when you sign in on another device.\n\nAre you sure?";
 "settings.section.profile" = "Profile";
+"settings.section.app" = "App";
 "settings.section.about" = "About";
 "settings.section.legal" = "Legal";
 "settings.section.sync" = "Sync";
@@ -211,6 +238,7 @@
 
 // MARK: - Tab bar
 "tab.payments" = "Payments";
+"tab.reminders" = "Reminders";
 "tab.calendar" = "Calendar";
 "tab.history" = "History";
 "tab.statistics" = "Statistics";

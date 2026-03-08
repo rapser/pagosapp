@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(AlertManager.self) private var alertManager
+    @Environment(AppDependencies.self) private var dependencies
     @Environment(SettingsStore.self) private var settingsStore
     @State private var viewModel: SettingsViewModel
 
@@ -14,6 +15,20 @@ struct SettingsView: View {
             Form {
                 // Perfil del usuario
                 ProfileSectionView()
+
+                // Historial y Estadísticas (acceso desde Ajustes)
+                Section {
+                    NavigationLink(L10n.History.navTitle) {
+                        PaymentHistoryView()
+                    }
+                    NavigationLink(L10n.Statistics.title) {
+                        StatisticsView(
+                            viewModel: dependencies.statisticsDependencyContainer.makeStatisticsViewModel()
+                        )
+                    }
+                } header: {
+                    Text(L10n.Settings.sectionApp)
+                }
 
                 // Seguridad (Biometría)
                 SecuritySectionView()

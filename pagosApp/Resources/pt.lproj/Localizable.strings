@@ -112,6 +112,32 @@
 "history.filter.all" = "Todos";
 "history.error.load" = "Erro ao carregar o histórico de pagamentos";
 
+// MARK: - Reminders
+"reminders.listTitle" = "Lembretes";
+"reminders.emptyTitle" = "Sem lembretes";
+"reminders.emptyDescription" = "Adicione lembretes para renovações, vencimentos ou cobranças.";
+"reminders.addTitle" = "Novo lembrete";
+"reminders.editTitle" = "Editar lembrete";
+"reminders.typeLabel" = "Tipo";
+"reminders.titleLabel" = "Título";
+"reminders.dueDateLabel" = "Data";
+"reminders.type.creditCardRenewal" = "Renovar cartão de crédito";
+"reminders.type.debitCardRenewal" = "Renovar cartão de débito";
+"reminders.type.annualMembership" = "Assinatura anual";
+"reminders.type.subscriptionToCancel" = "Assinatura a cancelar";
+"reminders.type.collectPayment" = "Cobrar pagamento";
+"reminders.type.idExpiration" = "Vencimento documento";
+"reminders.type.passportRenewal" = "Renovar passaporte";
+"reminders.type.municipalTaxes" = "Impostos municipais";
+"reminders.type.annualTaxes" = "Impostos anuais";
+"reminders.type.other" = "Outro";
+"reminders.error.invalidTitle" = "O título é obrigatório";
+"reminders.error.invalidDate" = "A data não é válida";
+"reminders.error.saveFailed" = "Não foi possível salvar: %@";
+"reminders.error.deleteFailed" = "Não foi possível excluir: %@";
+"reminders.error.notFound" = "Lembrete não encontrado";
+"reminders.error.unknown" = "Erro: %@";
+
 // MARK: - Calendar
 "calendar.title" = "Calendário";
 "calendar.sync" = "Sincronizar";
@@ -145,6 +171,7 @@
 "settings.unlink.warningWithPending" = "⚠️ Você tem %d pagamento(s) não sincronizado(s).\n\nEsta ação excluirá permanentemente TODOS os seus dados locais (pagamentos, perfil e notificações) neste dispositivo.\n\nTem certeza?";
 "settings.unlink.warning" = "Esta ação excluirá permanentemente TODOS os seus dados locais (pagamentos, perfil e notificações) neste dispositivo.\n\nSeus dados na nuvem estão seguros e você poderá baixá-los novamente ao entrar em outro dispositivo.\n\nTem certeza?";
 "settings.section.profile" = "Perfil";
+"settings.section.app" = "App";
 "settings.section.about" = "Sobre";
 "settings.section.legal" = "Legal";
 "settings.section.sync" = "Sincronização";
@@ -211,6 +238,7 @@
 
 // MARK: - Tab bar
 "tab.payments" = "Pagamentos";
+"tab.reminders" = "Lembretes";
 "tab.calendar" = "Calendário";
 "tab.history" = "Histórico";
 "tab.statistics" = "Estatísticas";

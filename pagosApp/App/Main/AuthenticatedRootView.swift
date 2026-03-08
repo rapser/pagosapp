@@ -19,22 +19,15 @@ struct AuthenticatedRootView: View {
                     Label(L10n.Tab.payments, systemImage: "list.bullet.rectangle.portrait")
                 }
 
+            RemindersListView()
+                .tabItem {
+                    Label(L10n.Tab.reminders, systemImage: "bell.badge")
+                }
+
             CalendarPaymentsView()
                 .environment(alertManager)
                 .tabItem {
-                    Label("Calendario", systemImage: "calendar")
-                }
-
-            PaymentHistoryView()
-                .tabItem {
-                    Label(L10n.Tab.history, systemImage: "clock.arrow.circlepath")
-                }
-
-            StatisticsView(
-                viewModel: dependencies.statisticsDependencyContainer.makeStatisticsViewModel()
-            )
-                .tabItem {
-                    Label(L10n.Tab.statistics, systemImage: "chart.pie.fill")
+                    Label(L10n.Tab.calendar, systemImage: "calendar")
                 }
 
             SettingsView(
