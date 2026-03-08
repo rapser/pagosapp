@@ -2,10 +2,6 @@ import SwiftUI
 
 struct HistoryLoadingView: View {
     var body: some View {
-        VStack {
-            Spacer()
-            ProgressView("Cargando historial...")
-            Spacer()
-        }
+        LoadingStateView(style: .inline, message: "Cargando historial...")
     }
 }

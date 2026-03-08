@@ -102,11 +102,7 @@ struct BiometricSettingsView: View {
         }
         .navigationTitle("Autenticación Biométrica")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Error", isPresented: $showError) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text(errorMessage)
-        }
+        .errorAlert(isPresented: $showError, message: errorMessage.isEmpty ? nil : errorMessage)
     }
 }
 

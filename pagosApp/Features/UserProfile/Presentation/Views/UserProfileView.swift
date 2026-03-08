@@ -76,15 +76,13 @@ struct UserProfileView: View {
             } message: {
                 Text("Tu perfil ha sido actualizado correctamente.")
             }
-            .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
-                Button("OK", role: .cancel) {
-                    viewModel.errorMessage = nil
-                }
-            } message: {
-                if let error = viewModel.errorMessage {
-                    Text(error)
-                }
-            }
+            .errorAlert(
+                isPresented: Binding(
+                    get: { viewModel.errorMessage != nil },
+                    set: { if !$0 { viewModel.errorMessage = nil } }
+                ),
+                message: viewModel.errorMessage
+            )
         }
         .task {
             // Load profile from local SwiftData (fast - no loader needed)

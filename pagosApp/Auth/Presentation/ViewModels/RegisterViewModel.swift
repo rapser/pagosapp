@@ -97,26 +97,9 @@ final class RegisterViewModel {
         PasswordValidator.isValid(password)
     }
 
-    // MARK: - Error Mapping
+    // MARK: - Error Mapping (Auth module mapper)
 
     private func mapErrorToUserMessage(_ error: AuthError) -> String {
-        switch error {
-        case .emailAlreadyExists:
-            return "Este email ya está registrado"
-        case .invalidEmail:
-            return "Email inválido"
-        case .weakPassword:
-            return "La contraseña debe tener al menos 6 caracteres"
-        case .networkError:
-            return "Error de conexión. Verifica tu internet"
-        case .invalidCredentials:
-            return "Credenciales inválidas"
-        case .userNotFound:
-            return "Usuario no encontrado"
-        case .sessionExpired:
-            return "Sesión expirada"
-        case .unknown(let message):
-            return message
-        }
+        AuthErrorMessageMapper.message(for: error)
     }
 }

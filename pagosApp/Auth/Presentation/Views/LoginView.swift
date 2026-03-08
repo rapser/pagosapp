@@ -89,13 +89,7 @@ struct LoginView: View {
                 showEmailPasswordLogin = !hasCredentials
                 viewModel.onLoginSuccess = onLoginSuccess
             }
-            .alert("Error", isPresented: $viewModel.showError) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                if let errorMessage = viewModel.errorMessage {
-                    Text(errorMessage)
-                }
-            }
+            .errorAlert(isPresented: $viewModel.showError, message: viewModel.errorMessage)
         }
     }
 

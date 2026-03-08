@@ -70,7 +70,7 @@ private struct FilterPicker: View {
 
 private struct LoadingIndicator: View {
     var body: some View {
-        ProgressView("Sincronizando...")
+        LoadingStateView(style: .inline, message: "Sincronizando...")
     }
 }
 

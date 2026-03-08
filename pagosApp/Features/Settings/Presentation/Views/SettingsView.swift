@@ -38,11 +38,11 @@ struct SettingsView: View {
                 SessionSectionView(onLogoutTapped: showLogoutAlert)
             }
             .navigationTitle("Ajustes")
-            .alert("Error de sincronización", isPresented: $viewModel.showingSyncError) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(viewModel.syncErrorMessage)
-            }
+            .errorAlert(
+                isPresented: $viewModel.showingSyncError,
+                message: viewModel.syncErrorMessage,
+                title: "Error de sincronización"
+            )
             .task {
                 // Initial sync count update
                 // Note: EventBus listeners are set up in ViewModel init
