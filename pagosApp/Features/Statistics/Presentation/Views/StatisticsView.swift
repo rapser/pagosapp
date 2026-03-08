@@ -62,7 +62,7 @@ struct StatisticsView: View {
                         }
                         .padding(.bottom)
 
-                        if vm.categorySpendingData.isEmpty {
+                        if vm.categorySpendingData.isEmpty || vm.totalSpending <= 0 {
                             EmptyStateView(
                                 currency: vm.selectedCurrency,
                                 filter: vm.selectedFilter

@@ -19,9 +19,7 @@ struct CurrencyTabSelector: View {
         HStack(spacing: 0) {
             // Tab Soles
             Button {
-                withAnimation(.spring(response: 0.3)) {
-                    selectedCurrency = .pen
-                }
+                selectedCurrency = .pen
             } label: {
                 CurrencyTab(
                     title: "Soles",
@@ -35,9 +33,7 @@ struct CurrencyTabSelector: View {
             
             // Tab Dólares
             Button {
-                withAnimation(.spring(response: 0.3)) {
-                    selectedCurrency = .usd
-                }
+                selectedCurrency = .usd
             } label: {
                 CurrencyTab(
                     title: "Dólares",
