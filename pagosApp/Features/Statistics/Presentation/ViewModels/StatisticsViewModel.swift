@@ -123,6 +123,10 @@ final class StatisticsViewModel {
     /// Update currency and reload statistics
     func updateCurrency(_ newCurrency: Currency) async {
         selectedCurrency = newCurrency
+        // Clear stats before reload to avoid showing stale data (PEN) with new currency (USD) during load
+        categoryStats = []
+        monthlyStats = []
+        totalSpending = 0
         await loadStatistics()
     }
 

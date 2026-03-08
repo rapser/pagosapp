@@ -14,6 +14,11 @@ struct CategoryPieChart: View {
     let totalSpending: Double
     let selectedCurrency: Currency
     
+    /// Charts require positive finite total to avoid layout/NaN crashes when data source changes
+    private var canShowChart: Bool {
+        totalSpending > 0 && totalSpending.isFinite && !categoryData.isEmpty
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -27,19 +32,21 @@ struct CategoryPieChart: View {
                     .foregroundColor(Color("AppPrimary"))
             }
             .padding(.horizontal)
-            
-            Chart(categoryData) { data in
-                SectorMark(
-                    angle: .value("Monto", data.totalAmount),
-                    innerRadius: .ratio(0.618),
-                    angularInset: 1.5
-                )
-                .cornerRadius(5)
-                .foregroundStyle(by: .value("Categoría", data.category.rawValue))
+
+            if canShowChart {
+                Chart(categoryData) { data in
+                    SectorMark(
+                        angle: .value("Monto", data.totalAmount),
+                        innerRadius: .ratio(0.618),
+                        angularInset: 1.5
+                    )
+                    .cornerRadius(5)
+                    .foregroundStyle(by: .value("Categoría", data.category.rawValue))
+                }
+                .frame(height: 280)
+                .chartLegend(position: .bottom, alignment: .center)
+                .padding(.horizontal)
             }
-            .frame(height: 280)
-            .chartLegend(position: .bottom, alignment: .center)
-            .padding(.horizontal)
 
             // Lista de categorías
             VStack(spacing: 0) {
