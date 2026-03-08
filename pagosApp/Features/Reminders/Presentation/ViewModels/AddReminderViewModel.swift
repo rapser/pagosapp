@@ -13,6 +13,7 @@ import Observation
 final class AddReminderViewModel {
     var reminderType: ReminderType = .other
     var title: String = ""
+    var reminderDescription: String = ""
     var dueDate: Date = Date()
     var isSaving = false
     var errorMessage: String?
@@ -20,6 +21,10 @@ final class AddReminderViewModel {
     var didSave = false
 
     private let createReminderUseCase: CreateReminderUseCase
+
+    var isValid: Bool {
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     init(createReminderUseCase: CreateReminderUseCase) {
         self.createReminderUseCase = createReminderUseCase
@@ -29,7 +34,7 @@ final class AddReminderViewModel {
         errorMessage = nil
         isSaving = true
         defer { isSaving = false }
-        switch await createReminderUseCase.execute(type: reminderType, title: title, dueDate: dueDate) {
+        switch await createReminderUseCase.execute(type: reminderType, title: title, description: reminderDescription, dueDate: dueDate) {
         case .success:
             didSave = true
         case .failure(let error):

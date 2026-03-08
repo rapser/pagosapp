@@ -13,6 +13,7 @@ enum ReminderRemoteMapper {
             id: dto.id,
             reminderType: ReminderType.from(storedRawValue: dto.reminderType),
             title: dto.title,
+            description: dto.reminderDescription,
             dueDate: dto.dueDate,
             syncStatus: .synced,
             lastSyncedAt: dto.updatedAt ?? dto.createdAt
@@ -29,6 +30,7 @@ enum ReminderRemoteMapper {
             userId: userId,
             reminderType: reminder.reminderType.rawValue,
             title: reminder.title,
+            reminderDescription: reminder.description,
             dueDate: reminder.dueDate,
             createdAt: nil,
             updatedAt: reminder.lastSyncedAt

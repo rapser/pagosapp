@@ -22,7 +22,7 @@ protocol NotificationDataSource {
     /// Cancel all notifications for a payment
     func cancelNotifications(paymentId: UUID)
 
-    /// Schedule notifications for a reminder (same logic as payments: 2 days before, 1 day before, same day 9 AM and 2 PM)
+    /// Schedule notifications for a reminder (from 5 days before: 5, 4, 3, 2, 1 days before + same day 9 AM and 2 PM)
     func scheduleReminderNotifications(reminderId: UUID, title: String, dueDate: Date)
 
     /// Cancel all notifications for a reminder
@@ -227,7 +227,7 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
         self.logger.info("🚫 Cancelled notifications for payment: \(paymentId)")
     }
 
-    // MARK: - Reminder notifications (same schedule as payments: 0, 1, 2 days before; same day 9 AM and 2 PM)
+    // MARK: - Reminder notifications (from 5 days before: 0=same day, 1..5 days before; same day 9 AM and 2 PM)
 
     func scheduleReminderNotifications(reminderId: UUID, title: String, dueDate: Date) {
         cancelReminderNotifications(reminderId: reminderId)
@@ -238,7 +238,7 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
 
                 let calendar = Calendar.current
                 let now = Date()
-                let notificationDays = [0, 1, 2]
+                let notificationDays = [0, 1, 2, 3, 4, 5] // Same day + 1 to 5 days before (reminders start earlier than payments)
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateStyle = .medium
 
@@ -288,7 +288,10 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
             "reminder-\(reminderId.uuidString)-0days-9am",
             "reminder-\(reminderId.uuidString)-0days-2pm",
             "reminder-\(reminderId.uuidString)-1days",
-            "reminder-\(reminderId.uuidString)-2days"
+            "reminder-\(reminderId.uuidString)-2days",
+            "reminder-\(reminderId.uuidString)-3days",
+            "reminder-\(reminderId.uuidString)-4days",
+            "reminder-\(reminderId.uuidString)-5days"
         ]
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
     }

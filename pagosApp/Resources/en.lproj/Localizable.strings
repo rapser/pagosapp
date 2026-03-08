@@ -116,10 +116,13 @@
 "reminders.listTitle" = "Reminders";
 "reminders.emptyTitle" = "No reminders";
 "reminders.emptyDescription" = "Add reminders for renewals, expirations or payments to collect.";
-"reminders.addTitle" = "New reminder";
-"reminders.editTitle" = "Edit reminder";
+"reminders.add.title" = "New Reminder";
+"reminders.edit.title" = "Edit Reminder";
+"reminders.edit.saving" = "Saving...";
 "reminders.typeLabel" = "Type";
 "reminders.titleLabel" = "Title";
+"reminders.descriptionLabel" = "Description";
+"reminders.descriptionPlaceholder" = "Brief description of what it refers to";
 "reminders.dueDateLabel" = "Date";
 "reminders.type.cardRenewal" = "Card renewal";
 "reminders.type.membership" = "Membership";
