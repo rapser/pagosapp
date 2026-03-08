@@ -25,11 +25,15 @@ struct EditReminderView: View {
                 Section(L10n.Reminders.titleLabel) {
                     TextField(L10n.Reminders.titleLabel, text: $viewModel.title)
                 }
+                Section(L10n.Reminders.descriptionLabel) {
+                    TextField(L10n.Reminders.descriptionPlaceholder, text: $viewModel.reminderDescription, axis: .vertical)
+                        .lineLimit(3...6)
+                }
                 Section(L10n.Reminders.dueDateLabel) {
                     DatePicker(L10n.Reminders.dueDateLabel, selection: $viewModel.dueDate, displayedComponents: .date)
                 }
             }
-            .navigationTitle(L10n.Reminders.editTitle)
+            .navigationTitle(L10n.Reminders.Edit.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

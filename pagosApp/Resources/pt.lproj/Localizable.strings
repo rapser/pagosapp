@@ -116,10 +116,13 @@
 "reminders.listTitle" = "Lembretes";
 "reminders.emptyTitle" = "Sem lembretes";
 "reminders.emptyDescription" = "Adicione lembretes para renovações, vencimentos ou cobranças.";
-"reminders.addTitle" = "Novo lembrete";
-"reminders.editTitle" = "Editar lembrete";
+"reminders.add.title" = "Novo Lembrete";
+"reminders.edit.title" = "Editar Lembrete";
+"reminders.edit.saving" = "Salvando...";
 "reminders.typeLabel" = "Tipo";
 "reminders.titleLabel" = "Título";
+"reminders.descriptionLabel" = "Descrição";
+"reminders.descriptionPlaceholder" = "Breve descrição do que se refere";
 "reminders.dueDateLabel" = "Data";
 "reminders.type.cardRenewal" = "Renovação de cartão";
 "reminders.type.membership" = "Membresia";

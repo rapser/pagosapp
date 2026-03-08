@@ -17,7 +17,7 @@ final class CreateReminderUseCase {
         self.repository = repository
     }
 
-    func execute(type: ReminderType, title: String, dueDate: Date) async -> Result<Reminder, ReminderError> {
+    func execute(type: ReminderType, title: String, description: String, dueDate: Date) async -> Result<Reminder, ReminderError> {
         let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmedTitle.isEmpty {
             return .failure(.invalidTitle)
@@ -26,6 +26,7 @@ final class CreateReminderUseCase {
             id: UUID(),
             reminderType: type,
             title: trimmedTitle,
+            description: (description.trimmingCharacters(in: .whitespacesAndNewlines)),
             dueDate: dueDate,
             syncStatus: .local,
             lastSyncedAt: nil

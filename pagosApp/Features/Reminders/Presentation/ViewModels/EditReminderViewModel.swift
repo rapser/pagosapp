@@ -13,6 +13,7 @@ import Observation
 final class EditReminderViewModel {
     var reminderType: ReminderType
     var title: String
+    var reminderDescription: String
     var dueDate: Date
     var isSaving = false
     var errorMessage: String?
@@ -26,6 +27,7 @@ final class EditReminderViewModel {
         self.reminder = reminder
         self.reminderType = reminder.reminderType
         self.title = reminder.title
+        self.reminderDescription = reminder.description
         self.dueDate = reminder.dueDate
         self.updateReminderUseCase = updateReminderUseCase
     }
@@ -39,6 +41,7 @@ final class EditReminderViewModel {
             id: reminder.id,
             reminderType: reminderType,
             title: title,
+            description: reminderDescription,
             dueDate: dueDate,
             syncStatus: newStatus,
             lastSyncedAt: reminder.lastSyncedAt

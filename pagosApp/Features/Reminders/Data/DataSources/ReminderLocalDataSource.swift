@@ -54,6 +54,7 @@ final class ReminderSwiftDataDataSource: ReminderLocalDataSource {
             let dto = ReminderDomainMapper.toDTO(reminder)
             existing.reminderType = dto.reminderType
             existing.title = dto.title
+            existing.reminderDescription = dto.reminderDescription ?? ""
             existing.dueDate = dto.dueDate
             existing.syncStatusRawValue = dto.syncStatusRawValue
             existing.lastSyncedAt = dto.lastSyncedAt

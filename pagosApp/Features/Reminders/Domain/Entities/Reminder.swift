@@ -14,6 +14,7 @@ struct Reminder: Sendable {
     let id: UUID
     let reminderType: ReminderType
     let title: String
+    let description: String
     let dueDate: Date
     let syncStatus: ReminderSyncStatus
     let lastSyncedAt: Date?

@@ -116,10 +116,13 @@
 "reminders.listTitle" = "Recordatorios";
 "reminders.emptyTitle" = "Sin recordatorios";
 "reminders.emptyDescription" = "Añade recordatorios para renovaciones, vencimientos o cobros.";
-"reminders.addTitle" = "Nuevo recordatorio";
-"reminders.editTitle" = "Editar recordatorio";
+"reminders.add.title" = "Nuevo Recordatorio";
+"reminders.edit.title" = "Editar Recordatorio";
+"reminders.edit.saving" = "Guardando...";
 "reminders.typeLabel" = "Tipo";
 "reminders.titleLabel" = "Título";
+"reminders.descriptionLabel" = "Descripción";
+"reminders.descriptionPlaceholder" = "Breve descripción de a qué se refiere";
 "reminders.dueDateLabel" = "Fecha";
 "reminders.type.cardRenewal" = "Renovación tarjeta";
 "reminders.type.membership" = "Membresía";

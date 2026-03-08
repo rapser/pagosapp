@@ -181,10 +181,17 @@ enum L10n {
         static let listTitle = tr("reminders.listTitle")
         static let emptyTitle = tr("reminders.emptyTitle")
         static let emptyDescription = tr("reminders.emptyDescription")
-        static let addTitle = tr("reminders.addTitle")
-        static let editTitle = tr("reminders.editTitle")
+        enum Add {
+            static let title = tr("reminders.add.title")
+        }
+        enum Edit {
+            static let title = tr("reminders.edit.title")
+            static let saving = tr("reminders.edit.saving")
+        }
         static let typeLabel = tr("reminders.typeLabel")
         static let titleLabel = tr("reminders.titleLabel")
+        static let descriptionLabel = tr("reminders.descriptionLabel")
+        static let descriptionPlaceholder = tr("reminders.descriptionPlaceholder")
         static let dueDateLabel = tr("reminders.dueDateLabel")
         static func typeDisplayName(_ type: ReminderType) -> String {
             let key: String

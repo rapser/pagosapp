@@ -25,15 +25,11 @@ struct RemindersListView: View {
             .navigationTitle(L10n.Reminders.listTitle)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showingAddSheet = true
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                    }
+                    AddReminderButton(action: { showingAddSheet = true })
                 }
             }
             .sheet(isPresented: $showingAddSheet) {
-                AddReminderView(viewModel: dependencies.reminderDependencyContainer.makeAddReminderViewModel())
+                AddReminderView()
                     .onDisappear {
                         Task { await viewModel?.loadReminders() }
                     }
@@ -101,6 +97,11 @@ private struct ReminderRowView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(reminder.title)
                 .font(.headline)
+            if !reminder.description.isEmpty {
+                Text(reminder.description)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
             HStack {
                 Text(L10n.Reminders.typeDisplayName(reminder.reminderType))
                     .font(.caption)
@@ -112,6 +113,28 @@ private struct ReminderRowView: View {
             }
         }
         .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Add Button (mismo estilo que en Pagos)
+private struct AddReminderButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "plus")
+                .foregroundColor(primaryColor)
+        }
+    }
+
+    private var primaryColor: Color {
+        Color(uiColor: UIColor { traitCollection in
+            if traitCollection.userInterfaceStyle == .dark {
+                return .white
+            } else {
+                return UIColor(named: "AppPrimary") ?? .systemBlue
+            }
+        })
     }
 }
 

@@ -13,6 +13,7 @@ struct ReminderDTO: Codable, Identifiable {
     let userId: UUID
     let reminderType: String
     let title: String
+    let reminderDescription: String
     let dueDate: Date
     let createdAt: Date?
     let updatedAt: Date?
@@ -25,13 +26,15 @@ struct ReminderDTO: Codable, Identifiable {
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case title
+        case reminderDescription = "description"
     }
 
-    init(id: UUID, userId: UUID, reminderType: String, title: String, dueDate: Date, createdAt: Date?, updatedAt: Date?) {
+    init(id: UUID, userId: UUID, reminderType: String, title: String, reminderDescription: String = "", dueDate: Date, createdAt: Date?, updatedAt: Date?) {
         self.id = id
         self.userId = userId
         self.reminderType = reminderType
         self.title = title
+        self.reminderDescription = reminderDescription
         self.dueDate = dueDate
         self.createdAt = createdAt
         self.updatedAt = updatedAt
@@ -43,6 +46,7 @@ struct ReminderDTO: Codable, Identifiable {
         userId = try container.decode(UUID.self, forKey: .userId)
         reminderType = try container.decode(String.self, forKey: .reminderType)
         title = try container.decode(String.self, forKey: .title)
+        reminderDescription = try container.decodeIfPresent(String.self, forKey: .reminderDescription) ?? ""
         dueDate = try ReminderDTO.decodeDate(from: container, forKey: .dueDate)
         createdAt = try ReminderDTO.decodeOptionalDate(from: container, forKey: .createdAt)
         updatedAt = try ReminderDTO.decodeOptionalDate(from: container, forKey: .updatedAt)
@@ -89,6 +93,7 @@ struct ReminderDTO: Codable, Identifiable {
         try container.encode(userId, forKey: .userId)
         try container.encode(reminderType, forKey: .reminderType)
         try container.encode(title, forKey: .title)
+        try container.encode(reminderDescription, forKey: .reminderDescription)
         try container.encode(ReminderDTO.iso8601String(from: dueDate), forKey: .dueDate)
         try container.encodeIfPresent(createdAt.map { ReminderDTO.iso8601String(from: $0) }, forKey: .createdAt)
         try container.encodeIfPresent(updatedAt.map { ReminderDTO.iso8601String(from: $0) }, forKey: .updatedAt)
