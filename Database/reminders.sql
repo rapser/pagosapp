@@ -19,7 +19,7 @@ CREATE INDEX IF NOT EXISTS idx_reminders_user_id ON public.reminders(user_id);
 CREATE INDEX IF NOT EXISTS idx_reminders_due_date ON public.reminders(due_date);
 
 COMMENT ON TABLE public.reminders IS 'Recordatorios del usuario; sincronizados desde la app (SwiftData + Supabase).';
-COMMENT ON COLUMN public.reminders.reminder_type IS 'Tipo: cardRenewal, membership, subscription, pension, deposit, documents, taxes, other.';
+COMMENT ON COLUMN public.reminders.reminder_type IS 'Tipo: cardRenewal, membership, subscription, pension, savings, deposit, documents, taxes, other.';
 
 ALTER TABLE public.reminders ENABLE ROW LEVEL SECURITY;
 

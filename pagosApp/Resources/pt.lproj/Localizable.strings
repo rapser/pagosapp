@@ -127,7 +127,8 @@
 "reminders.type.cardRenewal" = "Renovação de cartão";
 "reminders.type.membership" = "Membresia";
 "reminders.type.subscription" = "Assinatura";
-"reminders.type.pension" = "Pensão / cobrança";
+"reminders.type.pension" = "Cobrança";
+"reminders.type.savings" = "Economia";
 "reminders.type.deposit" = "Depósito";
 "reminders.type.documents" = "Documentos";
 "reminders.type.taxes" = "Impostos";
