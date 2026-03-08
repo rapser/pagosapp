@@ -18,7 +18,7 @@ final class SettingsViewModel {
     var showingSyncError = false
     var syncErrorMessage = ""
     var pendingSyncCount: Int = 0
-    var syncError: PaymentSyncError? = nil
+    var syncError: Error?
     var isLoading = false
 
     // MARK: - Dependencies (Use Cases only - Clean Architecture)

@@ -13,7 +13,9 @@ enum ReminderDomainMapper {
             id: dto.id,
             reminderType: dto.reminderType,
             title: dto.title,
-            dueDate: dto.dueDate
+            dueDate: dto.dueDate,
+            syncStatus: dto.syncStatus,
+            lastSyncedAt: dto.lastSyncedAt
         )
     }
 
@@ -22,7 +24,9 @@ enum ReminderDomainMapper {
             id: reminder.id,
             reminderType: reminder.reminderType,
             title: reminder.title,
-            dueDate: reminder.dueDate
+            dueDate: reminder.dueDate,
+            syncStatus: reminder.syncStatus,
+            lastSyncedAt: reminder.lastSyncedAt
         )
     }
 }

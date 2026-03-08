@@ -41,6 +41,7 @@ final class AppDependencies {
 
     let sessionCoordinator: SessionCoordinator
     let paymentSyncCoordinator: PaymentSyncCoordinator
+    let reminderSyncCoordinator: ReminderSyncCoordinator
 
     // MARK: - Initialization
 
@@ -74,7 +75,8 @@ final class AppDependencies {
 
         self.reminderDependencyContainer = ReminderDependencyContainer(
             modelContext: modelContext,
-            notificationDataSource: notificationDataSource
+            notificationDataSource: notificationDataSource,
+            supabaseClient: supabaseClient
         )
 
         self.calendarDependencyContainer = CalendarDependencyContainer(
@@ -93,15 +95,18 @@ final class AppDependencies {
 
         // Coordinators (Created by feature containers)
         self.paymentSyncCoordinator = paymentDependencyContainer.makePaymentSyncCoordinator()
+        self.reminderSyncCoordinator = reminderDependencyContainer.makeReminderSyncCoordinator()
 
         self.sessionCoordinator = authDependencyContainer.makeSessionCoordinator(
             errorHandler: errorHandler,
             settingsStore: settingsStore,
-            paymentSyncCoordinator: paymentSyncCoordinator
+            paymentSyncCoordinator: paymentSyncCoordinator,
+            reminderSyncCoordinator: reminderSyncCoordinator
         )
 
         self.settingsDependencyContainer = SettingsDependencyContainer(
             paymentSyncCoordinator: paymentSyncCoordinator,
+            reminderSyncCoordinator: reminderSyncCoordinator,
             authDependencyContainer: authDependencyContainer,
             userProfileDependencyContainer: userProfileDependencyContainer,
             eventBus: eventBus

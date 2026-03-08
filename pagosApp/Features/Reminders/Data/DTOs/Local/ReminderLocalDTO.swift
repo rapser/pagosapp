@@ -15,16 +15,25 @@ final class ReminderLocalDTO {
     var reminderTypeRawValue: String
     var title: String
     var dueDate: Date
+    var syncStatusRawValue: String
+    var lastSyncedAt: Date?
 
-    init(id: UUID, reminderType: ReminderType, title: String, dueDate: Date) {
+    init(id: UUID, reminderType: ReminderType, title: String, dueDate: Date, syncStatus: ReminderSyncStatus = .local, lastSyncedAt: Date? = nil) {
         self.id = id
         self.reminderTypeRawValue = reminderType.rawValue
         self.title = title
         self.dueDate = dueDate
+        self.syncStatusRawValue = syncStatus.rawValue
+        self.lastSyncedAt = lastSyncedAt
     }
 
     var reminderType: ReminderType {
         get { ReminderType.from(storedRawValue: reminderTypeRawValue) }
         set { reminderTypeRawValue = newValue.rawValue }
+    }
+
+    var syncStatus: ReminderSyncStatus {
+        get { ReminderSyncStatus(rawValue: syncStatusRawValue) ?? .local }
+        set { syncStatusRawValue = newValue.rawValue }
     }
 }
