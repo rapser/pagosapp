@@ -171,8 +171,8 @@
 "settings.data.sectionTitle" = "Datos del Dispositivo";
 "settings.data.footer" = "Desvincular eliminará TODOS los datos locales de este dispositivo de forma permanente. Tus datos en la nube están seguros.";
 "settings.data.unlinkButton" = "Desvincular Dispositivo";
-"settings.unlink.warningWithPending" = "⚠️ Tienes %d pago(s) sin sincronizar.\n\nEsta acción eliminará TODOS tus datos locales (pagos, perfil y notificaciones) de este dispositivo de forma permanente.\n\n¿Estás completamente seguro?";
-"settings.unlink.warning" = "Esta acción eliminará TODOS tus datos locales (pagos, perfil y notificaciones) de este dispositivo de forma permanente.\n\nTus datos en la nube están seguros y podrás descargarlos nuevamente al iniciar sesión en otro dispositivo.\n\n¿Estás seguro?";
+"settings.unlink.warningWithPending" = "⚠️ Tienes %d elemento(s) sin sincronizar (pagos o recordatorios).\n\nEsta acción eliminará TODOS tus datos locales (pagos, recordatorios, perfil y notificaciones) de este dispositivo de forma permanente.\n\n¿Estás completamente seguro?";
+"settings.unlink.warning" = "Esta acción eliminará TODOS tus datos locales (pagos, recordatorios, perfil y notificaciones) de este dispositivo de forma permanente.\n\nTus datos en la nube están seguros y podrás descargarlos nuevamente al iniciar sesión en otro dispositivo.\n\n¿Estás seguro?";
 "settings.section.profile" = "Perfil";
 "settings.section.app" = "App";
 "settings.section.about" = "Acerca de";
@@ -187,7 +187,7 @@
 "settings.legal.privacy" = "Política de Privacidad";
 "settings.legal.terms" = "Términos y Condiciones";
 "settings.legal.licenses" = "Licencias de Código Abierto";
-"settings.sync.pendingCount" = "Pagos sin sincronizar";
+"settings.sync.pendingCount" = "Datos sin sincronizar";
 "settings.sync.allSynced" = "Todo sincronizado";
 "settings.sync.lastSync" = "Última sincronización";
 "settings.sync.signInToSync" = "Inicia sesión para sincronizar";
