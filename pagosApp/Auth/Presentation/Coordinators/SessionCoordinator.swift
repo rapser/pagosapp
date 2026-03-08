@@ -43,6 +43,7 @@ final class SessionCoordinator {
     private let errorHandler: ErrorHandler
     private let settingsStore: SettingsStore
     private let paymentSyncCoordinator: PaymentSyncCoordinator
+    private let reminderSyncCoordinator: ReminderSyncCoordinator
 
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "SessionCoordinator")
 
@@ -52,11 +53,13 @@ final class SessionCoordinator {
         errorHandler: ErrorHandler,
         settingsStore: SettingsStore,
         paymentSyncCoordinator: PaymentSyncCoordinator,
+        reminderSyncCoordinator: ReminderSyncCoordinator,
         authDependencyContainer: AuthDependencyContainer
     ) {
         self.errorHandler = errorHandler
         self.settingsStore = settingsStore
         self.paymentSyncCoordinator = paymentSyncCoordinator
+        self.reminderSyncCoordinator = reminderSyncCoordinator
 
         // Initialize Use Cases from container (Clean Architecture)
         self.loginUseCase = authDependencyContainer.makeLoginUseCase()
@@ -262,6 +265,7 @@ final class SessionCoordinator {
 
         _ = await logoutUseCase.execute()
         _ = await paymentSyncCoordinator.clearLocalDatabase(force: true)
+        _ = await reminderSyncCoordinator.clearLocalDatabase(force: true)
 
         logger.warning("⚠️ UserProfile cleanup not yet migrated to Clean Architecture")
 

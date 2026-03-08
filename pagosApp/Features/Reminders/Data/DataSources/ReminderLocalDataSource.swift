@@ -13,6 +13,7 @@ protocol ReminderLocalDataSource {
     func fetchAll() async throws -> [Reminder]
     func fetch(id: UUID) async throws -> Reminder?
     func save(_ reminder: Reminder) async throws
+    func saveAll(_ reminders: [Reminder]) async throws
     func delete(id: UUID) async throws
 }
 
@@ -50,14 +51,23 @@ final class ReminderSwiftDataDataSource: ReminderLocalDataSource {
         descriptor.fetchLimit = 1
         let existing = try modelContext.fetch(descriptor).first
         if let existing = existing {
-            existing.reminderType = reminder.reminderType
-            existing.title = reminder.title
-            existing.dueDate = reminder.dueDate
+            let dto = ReminderDomainMapper.toDTO(reminder)
+            existing.reminderType = dto.reminderType
+            existing.title = dto.title
+            existing.dueDate = dto.dueDate
+            existing.syncStatusRawValue = dto.syncStatusRawValue
+            existing.lastSyncedAt = dto.lastSyncedAt
         } else {
             let dto = ReminderDomainMapper.toDTO(reminder)
             modelContext.insert(dto)
         }
         try modelContext.save()
+    }
+
+    func saveAll(_ reminders: [Reminder]) async throws {
+        for reminder in reminders {
+            try await save(reminder)
+        }
     }
 
     func delete(id: UUID) async throws {

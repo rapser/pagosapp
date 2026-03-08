@@ -22,11 +22,14 @@ final class UpdateReminderUseCase {
         if trimmedTitle.isEmpty {
             return .failure(.invalidTitle)
         }
+        let newStatus: ReminderSyncStatus = reminder.syncStatus == .synced ? .modified : reminder.syncStatus
         let updated = Reminder(
             id: reminder.id,
             reminderType: reminder.reminderType,
             title: trimmedTitle,
-            dueDate: reminder.dueDate
+            dueDate: reminder.dueDate,
+            syncStatus: newStatus,
+            lastSyncedAt: reminder.lastSyncedAt
         )
         return await repository.update(reminder: updated)
     }

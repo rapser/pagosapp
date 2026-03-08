@@ -26,7 +26,9 @@ final class CreateReminderUseCase {
             id: UUID(),
             reminderType: type,
             title: trimmedTitle,
-            dueDate: dueDate
+            dueDate: dueDate,
+            syncStatus: .local,
+            lastSyncedAt: nil
         )
         return await repository.create(reminder: reminder)
     }

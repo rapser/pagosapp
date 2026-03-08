@@ -34,7 +34,15 @@ final class EditReminderViewModel {
         errorMessage = nil
         isSaving = true
         defer { isSaving = false }
-        let updated = Reminder(id: reminder.id, reminderType: reminderType, title: title, dueDate: dueDate)
+        let newStatus: ReminderSyncStatus = reminder.syncStatus == .synced ? .modified : reminder.syncStatus
+        let updated = Reminder(
+            id: reminder.id,
+            reminderType: reminderType,
+            title: title,
+            dueDate: dueDate,
+            syncStatus: newStatus,
+            lastSyncedAt: reminder.lastSyncedAt
+        )
         switch await updateReminderUseCase.execute(updated) {
         case .success:
             didSave = true
