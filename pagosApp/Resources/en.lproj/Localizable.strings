@@ -171,8 +171,8 @@
 "settings.data.sectionTitle" = "Device Data";
 "settings.data.footer" = "Unlinking will permanently delete ALL local data on this device. Your cloud data is safe.";
 "settings.data.unlinkButton" = "Unlink Device";
-"settings.unlink.warningWithPending" = "⚠️ You have %d payment(s) not synced.\n\nThis will permanently delete ALL your local data (payments, profile, notifications) on this device.\n\nAre you sure?";
-"settings.unlink.warning" = "This will permanently delete ALL your local data (payments, profile, notifications) on this device.\n\nYour cloud data is safe and you can download it again when you sign in on another device.\n\nAre you sure?";
+"settings.unlink.warningWithPending" = "⚠️ You have %d item(s) not synced (payments or reminders).\n\nThis will permanently delete ALL your local data (payments, reminders, profile, notifications) on this device.\n\nAre you sure?";
+"settings.unlink.warning" = "This will permanently delete ALL your local data (payments, reminders, profile, notifications) on this device.\n\nYour cloud data is safe and you can download it again when you sign in on another device.\n\nAre you sure?";
 "settings.section.profile" = "Profile";
 "settings.section.app" = "App";
 "settings.section.about" = "About";
@@ -187,7 +187,7 @@
 "settings.legal.privacy" = "Privacy Policy";
 "settings.legal.terms" = "Terms and Conditions";
 "settings.legal.licenses" = "Open Source Licenses";
-"settings.sync.pendingCount" = "Unsynced payments";
+"settings.sync.pendingCount" = "Unsynced data";
 "settings.sync.allSynced" = "All synced";
 "settings.sync.lastSync" = "Last sync";
 "settings.sync.signInToSync" = "Sign in to sync";
