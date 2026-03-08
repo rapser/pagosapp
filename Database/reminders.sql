@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS public.reminders (
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     reminder_type TEXT NOT NULL,
     title TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
     due_date TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
@@ -49,3 +50,6 @@ CREATE TRIGGER reminders_updated_at
     FOR EACH ROW
     EXECUTE FUNCTION public.set_reminders_updated_at();
 -- Si tu Postgres no acepta EXECUTE FUNCTION, usa: EXECUTE PROCEDURE public.set_reminders_updated_at();
+
+-- Si la tabla ya existía sin la columna description, ejecutar:
+-- ALTER TABLE public.reminders ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';
