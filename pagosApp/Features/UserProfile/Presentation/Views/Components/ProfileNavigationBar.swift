@@ -42,7 +42,7 @@ struct ProfileNavigationBar: View {
             Spacer()
 
             // Title
-            Text("Mi Perfil")
+            Text(L10n.Profile.myProfile)
                 .font(.headline)
                 .foregroundColor(Color("AppTextPrimary"))
 
@@ -57,7 +57,7 @@ struct ProfileNavigationBar: View {
                         ProgressView()
                             .tint(buttonColor)
                     } else {
-                        Text("Guardar")
+                        Text(L10n.Profile.save)
                             .foregroundColor(buttonColor)
                     }
                 }
@@ -66,7 +66,7 @@ struct ProfileNavigationBar: View {
                 Button {
                     onEdit()
                 } label: {
-                    Text("Editar")
+                    Text(L10n.Profile.edit)
                         .foregroundColor(buttonColor)
                 }
             }

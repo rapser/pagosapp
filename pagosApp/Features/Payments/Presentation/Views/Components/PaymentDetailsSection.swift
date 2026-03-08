@@ -22,20 +22,20 @@ struct PaymentDetailsSection: View {
     }
 
     var body: some View {
-        Section(header: Text("Detalles del Pago")) {
-            TextField("Nombre del pago", text: $name)
+        Section(header: Text(L10n.Payments.Details.section)) {
+            TextField(L10n.Payments.Details.namePlaceholder, text: $name)
 
-            Picker("Categoría", selection: $category) {
-                ForEach(PaymentCategory.allCases, id: \.self) { category in
-                    Text(category.rawValue).tag(category)
+            Picker(L10n.Payments.Details.category, selection: $category) {
+                ForEach(PaymentCategory.allCases, id: \.self) { cat in
+                    Text(L10n.Payments.categoryDisplayName(cat)).tag(cat)
                 }
             }
 
-            DatePicker("Fecha de Vencimiento", selection: $dueDate, displayedComponents: .date)
+            DatePicker(L10n.Payments.Details.dueDate, selection: $dueDate, displayedComponents: .date)
 
             if showPaidToggle {
                 Toggle(isOn: $isPaid) {
-                    Text("Pagado")
+                    Text(L10n.Payments.Details.paid)
                 }
             }
         }

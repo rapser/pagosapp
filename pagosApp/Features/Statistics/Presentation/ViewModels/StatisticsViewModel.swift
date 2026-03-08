@@ -75,7 +75,7 @@ final class StatisticsViewModel {
 
         case .failure(let error):
             logger.error("❌ Failed to load category stats: \(error.errorCode)")
-            errorMessage = "Error al cargar estadísticas por categoría"
+            errorMessage = L10n.Statistics.errorCategory
         }
     }
 
@@ -93,7 +93,7 @@ final class StatisticsViewModel {
 
         case .failure(let error):
             logger.error("❌ Failed to load monthly stats: \(error.errorCode)")
-            errorMessage = "Error al cargar estadísticas mensuales"
+            errorMessage = L10n.Statistics.errorMonthly
         }
     }
 

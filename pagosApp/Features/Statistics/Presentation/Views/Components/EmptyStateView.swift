@@ -13,11 +13,12 @@ struct EmptyStateView: View {
     let filter: StatsFilter
 
     private var title: String {
-        "No hay pagos en \(currency == .pen ? "Soles" : "Dólares")"
+        let currencyName = currency == .pen ? L10n.Statistics.currencySoles : L10n.Statistics.currencyDollars
+        return L10n.Statistics.emptyNoPayments(currencyName)
     }
 
     private var description: String {
-        "para \"\(filter.rawValue)\""
+        L10n.Statistics.emptyForFilter(filter.rawValue)
     }
 
     var body: some View {

@@ -108,9 +108,9 @@ final class SettingsViewModel {
 
         do {
             try await performSyncUseCase.execute()
-            logger.info("✅ Sync completed successfully")
+            logger.info("\(L10n.Log.Settings.syncComplete)")
         } catch {
-            logger.error("❌ Sync failed: \(error.localizedDescription)")
+            logger.error("\(L10n.Log.Settings.syncFailed(error.localizedDescription))")
             syncErrorMessage = error.localizedDescription
             showingSyncError = true
         }
@@ -136,13 +136,13 @@ final class SettingsViewModel {
         isLoading = true
         defer { isLoading = false }
 
-        logger.info("🗑️ Clearing local database")
+        logger.info("\(L10n.Log.Settings.clearingDb)")
         let success = await clearLocalDatabaseUseCase.execute(force: true)
 
         if success {
-            logger.info("✅ Local database cleared successfully")
+            logger.info("\(L10n.Log.Settings.dbCleared)")
         } else {
-            logger.error("❌ Failed to clear local database")
+            logger.error("\(L10n.Log.Settings.dbClearFailed)")
         }
 
         return success
@@ -154,12 +154,12 @@ final class SettingsViewModel {
         isLoading = true
         defer { isLoading = false }
 
-        logger.info("🚪 Logging out")
+        logger.info("\(L10n.Log.Settings.loggingOut)")
         let result = await logoutUseCase.execute()
 
         if case .failure(let error) = result {
-            logger.error("❌ Logout failed: \(error.errorCode)")
-            syncErrorMessage = "Error al cerrar sesión"
+            logger.error("\(L10n.Log.Settings.logoutFailed(error.errorCode))")
+            syncErrorMessage = L10n.Settings.logoutError
             showingSyncError = true
         }
     }
@@ -168,12 +168,12 @@ final class SettingsViewModel {
         isLoading = true
         defer { isLoading = false }
 
-        logger.info("🔓 Unlinking device")
+        logger.info("\(L10n.Log.Settings.unlinking)")
         let result = await unlinkDeviceUseCase.execute()
 
         if case .failure(let error) = result {
-            logger.error("❌ Unlink device failed: \(error.errorCode)")
-            syncErrorMessage = "Error al desvincular dispositivo"
+            logger.error("\(L10n.Log.Settings.unlinkFailed(error.errorCode))")
+            syncErrorMessage = L10n.Settings.unlinkError
             showingSyncError = true
         }
     }

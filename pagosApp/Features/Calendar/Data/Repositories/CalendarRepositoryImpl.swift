@@ -18,13 +18,13 @@ final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
 
     init(paymentRepository: PaymentRepositoryProtocol) {
         self.paymentRepository = paymentRepository
-        logger.info("✅ CalendarRepositoryImpl initialized")
+        logger.info("\(L10n.Log.Calendar.initRepo)")
     }
 
     // MARK: - Calendar Queries
 
     func getPayments(forDate date: Date) async -> Result<[Payment], PaymentError> {
-        logger.debug("📅 Getting payments for specific date")
+        logger.debug("\(L10n.Log.Calendar.gettingForDate)")
 
         // Get all payments first
         do {
@@ -35,16 +35,16 @@ final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
                 calendar.isDate(payment.dueDate, inSameDayAs: date)
             }
 
-            logger.info("✅ Filtered \(filtered.count) payments for date from \(allPayments.count) total")
+            logger.info("\(L10n.Log.Calendar.filteredForDate(filtered.count, allPayments.count))")
             return .success(filtered)
         } catch {
-            logger.error("❌ Failed to get payments: \(error.localizedDescription)")
+            logger.error("\(L10n.Log.Payments.failedToGet(error.localizedDescription))")
             return .failure(.unknown(error.localizedDescription))
         }
     }
 
     func getPayments(forMonth month: Date) async -> Result<[Payment], PaymentError> {
-        logger.debug("📅 Getting payments for specific month")
+        logger.debug("\(L10n.Log.Calendar.gettingForMonth)")
 
         // Get all payments first
         do {
@@ -55,22 +55,22 @@ final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
                 calendar.isDate(payment.dueDate, equalTo: month, toGranularity: .month)
             }
 
-            logger.info("✅ Filtered \(filtered.count) payments for month from \(allPayments.count) total")
+            logger.info("\(L10n.Log.Calendar.filteredForMonth(filtered.count, allPayments.count))")
             return .success(filtered)
         } catch {
-            logger.error("❌ Failed to get payments: \(error.localizedDescription)")
+            logger.error("\(L10n.Log.Payments.failedToGet(error.localizedDescription))")
             return .failure(.unknown(error.localizedDescription))
         }
     }
 
     func getAllPayments() async -> Result<[Payment], PaymentError> {
-        logger.debug("📅 Getting all payments for calendar")
+        logger.debug("\(L10n.Log.Calendar.gettingAll)")
 
         do {
             let payments = try await paymentRepository.getAllLocalPayments()
             return .success(payments)
         } catch {
-            logger.error("❌ Failed to get payments: \(error.localizedDescription)")
+            logger.error("\(L10n.Log.Payments.failedToGet(error.localizedDescription))")
             return .failure(.unknown(error.localizedDescription))
         }
     }

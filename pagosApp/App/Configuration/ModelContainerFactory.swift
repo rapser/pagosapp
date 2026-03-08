@@ -23,7 +23,7 @@ enum ModelContainerFactory {
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
-            logger.error("❌ Failed to create ModelContainer: \(error.localizedDescription)")
+            logger.error("\(L10n.Log.Db.modelContainerFailed(error.localizedDescription))")
 
             // Attempt database recovery
             return recoverFromCorruption(schema: schema, configuration: modelConfiguration)
@@ -32,7 +32,7 @@ enum ModelContainerFactory {
 
     /// Attempts to recover from database corruption by recreating the database
     private static func recoverFromCorruption(schema: Schema, configuration: ModelConfiguration) -> ModelContainer {
-        logger.warning("⚠️ Attempting database recovery...")
+        logger.warning("\(L10n.Log.Db.recoveryAttempt)")
 
         // Remove corrupted database files
         if let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
@@ -42,16 +42,16 @@ enum ModelContainerFactory {
             try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("wal"))
             try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("shm"))
 
-            logger.info("🗑️ Corrupted database files removed")
+            logger.info("\(L10n.Log.Db.corruptedRemoved)")
         }
 
         // Attempt to create new container
         do {
             let newContainer = try ModelContainer(for: schema, configurations: [configuration])
-            logger.info("✅ Database successfully recreated")
+            logger.info("\(L10n.Log.Db.recreated)")
             return newContainer
         } catch {
-            logger.error("❌ Fatal: Could not recover database: \(error.localizedDescription)")
+            logger.error("\(L10n.Log.Db.recoveryFailed(error.localizedDescription))")
             fatalError("Could not initialize SwiftData container: \(error)")
         }
     }

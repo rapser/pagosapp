@@ -11,13 +11,13 @@ import SwiftUI
 struct ErrorAlertModifier: ViewModifier {
     @Binding var isPresented: Bool
     var message: String?
-    var title: String = "Error"
+    var title: String = L10n.General.error
     var onDismiss: (() -> Void)?
 
     func body(content: Content) -> some View {
         content
             .alert(title, isPresented: $isPresented) {
-                Button("OK", role: .cancel) {
+                Button(L10n.General.ok, role: .cancel) {
                     onDismiss?()
                 }
             } message: {

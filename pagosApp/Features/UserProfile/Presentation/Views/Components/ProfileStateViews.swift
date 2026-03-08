@@ -9,7 +9,7 @@ import SwiftUI
 
 struct ProfileLoadingView: View {
     var body: some View {
-        LoadingStateView(style: .inline, message: "Cargando perfil...")
+        LoadingStateView(style: .inline, message: L10n.Profile.loading)
     }
 }
 
@@ -19,7 +19,7 @@ struct ProfileErrorView: View {
 
     var body: some View {
         ErrorStateView(
-            title: "Error al cargar perfil",
+            title: L10n.Profile.errorTitle,
             message: errorMessage,
             onRetry: onRetry
         )

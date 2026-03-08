@@ -35,7 +35,7 @@ struct PaymentsListContentView: View {
                 }
             }
         }
-        .navigationTitle("Mis Pagos")
+        .navigationTitle(L10n.Payments.List.title)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 AddButton(action: { showingAddPaymentSheet = true })
@@ -59,9 +59,9 @@ private struct FilterPicker: View {
     @Binding var selectedFilter: PaymentFilterUI
 
     var body: some View {
-        Picker("Filtrar", selection: $selectedFilter) {
+        Picker(L10n.Payments.List.filter, selection: $selectedFilter) {
             ForEach(PaymentFilterUI.allCases) { filter in
-                Text(filter.rawValue).tag(filter)
+                Text(L10n.Payments.filterDisplayName(filter)).tag(filter)
             }
         }
         .pickerStyle(.segmented)
@@ -70,7 +70,7 @@ private struct FilterPicker: View {
 
 private struct LoadingIndicator: View {
     var body: some View {
-        LoadingStateView(style: .inline, message: "Sincronizando...")
+        LoadingStateView(style: .inline, message: L10n.Payments.List.syncing)
     }
 }
 
@@ -101,7 +101,7 @@ private struct PaymentsList: View {
                                 await viewModel.deleteGroup(group)
                             }
                         } label: {
-                            Label("Borrar", systemImage: "trash.fill")
+                            Label(L10n.General.delete, systemImage: "trash.fill")
                         }
                     }
 
@@ -115,7 +115,7 @@ private struct PaymentsList: View {
                         Button(role: .destructive) {
                             onDelete(payment)
                         } label: {
-                            Label("Borrar", systemImage: "trash.fill")
+                            Label(L10n.General.delete, systemImage: "trash.fill")
                         }
                     }
                 }

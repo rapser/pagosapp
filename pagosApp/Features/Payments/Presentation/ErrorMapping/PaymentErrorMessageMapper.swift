@@ -14,25 +14,25 @@ enum PaymentErrorMessageMapper {
     static func message(for error: PaymentError) -> String {
         switch error {
         case .invalidName:
-            return "El nombre del pago es requerido"
+            return L10n.PaymentError.invalidName
         case .invalidAmount:
-            return "El monto debe ser mayor a cero"
+            return L10n.PaymentError.invalidAmount
         case .invalidDate:
-            return "La fecha seleccionada no es válida"
+            return L10n.PaymentError.invalidDate
         case .saveFailed(let details):
-            return "No se pudo guardar el pago: \(details)"
+            return L10n.PaymentError.saveFailed(details)
         case .deleteFailed(let details):
-            return "No se pudo eliminar el pago: \(details)"
+            return L10n.PaymentError.deleteFailed(details)
         case .updateFailed(let details):
-            return "No se pudo actualizar el pago: \(details)"
+            return L10n.PaymentError.updateFailed(details)
         case .notificationScheduleFailed(let details):
-            return "No se pudieron programar las notificaciones: \(details)"
+            return L10n.PaymentError.notificationFailed(details)
         case .calendarSyncFailed(let details):
-            return "No se pudo sincronizar con el calendario: \(details)"
+            return L10n.PaymentError.calendarSyncFailed(details)
         case .notFound:
-            return "No se encontró el pago"
+            return L10n.PaymentError.notFound
         case .unknown(let details):
-            return "Error: \(details)"
+            return L10n.PaymentError.unknown(details)
         }
     }
 }

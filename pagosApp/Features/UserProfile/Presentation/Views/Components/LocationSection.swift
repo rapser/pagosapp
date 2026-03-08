@@ -13,12 +13,12 @@ struct LocationSection: View {
     @Binding var editableProfile: EditableProfileUI?
 
     var body: some View {
-        Section(header: Text("Ubicación").foregroundColor(Color("AppTextPrimary"))) {
+        Section(header: Text(L10n.Profile.sectionLocation).foregroundColor(Color("AppTextPrimary"))) {
             // City
             if isEditing, editableProfile != nil {
                 EditableTextFieldRow(
                     icon: "building.2.fill",
-                    placeholder: "Ciudad",
+                    placeholder: L10n.Profile.fieldCity,
                     text: Binding(
                         get: { self.editableProfile?.city ?? "" },
                         set: { self.editableProfile?.city = $0 }
@@ -27,7 +27,7 @@ struct LocationSection: View {
             } else {
                 ProfileFieldRow(
                     icon: "building.2.fill",
-                    title: "Ciudad",
+                    title: L10n.Profile.fieldCity,
                     value: profile.city
                 )
             }
@@ -35,7 +35,7 @@ struct LocationSection: View {
             // Country (read-only)
             ProfileFieldRow(
                 icon: "flag.fill",
-                title: "País",
+                title: L10n.Profile.fieldCountry,
                 value: profile.country ?? "Perú",
                 isOptional: false
             )

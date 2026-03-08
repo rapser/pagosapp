@@ -26,7 +26,7 @@ struct CurrencyPickerRow: View {
                 .pickerStyle(.segmented)
             } else {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Moneda preferida")
+                    Text(L10n.Profile.preferredCurrency)
                         .font(.caption)
                         .foregroundColor(Color("AppTextSecondary"))
                     Text(selectedCurrency.displayName)

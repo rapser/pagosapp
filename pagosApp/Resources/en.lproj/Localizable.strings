@@ -1,0 +1,373 @@
+/*
+  Localizable.strings (English)
+  pagosApp
+*/
+
+// MARK: - General
+"general.ok" = "OK";
+"general.cancel" = "Cancel";
+"general.save" = "Save";
+"general.delete" = "Delete";
+"general.edit" = "Edit";
+"general.retry" = "Retry";
+"general.error" = "Error";
+"general.loading" = "Loading...";
+
+// MARK: - Auth
+"auth.login.welcome" = "Welcome";
+"auth.login.forgotPassword" = "Forgot your password?";
+"auth.login.noAccount" = "Don't have an account? Sign up here";
+"auth.login.useBiometric" = "Use %@";
+"auth.register.title" = "Create Account";
+"auth.register.back" = "Back";
+"auth.register.passwordHintMin" = "Minimum 6 characters";
+"auth.register.passwordMatch" = "Passwords match";
+"auth.forgotPassword.title" = "Reset Password";
+"auth.forgotPassword.description" = "Enter your email and we'll send you a link to reset your password.";
+"auth.forgotPassword.back" = "Back";
+"auth.forgotPassword.emailSent" = "An email to reset your password has been sent. Check your inbox.";
+"auth.resetPassword.title" = "Reset Password";
+"auth.resetPassword.newPassword" = "New Password";
+"auth.resetPassword.confirmPassword" = "Confirm Password";
+"auth.resetPassword.passwordsDontMatch" = "Passwords don't match";
+"auth.resetPassword.button" = "Reset Password";
+"auth.resetPassword.goToLogin" = "Go to Login";
+"auth.resetPassword.successMessage" = "Your password has been reset successfully. You can now sign in with your new password.";
+
+// MARK: - Payments
+"payments.list.title" = "My Payments";
+"payments.list.filter" = "Filter";
+"payments.list.syncing" = "Syncing...";
+"payments.add.title" = "New Payment";
+"payments.add.cancel" = "Cancel";
+"payments.edit.title" = "Edit Payment";
+"payments.edit.discard" = "Discard Changes";
+"payments.edit.saving" = "Saving...";
+"payments.amounts.section" = "Amounts";
+"payments.amounts.soles" = "Soles";
+"payments.amounts.dollars" = "Dollars";
+"payments.amounts.dualCurrency" = "Dual Currency Card";
+"payments.amounts.hintOneAmount" = "💡 Enter at least one amount";
+"payments.details.section" = "Payment Details";
+"payments.details.paid" = "Paid";
+"payments.details.namePlaceholder" = "Payment name";
+"payments.details.category" = "Category";
+"payments.details.dueDate" = "Due Date";
+"payments.validation.completeFields" = "Please fill in all fields correctly";
+"payments.validation.amountGreaterZero" = "Amount must be greater than zero";
+"payments.validation.bothAmountsGreaterZero" = "Both amounts must be greater than zero";
+
+// MARK: - Payment Categories
+"payment.category.servicios" = "Services";
+"payment.category.tarjetaCredito" = "Credit Card";
+"payment.category.vivienda" = "Housing";
+"payment.category.prestamo" = "Loan";
+"payment.category.seguro" = "Insurance";
+"payment.category.educacion" = "Education";
+"payment.category.impuestos" = "Taxes";
+"payment.category.suscripcion" = "Subscription";
+"payment.category.otro" = "Other";
+
+// MARK: - Payment Filters
+"payment.filter.currentMonth" = "Upcoming";
+"payment.filter.futureMonths" = "Future";
+
+// MARK: - Payment Errors
+"payment.error.invalidName" = "Payment name is required";
+"payment.error.invalidAmount" = "Amount must be greater than zero";
+"payment.error.invalidDate" = "Selected date is not valid";
+"payment.error.saveFailed" = "Could not save payment: %@";
+"payment.error.deleteFailed" = "Could not delete payment: %@";
+"payment.error.updateFailed" = "Could not update payment: %@";
+"payment.error.notificationFailed" = "Could not schedule notifications: %@";
+"payment.error.calendarSyncFailed" = "Could not sync with calendar: %@";
+"payment.error.notFound" = "Payment not found";
+"payment.error.unknown" = "Error: %@";
+
+// MARK: - Statistics
+"statistics.title" = "Statistics";
+"statistics.noData.title" = "No Data";
+"statistics.noData.description" = "Add some payments to see statistics.";
+"statistics.period.picker" = "Period";
+"statistics.period.month" = "This Month";
+"statistics.period.year" = "This Year";
+"statistics.period.all" = "All";
+"statistics.currency.soles" = "Soles";
+"statistics.currency.dollars" = "Dollars";
+"statistics.empty.noPayments" = "No payments in %@";
+"statistics.empty.forFilter" = "for \"%@\"";
+"statistics.chart.byCategory" = "Spending by Category";
+"statistics.chart.last6Months" = "Last 6 Months";
+"statistics.error.category" = "Error loading category statistics";
+"statistics.error.monthly" = "Error loading monthly statistics";
+
+// MARK: - History
+"history.title" = "History";
+"history.navTitle" = "Payment History";
+"history.loading" = "Loading history...";
+"history.empty.title" = "No payments in history";
+"history.empty.description" = "Completed and overdue payments will appear here";
+"history.filter.completed" = "Completed";
+"history.filter.overdue" = "Overdue";
+"history.filter.all" = "All";
+"history.error.load" = "Error loading payment history";
+
+// MARK: - Calendar
+"calendar.title" = "Calendar";
+"calendar.sync" = "Sync";
+"calendar.noPayments.title" = "No Payments";
+"calendar.noPayments.description" = "No payments scheduled for this day.";
+"calendar.paymentsFor" = "Payments for %@";
+"calendar.alert.syncSuccess" = "Sync Successful";
+"calendar.alert.noPaymentsToSync" = "No Payments";
+"calendar.alert.noPaymentsToSyncMessage" = "No payments to sync for the selected date.";
+"calendar.alert.accessDenied" = "Access Denied";
+"calendar.alert.accessDeniedMessage" = "Please enable calendar access in Settings.";
+
+// MARK: - Settings
+"settings.title" = "Settings";
+"settings.syncError.title" = "Sync Error";
+"settings.loggingOut" = "Signing out...";
+"settings.repairDb.title" = "Repair Database";
+"settings.repairDb.button" = "Repair";
+"settings.repairDb.successTitle" = "Database Repaired";
+"settings.repairDb.successMessage" = "The app will close. Reopen it to complete the repair.";
+"settings.repairDb.errorMessage" = "Could not repair the database. Try reinstalling the app.";
+"settings.repairDb.confirmMessage" = "This will delete all LOCAL SwiftData and re-download from Supabase. Your server data will NOT be affected. Are you sure?";
+"settings.logout.title" = "Sign Out";
+"settings.logout.message" = "Your session will end but your data will remain on this device. When you sign in again with the same account, everything will be here.";
+"settings.logout.button" = "Sign Out";
+"settings.unlinkDevice.title" = "Unlink Device";
+"settings.unlink.button" = "Unlink";
+"settings.data.sectionTitle" = "Device Data";
+"settings.data.footer" = "Unlinking will permanently delete ALL local data on this device. Your cloud data is safe.";
+"settings.data.unlinkButton" = "Unlink Device";
+"settings.unlink.warningWithPending" = "⚠️ You have %d payment(s) not synced.\n\nThis will permanently delete ALL your local data (payments, profile, notifications) on this device.\n\nAre you sure?";
+"settings.unlink.warning" = "This will permanently delete ALL your local data (payments, profile, notifications) on this device.\n\nYour cloud data is safe and you can download it again when you sign in on another device.\n\nAre you sure?";
+"settings.section.profile" = "Profile";
+"settings.section.about" = "About";
+"settings.section.legal" = "Legal";
+"settings.section.sync" = "Sync";
+"settings.section.session" = "Session";
+"settings.profile.myProfile" = "My Profile";
+"settings.profile.signIn" = "Sign in";
+"settings.about.version" = "Version";
+"settings.about.developedBy" = "Developed by";
+"settings.about.team" = "PagosApp Team";
+"settings.legal.privacy" = "Privacy Policy";
+"settings.legal.terms" = "Terms and Conditions";
+"settings.legal.licenses" = "Open Source Licenses";
+"settings.sync.pendingCount" = "Unsynced payments";
+"settings.sync.allSynced" = "All synced";
+"settings.sync.lastSync" = "Last sync";
+"settings.sync.signInToSync" = "Sign in to sync";
+"settings.sync.retry" = "Retry sync";
+"settings.sync.repairDb" = "Repair database";
+"settings.sync.syncNow" = "Sync now";
+"settings.biometric.title" = "Biometric Authentication";
+"settings.biometric.fastAccess" = "Fast and secure access";
+"settings.biometric.description" = "Face ID / Touch ID lets you access the app quickly and securely without entering your email and password each time.";
+"settings.biometric.benefits" = "Benefits:";
+"settings.biometric.benefit1" = "Enhanced security with biometric authentication";
+"settings.biometric.benefit2" = "Instant access to your payments";
+"settings.biometric.benefit3" = "No more passwords to remember";
+"settings.biometric.notAvailable" = "Face ID / Touch ID is not available on this device";
+"settings.biometric.configuration" = "Configuration";
+"settings.biometric.important" = "Important";
+"settings.biometric.importantMessage" = "When you enable this, next time you open the app you'll only need Face ID to access. Your information stays safe and secure.";
+"settings.biometric.loginRequired" = "You must sign in first to enable Face ID";
+"settings.logoutError" = "Error signing out";
+"settings.unlinkError" = "Error unlinking device";
+
+// MARK: - Profile
+"profile.myProfile" = "My Profile";
+"profile.save" = "Save";
+"profile.edit" = "Edit";
+"profile.preferredCurrency" = "Preferred currency";
+"profile.section.personal" = "Personal Information";
+"profile.section.location" = "Location";
+"profile.section.preferences" = "Preferences";
+"profile.field.name" = "Name";
+"profile.field.city" = "City";
+"profile.field.country" = "Country";
+"profile.noProfile.title" = "No Profile";
+"profile.noProfile.description" = "No profile information found.";
+"profile.updated.title" = "Profile updated";
+"profile.updated.message" = "Your profile has been updated successfully.";
+"profile.loading" = "Loading profile...";
+"profile.error.title" = "Error loading profile";
+"profile.error.loadLocal" = "Error loading local profile";
+"profile.error.load" = "Error loading profile: %@";
+"profile.error.noProfile" = "No profile loaded";
+"profile.error.update" = "Error updating profile: %@";
+
+// MARK: - Session
+"session.inactivity.title" = "Session Closed Due to Inactivity";
+"session.inactivity.message" = "Your session was automatically closed after 1 week of inactivity.";
+
+// MARK: - Sync
+"sync.cannotSync" = "Cannot sync at this time";
+"sync.recoverySuggestion" = "Check your internet connection. You can keep working locally and sync later.";
+
+// MARK: - Tab bar
+"tab.payments" = "Payments";
+"tab.calendar" = "Calendar";
+"tab.history" = "History";
+"tab.statistics" = "Statistics";
+"tab.settings" = "Settings";
+
+// MARK: - Auth Errors
+"auth.error.invalidCredentials" = "Incorrect email or password";
+"auth.error.emailExists" = "This email is already registered";
+"auth.error.weakPassword" = "Password must be at least 6 characters";
+"auth.error.invalidEmail" = "Invalid email";
+"auth.error.userNotFound" = "User not found";
+"auth.error.sessionExpired" = "Session expired. Please sign in again";
+"auth.error.network" = "Connection error. Check your internet";
+"auth.error.unknown" = "%@";
+
+// MARK: - Gender
+"gender.masculino" = "Male";
+"gender.femenino" = "Female";
+"gender.otro" = "Other";
+"gender.prefieroNoDecir" = "Prefer not to say";
+
+// MARK: - Logs (console, follow app language)
+"log.generic.withDetail" = "Error: %@";
+"log.generic.withContext" = "%@: %@";
+"log.auth.signUp" = "📝 Signing up user";
+"log.auth.signUpSuccess" = "✅ User signed up successfully";
+"log.auth.signUpFailed" = "❌ Sign up failed: %@";
+"log.auth.signIn" = "🔑 Signing in user";
+"log.auth.signInSuccess" = "✅ User signed in successfully";
+"log.auth.signInFailed" = "❌ Sign in failed: %@";
+"log.auth.signOut" = "🚪 Signing out user";
+"log.auth.signOutSuccess" = "✅ User signed out successfully";
+"log.auth.gettingSession" = "🔍 Getting current session";
+"log.auth.sessionRetrieved" = "✅ Session retrieved from remote";
+"log.auth.noRemoteSession" = "⚠️ No remote session found";
+"log.auth.sessionFailed" = "⚠️ Failed to get remote session: %@";
+"log.auth.refreshingSession" = "🔄 Refreshing session";
+"log.auth.sessionRefreshed" = "✅ Session refreshed successfully";
+"log.auth.sessionRefreshFailed" = "❌ Session refresh failed: %@";
+"log.auth.passwordResetEmail" = "📧 Sending password reset email";
+"log.auth.passwordResetEmailSent" = "✅ Password reset email sent";
+"log.auth.passwordResetEmailFailed" = "❌ Password reset email failed: %@";
+"log.auth.resettingPassword" = "🔐 Resetting password";
+"log.auth.passwordResetSuccess" = "✅ Password reset successfully";
+"log.auth.passwordResetFailed" = "❌ Password reset failed: %@";
+"log.auth.updatingEmail" = "📧 Updating email";
+"log.auth.emailUpdated" = "✅ Email updated successfully";
+"log.auth.emailUpdateFailed" = "❌ Email update failed: %@";
+"log.auth.updatingPassword" = "🔐 Updating password";
+"log.auth.passwordUpdated" = "✅ Password updated successfully";
+"log.auth.passwordUpdateFailed" = "❌ Password update failed: %@";
+"log.auth.deletingAccount" = "🗑️ Deleting account";
+"log.auth.accountDeleted" = "✅ Account deleted successfully";
+"log.auth.accountDeletionFailed" = "❌ Account deletion failed: %@";
+"log.auth.biometricClearing" = "🗑️ Clearing biometric credentials";
+"log.auth.biometricCleared" = "✅ Biometric credentials cleared successfully";
+"log.auth.biometricClearFailed" = "❌ Failed to clear biometric credentials";
+"log.auth.tokensSaving" = "💾 Saving tokens to Keychain";
+"log.auth.tokensSaved" = "✅ Tokens saved successfully";
+"log.auth.tokensSaveFailed" = "❌ Failed to save tokens: %@";
+"log.auth.tokensRetrieving" = "🔍 Retrieving tokens from Keychain";
+"log.auth.noTokens" = "⚠️ No tokens found in Keychain";
+"log.auth.tokensRetrieved" = "✅ Tokens retrieved successfully";
+"log.auth.tokensClearing" = "🗑️ Clearing tokens from Keychain";
+"log.auth.tokensCleared" = "✅ Tokens cleared";
+"log.auth.hasStoredTokens" = "🔍 Has stored tokens: %@";
+"log.auth.allTokensCleared" = "🗑️ All tokens cleared from Keychain";
+"log.profile.fetching" = "📥 Fetching profile for user: %@";
+"log.profile.notFound" = "❌ Profile not found for user: %@";
+"log.profile.fetchedMapped" = "✅ Profile fetched and mapped to domain entity";
+"log.profile.fetchFailed" = "❌ Failed to fetch profile: %@";
+"log.profile.updating" = "📤 Updating profile for user: %@";
+"log.profile.updated" = "✅ Profile updated successfully";
+"log.profile.updateFailed" = "❌ Failed to update profile: %@";
+"log.profile.fetchingLocal" = "📱 Fetching local profile";
+"log.profile.savingLocal" = "💾 Saving profile locally";
+"log.profile.postedNotification" = "📢 Posted UserProfileDidUpdate notification";
+"log.profile.deletingLocal" = "🗑️ Deleting local profile";
+"log.profile.localFound" = "✅ Local profile found";
+"log.profile.noLocalFound" = "ℹ️ No local profile found";
+"log.profile.fetchLocalFailed" = "❌ Failed to fetch local profile: %@";
+"log.profile.savedToStorage" = "✅ Profile saved to local storage";
+"log.profile.saveLocalFailed" = "❌ Failed to save local profile: %@";
+"log.profile.localDeleted" = "✅ Local profile deleted";
+"log.profile.deleteLocalFailed" = "❌ Failed to delete local profile: %@";
+"log.profile.initRepo" = "✅ UserProfileRepositoryImpl initialized";
+"log.payments.fetchingAll" = "📥 Fetching all payments for user: %@";
+"log.payments.fetchedCount" = "✅ Fetched %@ payments";
+"log.payments.upserting" = "📤 Upserting payment: %@";
+"log.payments.upserted" = "✅ Payment upserted";
+"log.payments.noPaymentsToUpsert" = "⚠️ No payments to upsert";
+"log.payments.upsertingCount" = "📤 Upserting %d payments";
+"log.payments.upsertedCount" = "✅ %d payments upserted";
+"log.payments.deleting" = "🗑️ Deleting payment: %@";
+"log.payments.deleted" = "✅ Payment deleted";
+"log.payments.noPaymentsToDelete" = "⚠️ No payments to delete";
+"log.payments.deletingCount" = "🗑️ Deleting %d payments";
+"log.payments.deletedCount" = "✅ %d payments deleted";
+"log.payments.fetchingLocal" = "📱 Fetching local payments";
+"log.payments.clearingAll" = "🗑️ Clearing all local payments";
+"log.payments.failedToGet" = "❌ Failed to get payments: %@";
+"log.payments.syncStart" = "🔄 Starting full synchronization";
+"log.payments.syncSuccess" = "✅ Synchronization completed successfully";
+"log.payments.syncFailed" = "❌ Synchronization failed: %@";
+"log.payments.noAuthUser" = "❌ No authenticated user";
+"log.payments.uploadingCount" = "📤 Uploading %d payments";
+"log.payments.uploadedSynced" = "✅ %d payments uploaded and marked as synced";
+"log.payments.downloading" = "📥 Downloading payments for user: %@";
+"log.payments.downloadedCount" = "✅ Downloaded %d payments";
+"log.payments.syncingDeletion" = "🗑️ Syncing deletion of payment: %@";
+"log.payments.deletionSynced" = "✅ Payment deletion synced";
+"log.statistics.gettingAll" = "📊 Getting all payments for statistics";
+"log.statistics.gettingFiltered" = "📊 Getting filtered payments: %@, currency: %@";
+"log.statistics.filteredCount" = "✅ Filtered %d payments (from %d total)";
+"log.statistics.gettingForMonths" = "📊 Getting payments for last %d months, currency: %@";
+"log.statistics.failedStartMonth" = "❌ Failed to calculate start of current month";
+"log.statistics.failedEndPrevMonth" = "❌ Failed to calculate end of previous month";
+"log.statistics.failedStartPeriod" = "❌ Failed to calculate start of period";
+"log.statistics.filteredForMonths" = "✅ Filtered %d payments for last %d months (from %d total)";
+"log.statistics.initRepo" = "✅ StatisticsRepositoryImpl initialized";
+"log.calendar.gettingForDate" = "📅 Getting payments for specific date";
+"log.calendar.filteredForDate" = "✅ Filtered %d payments for date (from %d total)";
+"log.calendar.gettingForMonth" = "📅 Getting payments for specific month";
+"log.calendar.filteredForMonth" = "✅ Filtered %d payments for month (from %d total)";
+"log.calendar.gettingAll" = "📅 Getting all payments for calendar";
+"log.calendar.initRepo" = "✅ CalendarRepositoryImpl initialized";
+"log.settings.syncComplete" = "✅ Sync completed successfully";
+"log.settings.syncFailed" = "❌ Sync failed: %@";
+"log.settings.clearingDb" = "🗑️ Clearing local database";
+"log.settings.dbCleared" = "✅ Local database cleared successfully";
+"log.settings.dbClearFailed" = "❌ Failed to clear local database";
+"log.settings.loggingOut" = "🚪 Logging out";
+"log.settings.logoutFailed" = "❌ Logout failed: %@";
+"log.settings.unlinking" = "🔓 Unlinking device";
+"log.settings.unlinkFailed" = "❌ Unlink device failed: %@";
+"log.notifications.authFailed" = "❌ Failed to request notification authorization: %@";
+"log.notifications.authGranted" = "✅ Notification authorization granted: %@";
+"log.notifications.paymentAlreadyPaid" = "🚫 Payment %@ is already paid, cancelling notifications";
+"log.notifications.cancelling" = "🔄 Cancelling existing notifications for %@";
+"log.notifications.notAuthorized" = "⚠️ Notifications not authorized. Cannot schedule for %@";
+"log.notifications.scheduled9AM" = "✅ Scheduled 9 AM notification for %@";
+"log.notifications.schedule9AMFailed" = "❌ Failed to schedule 9 AM notification for %@: %@";
+"log.notifications.skipping9AM" = "⏭️ Skipping 9 AM notification for %@ (already passed)";
+"log.notifications.scheduled2PM" = "✅ Scheduled 2 PM notification for %@";
+"log.notifications.schedule2PMFailed" = "❌ Failed to schedule 2 PM notification for %@: %@";
+"log.notifications.skipping2PM" = "⏭️ Skipping 2 PM notification for %@ (already passed)";
+"log.notifications.skippingDays" = "⏭️ Skipping notification for %@ - %d days before";
+"log.notifications.scheduledDays" = "✅ Scheduled notification for %@ - %d days before";
+"log.notifications.scheduleFailed" = "❌ Failed to schedule notification for %@ (%d days before): %@";
+"log.notifications.noneScheduled" = "⚠️ No notifications scheduled for %@";
+"log.notifications.scheduledCount" = "✅ Successfully scheduled %d notification(s) for %@";
+"log.notifications.cancelled" = "🚫 Cancelled notifications for payment: %@";
+"log.db.modelContainerFailed" = "❌ Failed to create ModelContainer: %@";
+"log.db.recoveryAttempt" = "⚠️ Attempting database recovery...";
+"log.db.corruptedRemoved" = "🗑️ Corrupted database files removed";
+"log.db.recreated" = "✅ Database successfully recreated";
+"log.db.recoveryFailed" = "❌ Fatal: Could not recover database: %@";
+"log.supabase.initialized" = "✅ Supabase client initialized successfully";
+"log.supabase.configFailed" = "❌ Failed to load Supabase configuration: %@";
+"log.supabase.usingDemo" = "⚠️ Using demo Supabase client for development";

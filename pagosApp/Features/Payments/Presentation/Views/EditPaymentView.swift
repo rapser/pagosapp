@@ -113,17 +113,17 @@ private struct EditPaymentFormView: View {
 
             if viewModel.hasChanges {
                 Section {
-                    Button("Descartar Cambios", role: .destructive) {
+                    Button(L10n.Payments.Edit.discard, role: .destructive) {
                         viewModel.resetChanges()
                     }
                 }
             }
         }
-        .navigationTitle("Editar Pago")
+        .navigationTitle(L10n.Payments.Edit.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
-                Button("Guardar") {
+                Button(L10n.General.save) {
                     Task {
                         await viewModel.saveChanges(onSuccess: { dismiss() })
                     }
@@ -134,7 +134,7 @@ private struct EditPaymentFormView: View {
         .disabled(viewModel.isLoading)
         .overlay {
             if viewModel.isLoading {
-                ProgressView("Guardando...")
+                ProgressView(L10n.Payments.Edit.saving)
                     .padding()
                     .background(Color(UIColor.systemBackground))
                     .cornerRadius(10)

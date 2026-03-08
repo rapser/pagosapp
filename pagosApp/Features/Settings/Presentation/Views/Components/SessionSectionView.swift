@@ -11,7 +11,7 @@ struct SessionSectionView: View {
                 HStack {
                     Image(systemName: "rectangle.portrait.and.arrow.right")
                         .foregroundColor(Color("AppPrimary"))
-                    Text("Cerrar Sesión")
+                    Text(L10n.Settings.Logout.button)
                         .foregroundColor(Color("AppTextPrimary"))
                 }
             }

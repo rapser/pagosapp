@@ -98,8 +98,8 @@ final class PaymentSyncCoordinator {
                 domain: "PaymentSyncCoordinator",
                 code: 503,
                 userInfo: [
-                    NSLocalizedDescriptionKey: "No se puede sincronizar en este momento",
-                    NSLocalizedRecoverySuggestionErrorKey: "Verifica tu conexión a internet. Puedes seguir trabajando localmente y sincronizar más tarde."
+                    NSLocalizedDescriptionKey: L10n.Sync.cannotSync,
+                    NSLocalizedRecoverySuggestionErrorKey: L10n.Sync.recoverySuggestion
                 ]
             )
             throw syncError!

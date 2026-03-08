@@ -36,7 +36,7 @@ struct PaymentHistoryView: View {
                 if let viewModel = viewModel {
                     HistoryContentView(viewModel: viewModel)
                 } else {
-                    ProgressView("Cargando...")
+                    ProgressView(L10n.History.loading)
                 }
             }
         }

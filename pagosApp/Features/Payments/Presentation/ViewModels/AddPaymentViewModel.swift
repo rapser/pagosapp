@@ -111,7 +111,7 @@ final class AddPaymentViewModel {
         // Validate
         guard isValid else {
             logger.warning("⚠️ Invalid payment data")
-            showValidationError("Por favor completa todos los campos correctamente")
+            showValidationError(L10n.Payments.Validation.completeFields)
             return
         }
 
@@ -139,7 +139,7 @@ final class AddPaymentViewModel {
             finalCurrency = .usd
             finalAmount = usdAmount
         } else {
-            showValidationError("El monto debe ser mayor a cero")
+            showValidationError(L10n.Payments.Validation.amountGreaterZero)
             return
         }
 
@@ -166,7 +166,7 @@ final class AddPaymentViewModel {
               let usdAmount = amountUSDValue,
               penAmount > 0,
               usdAmount > 0 else {
-            showValidationError("Ambos montos deben ser mayores a cero")
+            showValidationError(L10n.Payments.Validation.bothAmountsGreaterZero)
             return
         }
 

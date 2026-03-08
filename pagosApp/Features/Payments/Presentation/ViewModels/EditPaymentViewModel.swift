@@ -140,7 +140,7 @@ final class EditPaymentViewModel {
         // Validate
         guard isValid else {
             logger.warning("⚠️ Invalid payment data")
-            showValidationError("Por favor completa todos los campos correctamente")
+            showValidationError(L10n.Payments.Validation.completeFields)
             return
         }
 
@@ -163,7 +163,7 @@ final class EditPaymentViewModel {
     /// Save single currency payment
     private func saveSinglePayment(onSuccess: (() -> Void)?) async {
         guard let amountValue = amountValue else {
-            showValidationError("El monto debe ser mayor a cero")
+            showValidationError(L10n.Payments.Validation.amountGreaterZero)
             return
         }
 
@@ -202,7 +202,7 @@ final class EditPaymentViewModel {
         // amount is always PEN, amountUSD is always USD
         guard let penAmountValue = amountValue, penAmountValue > 0,
               let usdAmountValue = amountUSDValue, usdAmountValue > 0 else {
-            showValidationError("Ambos montos deben ser mayores a cero")
+            showValidationError(L10n.Payments.Validation.bothAmountsGreaterZero)
             return
         }
 

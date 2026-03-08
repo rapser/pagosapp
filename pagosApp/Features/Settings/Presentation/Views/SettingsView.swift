@@ -37,11 +37,11 @@ struct SettingsView: View {
                 // Sesión (Cerrar sesión)
                 SessionSectionView(onLogoutTapped: showLogoutAlert)
             }
-            .navigationTitle("Ajustes")
+            .navigationTitle(L10n.Settings.title)
             .errorAlert(
                 isPresented: $viewModel.showingSyncError,
                 message: viewModel.syncErrorMessage,
-                title: "Error de sincronización"
+                title: L10n.Settings.syncErrorTitle
             )
             .task {
                 // Initial sync count update
@@ -50,7 +50,7 @@ struct SettingsView: View {
             }
             .overlay {
                 if viewModel.isLoading {
-                    LoadingView(message: "Cerrando sesión...")
+                    LoadingView(message: L10n.Settings.loggingOut)
                 }
             }
         }
@@ -70,65 +70,61 @@ struct SettingsView: View {
 
     private func showDatabaseResetAlert() {
         alertManager.show(
-            title: Text("Reparar Base de Datos"),
-            message: Text("Esto eliminará todos los datos LOCALES de SwiftData y los volverá a descargar desde Supabase. Tus datos en el servidor NO se verán afectados. ¿Estás seguro?"),
+            title: Text(L10n.Settings.RepairDb.title),
+            message: Text(L10n.Settings.RepairDb.confirmMessage),
             buttons: [
-                AlertButton(title: Text("Reparar"), role: .destructive) {
+                AlertButton(title: Text(L10n.Settings.RepairDb.button), role: .destructive) {
                     Task {
                         let success = await viewModel.clearLocalDatabase()
                         if success {
                             alertManager.show(
-                                title: Text("Base de Datos Reparada"),
-                                message: Text("La aplicación se cerrará. Vuelve a abrirla para completar la reparación."),
-                                buttons: [AlertButton(title: Text("OK"), role: .cancel) {
+                                title: Text(L10n.Settings.RepairDb.successTitle),
+                                message: Text(L10n.Settings.RepairDb.successMessage),
+                                buttons: [AlertButton(title: Text(L10n.General.ok), role: .cancel) {
                                     exit(0)
                                 }]
                             )
                         } else {
                             alertManager.show(
-                                title: Text("Error"),
-                                message: Text("No se pudo reparar la base de datos. Intenta reinstalar la aplicación."),
-                                buttons: [AlertButton(title: Text("OK"), role: .cancel) { }]
+                                title: Text(L10n.General.error),
+                                message: Text(L10n.Settings.RepairDb.errorMessage),
+                                buttons: [AlertButton(title: Text(L10n.General.ok), role: .cancel) { }]
                             )
                         }
                     }
                 },
-                AlertButton(title: Text("Cancelar"), role: .cancel) { }
+                AlertButton(title: Text(L10n.General.cancel), role: .cancel) { }
             ]
         )
     }
 
     private func showLogoutAlert() {
         alertManager.show(
-            title: Text("Cerrar Sesión"),
-            message: Text("Tu sesión se cerrará pero tus datos permanecerán en este dispositivo. Al volver a iniciar sesión con la misma cuenta, todo estará aquí."),
+            title: Text(L10n.Settings.Logout.title),
+            message: Text(L10n.Settings.Logout.message),
             buttons: [
-                AlertButton(title: Text("Cerrar Sesión"), role: .destructive) {
+                AlertButton(title: Text(L10n.Settings.Logout.button), role: .destructive) {
                     Task {
                         await viewModel.logout()
                     }
                 },
-                AlertButton(title: Text("Cancelar"), role: .cancel) { }
+                AlertButton(title: Text(L10n.General.cancel), role: .cancel) { }
             ]
         )
     }
 
     private func showUnlinkDeviceAlert() {
-        let pendingCount = viewModel.pendingSyncCount
-        let warningMessage = pendingCount > 0
-            ? "⚠️ Tienes \(pendingCount) pago(s) sin sincronizar.\n\nEsta acción eliminará TODOS tus datos locales (pagos, perfil y notificaciones) de este dispositivo de forma permanente.\n\n¿Estás completamente seguro?"
-            : "Esta acción eliminará TODOS tus datos locales (pagos, perfil y notificaciones) de este dispositivo de forma permanente.\n\nTus datos en la nube están seguros y podrás descargarlos nuevamente al iniciar sesión en otro dispositivo.\n\n¿Estás seguro?"
-
+        let warningMessage = L10n.Settings.Unlink.warning(pendingCount: viewModel.pendingSyncCount)
         alertManager.show(
-            title: Text("Desvincular Dispositivo"),
+            title: Text(L10n.Settings.Unlink.title),
             message: Text(warningMessage),
             buttons: [
-                AlertButton(title: Text("Desvincular"), role: .destructive) {
+                AlertButton(title: Text(L10n.Settings.Unlink.button), role: .destructive) {
                     Task {
                         await viewModel.unlinkDevice()
                     }
                 },
-                AlertButton(title: Text("Cancelar"), role: .cancel) { }
+                AlertButton(title: Text(L10n.General.cancel), role: .cancel) { }
             ]
         )
     }

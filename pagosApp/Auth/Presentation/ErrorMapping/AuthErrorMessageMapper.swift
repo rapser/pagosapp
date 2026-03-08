@@ -11,6 +11,7 @@ import Foundation
 /// Maps domain AuthError to user-facing message strings (Auth module only)
 enum AuthErrorMessageMapper {
 
+    /// Auth is an autonomous library; strings stay here. For i18n, Auth can expose a localizer protocol later.
     static func message(for error: AuthError) -> String {
         switch error {
         case .invalidCredentials:

@@ -49,10 +49,10 @@ private struct PaymentsListContentWrapper: View {
                         showingAddPaymentSheet: $showingAddPaymentSheet
                     )
                 } else {
-                    ProgressView("Cargando...")
+                    ProgressView(L10n.General.loading)
                 }
             }
-            .navigationTitle("Mis Pagos")
+            .navigationTitle(L10n.Payments.List.title)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     AddButton(action: { showingAddPaymentSheet = true })
@@ -100,7 +100,7 @@ private struct PaymentsListContent: View {
 
             // TableView/List - Fills remaining space
             if viewModel.isLoading {
-                ProgressView("Sincronizando...")
+                ProgressView(L10n.Payments.List.syncing)
             } else {
                 PaymentsList(viewModel: viewModel)
             }
@@ -113,9 +113,9 @@ private struct FilterPicker: View {
     @Binding var selectedFilter: PaymentFilterUI
 
     var body: some View {
-        Picker("Filtrar", selection: $selectedFilter) {
+        Picker(L10n.Payments.List.filter, selection: $selectedFilter) {
             ForEach(PaymentFilterUI.allCases) { filter in
-                Text(filter.rawValue).tag(filter)
+                Text(L10n.Payments.filterDisplayName(filter)).tag(filter)
             }
         }
         .pickerStyle(.segmented)
@@ -144,7 +144,7 @@ private struct PaymentsList: View {
                                 await viewModel.deleteGroup(group)
                             }
                         } label: {
-                            Label("Borrar", systemImage: "trash.fill")
+                            Label(L10n.General.delete, systemImage: "trash.fill")
                         }
                     }
 
@@ -162,7 +162,7 @@ private struct PaymentsList: View {
                                 await viewModel.deletePayment(payment)
                             }
                         } label: {
-                            Label("Borrar", systemImage: "trash.fill")
+                            Label(L10n.General.delete, systemImage: "trash.fill")
                         }
                     }
                 }

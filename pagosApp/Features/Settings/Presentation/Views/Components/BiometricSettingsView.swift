@@ -21,24 +21,24 @@ struct BiometricSettingsView: View {
                     }
                     .padding(.vertical)
 
-                    Text("Acceso rápido y seguro")
+                    Text(L10n.Settings.Biometric.fastAccess)
                         .font(.title2)
                         .bold()
                         .foregroundColor(Color("AppTextPrimary"))
 
-                    Text("Face ID / Touch ID te permite acceder a la aplicación de forma rápida y segura sin necesidad de ingresar tu correo y contraseña cada vez.")
+                    Text(L10n.Settings.Biometric.description)
                         .font(.body)
                         .foregroundColor(Color("AppTextSecondary"))
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text("Beneficios:")
+                    Text(L10n.Settings.Biometric.benefits)
                         .font(.headline)
                         .foregroundColor(Color("AppTextPrimary"))
                         .padding(.top, 8)
 
-                    BenefitRow(icon: "lock.fill", text: "Mayor seguridad con autenticación biométrica")
-                    BenefitRow(icon: "bolt.fill", text: "Acceso instantáneo a tus pagos")
-                    BenefitRow(icon: "hand.raised.fill", text: "No más contraseñas que recordar")
+                    BenefitRow(icon: "lock.fill", text: L10n.Settings.Biometric.benefit1)
+                    BenefitRow(icon: "bolt.fill", text: L10n.Settings.Biometric.benefit2)
+                    BenefitRow(icon: "hand.raised.fill", text: L10n.Settings.Biometric.benefit3)
                 }
                 .padding(.vertical, 8)
             }
@@ -54,7 +54,7 @@ struct BiometricSettingsView: View {
                                 settingsStore.isBiometricLockEnabled = true
                             } else {
                                 // No credentials stored, this shouldn't happen but handle edge case
-                                errorMessage = "Debes iniciar sesión primero para habilitar Face ID"
+                                errorMessage = L10n.Settings.Biometric.loginRequired
                                 showError = true
                             }
                         } else {
@@ -72,13 +72,13 @@ struct BiometricSettingsView: View {
                     HStack {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundColor(.orange)
-                        Text("Face ID / Touch ID no está disponible en este dispositivo")
+                        Text(L10n.Settings.Biometric.notAvailable)
                             .font(.caption)
                             .foregroundColor(Color("AppTextSecondary"))
                     }
                 }
             } header: {
-                Text("Configuración")
+                Text(L10n.Settings.Biometric.configuration)
                     .foregroundColor(Color("AppTextPrimary"))
             }
 
@@ -87,12 +87,12 @@ struct BiometricSettingsView: View {
                     HStack {
                         Image(systemName: "info.circle.fill")
                             .foregroundColor(Color("AppPrimary"))
-                        Text("Importante")
+                        Text(L10n.Settings.Biometric.important)
                             .font(.headline)
                             .foregroundColor(Color("AppTextPrimary"))
                     }
 
-                    Text("Al activar esta opción, la próxima vez que abras la aplicación solo necesitarás usar Face ID para acceder. Tu información permanece segura y protegida.")
+                    Text(L10n.Settings.Biometric.importantMessage)
                         .font(.caption)
                         .foregroundColor(Color("AppTextSecondary"))
                         .fixedSize(horizontal: false, vertical: true)
@@ -100,7 +100,7 @@ struct BiometricSettingsView: View {
                 .padding(.vertical, 4)
             }
         }
-        .navigationTitle("Autenticación Biométrica")
+        .navigationTitle(L10n.Settings.Biometric.title)
         .navigationBarTitleDisplayMode(.inline)
         .errorAlert(isPresented: $showError, message: errorMessage.isEmpty ? nil : errorMessage)
     }
