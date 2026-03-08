@@ -189,15 +189,13 @@ enum L10n {
         static func typeDisplayName(_ type: ReminderType) -> String {
             let key: String
             switch type {
-            case .creditCardRenewal: key = "reminders.type.creditCardRenewal"
-            case .debitCardRenewal: key = "reminders.type.debitCardRenewal"
-            case .annualMembership: key = "reminders.type.annualMembership"
-            case .subscriptionToCancel: key = "reminders.type.subscriptionToCancel"
-            case .collectPayment: key = "reminders.type.collectPayment"
-            case .idExpiration: key = "reminders.type.idExpiration"
-            case .passportRenewal: key = "reminders.type.passportRenewal"
-            case .municipalTaxes: key = "reminders.type.municipalTaxes"
-            case .annualTaxes: key = "reminders.type.annualTaxes"
+            case .cardRenewal: key = "reminders.type.cardRenewal"
+            case .membership: key = "reminders.type.membership"
+            case .subscription: key = "reminders.type.subscription"
+            case .pension: key = "reminders.type.pension"
+            case .deposit: key = "reminders.type.deposit"
+            case .documents: key = "reminders.type.documents"
+            case .taxes: key = "reminders.type.taxes"
             case .other: key = "reminders.type.other"
             }
             return tr(key)
@@ -219,6 +217,11 @@ enum L10n {
         static let noPaymentsTitle = tr("calendar.noPayments.title")
         static let noPaymentsDescription = tr("calendar.noPayments.description")
         static func paymentsFor(date: String) -> String { tr("calendar.paymentsFor", date) }
+        static func itemsFor(date: String) -> String { tr("calendar.itemsFor", date) }
+        static let noItemsTitle = tr("calendar.noItems.title")
+        static let noItemsDescription = tr("calendar.noItems.description")
+        static let sectionPayments = tr("calendar.section.payments")
+        static let sectionReminders = tr("calendar.section.reminders")
         static let alertSyncSuccess = tr("calendar.alert.syncSuccess")
         static let alertNoPaymentsTitle = tr("calendar.alert.noPaymentsToSync")
         static let alertNoPaymentsMessage = tr("calendar.alert.noPaymentsToSyncMessage")

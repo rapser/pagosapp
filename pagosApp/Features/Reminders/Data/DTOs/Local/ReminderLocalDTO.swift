@@ -24,7 +24,7 @@ final class ReminderLocalDTO {
     }
 
     var reminderType: ReminderType {
-        get { ReminderType(rawValue: reminderTypeRawValue) ?? .other }
+        get { ReminderType.from(storedRawValue: reminderTypeRawValue) }
         set { reminderTypeRawValue = newValue.rawValue }
     }
 }

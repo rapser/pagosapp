@@ -10,9 +10,23 @@ struct CalendarPaymentsView: View {
         return viewModel.paymentsForSelectedDate
     }
 
+    private var remindersForSelectedDate: [Reminder] {
+        guard let viewModel = viewModel else { return [] }
+        return viewModel.remindersForSelectedDate
+    }
+
     private var allPayments: [PaymentUI] {
         guard let viewModel = viewModel else { return [] }
         return viewModel.allPayments
+    }
+
+    private var allReminders: [Reminder] {
+        guard let viewModel = viewModel else { return [] }
+        return viewModel.allReminders
+    }
+
+    private var hasItemsForSelectedDate: Bool {
+        !paymentsForSelectedDate.isEmpty || !remindersForSelectedDate.isEmpty
     }
 
     var body: some View {
@@ -22,7 +36,7 @@ struct CalendarPaymentsView: View {
                     @Bindable var vm = viewModel
 
                     VStack(spacing: 0) {
-                        CustomCalendarView(selectedDate: $vm.selectedDate, payments: allPayments)
+                        CustomCalendarView(selectedDate: $vm.selectedDate, payments: allPayments, reminders: allReminders)
                             .background(Color("AppBackground"))
                             .onChange(of: vm.selectedDate) { _, newDate in
                                 Task {
@@ -33,24 +47,43 @@ struct CalendarPaymentsView: View {
                         Divider()
 
                         VStack(alignment: .leading, spacing: 0) {
-                            Text(L10n.Calendar.paymentsFor(date: longDateFormatter.string(from: vm.selectedDate)))
+                            Text(L10n.Calendar.itemsFor(date: longDateFormatter.string(from: vm.selectedDate)))
                                 .font(.headline)
                                 .foregroundColor(Color("AppTextPrimary"))
                                 .padding()
 
-                            if paymentsForSelectedDate.isEmpty {
-                                ContentUnavailableView(L10n.Calendar.noPaymentsTitle, systemImage: "calendar.badge.exclamationmark", description: Text(L10n.Calendar.noPaymentsDescription))
+                            if !hasItemsForSelectedDate {
+                                ContentUnavailableView(L10n.Calendar.noItemsTitle, systemImage: "calendar.badge.exclamationmark", description: Text(L10n.Calendar.noItemsDescription))
                                     .foregroundColor(Color("AppTextSecondary"))
                             } else {
-                                List(paymentsForSelectedDate) { payment in
-                                    HStack {
-                                        VStack(alignment: .leading) {
-                                            Text(payment.name).fontWeight(.semibold)
-                                            Text(L10n.Payments.categoryDisplayName(payment.category)).font(.caption).foregroundColor(Color("AppTextSecondary"))
+                                List {
+                                    if !paymentsForSelectedDate.isEmpty {
+                                        Section(L10n.Calendar.sectionPayments) {
+                                            ForEach(paymentsForSelectedDate) { payment in
+                                                HStack {
+                                                    VStack(alignment: .leading) {
+                                                        Text(payment.name).fontWeight(.semibold)
+                                                        Text(L10n.Payments.categoryDisplayName(payment.category)).font(.caption).foregroundColor(Color("AppTextSecondary"))
+                                                    }
+                                                    Spacer()
+                                                    Text("\(payment.currency.symbol) \(payment.amount, format: .number.precision(.fractionLength(2)))")
+                                                        .foregroundColor(Color("AppTextPrimary"))
+                                                }
+                                            }
                                         }
-                                        Spacer()
-                                        Text("\(payment.currency.symbol) \(payment.amount, format: .number.precision(.fractionLength(2)))")
-                                            .foregroundColor(Color("AppTextPrimary"))
+                                    }
+                                    if !remindersForSelectedDate.isEmpty {
+                                        Section(L10n.Calendar.sectionReminders) {
+                                            ForEach(remindersForSelectedDate) { reminder in
+                                                HStack {
+                                                    VStack(alignment: .leading) {
+                                                        Text(reminder.title).fontWeight(.semibold)
+                                                        Text(L10n.Reminders.typeDisplayName(reminder.reminderType)).font(.caption).foregroundColor(Color("AppTextSecondary"))
+                                                    }
+                                                    Spacer()
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                                 .listStyle(.plain)

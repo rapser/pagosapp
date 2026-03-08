@@ -17,6 +17,8 @@ final class CalendarViewModel {
 
     var allPayments: [PaymentUI] = []
     var paymentsForSelectedDate: [PaymentUI] = []
+    var allReminders: [Reminder] = []
+    var remindersForSelectedDate: [Reminder] = []
     var selectedDate: Date = Calendar.current.startOfDay(for: Date())
     var isLoading = false
     var errorMessage: String?
@@ -26,6 +28,7 @@ final class CalendarViewModel {
     private let getAllPaymentsUseCase: GetAllPaymentsForCalendarUseCase
     private let getPaymentsByDateUseCase: GetPaymentsByDateUseCase
     private let getPaymentsByMonthUseCase: GetPaymentsByMonthUseCase
+    private let getAllRemindersUseCase: GetAllRemindersUseCase
     private let calendarEventDataSource: CalendarEventDataSource
     private let mapper: PaymentUIMapping
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "CalendarViewModel")
@@ -34,51 +37,63 @@ final class CalendarViewModel {
         getAllPaymentsUseCase: GetAllPaymentsForCalendarUseCase,
         getPaymentsByDateUseCase: GetPaymentsByDateUseCase,
         getPaymentsByMonthUseCase: GetPaymentsByMonthUseCase,
+        getAllRemindersUseCase: GetAllRemindersUseCase,
         calendarEventDataSource: CalendarEventDataSource,
         mapper: PaymentUIMapping
     ) {
         self.getAllPaymentsUseCase = getAllPaymentsUseCase
         self.getPaymentsByDateUseCase = getPaymentsByDateUseCase
         self.getPaymentsByMonthUseCase = getPaymentsByMonthUseCase
+        self.getAllRemindersUseCase = getAllRemindersUseCase
         self.calendarEventDataSource = calendarEventDataSource
         self.mapper = mapper
     }
 
     // MARK: - Data Operations
 
-    /// Load all payments (for calendar indicators)
+    /// Load all payments and reminders (for calendar indicators)
     func loadAllPayments() async {
         isLoading = true
         defer { isLoading = false }
 
-        let result = await getAllPaymentsUseCase.execute()
+        async let paymentsResult = getAllPaymentsUseCase.execute()
+        async let remindersResult = getAllRemindersUseCase.execute()
 
-        switch result {
+        let (paymentsRes, remindersRes) = await (paymentsResult, remindersResult)
+
+        switch paymentsRes {
         case .success(let payments):
-            // Convert Domain -> UI
             allPayments = mapper.toUI(payments)
             logger.info("✅ Loaded \(payments.count) payments for calendar")
-
         case .failure(let error):
             logger.error("❌ Failed to load payments: \(error.errorCode)")
             errorMessage = "Error al cargar pagos"
         }
+
+        switch remindersRes {
+        case .success(let reminders):
+            allReminders = reminders
+            logger.info("✅ Loaded \(reminders.count) reminders for calendar")
+        case .failure:
+            allReminders = []
+        }
     }
 
-    /// Load payments for selected date
+    /// Load payments and reminders for selected date
     func loadPaymentsForSelectedDate() async {
         let result = await getPaymentsByDateUseCase.execute(for: selectedDate)
 
         switch result {
         case .success(let payments):
-            // Convert Domain -> UI
             paymentsForSelectedDate = mapper.toUI(payments)
             logger.info("✅ Loaded \(payments.count) payments for selected date")
-
         case .failure(let error):
             logger.error("❌ Failed to load payments for date: \(error.errorCode)")
             errorMessage = "Error al cargar pagos para la fecha seleccionada"
         }
+
+        let calendar = Calendar.current
+        remindersForSelectedDate = allReminders.filter { calendar.isDate($0.dueDate, inSameDayAs: selectedDate) }
     }
 
     /// Load payments for a specific month
@@ -100,10 +115,12 @@ final class CalendarViewModel {
         await loadPaymentsForSelectedDate()
     }
 
-    /// Check if a date has payments (for calendar indicators)
-    func hasPayments(on date: Date) -> Bool {
-        let calendar = Calendar.current
-        return allPayments.contains { calendar.isDate($0.dueDate, inSameDayAs: date) }
+    /// Check if a date has payments or reminders (for calendar indicators)
+    func hasEvents(on date: Date) -> Bool {
+        let cal = Calendar.current
+        let hasPayment = allPayments.contains { cal.isDate($0.dueDate, inSameDayAs: date) }
+        let hasReminder = allReminders.contains { cal.isDate($0.dueDate, inSameDayAs: date) }
+        return hasPayment || hasReminder
     }
 
     /// Refresh all data
@@ -114,7 +131,7 @@ final class CalendarViewModel {
 
     // MARK: - Calendar Sync Operations
 
-    /// Sync payments with device calendar
+    /// Sync payments with device calendar (reminders are not synced to device calendar)
     func syncPaymentsWithCalendar(completion: @escaping (SyncResult) -> Void) {
         guard !paymentsForSelectedDate.isEmpty else {
             completion(.noPayments)

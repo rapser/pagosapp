@@ -72,8 +72,14 @@ final class AppDependencies {
             modelContext: modelContext
         )
 
+        self.reminderDependencyContainer = ReminderDependencyContainer(
+            modelContext: modelContext,
+            notificationDataSource: notificationDataSource
+        )
+
         self.calendarDependencyContainer = CalendarDependencyContainer(
             paymentDependencyContainer: paymentDependencyContainer,
+            reminderDependencyContainer: reminderDependencyContainer,
             calendarEventDataSource: calendarEventDataSource
         )
 
@@ -83,11 +89,6 @@ final class AppDependencies {
 
         self.historyDependencyContainer = HistoryDependencyContainer(
             paymentDependencyContainer: paymentDependencyContainer
-        )
-
-        self.reminderDependencyContainer = ReminderDependencyContainer(
-            modelContext: modelContext,
-            notificationDataSource: notificationDataSource
         )
 
         // Coordinators (Created by feature containers)
