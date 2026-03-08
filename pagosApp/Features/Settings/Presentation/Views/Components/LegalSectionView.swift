@@ -2,12 +2,12 @@ import SwiftUI
 
 struct LegalSectionView: View {
     var body: some View {
-        Section(header: Text("Legal").foregroundColor(Color("AppTextPrimary"))) {
+        Section(header: Text(L10n.Settings.sectionLegal).foregroundColor(Color("AppTextPrimary"))) {
             Link(destination: URL(string: "https://www.apple.com/legal/privacy")!) {
                 HStack {
                     Image(systemName: "hand.raised.fill")
                         .foregroundColor(Color("AppPrimary"))
-                    Text("Política de Privacidad")
+                    Text(L10n.Settings.legalPrivacy)
                         .foregroundColor(Color("AppTextPrimary"))
                     Spacer()
                     Image(systemName: "arrow.up.right")
@@ -33,7 +33,7 @@ struct LegalSectionView: View {
                 HStack {
                     Image(systemName: "checkmark.shield.fill")
                         .foregroundColor(Color("AppPrimary"))
-                    Text("Licencias de Código Abierto")
+                    Text(L10n.Settings.legalLicenses)
                         .foregroundColor(Color("AppTextPrimary"))
                     Spacer()
                     Image(systemName: "arrow.up.right")

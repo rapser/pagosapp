@@ -71,7 +71,7 @@ final class UserProfileViewModel {
 
         case .failure(let error):
             logger.error("❌ Error loading local profile: \(error.errorCode)")
-            errorMessage = "Error al cargar el perfil local"
+            errorMessage = L10n.Profile.errorLoadLocal
         }
     }
 
@@ -93,7 +93,7 @@ final class UserProfileViewModel {
 
         case .failure(let error):
             logger.error("❌ Error fetching profile: \(error.errorCode)")
-            errorMessage = "Error al cargar el perfil: \(error.errorCode)"
+            errorMessage = L10n.Profile.errorLoad(error.errorCode)
             isLoading = false
             return false
         }
@@ -102,7 +102,7 @@ final class UserProfileViewModel {
     /// Update user profile
     func updateProfile(with editableProfile: EditableProfileUI) async -> Bool {
         guard let currentProfile = profile else {
-            errorMessage = "No hay perfil cargado"
+            errorMessage = L10n.Profile.errorNoProfile
             return false
         }
 
@@ -125,7 +125,7 @@ final class UserProfileViewModel {
 
         case .failure(let error):
             logger.error("❌ Error updating profile: \(error.errorCode)")
-            errorMessage = "Error al actualizar el perfil: \(error.errorCode)"
+            errorMessage = L10n.Profile.errorUpdate(error.errorCode)
             isSaving = false
             return false
         }

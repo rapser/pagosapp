@@ -27,7 +27,7 @@ struct PaymentGroupRowView: View {
                     .fontWeight(.bold)
                     .strikethrough(group.isPaid, color: Color("AppTextSecondary"))
                     .foregroundColor(group.displayColor)
-                Text(group.category.rawValue)
+                Text(L10n.Payments.categoryDisplayName(group.category))
                     .font(.caption)
                     .foregroundColor(Color("AppTextSecondary"))
             }

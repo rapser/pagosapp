@@ -18,19 +18,19 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
 
     init(paymentRepository: PaymentRepositoryProtocol) {
         self.paymentRepository = paymentRepository
-        logger.info("✅ StatisticsRepositoryImpl initialized")
+        logger.info("\(L10n.Log.Statistics.initRepo)")
     }
 
     // MARK: - Statistics Queries
 
     func getAllPayments() async -> Result<[Payment], PaymentError> {
-        logger.debug("📊 Getting all payments for statistics")
+        logger.debug("\(L10n.Log.Statistics.gettingAll)")
 
         do {
             let payments = try await paymentRepository.getAllLocalPayments()
             return .success(payments)
         } catch {
-            logger.error("❌ Failed to get payments: \(error.localizedDescription)")
+            logger.error("\(L10n.Log.Payments.failedToGet(error.localizedDescription))")
             return .failure(.unknown(error.localizedDescription))
         }
     }
@@ -39,14 +39,14 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
         filter: StatsFilter,
         currency: Currency
     ) async -> Result<[Payment], PaymentError> {
-        logger.debug("📊 Getting filtered payments: \(filter.rawValue), currency: \(currency.rawValue)")
+        logger.debug("\(L10n.Log.Statistics.gettingFiltered(filter.rawValue, currency.rawValue))")
 
         // Get all payments first
         let allPayments: [Payment]
         do {
             allPayments = try await paymentRepository.getAllLocalPayments()
         } catch {
-            logger.error("❌ Failed to get payments: \(error.localizedDescription)")
+            logger.error("\(L10n.Log.Payments.failedToGet(error.localizedDescription))")
             return .failure(.unknown(error.localizedDescription))
         }
 
@@ -66,7 +66,7 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
         // Filter by currency
         let filtered = timeFiltered.filter { $0.currency == currency }
 
-        logger.info("✅ Filtered \(filtered.count) payments (from \(allPayments.count) total)")
+        logger.info("\(L10n.Log.Statistics.filteredCount(filtered.count, allPayments.count))")
         return .success(filtered)
     }
 
@@ -74,14 +74,14 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
         count: Int,
         currency: Currency
     ) async -> Result<[Payment], PaymentError> {
-        logger.debug("📊 Getting payments for last \(count) months, currency: \(currency.rawValue)")
+        logger.debug("\(L10n.Log.Statistics.gettingForMonths(count, currency.rawValue))")
 
         // Get all payments first
         let allPayments: [Payment]
         do {
             allPayments = try await paymentRepository.getAllLocalPayments()
         } catch {
-            logger.error("❌ Failed to get payments: \(error.localizedDescription)")
+            logger.error("\(L10n.Log.Payments.failedToGet(error.localizedDescription))")
             return .failure(.unknown(error.localizedDescription))
         }
 
@@ -89,20 +89,20 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
 
         // Calculate the start of the current month
         guard let startOfCurrentMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now)) else {
-            logger.error("❌ Failed to calculate start of current month")
+            logger.error("\(L10n.Log.Statistics.failedStartMonth)")
             return .success([])
         }
 
         // Calculate the end of the previous month
         guard let endOfPreviousMonth = calendar.date(byAdding: .day, value: -1, to: startOfCurrentMonth) else {
-            logger.error("❌ Failed to calculate end of previous month")
+            logger.error("\(L10n.Log.Statistics.failedEndPrevMonth)")
             return .success([])
         }
 
         // Calculate the start of the period (N months before the end of the previous month)
         guard let startOfPeriod = calendar.date(byAdding: .month, value: -(count - 1), to: endOfPreviousMonth),
               let periodStart = calendar.date(from: calendar.dateComponents([.year, .month], from: startOfPeriod)) else {
-            logger.error("❌ Failed to calculate start of period")
+            logger.error("\(L10n.Log.Statistics.failedStartPeriod)")
             return .success([])
         }
 
@@ -113,7 +113,7 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
             return isInPeriod && payment.currency == currency
         }
 
-        logger.info("✅ Filtered \(filtered.count) payments for last \(count) months (from \(allPayments.count) total)")
+        logger.info("\(L10n.Log.Statistics.filteredForMonths(filtered.count, count, allPayments.count))")
         return .success(filtered)
     }
 }

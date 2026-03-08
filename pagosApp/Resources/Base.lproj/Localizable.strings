@@ -1,0 +1,233 @@
+/* 
+  Localizable.strings (Base - Spanish)
+  pagosApp - Centralized user-facing strings for internationalization
+*/
+
+// MARK: - General
+"general.ok" = "Aceptar";
+"general.cancel" = "Cancelar";
+"general.save" = "Guardar";
+"general.delete" = "Borrar";
+"general.edit" = "Editar";
+"general.retry" = "Reintentar";
+"general.error" = "Error";
+"general.loading" = "Cargando...";
+
+// MARK: - Auth
+"auth.login.welcome" = "Bienvenido";
+"auth.login.forgotPassword" = "¿Olvidaste tu contraseña?";
+"auth.login.noAccount" = "¿No tienes cuenta? Regístrate aquí";
+"auth.login.useBiometric" = "Usar %@";
+"auth.register.title" = "Crear Cuenta";
+"auth.register.back" = "Atrás";
+"auth.register.passwordHintMin" = "Mínimo 6 caracteres";
+"auth.register.passwordMatch" = "Las contraseñas coinciden";
+"auth.forgotPassword.title" = "Restablecer Contraseña";
+"auth.forgotPassword.description" = "Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.";
+"auth.forgotPassword.back" = "Atrás";
+"auth.forgotPassword.emailSent" = "Se ha enviado un correo para restablecer tu contraseña. Revisa tu bandeja de entrada.";
+"auth.resetPassword.title" = "Restablecer Contraseña";
+"auth.resetPassword.newPassword" = "Nueva Contraseña";
+"auth.resetPassword.confirmPassword" = "Confirmar Contraseña";
+"auth.resetPassword.passwordsDontMatch" = "Las contraseñas no coinciden";
+"auth.resetPassword.button" = "Restablecer Contraseña";
+"auth.resetPassword.goToLogin" = "Ir al Login";
+"auth.resetPassword.successMessage" = "Tu contraseña ha sido restablecida exitosamente. Ahora puedes iniciar sesión con tu nueva contraseña.";
+
+// MARK: - Payments
+"payments.list.title" = "Mis Pagos";
+"payments.list.filter" = "Filtrar";
+"payments.list.syncing" = "Sincronizando...";
+"payments.add.title" = "Nuevo Pago";
+"payments.add.cancel" = "Cancelar";
+"payments.edit.title" = "Editar Pago";
+"payments.edit.discard" = "Descartar Cambios";
+"payments.edit.saving" = "Guardando...";
+"payments.amounts.section" = "Montos";
+"payments.amounts.soles" = "Soles";
+"payments.amounts.dollars" = "Dólares";
+"payments.amounts.dualCurrency" = "Tarjeta Bimoneda";
+"payments.amounts.hintOneAmount" = "💡 Ingresa al menos un monto";
+"payments.details.section" = "Detalles del Pago";
+"payments.details.paid" = "Pagado";
+"payments.details.namePlaceholder" = "Nombre del pago";
+"payments.details.category" = "Categoría";
+"payments.details.dueDate" = "Fecha de Vencimiento";
+"payments.validation.completeFields" = "Por favor completa todos los campos correctamente";
+"payments.validation.amountGreaterZero" = "El monto debe ser mayor a cero";
+"payments.validation.bothAmountsGreaterZero" = "Ambos montos deben ser mayores a cero";
+
+// MARK: - Payment Categories (display names)
+"payment.category.servicios" = "Servicios";
+"payment.category.tarjetaCredito" = "Tarjeta de Crédito";
+"payment.category.vivienda" = "Vivienda";
+"payment.category.prestamo" = "Préstamo";
+"payment.category.seguro" = "Seguro";
+"payment.category.educacion" = "Educación";
+"payment.category.impuestos" = "Impuestos";
+"payment.category.suscripcion" = "Suscripción";
+"payment.category.otro" = "Otro";
+
+// MARK: - Payment Filters
+"payment.filter.currentMonth" = "Próximos";
+"payment.filter.futureMonths" = "Futuros";
+
+// MARK: - Payment Errors
+"payment.error.invalidName" = "El nombre del pago es requerido";
+"payment.error.invalidAmount" = "El monto debe ser mayor a cero";
+"payment.error.invalidDate" = "La fecha seleccionada no es válida";
+"payment.error.saveFailed" = "No se pudo guardar el pago: %@";
+"payment.error.deleteFailed" = "No se pudo eliminar el pago: %@";
+"payment.error.updateFailed" = "No se pudo actualizar el pago: %@";
+"payment.error.notificationFailed" = "No se pudieron programar las notificaciones: %@";
+"payment.error.calendarSyncFailed" = "No se pudo sincronizar con el calendario: %@";
+"payment.error.notFound" = "No se encontró el pago";
+"payment.error.unknown" = "Error: %@";
+
+// MARK: - Statistics
+"statistics.title" = "Estadísticas";
+"statistics.noData.title" = "Sin Datos";
+"statistics.noData.description" = "Añade algunos pagos para ver las estadísticas.";
+"statistics.period.picker" = "Período";
+"statistics.period.month" = "Este Mes";
+"statistics.period.year" = "Este Año";
+"statistics.period.all" = "Todos";
+"statistics.currency.soles" = "Soles";
+"statistics.currency.dollars" = "Dólares";
+"statistics.empty.noPayments" = "No hay pagos en %@";
+"statistics.empty.forFilter" = "para \"%@\"";
+"statistics.chart.byCategory" = "Gastos por Categoría";
+"statistics.chart.last6Months" = "Últimos 6 Meses";
+"statistics.error.category" = "Error al cargar estadísticas por categoría";
+"statistics.error.monthly" = "Error al cargar estadísticas mensuales";
+
+// MARK: - History
+"history.title" = "Historial";
+"history.navTitle" = "Historial de Pagos";
+"history.loading" = "Cargando historial...";
+"history.empty.title" = "No hay pagos en el historial";
+"history.empty.description" = "Los pagos completados y vencidos aparecerán aquí";
+"history.filter.completed" = "Completados";
+"history.filter.overdue" = "Vencidos";
+"history.filter.all" = "Todos";
+"history.error.load" = "Error al cargar el historial de pagos";
+
+// MARK: - Calendar
+"calendar.title" = "Calendario";
+"calendar.sync" = "Sincronizar";
+"calendar.noPayments.title" = "Sin Pagos";
+"calendar.noPayments.description" = "No hay pagos programados para este día.";
+"calendar.paymentsFor" = "Pagos para %@";
+"calendar.alert.syncSuccess" = "Sincronización Exitosa";
+"calendar.alert.noPaymentsToSync" = "Sin Pagos";
+"calendar.alert.noPaymentsToSyncMessage" = "No hay pagos para sincronizar en la fecha seleccionada.";
+"calendar.alert.accessDenied" = "Acceso Denegado";
+"calendar.alert.accessDeniedMessage" = "Por favor, habilita el acceso al calendario en Ajustes.";
+
+// MARK: - Settings
+"settings.title" = "Ajustes";
+"settings.syncError.title" = "Error de sincronización";
+"settings.loggingOut" = "Cerrando sesión...";
+"settings.repairDb.title" = "Reparar Base de Datos";
+"settings.repairDb.button" = "Reparar";
+"settings.repairDb.successTitle" = "Base de Datos Reparada";
+"settings.repairDb.successMessage" = "La aplicación se cerrará. Vuelve a abrirla para completar la reparación.";
+"settings.repairDb.errorMessage" = "No se pudo reparar la base de datos. Intenta reinstalar la aplicación.";
+"settings.repairDb.confirmMessage" = "Esto eliminará todos los datos LOCALES de SwiftData y los volverá a descargar desde Supabase. Tus datos en el servidor NO se verán afectados. ¿Estás seguro?";
+"settings.logout.title" = "Cerrar Sesión";
+"settings.logout.message" = "Tu sesión se cerrará pero tus datos permanecerán en este dispositivo. Al volver a iniciar sesión con la misma cuenta, todo estará aquí.";
+"settings.logout.button" = "Cerrar Sesión";
+"settings.unlinkDevice.title" = "Desvincular Dispositivo";
+"settings.unlink.button" = "Desvincular";
+"settings.data.sectionTitle" = "Datos del Dispositivo";
+"settings.data.footer" = "Desvincular eliminará TODOS los datos locales de este dispositivo de forma permanente. Tus datos en la nube están seguros.";
+"settings.data.unlinkButton" = "Desvincular Dispositivo";
+"settings.unlink.warningWithPending" = "⚠️ Tienes %d pago(s) sin sincronizar.\n\nEsta acción eliminará TODOS tus datos locales (pagos, perfil y notificaciones) de este dispositivo de forma permanente.\n\n¿Estás completamente seguro?";
+"settings.unlink.warning" = "Esta acción eliminará TODOS tus datos locales (pagos, perfil y notificaciones) de este dispositivo de forma permanente.\n\nTus datos en la nube están seguros y podrás descargarlos nuevamente al iniciar sesión en otro dispositivo.\n\n¿Estás seguro?";
+"settings.section.profile" = "Perfil";
+"settings.section.about" = "Acerca de";
+"settings.section.legal" = "Legal";
+"settings.section.sync" = "Sincronización";
+"settings.section.session" = "Sesión";
+"settings.profile.myProfile" = "Mi Perfil";
+"settings.profile.signIn" = "Inicia sesión";
+"settings.about.version" = "Versión";
+"settings.about.developedBy" = "Desarrollado por";
+"settings.about.team" = "PagosApp Team";
+"settings.legal.privacy" = "Política de Privacidad";
+"settings.legal.terms" = "Términos y Condiciones";
+"settings.legal.licenses" = "Licencias de Código Abierto";
+"settings.sync.pendingCount" = "Pagos sin sincronizar";
+"settings.sync.allSynced" = "Todo sincronizado";
+"settings.sync.lastSync" = "Última sincronización";
+"settings.sync.signInToSync" = "Inicia sesión para sincronizar";
+"settings.sync.retry" = "Reintentar sincronización";
+"settings.sync.repairDb" = "Reparar base de datos";
+"settings.sync.syncNow" = "Sincronizar ahora";
+"settings.biometric.title" = "Autenticación Biométrica";
+"settings.biometric.fastAccess" = "Acceso rápido y seguro";
+"settings.biometric.description" = "Face ID / Touch ID te permite acceder a la aplicación de forma rápida y segura sin necesidad de ingresar tu correo y contraseña cada vez.";
+"settings.biometric.benefits" = "Beneficios:";
+"settings.biometric.benefit1" = "Mayor seguridad con autenticación biométrica";
+"settings.biometric.benefit2" = "Acceso instantáneo a tus pagos";
+"settings.biometric.benefit3" = "No más contraseñas que recordar";
+"settings.biometric.notAvailable" = "Face ID / Touch ID no está disponible en este dispositivo";
+"settings.biometric.configuration" = "Configuración";
+"settings.biometric.important" = "Importante";
+"settings.biometric.importantMessage" = "Al activar esta opción, la próxima vez que abras la aplicación solo necesitarás usar Face ID para acceder. Tu información permanece segura y protegida.";
+"settings.biometric.loginRequired" = "Debes iniciar sesión primero para habilitar Face ID";
+"settings.logoutError" = "Error al cerrar sesión";
+"settings.unlinkError" = "Error al desvincular dispositivo";
+
+// MARK: - Profile
+"profile.myProfile" = "Mi Perfil";
+"profile.save" = "Guardar";
+"profile.edit" = "Editar";
+"profile.preferredCurrency" = "Moneda preferida";
+"profile.section.personal" = "Información Personal";
+"profile.section.location" = "Ubicación";
+"profile.section.preferences" = "Preferencias";
+"profile.field.name" = "Nombre";
+"profile.field.city" = "Ciudad";
+"profile.field.country" = "País";
+"profile.noProfile.title" = "Sin Perfil";
+"profile.noProfile.description" = "No se encontró información del perfil.";
+"profile.updated.title" = "Perfil actualizado";
+"profile.updated.message" = "Tu perfil ha sido actualizado correctamente.";
+"profile.loading" = "Cargando perfil...";
+"profile.error.title" = "Error al cargar perfil";
+"profile.error.loadLocal" = "Error al cargar el perfil local";
+"profile.error.load" = "Error al cargar el perfil: %@";
+"profile.error.noProfile" = "No hay perfil cargado";
+"profile.error.update" = "Error al actualizar el perfil: %@";
+
+// MARK: - Session / Inactivity
+"session.inactivity.title" = "Sesión Cerrada por Inactividad";
+"session.inactivity.message" = "Tu sesión ha sido cerrada automáticamente debido a 1 semana de inactividad.";
+
+// MARK: - Sync
+"sync.cannotSync" = "No se puede sincronizar en este momento";
+"sync.recoverySuggestion" = "Verifica tu conexión a internet. Puedes seguir trabajando localmente y sincronizar más tarde.";
+
+// MARK: - Tab bar
+"tab.payments" = "Pagos";
+"tab.calendar" = "Calendario";
+"tab.history" = "Historial";
+"tab.statistics" = "Estadísticas";
+"tab.settings" = "Ajustes";
+
+// MARK: - Auth Errors (module internal)
+"auth.error.invalidCredentials" = "Email o contraseña incorrectos";
+"auth.error.emailExists" = "El email ya está registrado";
+"auth.error.weakPassword" = "La contraseña debe tener al menos 6 caracteres";
+"auth.error.invalidEmail" = "Email inválido";
+"auth.error.userNotFound" = "Usuario no encontrado";
+"auth.error.sessionExpired" = "Sesión expirada. Vuelve a iniciar sesión";
+"auth.error.network" = "Error de conexión. Verifica tu internet";
+"auth.error.unknown" = "%@";
+
+// MARK: - Gender (profile)
+"gender.masculino" = "Masculino";
+"gender.femenino" = "Femenino";
+"gender.otro" = "Otro";
+"gender.prefieroNoDecir" = "Prefiero no decir";

@@ -61,20 +61,20 @@ struct UserProfileView: View {
                         .listStyle(.insetGrouped)
                     } else {
                         ContentUnavailableView(
-                            "Sin Perfil",
+                            L10n.Profile.noProfileTitle,
                             systemImage: "person.crop.circle.badge.exclamationmark",
-                            description: Text("No se encontró información del perfil.")
+                            description: Text(L10n.Profile.noProfileDescription)
                         )
                     }
                 }
             }
             .navigationBarHidden(true)
-            .alert("Perfil actualizado", isPresented: $viewModel.showSuccessAlert) {
-                Button("OK", role: .cancel) {
+            .alert(L10n.Profile.updatedTitle, isPresented: $viewModel.showSuccessAlert) {
+                Button(L10n.General.ok, role: .cancel) {
                     viewModel.isEditing = false
                 }
             } message: {
-                Text("Tu perfil ha sido actualizado correctamente.")
+                Text(L10n.Profile.updatedMessage)
             }
             .errorAlert(
                 isPresented: Binding(

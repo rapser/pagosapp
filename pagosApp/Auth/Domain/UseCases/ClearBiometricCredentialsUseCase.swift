@@ -22,16 +22,16 @@ final class ClearBiometricCredentialsUseCase {
     /// Execute: Clear all biometric credentials and flags
     /// - Returns: Result indicating success or failure
     func execute() -> Result<Void, AuthError> {
-        logger.info("🗑️ Clearing biometric credentials")
+        logger.info("\(L10n.Log.Auth.biometricClearing)")
 
         _ = biometricCredentialsDataSource.deleteHasLoggedIn()
         let success = biometricCredentialsDataSource.deleteCredentials()
 
         if success {
-            logger.info("✅ Biometric credentials cleared successfully")
+            logger.info("\(L10n.Log.Auth.biometricCleared)")
             return .success(())
         } else {
-            logger.error("❌ Failed to clear biometric credentials")
+            logger.error("\(L10n.Log.Auth.biometricClearFailed)")
             return .failure(.unknown("Failed to clear biometric credentials"))
         }
     }

@@ -36,7 +36,7 @@ struct ErrorStateView: View {
                 } label: {
                     HStack {
                         Image(systemName: "arrow.clockwise")
-                        Text("Reintentar")
+                        Text(L10n.General.retry)
                     }
                     .foregroundColor(.white)
                     .padding()

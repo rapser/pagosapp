@@ -12,6 +12,6 @@ struct LoadingView: View {
 #Preview {
     ZStack {
         Color.gray
-        LoadingView(message: "Cerrando sesión...")
+        LoadingView(message: L10n.Settings.loggingOut)
     }
 }

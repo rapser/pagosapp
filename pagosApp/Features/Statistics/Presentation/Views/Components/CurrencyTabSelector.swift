@@ -22,7 +22,7 @@ struct CurrencyTabSelector: View {
                 selectedCurrency = .pen
             } label: {
                 CurrencyTab(
-                    title: "Soles",
+                    title: L10n.Statistics.currencySoles,
                     symbol: "S/",
                     totalSpending: selectedCurrency == .pen ? totalSpending : nil,
                     isSelected: selectedCurrency == .pen
@@ -36,7 +36,7 @@ struct CurrencyTabSelector: View {
                 selectedCurrency = .usd
             } label: {
                 CurrencyTab(
-                    title: "Dólares",
+                    title: L10n.Statistics.currencyDollars,
                     symbol: "$",
                     totalSpending: selectedCurrency == .usd ? totalSpending : nil,
                     isSelected: selectedCurrency == .usd

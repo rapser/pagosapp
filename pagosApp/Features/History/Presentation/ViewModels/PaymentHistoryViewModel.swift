@@ -69,7 +69,7 @@ final class PaymentHistoryViewModel {
             logger.info("✅ Fetched \(self.filteredPayments.count) payments for history (filter: \(self.selectedFilter.rawValue))")
         case .failure(let error):
             logger.error("❌ Failed to fetch payment history: \(error.errorCode)")
-            errorMessage = "Error al cargar el historial de pagos"
+            errorMessage = L10n.History.errorLoad
         }
     }
 
