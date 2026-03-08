@@ -282,16 +282,7 @@ final class PaymentsListViewModel {
     // MARK: - Error Handling
 
     private func showError(for error: PaymentError) {
-        switch error {
-        case .deleteFailed(let details):
-            errorMessage = "No se pudo eliminar el pago: \(details)"
-        case .updateFailed(let details):
-            errorMessage = "No se pudo actualizar el pago: \(details)"
-        case .unknown(let details):
-            errorMessage = "Error: \(details)"
-        default:
-            errorMessage = "Ocurrió un error inesperado"
-        }
+        errorMessage = PaymentErrorMessageMapper.message(for: error)
         showError = true
     }
 }

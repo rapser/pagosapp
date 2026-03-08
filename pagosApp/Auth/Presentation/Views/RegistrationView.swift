@@ -118,13 +118,7 @@ struct RegistrationView: View {
                     dismiss()
                 }
             }
-            .alert("Error", isPresented: $viewModel.showError) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                if let errorMessage = viewModel.errorMessage {
-                    Text(errorMessage)
-                }
-            }
+            .errorAlert(isPresented: $viewModel.showError, message: viewModel.errorMessage)
         }
     }
 }
