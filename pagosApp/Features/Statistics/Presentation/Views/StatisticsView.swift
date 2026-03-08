@@ -62,7 +62,7 @@ struct StatisticsView: View {
                         }
                         .padding(.bottom)
 
-                        if vm.categorySpendingData.isEmpty || vm.totalSpending <= 0 {
+                        if !vm.hasValidChartData {
                             EmptyStateView(
                                 currency: vm.selectedCurrency,
                                 filter: vm.selectedFilter
@@ -72,7 +72,8 @@ struct StatisticsView: View {
                             CategoryPieChart(
                                 categoryData: vm.categorySpendingData,
                                 totalSpending: vm.totalSpending,
-                                selectedCurrency: vm.selectedCurrency
+                                selectedCurrency: vm.selectedCurrency,
+                                shouldShowChart: vm.hasValidChartData
                             )
                             .padding(.vertical)
 
