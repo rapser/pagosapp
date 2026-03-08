@@ -21,13 +21,19 @@ protocol NotificationDataSource {
 
     /// Cancel all notifications for a payment
     func cancelNotifications(paymentId: UUID)
+
+    /// Schedule notifications for a reminder (same logic as payments: 2 days before, 1 day before, same day 9 AM and 2 PM)
+    func scheduleReminderNotifications(reminderId: UUID, title: String, dueDate: Date)
+
+    /// Cancel all notifications for a reminder
+    func cancelReminderNotifications(reminderId: UUID)
 }
 
 /// UserNotifications implementation of NotificationDataSource
 @MainActor
 final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUserNotificationCenterDelegate {
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "NotificationDataSource")
-    
+
     override init() {
         super.init()
         UNUserNotificationCenter.current().delegate = self
@@ -78,10 +84,9 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
         logger.info("🔄 Cancelling existing notifications for \(name) before rescheduling")
         cancelNotifications(paymentId: paymentId)
 
-        // Check authorization status before scheduling
         UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
             guard let self = self else { return }
-            
+
             Task { @MainActor in
                 guard settings.authorizationStatus == .authorized else {
                     self.logger.warning("⚠️ Notifications not authorized (status: \(settings.authorizationStatus.rawValue)). Cannot schedule notifications for \(name)")
@@ -219,6 +224,72 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
             "\(paymentId.uuidString)-0days-immediate" // Legacy identifier (por si quedó alguno)
         ]
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
-        logger.info("🚫 Cancelled notifications for payment: \(paymentId)")
+        self.logger.info("🚫 Cancelled notifications for payment: \(paymentId)")
+    }
+
+    // MARK: - Reminder notifications (same schedule as payments: 0, 1, 2 days before; same day 9 AM and 2 PM)
+
+    func scheduleReminderNotifications(reminderId: UUID, title: String, dueDate: Date) {
+        cancelReminderNotifications(reminderId: reminderId)
+
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            Task { @MainActor in
+                guard settings.authorizationStatus == .authorized else { return }
+
+                let calendar = Calendar.current
+                let now = Date()
+                let notificationDays = [0, 1, 2]
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateStyle = .medium
+
+                for daysBefore in notificationDays {
+                    guard let notificationDate = calendar.date(byAdding: .day, value: -daysBefore, to: dueDate) else { continue }
+
+                    if daysBefore == 0 {
+                        for (hour, suffix) in [(9, "9am"), (14, "2pm")] {
+                            var comp = calendar.dateComponents([.year, .month, .day], from: notificationDate)
+                            comp.hour = hour
+                            comp.minute = 0
+                            comp.second = 0
+                            guard let triggerDate = calendar.date(from: comp), triggerDate > now else { continue }
+                            let id = "reminder-\(reminderId.uuidString)-0days-\(suffix)"
+                            let content = UNMutableNotificationContent()
+                            content.title = "Recordatorio"
+                            content.subtitle = title
+                            content.body = "Hoy: \(title)."
+                            content.sound = .default
+                            let trigger = UNCalendarNotificationTrigger(dateMatching: comp, repeats: false)
+                            let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+                            try? await UNUserNotificationCenter.current().add(request)
+                        }
+                    } else {
+                        var comp = calendar.dateComponents([.year, .month, .day], from: notificationDate)
+                        comp.hour = 9
+                        comp.minute = 0
+                        comp.second = 0
+                        guard let triggerDate = calendar.date(from: comp), triggerDate > now else { continue }
+                        let id = "reminder-\(reminderId.uuidString)-\(daysBefore)days"
+                        let content = UNMutableNotificationContent()
+                        content.title = "Recordatorio"
+                        content.subtitle = "En \(daysBefore) día(s): \(title)"
+                        content.body = "\(title) — \(dateFormatter.string(from: dueDate))"
+                        content.sound = .default
+                        let trigger = UNCalendarNotificationTrigger(dateMatching: comp, repeats: false)
+                        let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
+                        try? await UNUserNotificationCenter.current().add(request)
+                    }
+                }
+            }
+        }
+    }
+
+    func cancelReminderNotifications(reminderId: UUID) {
+        let identifiers = [
+            "reminder-\(reminderId.uuidString)-0days-9am",
+            "reminder-\(reminderId.uuidString)-0days-2pm",
+            "reminder-\(reminderId.uuidString)-1days",
+            "reminder-\(reminderId.uuidString)-2days"
+        ]
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
     }
 }

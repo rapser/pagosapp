@@ -112,6 +112,32 @@
 "history.filter.all" = "Todos";
 "history.error.load" = "Error al cargar el historial de pagos";
 
+// MARK: - Reminders
+"reminders.listTitle" = "Recordatorios";
+"reminders.emptyTitle" = "Sin recordatorios";
+"reminders.emptyDescription" = "Añade recordatorios para renovaciones, vencimientos o cobros.";
+"reminders.addTitle" = "Nuevo recordatorio";
+"reminders.editTitle" = "Editar recordatorio";
+"reminders.typeLabel" = "Tipo";
+"reminders.titleLabel" = "Título";
+"reminders.dueDateLabel" = "Fecha";
+"reminders.type.creditCardRenewal" = "Renovar tarjeta de crédito";
+"reminders.type.debitCardRenewal" = "Renovar tarjeta de débito";
+"reminders.type.annualMembership" = "Membresía anual";
+"reminders.type.subscriptionToCancel" = "Suscripción a cortar";
+"reminders.type.collectPayment" = "Cobrar pensión / pago";
+"reminders.type.idExpiration" = "Vencimiento DNI/documento";
+"reminders.type.passportRenewal" = "Renovar pasaporte";
+"reminders.type.municipalTaxes" = "Impuestos municipalidad";
+"reminders.type.annualTaxes" = "Impuestos anuales";
+"reminders.type.other" = "Otro";
+"reminders.error.invalidTitle" = "El título es obligatorio";
+"reminders.error.invalidDate" = "La fecha no es válida";
+"reminders.error.saveFailed" = "No se pudo guardar: %@";
+"reminders.error.deleteFailed" = "No se pudo eliminar: %@";
+"reminders.error.notFound" = "Recordatorio no encontrado";
+"reminders.error.unknown" = "Error: %@";
+
 // MARK: - Calendar
 "calendar.title" = "Calendario";
 "calendar.sync" = "Sincronizar";
@@ -145,6 +171,7 @@
 "settings.unlink.warningWithPending" = "⚠️ Tienes %d pago(s) sin sincronizar.\n\nEsta acción eliminará TODOS tus datos locales (pagos, perfil y notificaciones) de este dispositivo de forma permanente.\n\n¿Estás completamente seguro?";
 "settings.unlink.warning" = "Esta acción eliminará TODOS tus datos locales (pagos, perfil y notificaciones) de este dispositivo de forma permanente.\n\nTus datos en la nube están seguros y podrás descargarlos nuevamente al iniciar sesión en otro dispositivo.\n\n¿Estás seguro?";
 "settings.section.profile" = "Perfil";
+"settings.section.app" = "App";
 "settings.section.about" = "Acerca de";
 "settings.section.legal" = "Legal";
 "settings.section.sync" = "Sincronización";
@@ -211,6 +238,7 @@
 
 // MARK: - Tab bar
 "tab.payments" = "Pagos";
+"tab.reminders" = "Recordatorios";
 "tab.calendar" = "Calendario";
 "tab.history" = "Historial";
 "tab.statistics" = "Estadísticas";

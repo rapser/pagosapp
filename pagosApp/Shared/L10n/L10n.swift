@@ -176,6 +176,42 @@ enum L10n {
         }
     }
 
+    // MARK: - Reminders
+    enum Reminders {
+        static let listTitle = tr("reminders.listTitle")
+        static let emptyTitle = tr("reminders.emptyTitle")
+        static let emptyDescription = tr("reminders.emptyDescription")
+        static let addTitle = tr("reminders.addTitle")
+        static let editTitle = tr("reminders.editTitle")
+        static let typeLabel = tr("reminders.typeLabel")
+        static let titleLabel = tr("reminders.titleLabel")
+        static let dueDateLabel = tr("reminders.dueDateLabel")
+        static func typeDisplayName(_ type: ReminderType) -> String {
+            let key: String
+            switch type {
+            case .creditCardRenewal: key = "reminders.type.creditCardRenewal"
+            case .debitCardRenewal: key = "reminders.type.debitCardRenewal"
+            case .annualMembership: key = "reminders.type.annualMembership"
+            case .subscriptionToCancel: key = "reminders.type.subscriptionToCancel"
+            case .collectPayment: key = "reminders.type.collectPayment"
+            case .idExpiration: key = "reminders.type.idExpiration"
+            case .passportRenewal: key = "reminders.type.passportRenewal"
+            case .municipalTaxes: key = "reminders.type.municipalTaxes"
+            case .annualTaxes: key = "reminders.type.annualTaxes"
+            case .other: key = "reminders.type.other"
+            }
+            return tr(key)
+        }
+        enum Error {
+            static let invalidTitle = tr("reminders.error.invalidTitle")
+            static let invalidDate = tr("reminders.error.invalidDate")
+            static func saveFailed(_ detail: String) -> String { tr("reminders.error.saveFailed", detail) }
+            static func deleteFailed(_ detail: String) -> String { tr("reminders.error.deleteFailed", detail) }
+            static let notFound = tr("reminders.error.notFound")
+            static func unknown(_ detail: String) -> String { tr("reminders.error.unknown", detail) }
+        }
+    }
+
     // MARK: - Calendar
     enum Calendar {
         static let title = tr("calendar.title")
@@ -221,6 +257,7 @@ enum L10n {
             }
         }
         static let sectionProfile = tr("settings.section.profile")
+        static let sectionApp = tr("settings.section.app")
         static let sectionAbout = tr("settings.section.about")
         static let sectionLegal = tr("settings.section.legal")
         static let sectionSync = tr("settings.section.sync")
@@ -309,6 +346,7 @@ enum L10n {
     // MARK: - Tab bar
     enum Tab {
         static let payments = tr("tab.payments")
+        static let reminders = tr("tab.reminders")
         static let calendar = tr("tab.calendar")
         static let history = tr("tab.history")
         static let statistics = tr("tab.statistics")

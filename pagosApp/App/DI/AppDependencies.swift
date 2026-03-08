@@ -34,6 +34,7 @@ final class AppDependencies {
     let calendarDependencyContainer: CalendarDependencyContainer
     let statisticsDependencyContainer: StatisticsDependencyContainer
     let historyDependencyContainer: HistoryDependencyContainer
+    let reminderDependencyContainer: ReminderDependencyContainer
     let settingsDependencyContainer: SettingsDependencyContainer
 
     // MARK: - Coordinators (Created by Containers)
@@ -84,6 +85,11 @@ final class AppDependencies {
             paymentDependencyContainer: paymentDependencyContainer
         )
 
+        self.reminderDependencyContainer = ReminderDependencyContainer(
+            modelContext: modelContext,
+            notificationDataSource: notificationDataSource
+        )
+
         // Coordinators (Created by feature containers)
         self.paymentSyncCoordinator = paymentDependencyContainer.makePaymentSyncCoordinator()
 
@@ -105,7 +111,7 @@ final class AppDependencies {
 
     static func mock() -> AppDependencies {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try! ModelContainer(for: PaymentLocalDTO.self, UserProfileLocalDTO.self, configurations: config)
+        let container = try! ModelContainer(for: PaymentLocalDTO.self, UserProfileLocalDTO.self, ReminderLocalDTO.self, configurations: config)
         let mockSupabase = SupabaseClient(
             supabaseURL: URL(string: "https://mock.supabase.co")!,
             supabaseKey: "mock_key"
