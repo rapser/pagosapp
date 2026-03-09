@@ -98,13 +98,7 @@ struct ResetPasswordView: View {
         } message: {
             Text("Tu contraseña ha sido restablecida exitosamente. Ahora puedes iniciar sesión con tu nueva contraseña.")
         }
-        .alert("Error", isPresented: $viewModel.showError) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            if let errorMessage = viewModel.errorMessage {
-                Text(errorMessage)
-            }
-        }
+        .errorAlert(isPresented: $viewModel.showError, message: viewModel.errorMessage)
     }
 }
 

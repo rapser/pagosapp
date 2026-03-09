@@ -7,13 +7,11 @@
 //
 
 import Foundation
-import OSLog
 
 /// Use case for full payment synchronization
 final class SyncPaymentsUseCase {
     private let uploadUseCase: UploadLocalChangesUseCase
     private let downloadUseCase: DownloadRemoteChangesUseCase
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "SyncPaymentsUseCase")
 
     init(
         uploadUseCase: UploadLocalChangesUseCase,
@@ -26,23 +24,10 @@ final class SyncPaymentsUseCase {
     /// Execute full synchronization (upload local changes, then download remote changes)
     /// - Returns: Result with success or sync error
     func execute() async -> Result<Void, PaymentSyncError> {
-        logger.info("🔄 Starting full payment synchronization")
-
-        // 1. Upload local changes first
         let uploadResult = await uploadUseCase.execute()
-        if case .failure(let error) = uploadResult {
-            logger.error("❌ Upload failed: \(error.errorCode)")
-            return .failure(error)
-        }
-
-        // 2. Download remote changes
+        if case .failure(let error) = uploadResult { return .failure(error) }
         let downloadResult = await downloadUseCase.execute()
-        if case .failure(let error) = downloadResult {
-            logger.error("❌ Download failed: \(error.errorCode)")
-            return .failure(error)
-        }
-
-        logger.info("✅ Full synchronization completed successfully")
+        if case .failure(let error) = downloadResult { return .failure(error) }
         return .success(())
     }
 }

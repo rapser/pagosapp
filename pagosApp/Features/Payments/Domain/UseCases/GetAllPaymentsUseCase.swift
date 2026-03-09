@@ -21,14 +21,11 @@ final class GetAllPaymentsUseCase {
     /// Execute get all payments
     /// - Returns: Result with array of payments or error
     func execute() async -> Result<[Payment], PaymentError> {
-        logger.debug("📱 Fetching all local payments")
-
         do {
             let payments = try await paymentRepository.getAllLocalPayments()
-            logger.debug("✅ Fetched \(payments.count) payments")
             return .success(payments)
         } catch {
-            logger.error("❌ Failed to fetch payments: \(error.localizedDescription)")
+            logger.error("Failed to fetch payments: \(error.localizedDescription)")
             return .failure(.unknown(error.localizedDescription))
         }
     }

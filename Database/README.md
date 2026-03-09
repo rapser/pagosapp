@@ -1,183 +1,78 @@
-# Database Setup - Supabase
+# Database – Supabase
 
-## Configuración Inicial
+Scripts SQL para crear y mantener las tablas de **pagosApp** en Supabase. Cada tabla tiene su propio archivo.
 
-### 1. Crear la tabla en Supabase
+## Archivos
 
-1. Ve a tu proyecto en [Supabase Dashboard](https://app.supabase.com)
-2. Ve a **SQL Editor**
-3. Copia y pega el contenido de `supabase_schema.sql`
-4. Ejecuta el script
+| Archivo | Tabla | Uso |
+|--------|--------|-----|
+| **payments.sql** | `public.payments` | Pagos del usuario (offline + sync). |
+| **reminders.sql** | `public.reminders` | Recordatorios del usuario (offline + sync). |
+| **user_profiles.sql** | `public.user_profiles` | Perfil extendido del usuario (nombre, email, moneda, etc.). |
 
-Esto creará:
-- ✅ Tabla `payments` con todas las columnas necesarias
-- ✅ Índices para mejorar el performance
-- ✅ Row Level Security (RLS) policies para seguridad
-- ✅ Trigger para actualizar automáticamente `updated_at`
+## Cómo usar los scripts
 
-### 2. Aplicar Migración de Moneda (si ya tienes la tabla creada)
+1. Entra en [Supabase Dashboard](https://app.supabase.com) y abre tu proyecto.
+2. Ve a **SQL Editor**.
+3. Ejecuta los scripts **en este orden** (por dependencias con `auth.users`):
 
-Si ya tienes la tabla `payments` creada y necesitas agregar soporte para múltiples monedas:
+   **Orden recomendado**
 
-1. Ve a **SQL Editor** en Supabase
-2. Copia y pega el contenido de `migration_add_currency.sql`
-3. Ejecuta el script
+   1. **payments.sql** – crea la tabla de pagos.
+   2. **reminders.sql** – crea la tabla de recordatorios.
+   3. **user_profiles.sql** – crea la tabla de perfiles de usuario.
 
-Esto agregará:
-- ✅ Columna `currency` con valor por defecto 'PEN'
-- ✅ Índice en la columna currency
-- ✅ Constraint para validar solo PEN o USD
-- ✅ Actualización de registros existentes a 'PEN'
+4. En cada ejecución:
+   - Copia todo el contenido del `.sql`.
+   - Pégalo en el editor.
+   - Pulsa **Run** (o el botón equivalente).
 
-### 3. Verificar la configuración
+No hace falta ejecutar los tres a la vez; puedes ejecutar solo el que necesites (por ejemplo solo `reminders.sql` si ya tienes el resto).
 
-#### Verificar la tabla
+## Verificación rápida
+
+Después de ejecutar, puedes comprobar que las tablas existen:
+
 ```sql
-SELECT * FROM payments LIMIT 5;
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public'
+  AND table_name IN ('payments', 'reminders', 'user_profiles');
 ```
 
-#### Verificar las políticas RLS
+Comprobar RLS de una tabla (ej. pagos):
+
 ```sql
 SELECT * FROM pg_policies WHERE tablename = 'payments';
 ```
 
-Deberías ver 4 políticas:
-- `Users can view their own payments`
-- `Users can insert their own payments`
-- `Users can update their own payments`
-- `Users can delete their own payments`
+## Resumen por tabla
 
-## Row Level Security (RLS)
+### payments (pagos)
 
-Las políticas RLS aseguran que:
-- ✅ Los usuarios solo pueden ver sus propios pagos
-- ✅ Los usuarios solo pueden crear pagos asociados a su cuenta
-- ✅ Los usuarios solo pueden editar/eliminar sus propios pagos
-- ❌ Un usuario NO puede acceder a los pagos de otro usuario
+- **Columnas:** `id`, `user_id`, `name`, `amount`, `currency`, `due_date`, `is_paid`, `category`, `event_identifier`, `group_id`, `created_at`, `updated_at`.
+- **Monedas:** `PEN`, `USD` (por defecto `PEN`).
+- **RLS:** cada usuario solo ve/edita sus propios pagos.
 
-## Estructura de la Tabla
+### reminders (recordatorios)
 
-| Columna | Tipo | Descripción | Restricciones |
-|---------|------|-------------|---------------|
-| `id` | UUID | Identificador único | PRIMARY KEY |
-| `user_id` | UUID | ID del usuario (FK a auth.users) | NOT NULL, ON DELETE CASCADE |
-| `name` | TEXT | Nombre del pago | NOT NULL |
-| `amount` | DECIMAL(10,2) | Monto del pago | NOT NULL, >= 0 |
-| `currency` | TEXT | Moneda del pago (PEN o USD) | NOT NULL, DEFAULT 'PEN' |
-| `due_date` | TIMESTAMPTZ | Fecha de vencimiento | NOT NULL |
-| `is_paid` | BOOLEAN | Estado del pago | NOT NULL, DEFAULT FALSE |
-| `category` | TEXT | Categoría del pago | NOT NULL, CHECK constraint |
-| `event_identifier` | TEXT | ID del evento en Calendar | NULLABLE |
-| `created_at` | TIMESTAMPTZ | Fecha de creación | DEFAULT NOW() |
-| `updated_at` | TIMESTAMPTZ | Última actualización | DEFAULT NOW() |
+- **Columnas:** `id`, `user_id`, `reminder_type`, `title`, `description`, `due_date`, `is_completed`, `created_at`, `updated_at`.
+- **reminder_type:** `cardRenewal`, `membership`, `subscription`, `pension`, `deposit`, `savings`, `documents`, `taxes`, `other`.
+- **RLS:** cada usuario solo ve/edita sus propios recordatorios.
 
-## Categorías Válidas
+### user_profiles (usuario)
 
-- `Recibo`
-- `Tarjeta de Crédito`
-- `Ahorro`
-- `Suscripción`
-- `Otro`
+- **Columnas:** `user_id` (PK), `full_name`, `email`, `phone`, `date_of_birth`, `gender`, `country`, `city`, `preferred_currency`.
+- **RLS:** cada usuario solo ve/edita su propio perfil.
 
-## Monedas Soportadas
-
-- `PEN` - Soles Peruanos (S/)
-- `USD` - Dólares Americanos ($)
-
-Por defecto, todos los pagos se crean en **PEN** (Soles).
-
-## Índices
-
-Para mejorar el performance de las queries:
-
-1. `idx_payments_user_id` - Acelera filtrado por usuario
-2. `idx_payments_due_date` - Acelera ordenamiento por fecha
-3. `idx_payments_is_paid` - Acelera filtrado por estado
-4. `idx_payments_currency` - Acelera filtrado por moneda
-
-## Testing Manual
-
-### Insertar un pago de prueba en Soles
-```sql
-INSERT INTO payments (user_id, name, amount, currency, due_date, is_paid, category)
-VALUES (
-    auth.uid(), -- Tu user ID actual
-    'Test Payment - Soles',
-    100.50,
-    'PEN',
-    '2025-12-01',
-    FALSE,
-    'Recibo'
-);
-```
-
-### Insertar un pago de prueba en Dólares
-```sql
-INSERT INTO payments (user_id, name, amount, currency, due_date, is_paid, category)
-VALUES (
-    auth.uid(), -- Tu user ID actual
-    'Test Payment - Dollars',
-    50.00,
-    'USD',
-    '2025-12-15',
-    FALSE,
-    'Suscripción'
-);
-```
-
-### Ver tus pagos
-```sql
-SELECT * FROM payments WHERE user_id = auth.uid();
-```
-
-### Actualizar un pago
-```sql
-UPDATE payments
-SET is_paid = TRUE
-WHERE id = 'tu-payment-id';
-```
-
-### Eliminar un pago
-```sql
-DELETE FROM payments WHERE id = 'tu-payment-id';
-```
-
-## Sincronización en la App
-
-La app usa `PaymentSyncManager` para sincronizar automáticamente:
-
-- **Al iniciar sesión**: Sincronización completa
-- **Al crear/editar/eliminar pago**: Sincronización inmediata
-- **Periódicamente**: Cada hora (si hay cambios)
+Los tres scripts son suficientes para crear el esquema en Supabase o para migrar/recrear las tablas en otro motor (PostgreSQL compatible).
 
 ## Troubleshooting
 
-### Error: "new row violates row-level security policy"
-- Verifica que RLS esté habilitado: `ALTER TABLE payments ENABLE ROW LEVEL SECURITY;`
-- Verifica que las políticas estén creadas correctamente
+- **"relation does not exist"**  
+  Ejecuta el script correspondiente a esa tabla (`payments.sql`, `reminders.sql` o `user_profiles.sql`).
 
-### Error: "relation 'payments' does not exist"
-- Ejecuta el script `supabase_schema.sql` completo
+- **"new row violates row-level security policy"**  
+  Asegúrate de que el usuario esté autenticado (`auth.uid()` no nulo) y de que las políticas RLS estén creadas (vuelve a ejecutar el script de esa tabla).
 
-### Los datos no se sincronizan
-- Verifica que estés autenticado: `SELECT auth.uid();` debe devolver tu user ID
-- Verifica los logs de la app en Xcode Console
-- Verifica las credenciales en `Config/Secrets.xcconfig`
-
-## Backup y Migraciones
-
-### Backup de la tabla
-```sql
-SELECT * FROM payments;
-```
-(Exporta como CSV desde Supabase Dashboard)
-
-### Restaurar backup
-Usa la interfaz de Supabase Dashboard para importar CSV.
-
-## Próximos Pasos
-
-- [ ] Configurar webhooks para sincronización en tiempo real
-- [ ] Agregar tabla de `payment_history` para auditoría
-- [ ] Implementar soft deletes (en lugar de DELETE)
-- [ ] Agregar campos para adjuntos/recibos escaneados
+- **Trigger: EXECUTE FUNCTION no reconocido**  
+  En versiones antiguas de Postgres puede ser necesario usar `EXECUTE PROCEDURE` en lugar de `EXECUTE FUNCTION`. En ese caso edita la última línea del trigger en el script y cambia la palabra clave.

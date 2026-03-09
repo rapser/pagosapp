@@ -30,6 +30,19 @@ final class PaymentDependencyContainer {
     private let remoteDTOMapper: PaymentRemoteDTOMapping = PaymentRemoteDTOMapper()
     private let uiMapper: PaymentUIMapping = PaymentUIMapper()
 
+    // Single repository instance per container (avoids creating new instances on every make call)
+    private lazy var sharedPaymentRepository: PaymentRepositoryProtocol = PaymentRepositoryImpl(
+        remoteDataSource: remoteDataSource,
+        localDataSource: localDataSource,
+        remoteDTOMapper: remoteDTOMapper
+    )
+
+    private lazy var sharedPaymentSyncRepository: PaymentSyncRepositoryProtocol = PaymentSyncRepositoryImpl(
+        remoteDataSource: remoteDataSource,
+        localDataSource: localDataSource,
+        supabaseClient: supabaseClient
+    )
+
     // MARK: - Initialization
 
     init(supabaseClient: SupabaseClient, modelContext: ModelContext, eventBus: EventBus) {
@@ -57,19 +70,11 @@ final class PaymentDependencyContainer {
     // MARK: - Repositories
 
     func makePaymentRepository() -> PaymentRepositoryProtocol {
-        return PaymentRepositoryImpl(
-            remoteDataSource: remoteDataSource,
-            localDataSource: localDataSource,
-            remoteDTOMapper: remoteDTOMapper
-        )
+        sharedPaymentRepository
     }
 
     func makePaymentSyncRepository() -> PaymentSyncRepositoryProtocol {
-        return PaymentSyncRepositoryImpl(
-            remoteDataSource: remoteDataSource,
-            localDataSource: localDataSource,
-            supabaseClient: supabaseClient
-        )
+        sharedPaymentSyncRepository
     }
 
     // MARK: - Use Cases (CRUD)

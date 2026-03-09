@@ -14,17 +14,20 @@ final class SettingsDependencyContainer {
     // MARK: - External Dependencies
 
     private let paymentSyncCoordinator: PaymentSyncCoordinator
+    private let reminderSyncCoordinator: ReminderSyncCoordinator
     private let authDependencyContainer: AuthDependencyContainer
     private let userProfileDependencyContainer: UserProfileDependencyContainer
     private let eventBus: EventBus
 
     init(
         paymentSyncCoordinator: PaymentSyncCoordinator,
+        reminderSyncCoordinator: ReminderSyncCoordinator,
         authDependencyContainer: AuthDependencyContainer,
         userProfileDependencyContainer: UserProfileDependencyContainer,
         eventBus: EventBus
     ) {
         self.paymentSyncCoordinator = paymentSyncCoordinator
+        self.reminderSyncCoordinator = reminderSyncCoordinator
         self.authDependencyContainer = authDependencyContainer
         self.userProfileDependencyContainer = userProfileDependencyContainer
         self.eventBus = eventBus
@@ -34,7 +37,8 @@ final class SettingsDependencyContainer {
 
     func makeSettingsSyncRepository() -> SettingsSyncRepositoryProtocol {
         SettingsSyncRepositoryImpl(
-            paymentSyncCoordinator: paymentSyncCoordinator
+            paymentSyncCoordinator: paymentSyncCoordinator,
+            reminderSyncCoordinator: reminderSyncCoordinator
         )
     }
 

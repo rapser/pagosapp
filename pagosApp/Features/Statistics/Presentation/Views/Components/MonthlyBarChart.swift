@@ -14,7 +14,7 @@ struct MonthlyBarChart: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Últimos 6 Meses")
+            Text(L10n.Statistics.chartLast6Months)
                 .font(.title3).bold()
                 .foregroundColor(Color("AppTextPrimary"))
                 .padding(.horizontal)

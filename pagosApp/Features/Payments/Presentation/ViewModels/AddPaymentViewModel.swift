@@ -110,8 +110,7 @@ final class AddPaymentViewModel {
     func savePayment() async {
         // Validate
         guard isValid else {
-            logger.warning("⚠️ Invalid payment data")
-            showValidationError("Por favor completa todos los campos correctamente")
+            showValidationError(L10n.Payments.Validation.completeFields)
             return
         }
 
@@ -139,7 +138,7 @@ final class AddPaymentViewModel {
             finalCurrency = .usd
             finalAmount = usdAmount
         } else {
-            showValidationError("El monto debe ser mayor a cero")
+            showValidationError(L10n.Payments.Validation.amountGreaterZero)
             return
         }
 
@@ -150,12 +149,11 @@ final class AddPaymentViewModel {
 
         switch result {
         case .success:
-            logger.info("✅ Payment created: \(paymentUI.name)")
             clearForm()
             onPaymentCreated?()
 
         case .failure(let error):
-            logger.error("❌ Failed to save payment: \(error.errorCode)")
+            logger.error("Failed to save payment: \(error.errorCode)")
             showError(for: error)
         }
     }
@@ -166,7 +164,7 @@ final class AddPaymentViewModel {
               let usdAmount = amountUSDValue,
               penAmount > 0,
               usdAmount > 0 else {
-            showValidationError("Ambos montos deben ser mayores a cero")
+            showValidationError(L10n.Payments.Validation.bothAmountsGreaterZero)
             return
         }
 
@@ -183,12 +181,11 @@ final class AddPaymentViewModel {
 
         switch (resultPEN, resultUSD) {
         case (.success, .success):
-            logger.info("✅ Dual-currency payment created: \(self.name) (PEN: \(penAmount), USD: \(usdAmount))")
             clearForm()
             onPaymentCreated?()
 
         case (.failure(let error), _), (_, .failure(let error)):
-            logger.error("❌ Failed to save dual-currency payment: \(error.errorCode)")
+            logger.error("Failed to save dual-currency payment: \(error.errorCode)")
             showError(for: error)
         }
     }
@@ -210,18 +207,7 @@ final class AddPaymentViewModel {
     }
 
     private func showError(for error: PaymentError) {
-        switch error {
-        case .invalidName:
-            errorMessage = "El nombre del pago es requerido"
-        case .invalidAmount:
-            errorMessage = "El monto debe ser mayor a cero"
-        case .invalidDate:
-            errorMessage = "La fecha seleccionada no es válida"
-        case .saveFailed(let details):
-            errorMessage = "No se pudo guardar el pago: \(details)"
-        default:
-            errorMessage = "Ocurrió un error al guardar el pago"
-        }
+        errorMessage = PaymentErrorMessageMapper.message(for: error)
         showError = true
     }
 }

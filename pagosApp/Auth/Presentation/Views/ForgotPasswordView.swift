@@ -109,12 +109,6 @@ struct ForgotPasswordView: View {
         } message: {
             Text("Se ha enviado un correo para restablecer tu contraseña. Revisa tu bandeja de entrada.")
         }
-        .alert("Error", isPresented: $viewModel.showError) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            if let errorMessage = viewModel.errorMessage {
-                Text(errorMessage)
-            }
-        }
+        .errorAlert(isPresented: $viewModel.showError, message: viewModel.errorMessage)
     }
 }
