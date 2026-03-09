@@ -20,6 +20,8 @@ final class SettingsViewModel {
     var pendingSyncCount: Int = 0
     var syncError: Error?
     var isLoading = false
+    /// Mensaje mostrado en el overlay de carga (sincronizando, cerrando sesión, etc.).
+    var loadingMessage: String = ""
 
     // MARK: - Dependencies (Use Cases only - Clean Architecture)
 
@@ -103,6 +105,7 @@ final class SettingsViewModel {
     }
 
     func performSync() async {
+        loadingMessage = L10n.Settings.syncing
         isLoading = true
         defer { isLoading = false }
 
@@ -133,6 +136,7 @@ final class SettingsViewModel {
     // MARK: - Database Operations
 
     func clearLocalDatabase() async -> Bool {
+        loadingMessage = L10n.Settings.repairingDb
         isLoading = true
         defer { isLoading = false }
 
@@ -151,6 +155,7 @@ final class SettingsViewModel {
     // MARK: - Session Operations
 
     func logout() async {
+        loadingMessage = L10n.Settings.loggingOut
         isLoading = true
         defer { isLoading = false }
 
@@ -165,6 +170,7 @@ final class SettingsViewModel {
     }
 
     func unlinkDevice() async {
+        loadingMessage = L10n.Settings.unlinking
         isLoading = true
         defer { isLoading = false }
 

@@ -243,6 +243,9 @@ enum L10n {
         static let title = tr("settings.title")
         static let syncErrorTitle = tr("settings.syncError.title")
         static let loggingOut = tr("settings.loggingOut")
+        static let syncing = tr("settings.syncing")
+        static let unlinking = tr("settings.unlinking")
+        static let repairingDb = tr("settings.repairingDb")
         enum RepairDb {
             static let title = tr("settings.repairDb.title")
             static let button = tr("settings.repairDb.button")

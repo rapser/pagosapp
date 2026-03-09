@@ -162,6 +162,9 @@
 "settings.title" = "Settings";
 "settings.syncError.title" = "Sync Error";
 "settings.loggingOut" = "Signing out...";
+"settings.syncing" = "Syncing...";
+"settings.unlinking" = "Unlinking...";
+"settings.repairingDb" = "Resetting database...";
 "settings.repairDb.title" = "Repair Database";
 "settings.repairDb.button" = "Repair";
 "settings.repairDb.successTitle" = "Database Repaired";
