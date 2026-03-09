@@ -58,7 +58,6 @@ final class StatisticsViewModel {
     func loadAvailableCurrencies() async {
         hasPENPayments = await checkPaymentsByCurrencyUseCase.execute(currency: .pen)
         hasUSDPayments = await checkPaymentsByCurrencyUseCase.execute(currency: .usd)
-        logger.info("✅ Currency availability - PEN: \(self.hasPENPayments), USD: \(self.hasUSDPayments)")
     }
 
     /// Load category statistics
@@ -71,10 +70,9 @@ final class StatisticsViewModel {
         switch result {
         case .success(let stats):
             categoryStats = stats
-            logger.info("✅ Loaded \(stats.count) category stats")
 
         case .failure(let error):
-            logger.error("❌ Failed to load category stats: \(error.errorCode)")
+            logger.error("Failed to load category stats: \(error.errorCode)")
             errorMessage = L10n.Statistics.errorCategory
         }
     }
@@ -89,10 +87,9 @@ final class StatisticsViewModel {
         switch result {
         case .success(let stats):
             monthlyStats = stats
-            logger.info("✅ Loaded \(stats.count) monthly stats")
 
         case .failure(let error):
-            logger.error("❌ Failed to load monthly stats: \(error.errorCode)")
+            logger.error("Failed to load monthly stats: \(error.errorCode)")
             errorMessage = L10n.Statistics.errorMonthly
         }
     }
@@ -107,10 +104,9 @@ final class StatisticsViewModel {
         switch result {
         case .success(let total):
             totalSpending = total
-            logger.info("✅ Total spending: \(total)")
 
         case .failure(let error):
-            logger.error("❌ Failed to load total spending: \(error.errorCode)")
+            logger.error("Failed to load total spending: \(error.errorCode)")
         }
     }
 

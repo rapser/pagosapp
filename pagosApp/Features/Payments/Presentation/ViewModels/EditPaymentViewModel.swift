@@ -139,15 +139,11 @@ final class EditPaymentViewModel {
     func saveChanges(onSuccess: (() -> Void)? = nil) async {
         // Validate
         guard isValid else {
-            logger.warning("⚠️ Invalid payment data")
             showValidationError(L10n.Payments.Validation.completeFields)
             return
         }
 
-        guard hasChanges else {
-            logger.info("ℹ️ No changes to save")
-            return
-        }
+        guard hasChanges else { return }
 
         isLoading = true
         defer { isLoading = false }
@@ -187,12 +183,11 @@ final class EditPaymentViewModel {
 
         switch result {
         case .success:
-            logger.info("✅ Payment updated: \(updatedPaymentUI.name)")
             onPaymentUpdated?()
             onSuccess?()
 
         case .failure(let error):
-            logger.error("❌ Failed to update payment: \(error.errorCode)")
+            logger.error("Failed to update payment: \(error.errorCode)")
             showError(for: error)
         }
     }
@@ -245,12 +240,11 @@ final class EditPaymentViewModel {
 
         switch (resultPEN, resultUSD) {
         case (.success, .success):
-            logger.info("✅ Dual-currency payment updated: \(self.name) (PEN: \(penAmountValue), USD: \(usdAmountValue))")
             onPaymentUpdated?()
             onSuccess?()
 
         case (.failure(let error), _), (_, .failure(let error)):
-            logger.error("❌ Failed to update dual-currency payment: \(error.errorCode)")
+            logger.error("Failed to update dual-currency payment: \(error.errorCode)")
             showError(for: error)
         }
     }
@@ -302,12 +296,11 @@ final class EditPaymentViewModel {
 
         switch result {
         case .success(let updatedPayment):
-            logger.info("✅ Payment status toggled: \(updatedPayment.name)")
             isPaid = updatedPayment.isPaid
             onPaymentUpdated?()
 
         case .failure(let error):
-            logger.error("❌ Failed to toggle payment status: \(error.errorCode)")
+            logger.error("Failed to toggle payment status: \(error.errorCode)")
             showError(for: error)
         }
     }

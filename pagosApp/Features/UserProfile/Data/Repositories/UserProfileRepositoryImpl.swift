@@ -29,24 +29,15 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
         self.localDataSource = localDataSource
         self.domainMapper = domainMapper
         self.remoteDTOMapper = remoteDTOMapper
-        logger.info("\(L10n.Log.Profile.initRepo)")
     }
 
-    // MARK: - Remote Operations
-
     func fetchProfile(userId: UUID) async -> Result<UserProfile, UserProfileError> {
-        logger.info("\(L10n.Log.Profile.fetching(userId.uuidString))")
-
         do {
             guard let profileDTO = try await remoteDataSource.fetchProfile(userId: userId) else {
-                logger.error("\(L10n.Log.Profile.notFound(userId.uuidString))")
                 return .failure(.profileNotFound)
             }
-
             let profileDomain = remoteDTOMapper.toDomain(profileDTO)
-            logger.info("\(L10n.Log.Profile.fetchedMapped)")
             return .success(profileDomain)
-
         } catch {
             logger.error("\(L10n.Log.Profile.fetchFailed(error.localizedDescription))")
             return .failure(.fetchFailed(error.localizedDescription))
@@ -54,15 +45,10 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
     }
 
     func updateProfile(_ profile: UserProfile) async -> Result<UserProfile, UserProfileError> {
-        logger.info("\(L10n.Log.Profile.updating(profile.userId.uuidString))")
-
         do {
             let profileDTO = remoteDTOMapper.toRemoteDTO(profile)
             try await remoteDataSource.updateProfile(profileDTO)
-
-            logger.info("\(L10n.Log.Profile.updated)")
             return .success(profile)
-
         } catch {
             logger.error("\(L10n.Log.Profile.updateFailed(error.localizedDescription))")
             return .failure(.updateFailed(error.localizedDescription))
@@ -72,25 +58,18 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
     // MARK: - Local Operations
 
     func getLocalProfile() async -> Result<UserProfile?, UserProfileError> {
-        logger.debug("\(L10n.Log.Profile.fetchingLocal)")
         return await _getLocalProfile()
     }
 
     func saveLocalProfile(_ profile: UserProfile) async -> Result<Void, UserProfileError> {
-        logger.debug("\(L10n.Log.Profile.savingLocal)")
         let result = await _saveLocalProfile(profile)
-
-        // Notify that profile was saved
         if case .success = result {
             NotificationCenter.default.post(name: NSNotification.Name("UserProfileDidUpdate"), object: nil)
-            logger.debug("\(L10n.Log.Profile.postedNotification)")
         }
-
         return result
     }
 
     func deleteLocalProfile() async -> Result<Void, UserProfileError> {
-        logger.info("\(L10n.Log.Profile.deletingLocal)")
         return await _deleteLocalProfile()
     }
 
@@ -100,13 +79,6 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
         do {
             let profileDTOs = try await localDataSource.fetchAll()
             let profileDomain = profileDTOs.first.map { domainMapper.toDomain($0) }
-
-            if profileDomain != nil {
-                logger.debug("\(L10n.Log.Profile.localFound)")
-            } else {
-                logger.debug("\(L10n.Log.Profile.noLocalFound)")
-            }
-
             return .success(profileDomain)
 
         } catch {
@@ -126,8 +98,6 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
             // Convert Domain -> LocalDTO and save
             let profileDTO = domainMapper.toLocalDTO(profile)
             try await localDataSource.save(profileDTO)
-
-            logger.info("\(L10n.Log.Profile.savedToStorage)")
             return .success(())
 
         } catch {
@@ -139,7 +109,6 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
     private func _deleteLocalProfile() async -> Result<Void, UserProfileError> {
         do {
             try await localDataSource.clear()
-            logger.info("\(L10n.Log.Profile.localDeleted)")
             return .success(())
 
         } catch {

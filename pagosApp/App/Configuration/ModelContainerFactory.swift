@@ -27,22 +27,16 @@ enum ModelContainerFactory {
         }
     }
 
-    /// Attempts to recover from database corruption by recreating the database
     private static func recoverFromCorruption(schema: Schema, configuration: ModelConfiguration) -> ModelContainer {
-        logger.warning("\(L10n.Log.Db.recoveryAttempt)")
-
         if let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
             let storeURL = appSupportURL.appendingPathComponent("default.store")
             try? FileManager.default.removeItem(at: storeURL)
             try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("wal"))
             try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("shm"))
-            logger.info("\(L10n.Log.Db.corruptedRemoved)")
         }
 
         do {
-            let newContainer = try ModelContainer(for: schema, configurations: [configuration])
-            logger.info("\(L10n.Log.Db.recreated)")
-            return newContainer
+            return try ModelContainer(for: schema, configurations: [configuration])
         } catch {
             logger.error("\(L10n.Log.Db.recoveryFailed(error.localizedDescription))")
             fatalError("Could not initialize SwiftData container: \(error)")

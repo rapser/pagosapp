@@ -7,12 +7,10 @@
 //
 
 import Foundation
-import OSLog
 
 /// Use case for getting count of payments pending sync
 final class GetPendingSyncCountUseCase {
     private let syncRepository: PaymentSyncRepositoryProtocol
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "GetPendingSyncCountUseCase")
 
     init(syncRepository: PaymentSyncRepositoryProtocol) {
         self.syncRepository = syncRepository
@@ -22,12 +20,9 @@ final class GetPendingSyncCountUseCase {
     /// - Returns: Number of payments pending synchronization
     func execute() async -> Int {
         do {
-            let count = try await syncRepository.getPendingSyncCount()
-            logger.debug("📊 Pending sync count: \(count)")
-            return count
+            return try await syncRepository.getPendingSyncCount()
         } catch {
-            logger.error("❌ Failed to get pending sync count: \(error.localizedDescription)")
-            return 0 // Safe default
+            return 0
         }
     }
 }

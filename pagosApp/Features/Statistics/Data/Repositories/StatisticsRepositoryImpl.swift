@@ -18,14 +18,9 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
 
     init(paymentRepository: PaymentRepositoryProtocol) {
         self.paymentRepository = paymentRepository
-        logger.info("\(L10n.Log.Statistics.initRepo)")
     }
 
-    // MARK: - Statistics Queries
-
     func getAllPayments() async -> Result<[Payment], PaymentError> {
-        logger.debug("\(L10n.Log.Statistics.gettingAll)")
-
         do {
             let payments = try await paymentRepository.getAllLocalPayments()
             return .success(payments)
@@ -39,8 +34,6 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
         filter: StatsFilter,
         currency: Currency
     ) async -> Result<[Payment], PaymentError> {
-        logger.debug("\(L10n.Log.Statistics.gettingFiltered(filter.rawValue, currency.rawValue))")
-
         // Get all payments first
         let allPayments: [Payment]
         do {
@@ -63,10 +56,7 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
             timeFiltered = allPayments
         }
 
-        // Filter by currency
         let filtered = timeFiltered.filter { $0.currency == currency }
-
-        logger.info("\(L10n.Log.Statistics.filteredCount(filtered.count, allPayments.count))")
         return .success(filtered)
     }
 
@@ -74,8 +64,6 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
         count: Int,
         currency: Currency
     ) async -> Result<[Payment], PaymentError> {
-        logger.debug("\(L10n.Log.Statistics.gettingForMonths(count, currency.rawValue))")
-
         // Get all payments first
         let allPayments: [Payment]
         do {
@@ -113,7 +101,6 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
             return isInPeriod && payment.currency == currency
         }
 
-        logger.info("\(L10n.Log.Statistics.filteredForMonths(filtered.count, count, allPayments.count))")
         return .success(filtered)
     }
 }

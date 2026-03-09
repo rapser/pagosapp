@@ -52,25 +52,14 @@ final class UserProfileViewModel {
     /// Load user profile from local storage (offline-first, fast - no loading indicator)
     func loadLocalProfile() async {
         errorMessage = nil
-
-        logger.info("🔍 [ViewModel] Starting loadLocalProfile")
         let result = await getLocalProfileUseCase.execute()
 
         switch result {
         case .success(let loadedProfile):
-            logger.info("🔍 [ViewModel] Got result - profile is \(loadedProfile == nil ? "nil" : "not nil")")
-            // Convert Domain -> UI
             profile = loadedProfile.map { mapper.toUI($0) }
-            logger.info("🔍 [ViewModel] Assigned to self.profile - self.profile is now \(self.profile == nil ? "nil" : "not nil")")
-
-            if let loadedProfile = loadedProfile {
-                logger.info("✅ Profile loaded from local storage - Name: \(loadedProfile.fullName), Email: \(loadedProfile.email)")
-            } else {
-                logger.warning("⚠️ No local profile found in SwiftData")
-            }
 
         case .failure(let error):
-            logger.error("❌ Error loading local profile: \(error.errorCode)")
+            logger.error("Error loading local profile: \(error.errorCode)")
             errorMessage = L10n.Profile.errorLoadLocal
         }
     }
@@ -85,14 +74,12 @@ final class UserProfileViewModel {
 
         switch result {
         case .success(let fetchedProfile):
-            // Convert Domain -> UI
             profile = mapper.toUI(fetchedProfile)
-            logger.info("✅ Profile fetched and saved successfully")
             isLoading = false
             return true
 
         case .failure(let error):
-            logger.error("❌ Error fetching profile: \(error.errorCode)")
+            logger.error("Error fetching profile: \(error.errorCode)")
             errorMessage = L10n.Profile.errorLoad(error.errorCode)
             isLoading = false
             return false
@@ -117,14 +104,12 @@ final class UserProfileViewModel {
 
         switch result {
         case .success(let savedProfile):
-            // Convert Domain -> UI
             profile = mapper.toUI(savedProfile)
-            logger.info("✅ Profile updated successfully")
             isSaving = false
             return true
 
         case .failure(let error):
-            logger.error("❌ Error updating profile: \(error.errorCode)")
+            logger.error("Error updating profile: \(error.errorCode)")
             errorMessage = L10n.Profile.errorUpdate(error.errorCode)
             isSaving = false
             return false
@@ -138,10 +123,9 @@ final class UserProfileViewModel {
         switch result {
         case .success:
             profile = nil
-            logger.info("✅ Local profile cleared")
 
         case .failure(let error):
-            logger.error("❌ Error clearing local profile: \(error.errorCode)")
+            logger.error("Error clearing local profile: \(error.errorCode)")
         }
     }
 

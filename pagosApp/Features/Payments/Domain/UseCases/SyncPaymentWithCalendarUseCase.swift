@@ -42,8 +42,6 @@ final class SyncPaymentWithCalendarUseCase {
     /// - Parameter payment: The payment to sync
     /// - Returns: Result with updated payment (with eventIdentifier) or error
     func execute(_ payment: Payment) async -> Result<Payment, PaymentError> {
-        logger.info("📅 Syncing payment with calendar: \(payment.name)")
-
         // Check if payment is part of a group
         if let groupId = payment.groupId {
             return await syncGroupedPayment(payment: payment, groupId: groupId)
@@ -64,7 +62,6 @@ final class SyncPaymentWithCalendarUseCase {
                 dueDate: payment.dueDate,
                 isPaid: payment.isPaid
             )
-            logger.info("✅ Calendar event updated: \(eventId)")
             return .success(payment)
         }
 
@@ -74,8 +71,6 @@ final class SyncPaymentWithCalendarUseCase {
 
     /// Sync a grouped payment (PEN + USD) - only create/update one event for the group
     private func syncGroupedPayment(payment: Payment, groupId: UUID) async -> Result<Payment, PaymentError> {
-        logger.info("🔗 Syncing grouped payment: \(groupId)")
-
         do {
             // Get all payments in the group
             let allPayments = try await paymentRepository.getAllLocalPayments()
@@ -132,7 +127,6 @@ final class SyncPaymentWithCalendarUseCase {
                     }
                 }
 
-                logger.info("✅ Grouped payment calendar event updated: \(existingEventId)")
                 return .success(updatedPayment)
             } else {
                 // No event exists yet, create one and share it with all payments in the group
@@ -170,7 +164,6 @@ final class SyncPaymentWithCalendarUseCase {
 
         do {
             try await paymentRepository.savePayment(updatedPayment)
-            logger.info("✅ Calendar event created and payment updated: \(eventIdentifier)")
             return .success(updatedPayment)
         } catch {
             logger.error("❌ Failed to save payment with eventIdentifier: \(error.localizedDescription)")
@@ -227,7 +220,6 @@ final class SyncPaymentWithCalendarUseCase {
                 try await paymentRepository.savePayment(updatedSibling)
             }
 
-            logger.info("✅ Calendar event created for group and all payments updated: \(eventIdentifier)")
             return .success(updatedPayment)
         } catch {
             logger.error("❌ Failed to save grouped payments with eventIdentifier: \(error.localizedDescription)")
@@ -249,9 +241,6 @@ final class SyncPaymentWithCalendarUseCase {
                 // Only remove event if no other payment in the group needs it
                 if groupPayments.isEmpty || groupPayments.allSatisfy({ $0.eventIdentifier != eventId }) {
                     calendarEventDataSource.removeEvent(eventIdentifier: eventId)
-                    logger.info("✅ Calendar event removed: \(eventId)")
-                } else {
-                    logger.info("ℹ️ Keeping calendar event as other payments in group still need it")
                 }
             } catch {
                 logger.error("❌ Failed to check grouped payments: \(error.localizedDescription)")
@@ -260,7 +249,6 @@ final class SyncPaymentWithCalendarUseCase {
             }
         } else {
             calendarEventDataSource.removeEvent(eventIdentifier: eventId)
-            logger.info("✅ Calendar event removed: \(eventId)")
         }
     }
 }
