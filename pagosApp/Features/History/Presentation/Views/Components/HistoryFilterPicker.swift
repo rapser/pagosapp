@@ -4,9 +4,9 @@ struct HistoryFilterPicker: View {
     @Binding var selectedFilter: PaymentHistoryFilter
 
     var body: some View {
-        Picker("Filtrar", selection: $selectedFilter) {
+        Picker(L10n.Payments.List.filter, selection: $selectedFilter) {
             ForEach(PaymentHistoryFilter.allCases) { filter in
-                Text(filter.rawValue).tag(filter)
+                Text(L10n.History.filterDisplayName(filter)).tag(filter)
             }
         }
         .pickerStyle(.segmented)

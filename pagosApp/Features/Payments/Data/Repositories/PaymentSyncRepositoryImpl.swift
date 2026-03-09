@@ -8,7 +8,6 @@
 
 import Foundation
 import Supabase
-import OSLog
 
 /// Implementation of payment sync repository
 final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
@@ -16,7 +15,6 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
     private let localDataSource: PaymentLocalDataSource
     private let supabaseClient: SupabaseClient
     private let mapper: PaymentMapper.Type
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentSyncRepositoryImpl")
 
     init(
         remoteDataSource: PaymentRemoteDataSource,
@@ -34,18 +32,12 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
 
     func getCurrentUserId() async throws -> UUID {
         guard let userId = supabaseClient.auth.currentUser?.id else {
-            logger.error("❌ No authenticated user")
             throw PaymentSyncError.notAuthenticated
         }
         return userId
     }
 
-    // MARK: - Upload
-
     func uploadPayments(_ payments: [Payment], userId: UUID) async throws {
-        logger.info("📤 Uploading \(payments.count) payments")
-
-        // Convert entities to DTOs
         let dtos = mapper.toRemoteDTO(from: payments, userId: userId)
 
         // Upload to remote
@@ -70,49 +62,27 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
             updatedPayments.append(updated)
         }
 
-        // Save updated entities locally
         try await _savePaymentsLocally(updatedPayments)
-
-        logger.info("✅ \(payments.count) payments uploaded and marked as synced")
     }
 
     // MARK: - Download
 
     func downloadPayments(userId: UUID) async throws -> [Payment] {
-        logger.info("📥 Downloading payments for user: \(userId)")
-
-        // Fetch from remote
         let dtos = try await remoteDataSource.fetchAll(userId: userId)
-
-        // Convert to domain entities
-        let entities = mapper.toDomain(from: dtos)
-
-        logger.info("✅ Downloaded \(entities.count) payments")
-        return entities
+        return mapper.toDomain(from: dtos)
     }
-
-    // MARK: - Delete
 
     func syncDeletion(paymentId: UUID) async throws {
-        logger.info("🗑️ Syncing deletion of payment: \(paymentId)")
         try await remoteDataSource.delete(id: paymentId)
-        logger.info("✅ Payment deletion synced")
     }
 
-    // MARK: - Pending Payments
-
     func getPendingPayments() async throws -> [Payment] {
-        logger.debug("📊 Getting pending payments")
         let entities = try await _getAllLocalPayments()
-
-        let pending = entities.filter { payment in
+        return entities.filter { payment in
             payment.syncStatus == .local ||
             payment.syncStatus == .modified ||
             payment.syncStatus == .error
         }
-
-        logger.debug("✅ Found \(pending.count) pending payments")
-        return pending
     }
 
     func getPendingSyncCount() async throws -> Int {
@@ -123,12 +93,7 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
     // MARK: - Update Sync Status
 
     func updateSyncStatus(paymentId: UUID, status: SyncStatus) async throws {
-        logger.debug("🔄 Updating sync status for \(paymentId) to \(status.rawValue)")
-
-        guard let payment = try await _getLocalPayment(id: paymentId) else {
-            logger.warning("⚠️ Payment not found: \(paymentId)")
-            return
-        }
+        guard let payment = try await _getLocalPayment(id: paymentId) else { return }
 
         let updated = Payment(
             id: payment.id,
@@ -145,7 +110,6 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
         )
 
         try await _savePaymentLocally(updated)
-        logger.debug("✅ Sync status updated")
     }
 
     // MARK: - Private @MainActor helpers

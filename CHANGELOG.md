@@ -6,6 +6,57 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [1.0.0] - Build 15 - 2026-03-08
+
+### Resumen
+
+**RECORDATORIOS + i18n + CALENDARIO UNIFICADO + REORGANIZACIÓN TABS + LIMPIEZA DE LOGS**
+
+- Nuevo módulo **Recordatorios** (independiente de Pagos): tipos genéricos, título, descripción, fecha; sincronización con Supabase; notificaciones desde 5 días antes.
+- **Internacionalización (i18n)**: español por defecto, inglés y portugués; textos de UI centralizados.
+- **Calendario**: muestra pagos y recordatorios.
+- **Navegación**: tabs principales Pagos, Recordatorios, Calendario, Ajustes; Historial y Estadísticas accesibles desde Ajustes.
+- **Sincronización**: un solo botón en Ajustes sincroniza pagos y recordatorios; textos de sync actualizados.
+- **Logging**: eliminados logs no esenciales (info/debug/warning); consola limpia; solo errores esenciales.
+
+### Recordatorios
+
+- Feature completo con Clean Architecture: Domain (Reminder, ReminderType), Data (DTOs local/remote, mappers, data sources, sync repository), Presentation (listas, alta/edición, coordinador de sync).
+- Tipos: renovación tarjeta, membresía, suscripción, cobro, ahorro, documentos, impuestos, otro.
+- Campos: título, descripción opcional, fecha de vencimiento, estado completado.
+- Lista: celda con checkbox para marcar completado; título, tipo y fecha visibles; descripción solo en detalle/edición.
+- Notificaciones: desde 5 días antes hasta el mismo día (9:00 y 14:00), igual lógica que pagos pero con más días.
+- Tabla Supabase `reminders` con script en `Database/reminders.sql` (columnas: `description`, `is_completed`).
+
+### Internacionalización
+
+- `Localizable.strings` en Base, es, en, pt; español como idioma por defecto.
+- L10n centralizado para UI; mensajes de consola opcionalmente localizados.
+
+### Calendario y navegación
+
+- Calendario muestra eventos de pagos y recordatorios.
+- Tabs: Pagos, Recordatorios, Calendario, Ajustes.
+- Desde Ajustes: enlaces a Historial y Estadísticas.
+
+### Sincronización
+
+- Un botón "Sincronizar" actualiza pagos y recordatorios; contador de pendientes y mensajes de carga correctos (p. ej. "Sincronizando...").
+- Scripts SQL en `Database/`: `payments.sql`, `reminders.sql`, `user_profiles.sql`.
+
+### Limpieza de logs
+
+- Eliminados `logger.info`, `logger.debug` y `logger.warning` en toda la app (ViewModels, Use Cases, Repositories, Data Sources, Coordinators, Notifications, Settings).
+- Se mantienen solo `logger.error` donde aportan valor (fallos de red, SwiftData, permisos, etc.).
+- Consola mínima para uso normal.
+
+### Cambios técnicos
+
+- Reminders: DTOs, mappers, ReminderSyncRepositoryImpl, ReminderSyncCoordinator, use cases de sync/upload/download; integración en Settings y sync combinado.
+- Pantalla "Nuevo Recordatorio" alineada con "Nuevo Pago" (título grande, formulario propio, sin reutilizar código de pagos).
+
+---
+
 ## [1.0.0] - Build 14 - 2026-01-29
 
 ### 🎯 Resumen Ejecutivo
@@ -860,8 +911,8 @@ Ver sección "Changelog - Fase 1: Fixes Críticos" en archivo original para deta
 
 ---
 
-**Versión**: 1.0.0 (Build 14)
-**Fecha**: 2026-01-29
+**Versión**: 1.0.0 (Build 15)
+**Fecha**: 2026-03-08
 **Estado**: ✅ Production Ready (TestFlight)
 **Swift**: 6.0
 **iOS**: 18.5+

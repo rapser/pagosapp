@@ -18,8 +18,10 @@ final class SettingsViewModel {
     var showingSyncError = false
     var syncErrorMessage = ""
     var pendingSyncCount: Int = 0
-    var syncError: PaymentSyncError? = nil
+    var syncError: Error?
     var isLoading = false
+    /// Mensaje mostrado en el overlay de carga (sincronizando, cerrando sesión, etc.).
+    var loadingMessage: String = ""
 
     // MARK: - Dependencies (Use Cases only - Clean Architecture)
 
@@ -65,7 +67,6 @@ final class SettingsViewModel {
         // Listen to PaymentsSyncedEvent
         Task { @MainActor in
             for await _ in eventBus.subscribe(to: PaymentsSyncedEvent.self) {
-                logger.debug("📢 Received PaymentsSyncedEvent, updating pending sync count")
                 await updatePendingSyncCount()
             }
         }
@@ -103,14 +104,14 @@ final class SettingsViewModel {
     }
 
     func performSync() async {
+        loadingMessage = L10n.Settings.syncing
         isLoading = true
         defer { isLoading = false }
 
         do {
             try await performSyncUseCase.execute()
-            logger.info("✅ Sync completed successfully")
         } catch {
-            logger.error("❌ Sync failed: \(error.localizedDescription)")
+            logger.error("\(L10n.Log.Settings.syncFailed(error.localizedDescription))")
             syncErrorMessage = error.localizedDescription
             showingSyncError = true
         }
@@ -133,16 +134,15 @@ final class SettingsViewModel {
     // MARK: - Database Operations
 
     func clearLocalDatabase() async -> Bool {
+        loadingMessage = L10n.Settings.repairingDb
         isLoading = true
         defer { isLoading = false }
 
-        logger.info("🗑️ Clearing local database")
         let success = await clearLocalDatabaseUseCase.execute(force: true)
 
         if success {
-            logger.info("✅ Local database cleared successfully")
         } else {
-            logger.error("❌ Failed to clear local database")
+            logger.error("\(L10n.Log.Settings.dbClearFailed)")
         }
 
         return success
@@ -151,29 +151,29 @@ final class SettingsViewModel {
     // MARK: - Session Operations
 
     func logout() async {
+        loadingMessage = L10n.Settings.loggingOut
         isLoading = true
         defer { isLoading = false }
 
-        logger.info("🚪 Logging out")
         let result = await logoutUseCase.execute()
 
         if case .failure(let error) = result {
-            logger.error("❌ Logout failed: \(error.errorCode)")
-            syncErrorMessage = "Error al cerrar sesión"
+            logger.error("\(L10n.Log.Settings.logoutFailed(error.errorCode))")
+            syncErrorMessage = L10n.Settings.logoutError
             showingSyncError = true
         }
     }
 
     func unlinkDevice() async {
+        loadingMessage = L10n.Settings.unlinking
         isLoading = true
         defer { isLoading = false }
 
-        logger.info("🔓 Unlinking device")
         let result = await unlinkDeviceUseCase.execute()
 
         if case .failure(let error) = result {
-            logger.error("❌ Unlink device failed: \(error.errorCode)")
-            syncErrorMessage = "Error al desvincular dispositivo"
+            logger.error("\(L10n.Log.Settings.unlinkFailed(error.errorCode))")
+            syncErrorMessage = L10n.Settings.unlinkError
             showingSyncError = true
         }
     }

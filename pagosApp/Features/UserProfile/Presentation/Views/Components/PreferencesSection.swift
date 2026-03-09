@@ -13,7 +13,7 @@ struct PreferencesSection: View {
     @Binding var editableProfile: EditableProfileUI?
 
     var body: some View {
-        Section(header: Text("Preferencias").foregroundColor(Color("AppTextPrimary"))) {
+        Section(header: Text(L10n.Profile.sectionPreferences).foregroundColor(Color("AppTextPrimary"))) {
             if isEditing, editableProfile != nil {
                 CurrencyPickerRow(
                     isEditing: isEditing,
@@ -25,7 +25,7 @@ struct PreferencesSection: View {
             } else {
                 ProfileFieldRow(
                     icon: "dollarsign.circle.fill",
-                    title: "Moneda preferida",
+                    title: L10n.Profile.preferredCurrency,
                     value: profile.preferredCurrency.displayName,
                     isOptional: false
                 )

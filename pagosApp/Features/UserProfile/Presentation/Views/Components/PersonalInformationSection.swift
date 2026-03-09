@@ -14,7 +14,7 @@ struct PersonalInformationSection: View {
     @Binding var showDatePicker: Bool
 
     var body: some View {
-        Section(header: Text("Información Personal").foregroundColor(Color("AppTextPrimary"))) {
+        Section(header: Text(L10n.Profile.sectionPersonal).foregroundColor(Color("AppTextPrimary"))) {
             // Full Name
             if isEditing, editableProfile != nil {
                 EditableTextFieldRow(
@@ -28,7 +28,7 @@ struct PersonalInformationSection: View {
             } else {
                 ProfileFieldRow(
                     icon: "person.fill",
-                    title: "Nombre",
+                    title: L10n.Profile.fieldName,
                     value: profile.fullName,
                     isOptional: false
                 )

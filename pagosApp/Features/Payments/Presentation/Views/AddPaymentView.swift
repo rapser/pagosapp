@@ -63,13 +63,13 @@ private struct AddPaymentForm: View {
                 )
             }
         }
-        .navigationTitle("Nuevo Pago")
+        .navigationTitle(L10n.Payments.Add.title)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Cancelar") { dismiss() }
+                Button(L10n.General.cancel) { dismiss() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Guardar") {
+                Button(L10n.General.save) {
                     Task {
                         await viewModel.savePayment()
                         dismiss()
@@ -81,7 +81,7 @@ private struct AddPaymentForm: View {
         .disabled(viewModel.isLoading)
         .overlay {
             if viewModel.isLoading {
-                ProgressView("Guardando...")
+                ProgressView(L10n.Payments.Edit.saving)
                     .padding()
                     .background(Color(UIColor.systemBackground))
                     .cornerRadius(10)

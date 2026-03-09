@@ -61,30 +61,28 @@ struct UserProfileView: View {
                         .listStyle(.insetGrouped)
                     } else {
                         ContentUnavailableView(
-                            "Sin Perfil",
+                            L10n.Profile.noProfileTitle,
                             systemImage: "person.crop.circle.badge.exclamationmark",
-                            description: Text("No se encontró información del perfil.")
+                            description: Text(L10n.Profile.noProfileDescription)
                         )
                     }
                 }
             }
             .navigationBarHidden(true)
-            .alert("Perfil actualizado", isPresented: $viewModel.showSuccessAlert) {
-                Button("OK", role: .cancel) {
+            .alert(L10n.Profile.updatedTitle, isPresented: $viewModel.showSuccessAlert) {
+                Button(L10n.General.ok, role: .cancel) {
                     viewModel.isEditing = false
                 }
             } message: {
-                Text("Tu perfil ha sido actualizado correctamente.")
+                Text(L10n.Profile.updatedMessage)
             }
-            .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
-                Button("OK", role: .cancel) {
-                    viewModel.errorMessage = nil
-                }
-            } message: {
-                if let error = viewModel.errorMessage {
-                    Text(error)
-                }
-            }
+            .errorAlert(
+                isPresented: Binding(
+                    get: { viewModel.errorMessage != nil },
+                    set: { if !$0 { viewModel.errorMessage = nil } }
+                ),
+                message: viewModel.errorMessage
+            )
         }
         .task {
             // Load profile from local SwiftData (fast - no loader needed)

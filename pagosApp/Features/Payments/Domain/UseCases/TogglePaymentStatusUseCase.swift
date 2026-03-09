@@ -30,9 +30,6 @@ final class TogglePaymentStatusUseCase {
     /// - Parameter payment: The payment to toggle
     /// - Returns: Result with updated payment or error
     func execute(_ payment: Payment) async -> Result<Payment, PaymentError> {
-        logger.info("🔄 Toggling payment status: \(payment.name) -> \(!payment.isPaid)")
-
-        // Create updated payment with toggled status
         let updatedPayment = Payment(
             id: payment.id,
             name: payment.name,
@@ -49,24 +46,17 @@ final class TogglePaymentStatusUseCase {
 
         do {
             try await paymentRepository.savePayment(updatedPayment)
-            logger.info("✅ Payment status toggled successfully: \(payment.name)")
-
-            // Update notifications (cancel if paid, reschedule if unpaid)
             if let notificationsUseCase = scheduleNotificationsUseCase {
                 await MainActor.run {
                     notificationsUseCase.execute(updatedPayment)
                 }
             }
-
-            // Publish domain event (type-safe, reactive)
             await MainActor.run {
                 eventBus.publish(PaymentStatusToggledEvent(paymentId: updatedPayment.id, isPaid: updatedPayment.isPaid))
-                logger.debug("📢 Published PaymentStatusToggledEvent")
             }
-
             return .success(updatedPayment)
         } catch {
-            logger.error("❌ Failed to toggle payment status: \(error.localizedDescription)")
+            logger.error("Failed to toggle payment status: \(error.localizedDescription)")
             return .failure(.updateFailed(error.localizedDescription))
         }
     }

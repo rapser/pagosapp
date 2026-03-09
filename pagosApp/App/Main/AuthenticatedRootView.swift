@@ -16,25 +16,18 @@ struct AuthenticatedRootView: View {
         TabView {
             PaymentsListView()
                 .tabItem {
-                    Label("Pagos", systemImage: "list.bullet.rectangle.portrait")
+                    Label(L10n.Tab.payments, systemImage: "list.bullet.rectangle.portrait")
+                }
+
+            RemindersListView()
+                .tabItem {
+                    Label(L10n.Tab.reminders, systemImage: "bell.badge")
                 }
 
             CalendarPaymentsView()
                 .environment(alertManager)
                 .tabItem {
-                    Label("Calendario", systemImage: "calendar")
-                }
-
-            PaymentHistoryView()
-                .tabItem {
-                    Label("Historial", systemImage: "clock.arrow.circlepath")
-                }
-
-            StatisticsView(
-                viewModel: dependencies.statisticsDependencyContainer.makeStatisticsViewModel()
-            )
-                .tabItem {
-                    Label("Estadísticas", systemImage: "chart.pie.fill")
+                    Label(L10n.Tab.calendar, systemImage: "calendar")
                 }
 
             SettingsView(
@@ -42,7 +35,7 @@ struct AuthenticatedRootView: View {
             )
                 .environment(alertManager)
                 .tabItem {
-                    Label("Ajustes", systemImage: "gear")
+                    Label(L10n.Tab.settings, systemImage: "gear")
                 }
         }
     }
