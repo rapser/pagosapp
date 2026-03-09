@@ -44,12 +44,12 @@ struct ReminderRowView: View {
                     .strikethrough(reminder.isCompleted, color: Color("AppTextSecondary"))
                     .foregroundColor(displayColor)
                 Text(L10n.Reminders.typeDisplayName(reminder.reminderType))
-                    .font(.subheadline)
+                    .font(.caption)
                     .foregroundColor(Color("AppTextSecondary"))
             }
             Spacer()
             Text(DateFormattingService.formatMedium(reminder.dueDate))
-                .font(.subheadline)
+                .font(.caption)
                 .strikethrough(reminder.isCompleted, color: Color("AppTextSecondary"))
                 .foregroundColor(displayColor)
         }
