@@ -162,6 +162,9 @@
 "settings.title" = "Ajustes";
 "settings.syncError.title" = "Error de sincronización";
 "settings.loggingOut" = "Cerrando sesión...";
+"settings.syncing" = "Sincronizando...";
+"settings.unlinking" = "Desvinculando...";
+"settings.repairingDb" = "Restableciendo base de datos...";
 "settings.repairDb.title" = "Reparar Base de Datos";
 "settings.repairDb.button" = "Reparar";
 "settings.repairDb.successTitle" = "Base de Datos Reparada";

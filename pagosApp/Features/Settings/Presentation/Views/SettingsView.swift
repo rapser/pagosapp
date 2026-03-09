@@ -65,7 +65,7 @@ struct SettingsView: View {
             }
             .overlay {
                 if viewModel.isLoading {
-                    LoadingView(message: L10n.Settings.loggingOut)
+                    LoadingView(message: viewModel.loadingMessage)
                 }
             }
         }
