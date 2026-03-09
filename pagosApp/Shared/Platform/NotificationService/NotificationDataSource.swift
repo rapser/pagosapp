@@ -55,11 +55,7 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
             if let error = error {
                 Task { @MainActor in
-                    self.logger.error("❌ Failed to request notification authorization: \(error.localizedDescription)")
-                }
-            } else {
-                Task { @MainActor in
-                    self.logger.info("✅ Notification authorization granted: \(granted)")
+                    self.logger.error("Failed to request notification authorization: \(error.localizedDescription)")
                 }
             }
         }
@@ -74,24 +70,17 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
         isPaid: Bool
     ) {
         guard !isPaid else {
-            logger.info("🚫 Payment \(name) is already paid, cancelling all pending notifications (including same-day 9 AM and 2 PM notifications)")
             cancelNotifications(paymentId: paymentId)
             return
         }
 
-        // Always cancel existing notifications first to ensure clean state
-        // This is especially important when updating payment dates
-        logger.info("🔄 Cancelling existing notifications for \(name) before rescheduling")
         cancelNotifications(paymentId: paymentId)
 
         UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
             guard let self = self else { return }
 
             Task { @MainActor in
-                guard settings.authorizationStatus == .authorized else {
-                    self.logger.warning("⚠️ Notifications not authorized (status: \(settings.authorizationStatus.rawValue)). Cannot schedule notifications for \(name)")
-                    return
-                }
+                guard settings.authorizationStatus == .authorized else { return }
 
                 let calendar = Calendar.current
                 let now = Date()
@@ -129,12 +118,9 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
                             do {
                                 try await UNUserNotificationCenter.current().add(request9AM)
                                 scheduledCount += 1
-                                self.logger.info("✅ Scheduled 9 AM notification for \(name) - due today (notification: \(notificationDateTime9AM))")
                             } catch {
-                                self.logger.error("❌ Failed to schedule 9 AM notification for \(name): \(error.localizedDescription)")
+                                self.logger.error("Failed to schedule 9 AM notification: \(error.localizedDescription)")
                             }
-                        } else {
-                            self.logger.info("⏭️ Skipping 9 AM notification for \(name) - already passed")
                         }
 
                         // Schedule 2 PM notification
@@ -161,12 +147,9 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
                             do {
                                 try await UNUserNotificationCenter.current().add(request2PM)
                                 scheduledCount += 1
-                                self.logger.info("✅ Scheduled 2 PM notification for \(name) - due today (notification: \(notificationDateTime2PM))")
                             } catch {
-                                self.logger.error("❌ Failed to schedule 2 PM notification for \(name): \(error.localizedDescription)")
+                                self.logger.error("Failed to schedule 2 PM notification: \(error.localizedDescription)")
                             }
-                        } else {
-                            self.logger.info("⏭️ Skipping 2 PM notification for \(name) - already passed")
                         }
                     } else {
                         // For 1 day before and 2 days before, schedule only 9 AM notification
@@ -179,11 +162,7 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
                             continue
                         }
 
-                        // Check if notification time has passed
-                        if notificationDateTime <= now {
-                            self.logger.info("⏭️ Skipping notification for \(name) - \(daysBefore) days before (already passed: \(notificationDateTime))")
-                            continue
-                        }
+                        if notificationDateTime <= now { continue }
 
                         let identifier = "\(paymentId.uuidString)-\(daysBefore)days"
                         let content = UNMutableNotificationContent()
@@ -198,18 +177,12 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
                         do {
                             try await UNUserNotificationCenter.current().add(request)
                             scheduledCount += 1
-                            self.logger.info("✅ Scheduled notification for \(name) - \(daysBefore) days before (due: \(dueDate), notification: \(notificationDateTime))")
                         } catch {
-                            self.logger.error("❌ Failed to schedule notification for \(name) (\(daysBefore) days before): \(error.localizedDescription)")
+                            self.logger.error("Failed to schedule notification: \(error.localizedDescription)")
                         }
                     }
                 }
 
-                if scheduledCount == 0 {
-                    self.logger.warning("⚠️ No notifications scheduled for \(name) - all notification times have already passed")
-                } else {
-                    self.logger.info("✅ Successfully scheduled \(scheduledCount) notification(s) for \(name) with new due date: \(dueDate)")
-                }
             }
         }
     }
@@ -224,7 +197,6 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
             "\(paymentId.uuidString)-0days-immediate" // Legacy identifier (por si quedó alguno)
         ]
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
-        self.logger.info("🚫 Cancelled notifications for payment: \(paymentId)")
     }
 
     // MARK: - Reminder notifications (from 5 days before: 0=same day, 1..5 days before; same day 9 AM and 2 PM)

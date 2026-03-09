@@ -12,16 +12,12 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
     }
 
     func fetchAll() async throws -> [Payment] {
-        logger.info("📋 [DATA] PaymentSwiftDataDataSource.fetchAll() called")
         let descriptor = FetchDescriptor<PaymentLocalDTO>()
-
         do {
-            let dtos = try modelContext.fetch(descriptor)
-            let payments = dtos.map { PaymentMapper.toDomain(from: $0) }
-            logger.info("📋 [DATA] ✅ SwiftData fetch OK: \(dtos.count) DTOs → \(payments.count) Payment(s)")
+            let payments = try modelContext.fetch(descriptor).map { PaymentMapper.toDomain(from: $0) }
             return payments
         } catch {
-            logger.error("📋 [DATA] ❌ SwiftData fetch failed: \(error.localizedDescription) — returning []")
+            logger.error("Failed to fetch payments from SwiftData: \(error.localizedDescription)")
             return []
         }
     }
@@ -73,42 +69,25 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
         let descriptor = FetchDescriptor<PaymentLocalDTO>()
         let existingPayments = try modelContext.fetch(descriptor)
 
-        guard let existing = existingPayments.first(where: { $0.id == payment.id }) else {
-            logger.debug("⚠️ Payment not found for deletion: \(payment.id)")
-            return
-        }
+        guard let existing = existingPayments.first(where: { $0.id == payment.id }) else { return }
 
         modelContext.delete(existing)
         try modelContext.save()
-        logger.debug("✅ Payment deleted: \(payment.name)")
     }
 
     func deleteAll(_ payments: [Payment]) async throws {
-        guard !payments.isEmpty else {
-            logger.debug("⚠️ No payments to delete")
-            return
-        }
-
-        logger.debug("🗑️ Deleting \(payments.count) payments")
-
+        guard !payments.isEmpty else { return }
         for payment in payments {
             try await delete(payment)
         }
-
-        logger.debug("✅ \(payments.count) payments deleted")
     }
 
     func clear() async throws {
-        logger.info("🗑️ Clearing all payments from SwiftData")
-
         let descriptor = FetchDescriptor<PaymentLocalDTO>()
         let allPayments = try modelContext.fetch(descriptor)
-
         for payment in allPayments {
             modelContext.delete(payment)
         }
-
         try modelContext.save()
-        logger.info("✅ All payments cleared (\(allPayments.count) deleted)")
     }
 }

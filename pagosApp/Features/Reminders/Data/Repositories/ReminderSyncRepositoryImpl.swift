@@ -8,14 +8,12 @@
 
 import Foundation
 import Supabase
-import OSLog
 
 @MainActor
 final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol {
     private let remoteDataSource: ReminderRemoteDataSource
     private let localDataSource: ReminderLocalDataSource
     private let supabaseClient: SupabaseClient
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ReminderSyncRepositoryImpl")
 
     init(
         remoteDataSource: ReminderRemoteDataSource,
@@ -29,14 +27,12 @@ final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol {
 
     func getCurrentUserId() async throws -> UUID {
         guard let userId = supabaseClient.auth.currentUser?.id else {
-            logger.error("❌ No authenticated user")
             throw ReminderSyncError.notAuthenticated
         }
         return userId
     }
 
     func uploadReminders(_ reminders: [Reminder], userId: UUID) async throws {
-        logger.info("📤 Uploading \(reminders.count) reminders")
         let dtos = ReminderRemoteMapper.toRemoteDTO(reminders, userId: userId)
         try await remoteDataSource.upsertAll(dtos, userId: userId)
 
@@ -54,30 +50,22 @@ final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol {
             )
             try await localDataSource.save(updated)
         }
-        logger.info("✅ \(reminders.count) reminders uploaded and marked as synced")
     }
 
     func downloadReminders(userId: UUID) async throws -> [Reminder] {
-        logger.info("📥 Downloading reminders for user: \(userId)")
         let dtos = try await remoteDataSource.fetchAll(userId: userId)
-        let entities = ReminderRemoteMapper.toDomain(dtos)
-        logger.info("✅ Downloaded \(entities.count) reminders")
-        return entities
+        return ReminderRemoteMapper.toDomain(dtos)
     }
 
     func syncDeletion(reminderId: UUID) async throws {
-        logger.info("🗑️ Syncing deletion of reminder: \(reminderId)")
         try await remoteDataSource.delete(id: reminderId)
-        logger.info("✅ Reminder deletion synced")
     }
 
     func getPendingReminders() async throws -> [Reminder] {
         let all = try await localDataSource.fetchAll()
-        let pending = all.filter { r in
+        return all.filter { r in
             r.syncStatus == .local || r.syncStatus == .modified || r.syncStatus == .error
         }
-        logger.debug("✅ Found \(pending.count) pending reminders")
-        return pending
     }
 
     func getPendingSyncCount() async throws -> Int {
@@ -86,11 +74,7 @@ final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol {
     }
 
     func updateSyncStatus(reminderId: UUID, status: ReminderSyncStatus) async throws {
-        logger.debug("🔄 Updating sync status for \(reminderId) to \(status.rawValue)")
-        guard let reminder = try await localDataSource.fetch(id: reminderId) else {
-            logger.warning("⚠️ Reminder not found: \(reminderId)")
-            return
-        }
+        guard let reminder = try await localDataSource.fetch(id: reminderId) else { return }
         let updated = Reminder(
             id: reminder.id,
             reminderType: reminder.reminderType,
@@ -102,6 +86,5 @@ final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol {
             lastSyncedAt: status == .synced ? Date() : reminder.lastSyncedAt
         )
         try await localDataSource.save(updated)
-        logger.debug("✅ Sync status updated")
     }
 }

@@ -67,7 +67,6 @@ final class SettingsViewModel {
         // Listen to PaymentsSyncedEvent
         Task { @MainActor in
             for await _ in eventBus.subscribe(to: PaymentsSyncedEvent.self) {
-                logger.debug("📢 Received PaymentsSyncedEvent, updating pending sync count")
                 await updatePendingSyncCount()
             }
         }
@@ -111,7 +110,6 @@ final class SettingsViewModel {
 
         do {
             try await performSyncUseCase.execute()
-            logger.info("\(L10n.Log.Settings.syncComplete)")
         } catch {
             logger.error("\(L10n.Log.Settings.syncFailed(error.localizedDescription))")
             syncErrorMessage = error.localizedDescription
@@ -140,11 +138,9 @@ final class SettingsViewModel {
         isLoading = true
         defer { isLoading = false }
 
-        logger.info("\(L10n.Log.Settings.clearingDb)")
         let success = await clearLocalDatabaseUseCase.execute(force: true)
 
         if success {
-            logger.info("\(L10n.Log.Settings.dbCleared)")
         } else {
             logger.error("\(L10n.Log.Settings.dbClearFailed)")
         }
@@ -159,7 +155,6 @@ final class SettingsViewModel {
         isLoading = true
         defer { isLoading = false }
 
-        logger.info("\(L10n.Log.Settings.loggingOut)")
         let result = await logoutUseCase.execute()
 
         if case .failure(let error) = result {
@@ -174,7 +169,6 @@ final class SettingsViewModel {
         isLoading = true
         defer { isLoading = false }
 
-        logger.info("\(L10n.Log.Settings.unlinking)")
         let result = await unlinkDeviceUseCase.execute()
 
         if case .failure(let error) = result {
