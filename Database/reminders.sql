@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS public.reminders (
     title TEXT NOT NULL,
     description TEXT NOT NULL DEFAULT '',
     due_date TIMESTAMPTZ NOT NULL,
+    is_completed BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -51,5 +52,6 @@ CREATE TRIGGER reminders_updated_at
     EXECUTE FUNCTION public.set_reminders_updated_at();
 -- Si tu Postgres no acepta EXECUTE FUNCTION, usa: EXECUTE PROCEDURE public.set_reminders_updated_at();
 
--- Si la tabla ya existía sin la columna description, ejecutar:
+-- Si la tabla ya existía sin columnas nuevas, ejecutar:
 -- ALTER TABLE public.reminders ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';
+-- ALTER TABLE public.reminders ADD COLUMN IF NOT EXISTS is_completed BOOLEAN NOT NULL DEFAULT false;

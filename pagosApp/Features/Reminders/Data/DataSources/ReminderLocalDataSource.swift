@@ -8,6 +8,7 @@
 
 import Foundation
 import SwiftData
+import OSLog
 
 protocol ReminderLocalDataSource {
     func fetchAll() async throws -> [Reminder]
@@ -20,6 +21,7 @@ protocol ReminderLocalDataSource {
 @MainActor
 final class ReminderSwiftDataDataSource: ReminderLocalDataSource {
     private let modelContext: ModelContext
+    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ReminderSwiftDataDataSource")
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -27,8 +29,13 @@ final class ReminderSwiftDataDataSource: ReminderLocalDataSource {
 
     func fetchAll() async throws -> [Reminder] {
         let descriptor = FetchDescriptor<ReminderLocalDTO>(sortBy: [SortDescriptor(\.dueDate)])
-        let dtos = try modelContext.fetch(descriptor)
-        return dtos.map { ReminderDomainMapper.toDomain($0) }
+        do {
+            let dtos = try modelContext.fetch(descriptor)
+            return dtos.map { ReminderDomainMapper.toDomain($0) }
+        } catch {
+            logger.error("Failed to fetch reminders from SwiftData: \(error.localizedDescription)")
+            return []
+        }
     }
 
     func fetch(id: UUID) async throws -> Reminder? {
@@ -56,6 +63,7 @@ final class ReminderSwiftDataDataSource: ReminderLocalDataSource {
             existing.title = dto.title
             existing.reminderDescription = dto.reminderDescription ?? ""
             existing.dueDate = dto.dueDate
+            existing.isCompleted = dto.isCompleted ?? false
             existing.syncStatusRawValue = dto.syncStatusRawValue
             existing.lastSyncedAt = dto.lastSyncedAt
         } else {

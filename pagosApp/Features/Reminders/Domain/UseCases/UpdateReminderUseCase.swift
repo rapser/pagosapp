@@ -29,6 +29,7 @@ final class UpdateReminderUseCase {
             title: trimmedTitle,
             description: reminder.description,
             dueDate: reminder.dueDate,
+            isCompleted: reminder.isCompleted,
             syncStatus: newStatus,
             lastSyncedAt: reminder.lastSyncedAt
         )

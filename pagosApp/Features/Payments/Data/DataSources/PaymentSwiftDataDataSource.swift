@@ -12,14 +12,16 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
     }
 
     func fetchAll() async throws -> [Payment] {
+        logger.info("📋 [DATA] PaymentSwiftDataDataSource.fetchAll() called")
         let descriptor = FetchDescriptor<PaymentLocalDTO>()
 
         do {
-            let payments = try modelContext.fetch(descriptor)
-            return payments.map { PaymentMapper.toDomain(from: $0) }
+            let dtos = try modelContext.fetch(descriptor)
+            let payments = dtos.map { PaymentMapper.toDomain(from: $0) }
+            logger.info("📋 [DATA] ✅ SwiftData fetch OK: \(dtos.count) DTOs → \(payments.count) Payment(s)")
+            return payments
         } catch {
-            logger.error("❌ Failed to fetch payments from SwiftData: \(error.localizedDescription)")
-            // Return empty array instead of crashing
+            logger.error("📋 [DATA] ❌ SwiftData fetch failed: \(error.localizedDescription) — returning []")
             return []
         }
     }

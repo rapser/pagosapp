@@ -72,8 +72,10 @@ final class PaymentRepositoryImpl: PaymentRepositoryProtocol {
     // MARK: - Local Operations (returns Sendable entities)
 
     func getAllLocalPayments() async throws -> [Payment] {
-        logger.debug("📱 Fetching all local payments")
-        return try await _getAllLocalPayments()
+        logger.info("📋 [REPO] getAllLocalPayments() called")
+        let result = try await _getAllLocalPayments()
+        logger.info("📋 [REPO] ✅ localDataSource.fetchAll() returned \(result.count) payments")
+        return result
     }
 
     func getLocalPayment(id: UUID) async throws -> Payment? {

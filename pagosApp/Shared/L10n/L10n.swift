@@ -193,6 +193,7 @@ enum L10n {
         static let descriptionLabel = tr("reminders.descriptionLabel")
         static let descriptionPlaceholder = tr("reminders.descriptionPlaceholder")
         static let dueDateLabel = tr("reminders.dueDateLabel")
+        static let completedLabel = tr("reminders.completedLabel")
         static func typeDisplayName(_ type: ReminderType) -> String {
             let key: String
             switch type {

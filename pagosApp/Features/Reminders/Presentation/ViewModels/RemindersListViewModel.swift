@@ -18,10 +18,34 @@ final class RemindersListViewModel {
 
     private let getAllRemindersUseCase: GetAllRemindersUseCase
     private let deleteReminderUseCase: DeleteReminderUseCase
+    private let updateReminderUseCase: UpdateReminderUseCase
 
-    init(getAllRemindersUseCase: GetAllRemindersUseCase, deleteReminderUseCase: DeleteReminderUseCase) {
+    init(getAllRemindersUseCase: GetAllRemindersUseCase, deleteReminderUseCase: DeleteReminderUseCase, updateReminderUseCase: UpdateReminderUseCase) {
         self.getAllRemindersUseCase = getAllRemindersUseCase
         self.deleteReminderUseCase = deleteReminderUseCase
+        self.updateReminderUseCase = updateReminderUseCase
+    }
+
+    func toggleCompletion(_ reminder: Reminder) async {
+        let updated = Reminder(
+            id: reminder.id,
+            reminderType: reminder.reminderType,
+            title: reminder.title,
+            description: reminder.description,
+            dueDate: reminder.dueDate,
+            isCompleted: !reminder.isCompleted,
+            syncStatus: reminder.syncStatus,
+            lastSyncedAt: reminder.lastSyncedAt
+        )
+        switch await updateReminderUseCase.execute(updated) {
+        case .success(let result):
+            if let index = reminders.firstIndex(where: { $0.id == result.id }) {
+                reminders[index] = result
+            }
+        case .failure(let error):
+            errorMessage = message(for: error)
+            showError = true
+        }
     }
 
     func loadReminders() async {

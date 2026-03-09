@@ -124,6 +124,7 @@
 "reminders.descriptionLabel" = "Descrição";
 "reminders.descriptionPlaceholder" = "Breve descrição do que se refere";
 "reminders.dueDateLabel" = "Data";
+"reminders.completedLabel" = "Concluído";
 "reminders.type.cardRenewal" = "Renovação de cartão";
 "reminders.type.membership" = "Membresia";
 "reminders.type.subscription" = "Assinatura";

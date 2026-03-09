@@ -64,55 +64,25 @@ struct RemindersListView: View {
         } else {
             List {
                 ForEach(viewModel.reminders, id: \.id) { reminder in
-                    ReminderRowView(reminder: reminder)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            reminderToEdit = reminder
-                        }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button(role: .destructive) {
-                                Task {
-                                    await viewModel.deleteReminder(id: reminder.id)
-                                }
-                            } label: {
-                                Label(L10n.General.delete, systemImage: "trash")
+                    ReminderRowView(reminder: reminder) {
+                        Task { await viewModel.toggleCompletion(reminder) }
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        reminderToEdit = reminder
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) {
+                            Task {
+                                await viewModel.deleteReminder(id: reminder.id)
                             }
+                        } label: {
+                            Label(L10n.General.delete, systemImage: "trash")
                         }
+                    }
                 }
             }
         }
-    }
-}
-
-// MARK: - Row
-private struct ReminderRowView: View {
-    let reminder: Reminder
-    private static let dateFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateStyle = .medium
-        return f
-    }()
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(reminder.title)
-                .font(.headline)
-            if !reminder.description.isEmpty {
-                Text(reminder.description)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            HStack {
-                Text(L10n.Reminders.typeDisplayName(reminder.reminderType))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text(Self.dateFormatter.string(from: reminder.dueDate))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.vertical, 4)
     }
 }
 
