@@ -55,8 +55,8 @@ SELECT * FROM pg_policies WHERE tablename = 'payments';
 
 ### reminders (recordatorios)
 
-- **Columnas:** `id`, `user_id`, `reminder_type`, `title`, `due_date`, `created_at`, `updated_at`.
-- **reminder_type:** `cardRenewal`, `membership`, `subscription`, `pension`, `deposit`, `documents`, `taxes`, `other`.
+- **Columnas:** `id`, `user_id`, `reminder_type`, `title`, `description`, `due_date`, `is_completed`, `created_at`, `updated_at`.
+- **reminder_type:** `cardRenewal`, `membership`, `subscription`, `pension`, `deposit`, `savings`, `documents`, `taxes`, `other`.
 - **RLS:** cada usuario solo ve/edita sus propios recordatorios.
 
 ### user_profiles (usuario)

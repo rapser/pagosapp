@@ -6,7 +6,7 @@
 [![Swift](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
 [![Xcode](https://img.shields.io/badge/Xcode-16.4%2B-blue.svg)](https://developer.apple.com/xcode/)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean-green.svg)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
-[![Version](https://img.shields.io/badge/Version-1.0.0(14)-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.0.0(15)-blue.svg)](CHANGELOG.md)
 
 ---
 
@@ -17,13 +17,14 @@
 ### 🎯 ¿Qué hace la App?
 
 - **Gestión de Pagos Recurrentes**: Crea, edita y organiza todos tus pagos mensuales (Netflix, tarjetas de crédito, servicios, etc.)
-- **Sincronización con Calendario iOS**: Cada pago se registra automáticamente como evento en tu calendario nativo
-- **Recordatorios Inteligentes**: Notificaciones automáticas antes de la fecha de vencimiento
+- **Recordatorios**: Gestiona eventos que no son pagos (renovación de tarjeta, membresías, cobros, impuestos, ahorro, etc.) con título, descripción y fecha; notificaciones desde 5 días antes
+- **Sincronización con Calendario iOS**: Pagos y recordatorios se muestran en el calendario nativo
+- **Notificaciones**: Recordatorios para pagos (2 días antes + mismo día) y para recordatorios (desde 5 días antes)
 - **Multi-moneda**: Soporte para PEN (Soles) y USD (Dólares) con conversión automática
-- **Estadísticas Visuales**: Gráficos de gastos por categoría y tendencias mensuales
-- **Offline-First**: Funciona completamente sin internet, sincroniza cuando estés online
+- **Estadísticas e Historial**: Gráficos de gastos por categoría, tendencias mensuales e historial; accesibles desde Ajustes
+- **Offline-First**: Funciona sin internet; sincronización manual (pagos + recordatorios) desde Ajustes
 - **Autenticación Segura**: Face ID/Touch ID + Email/Password
-- **Sincronización Cloud**: Tus datos se sincronizan entre todos tus dispositivos iOS
+- **Internacionalización**: Español (por defecto), inglés y portugués
 
 ---
 
@@ -57,12 +58,10 @@
 - ✅ Selección de calendario destino
 - ✅ Soporte para calendarios compartidos
 
-### 🔔 Notificaciones y Recordatorios
-- ✅ **Notificaciones Locales Automáticas**: Se programan automáticamente al crear/actualizar pagos
-- ✅ Recordatorios inteligentes: 2 días antes, 1 día antes y el mismo día a las 9:00 AM
-- ✅ **Restauración Automática**: Las notificaciones se restauran al iniciar sesión
-- ✅ Cancelación automática cuando se marca como pagado o se elimina
-- ✅ Notificaciones de sincronización exitosa
+### 🔔 Notificaciones
+- ✅ **Pagos**: Notificaciones 2 días antes, 1 día antes y el mismo día (9:00 y 14:00)
+- ✅ **Recordatorios**: Notificaciones desde 5 días antes hasta el mismo día (9:00 y 14:00)
+- ✅ Restauración automática al iniciar sesión; cancelación al marcar completado o eliminar
 - ✅ Alertas de errores con sugerencias de recuperación
 
 ### 📊 Estadísticas y Visualización
@@ -73,21 +72,29 @@
 - ✅ Proyección de gastos futuros
 - ✅ Comparativas mes a mes
 
-### ☁️ Sincronización Cloud
-- ✅ Sincronización automática con Supabase
-- ✅ Backup completo en la nube
-- ✅ Sincronización incremental eficiente
-- ✅ Resolución de conflictos inteligente
-- ✅ Offline-first: todo funciona sin internet
-- ✅ Multi-dispositivo: mismo usuario, múltiples iPhones/iPads
+### 📌 Recordatorios (no son pagos)
+- ✅ Tipos: renovación tarjeta, membresía, suscripción, cobro, ahorro, documentos, impuestos, otro
+- ✅ Título, descripción opcional y fecha; sin monto
+- ✅ Marcar como completado/cancelado (checkbox en lista)
+- ✅ Sincronización con Supabase (tabla `reminders`); mismo flujo offline-first que pagos
+- ✅ Un botón **Sincronizar** en Ajustes sube/baja pagos y recordatorios
 
-### 👤 Perfil de Usuario
-- ✅ Gestión completa de perfil personal
-- ✅ Configuración de moneda preferida
-- ✅ Personalización de notificaciones
-- ✅ Ajustes de sincronización
-- ✅ Activación/desactivación de Face ID
+### ☁️ Sincronización Cloud
+- ✅ Sincronización con Supabase (pagos + recordatorios)
+- ✅ Un solo botón en Ajustes sincroniza ambos
+- ✅ Offline-first: todo funciona sin internet; sync manual cuando quieras
+- ✅ Multi-dispositivo: mismo usuario, múltiples dispositivos
+
+### 👤 Perfil y Ajustes
+- ✅ Gestión de perfil personal y moneda preferida
+- ✅ **Desde Ajustes**: Historial de pagos, Estadísticas, Sincronización, reparar base de datos, cerrar sesión
+- ✅ Activación/desactivación de Face ID y desvincular dispositivo
 - ✅ Cierre de sesión seguro
+
+### 🌐 Internacionalización (i18n)
+- ✅ Español por defecto (fallback)
+- ✅ Inglés y portugués
+- ✅ Textos de UI y mensajes de error centralizados en `Localizable.strings`
 
 ---
 
@@ -689,10 +696,9 @@ struct PaymentRemoteDTO: Codable, Sendable { /* ... */ }
 - **DTO Pattern**: Separación de modelos por capa
 
 ### Observability & Reactive Systems
-- **OSLog**: Logging estructurado por categorías
-- **Logger**: Subsystems específicos (App, Auth, Payments, Sync, Calendar, etc.)
 - **EventBus**: Sistema reactivo type-safe con AsyncStream (reemplaza NotificationCenter)
 - **DomainEvent**: Eventos de dominio (PaymentCreated, PaymentUpdated, PaymentDeleted, PaymentsSynced, etc.)
+- **Logging**: Solo logs de error esenciales; consola limpia (sin logs informativos/debug en producción)
 
 ---
 
@@ -812,9 +818,11 @@ pagosApp/
 │   │       ├── Coordinators/               # PaymentSyncCoordinator
 │   │       └── DI/                         # PaymentDependencyContainer
 │   │
-│   ├── Calendar/                           # Feature: Calendar integration
-│   ├── Statistics/                         # Feature: Stats & charts
-│   ├── History/                            # Feature: Payment history
+│   ├── Reminders/                          # Feature: Recordatorios (tipos, título, descripción, fecha; sync Supabase)
+│   ├── Calendar/                           # Feature: Calendar (pagos + recordatorios)
+│   ├── Statistics/                         # Feature: Stats & charts (acceso desde Ajustes)
+│   ├── History/                            # Feature: Payment history (acceso desde Ajustes)
+│   ├── Settings/                           # Feature: Ajustes, sync, Historial, Estadísticas
 │   └── UserProfile/                        # Feature: User profile
 │
 ├── Shared/                                 # Código compartido entre features
@@ -829,9 +837,10 @@ pagosApp/
 │   └── README.md                           # Instrucciones de configuración
 │
 └── Database/
-    ├── supabase_schema.sql                 # Schema completo
-    ├── migration_add_currency.sql          # Migraciones
-    └── README.md                           # Setup de Supabase
+    ├── payments.sql                        # Tabla payments (Supabase)
+    ├── reminders.sql                       # Tabla reminders (Supabase)
+    ├── user_profiles.sql                   # Tabla user_profiles (Supabase)
+    └── README.md                            # Orden de ejecución y uso
 
 Tests/
 └── pagosAppTests/
@@ -869,9 +878,9 @@ xcodebuild test -scheme pagosApp -destination 'platform=iOS Simulator,name=iPhon
 
 ## 📚 Documentación Adicional
 
-- **[CHANGELOG.md](CHANGELOG.md)**: Historial completo de cambios (versión 1.0.0 build 14)
+- **[CHANGELOG.md](CHANGELOG.md)**: Historial completo de cambios (versión 1.0.0 build 15)
 - **[Config/README.md](Config/README.md)**: Setup de credenciales
-- **[Database/README.md](Database/README.md)**: Configuración de Supabase
+- **[Database/README.md](Database/README.md)**: Scripts SQL (payments, reminders, user_profiles) y orden de ejecución
 
 ---
 
@@ -915,8 +924,9 @@ Ver [CHANGELOG.md](CHANGELOG.md) para historial completo de cambios.
 
 ### Highlights
 
+- **2026-03 (v1.0.0 build 15)**: Recordatorios (módulo completo, sync Supabase, notificaciones 5 días antes), i18n (ES/EN/PT), Calendario con pagos + recordatorios, Historial/Estadísticas desde Ajustes, limpieza de logs
 - **2026-01 (v1.0.0 build 14)**: EventBus type-safe + Migración completa de NotificationCenter + Clean Architecture 100%
-- **2026-01 (v1.0.0 build 11)**: Edición de pagos agrupados + Sincronización automática con calendario + Notificaciones locales restauradas
+- **2026-01 (v1.0.0 build 11)**: Edición de pagos agrupados + Sincronización con calendario + Notificaciones locales restauradas
 - **2026-01 (v1.0.0 build 10)**: Clean Architecture completa + Entity renaming + Swift 6 concurrency
 - **2025-01**: Modernización completa iOS 18.5 + Swift 6
 - **2024-11**: Módulo de autenticación con patrones de diseño
