@@ -5,9 +5,9 @@ struct DualCurrencyAmountSection: View {
     @Binding var amountUSD: String
 
     var body: some View {
-        Section(header: Text("Montos")) {
+        Section(header: Text(L10n.Payments.Amounts.section)) {
             VStack(alignment: .leading, spacing: 16) {
-                Text("Tarjeta Bimoneda")
+                Text(L10n.Payments.Amounts.dualCurrency)
                     .font(.subheadline)
                     .fontWeight(.semibold)
 
@@ -37,7 +37,7 @@ struct DualCurrencyAmountSection: View {
                         .cornerRadius(8)
                 }
 
-                Text("💡 Ingresa al menos un monto")
+                Text(L10n.Payments.Amounts.hintOneAmount)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

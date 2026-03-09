@@ -5,10 +5,10 @@ struct SingleCurrencyAmountSection: View {
     @Binding var amount: String
 
     var body: some View {
-        Section(header: Text("Montos")) {
+        Section(header: Text(L10n.Payments.Amounts.section)) {
             Picker("Moneda", selection: $currency) {
-                Text("Soles").tag(Currency.pen)
-                Text("Dólares").tag(Currency.usd)
+                Text(L10n.Payments.Amounts.soles).tag(Currency.pen)
+                Text(L10n.Payments.Amounts.dollars).tag(Currency.usd)
             }
 
             HStack {

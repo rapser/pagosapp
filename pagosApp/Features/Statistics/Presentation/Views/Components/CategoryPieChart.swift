@@ -13,11 +13,13 @@ struct CategoryPieChart: View {
     let categoryData: [CategorySpendingUI]
     let totalSpending: Double
     let selectedCurrency: Currency
-    
+    /// From ViewModel (single source of truth); avoids rendering Chart with invalid data
+    let shouldShowChart: Bool
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Gastos por Categoría")
+                Text(L10n.Statistics.chartByCategory)
                     .font(.title3).bold()
                     .foregroundColor(Color("AppTextPrimary"))
                 Spacer()
@@ -27,19 +29,21 @@ struct CategoryPieChart: View {
                     .foregroundColor(Color("AppPrimary"))
             }
             .padding(.horizontal)
-            
-            Chart(categoryData) { data in
-                SectorMark(
-                    angle: .value("Monto", data.totalAmount),
-                    innerRadius: .ratio(0.618),
-                    angularInset: 1.5
-                )
-                .cornerRadius(5)
-                .foregroundStyle(by: .value("Categoría", data.category.rawValue))
+
+            if shouldShowChart {
+                Chart(categoryData) { data in
+                    SectorMark(
+                        angle: .value("Monto", data.totalAmount),
+                        innerRadius: .ratio(0.618),
+                        angularInset: 1.5
+                    )
+                    .cornerRadius(5)
+                    .foregroundStyle(by: .value("Categoría", L10n.Payments.categoryDisplayName(data.category)))
+                }
+                .frame(height: 280)
+                .chartLegend(position: .bottom, alignment: .center)
+                .padding(.horizontal)
             }
-            .frame(height: 280)
-            .chartLegend(position: .bottom, alignment: .center)
-            .padding(.horizontal)
 
             // Lista de categorías
             VStack(spacing: 0) {
@@ -48,7 +52,7 @@ struct CategoryPieChart: View {
                         Circle()
                             .fill(Color.accentColor)
                             .frame(width: 8, height: 8)
-                        Text(data.category.rawValue)
+                        Text(L10n.Payments.categoryDisplayName(data.category))
                             .foregroundColor(Color("AppTextPrimary"))
                         Spacer()
                         VStack(alignment: .trailing, spacing: 2) {

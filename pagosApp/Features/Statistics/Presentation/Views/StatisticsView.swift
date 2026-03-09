@@ -24,18 +24,18 @@ struct StatisticsView: View {
                 VStack(spacing: 0) {
                     if vm.categoryStats.isEmpty && vm.monthlyStats.isEmpty {
                         ContentUnavailableView(
-                            "Sin Datos",
+                            L10n.Statistics.noDataTitle,
                             systemImage: "chart.pie",
-                            description: Text("Añade algunos pagos para ver las estadísticas.")
+                            description: Text(L10n.Statistics.noDataDescription)
                         )
                         .foregroundColor(Color("AppTextSecondary"))
                         .padding(.top, 100)
                     } else {
                         // Header con filtro de tiempo
                         VStack(spacing: 16) {
-                            Picker("Período", selection: $vm.selectedFilter) {
+                            Picker(L10n.Statistics.periodPicker, selection: $vm.selectedFilter) {
                                 ForEach(StatsFilter.allCases) { filter in
-                                    Text(filter.rawValue).tag(filter)
+                                    Text(L10n.Statistics.periodDisplayName(filter)).tag(filter)
                                 }
                             }
                             .pickerStyle(.segmented)
@@ -62,7 +62,7 @@ struct StatisticsView: View {
                         }
                         .padding(.bottom)
 
-                        if vm.categorySpendingData.isEmpty {
+                        if !vm.hasValidChartData {
                             EmptyStateView(
                                 currency: vm.selectedCurrency,
                                 filter: vm.selectedFilter
@@ -72,7 +72,8 @@ struct StatisticsView: View {
                             CategoryPieChart(
                                 categoryData: vm.categorySpendingData,
                                 totalSpending: vm.totalSpending,
-                                selectedCurrency: vm.selectedCurrency
+                                selectedCurrency: vm.selectedCurrency,
+                                shouldShowChart: vm.hasValidChartData
                             )
                             .padding(.vertical)
 
@@ -85,7 +86,7 @@ struct StatisticsView: View {
                     }
                 }
             }
-            .navigationTitle("Estadísticas")
+            .navigationTitle(L10n.Statistics.title)
         }
         .task {
             // Load statistics from SwiftData (fast, no loader needed)

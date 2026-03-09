@@ -20,7 +20,7 @@ struct PaymentRowView: View {
                     .fontWeight(.bold)
                     .strikethrough(payment.isPaid, color: Color("AppTextSecondary"))
                     .foregroundColor(payment.displayColor)
-                Text(payment.category.rawValue)
+                Text(L10n.Payments.categoryDisplayName(payment.category))
                     .font(.caption)
                     .foregroundColor(Color("AppTextSecondary"))
             }

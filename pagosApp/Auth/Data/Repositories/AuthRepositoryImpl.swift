@@ -33,7 +33,7 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
 
     func signUp(credentials: RegistrationCredentials) async -> Result<AuthSession, AuthError> {
         do {
-            logger.info("📝 Signing up user")
+            logger.info("\(L10n.Log.Auth.signUp)")
 
             // Sign up via remote data source
             let sessionDTO = try await remoteDataSource.signUp(
@@ -49,22 +49,22 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             let keychainDTO = KeychainAuthDTOMapper().toDTO(from: session)
             try localDataSource.saveTokens(keychainDTO)
 
-            logger.info("✅ User signed up successfully")
+            logger.info("\(L10n.Log.Auth.signUpSuccess)")
 
             return .success(session)
 
         } catch let error as AuthError {
-            logger.error("❌ Sign up failed: \(error.errorCode)")
+            logger.error("\(L10n.Log.Auth.signUpFailed(error.errorCode))")
             return .failure(error)
         } catch {
-            logger.error("❌ Sign up failed: \(error.localizedDescription)")
+            logger.error("\(L10n.Log.Auth.signUpFailed(error.localizedDescription))")
             return .failure(.unknown(error.localizedDescription))
         }
     }
 
     func signIn(credentials: LoginCredentials) async -> Result<AuthSession, AuthError> {
         do {
-            logger.info("🔑 Signing in user")
+            logger.info("\(L10n.Log.Auth.signIn)")
 
             // Sign in via remote data source
             let sessionDTO = try await remoteDataSource.signIn(
@@ -79,21 +79,21 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             let keychainDTO = KeychainAuthDTOMapper().toDTO(from: session)
             try localDataSource.saveTokens(keychainDTO)
 
-            logger.info("✅ User signed in successfully")
+            logger.info("\(L10n.Log.Auth.signInSuccess)")
 
             return .success(session)
 
         } catch let error as AuthError {
-            logger.error("❌ Sign in failed: \(error.errorCode)")
+            logger.error("\(L10n.Log.Auth.signInFailed(error.errorCode))")
             return .failure(error)
         } catch {
-            logger.error("❌ Sign in failed: \(error.localizedDescription)")
+            logger.error("\(L10n.Log.Auth.signInFailed(error.localizedDescription))")
             return .failure(.unknown(error.localizedDescription))
         }
     }
 
     func signOut() async -> Result<Void, AuthError> {
-        logger.info("🚪 Signing out user")
+        logger.info("\(L10n.Log.Auth.signOut)")
 
         // Sign out from remote (best effort - don't fail if offline)
         try? await remoteDataSource.signOut()
@@ -101,34 +101,34 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
         // Clear local tokens
         localDataSource.clearTokens()
 
-        logger.info("✅ User signed out successfully")
+        logger.info("\(L10n.Log.Auth.signOutSuccess)")
 
         return .success(())
     }
 
     func getCurrentSession() async -> AuthSession? {
         do {
-            logger.debug("🔍 Getting current session")
+            logger.debug("\(L10n.Log.Auth.gettingSession)")
 
             // Try to get session from remote
             if let sessionDTO = try await remoteDataSource.getCurrentSession() {
                 let session = mapper.toDomain(sessionDTO)
-                logger.debug("✅ Session retrieved from remote")
+                logger.debug("\(L10n.Log.Auth.sessionRetrieved)")
                 return session
             }
 
-            logger.debug("⚠️ No remote session found")
+            logger.debug("\(L10n.Log.Auth.noRemoteSession)")
             return nil
 
         } catch {
-            logger.debug("⚠️ Failed to get remote session: \(error.localizedDescription)")
+            logger.debug("\(L10n.Log.Auth.sessionFailed(error.localizedDescription))")
             return nil
         }
     }
 
     func refreshSession(refreshToken: String) async -> Result<AuthSession, AuthError> {
         do {
-            logger.info("🔄 Refreshing session")
+            logger.info("\(L10n.Log.Auth.refreshingSession)")
 
             // Refresh session via remote
             let sessionDTO = try await remoteDataSource.refreshSession(refreshToken: refreshToken)
@@ -140,15 +140,15 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             let keychainDTO = KeychainAuthDTOMapper().toDTO(from: session)
             try localDataSource.saveTokens(keychainDTO)
 
-            logger.info("✅ Session refreshed successfully")
+            logger.info("\(L10n.Log.Auth.sessionRefreshed)")
 
             return .success(session)
 
         } catch let error as AuthError {
-            logger.error("❌ Session refresh failed: \(error.errorCode)")
+            logger.error("\(L10n.Log.Auth.sessionRefreshFailed(error.errorCode))")
             return .failure(error)
         } catch {
-            logger.error("❌ Session refresh failed: \(error.localizedDescription)")
+            logger.error("\(L10n.Log.Auth.sessionRefreshFailed(error.localizedDescription))")
             return .failure(.sessionExpired)
         }
     }
@@ -157,76 +157,76 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
 
     func sendPasswordResetEmail(email: String) async -> Result<Void, AuthError> {
         do {
-            logger.info("📧 Sending password reset email")
+            logger.info("\(L10n.Log.Auth.passwordResetEmail)")
 
             try await remoteDataSource.sendPasswordResetEmail(email: email)
 
-            logger.info("✅ Password reset email sent")
+            logger.info("\(L10n.Log.Auth.passwordResetEmailSent)")
 
             return .success(())
 
         } catch let error as AuthError {
-            logger.error("❌ Password reset email failed: \(error.errorCode)")
+            logger.error("\(L10n.Log.Auth.passwordResetEmailFailed(error.errorCode))")
             return .failure(error)
         } catch {
-            logger.error("❌ Password reset email failed: \(error.localizedDescription)")
+            logger.error("\(L10n.Log.Auth.passwordResetEmailFailed(error.localizedDescription))")
             return .failure(.unknown(error.localizedDescription))
         }
     }
 
     func resetPassword(token: String, newPassword: String) async -> Result<Void, AuthError> {
         do {
-            logger.info("🔐 Resetting password")
+            logger.info("\(L10n.Log.Auth.resettingPassword)")
 
             try await remoteDataSource.resetPassword(token: token, newPassword: newPassword)
 
-            logger.info("✅ Password reset successfully")
+            logger.info("\(L10n.Log.Auth.passwordResetSuccess)")
 
             return .success(())
 
         } catch let error as AuthError {
-            logger.error("❌ Password reset failed: \(error.errorCode)")
+            logger.error("\(L10n.Log.Auth.passwordResetFailed(error.errorCode))")
             return .failure(error)
         } catch {
-            logger.error("❌ Password reset failed: \(error.localizedDescription)")
+            logger.error("\(L10n.Log.Auth.passwordResetFailed(error.localizedDescription))")
             return .failure(.unknown(error.localizedDescription))
         }
     }
 
     func updateEmail(newEmail: String) async -> Result<Void, AuthError> {
         do {
-            logger.info("📧 Updating email")
+            logger.info("\(L10n.Log.Auth.updatingEmail)")
 
             try await remoteDataSource.updateEmail(newEmail: newEmail)
 
-            logger.info("✅ Email updated successfully")
+            logger.info("\(L10n.Log.Auth.emailUpdated)")
 
             return .success(())
 
         } catch let error as AuthError {
-            logger.error("❌ Email update failed: \(error.errorCode)")
+            logger.error("\(L10n.Log.Auth.emailUpdateFailed(error.errorCode))")
             return .failure(error)
         } catch {
-            logger.error("❌ Email update failed: \(error.localizedDescription)")
+            logger.error("\(L10n.Log.Auth.emailUpdateFailed(error.localizedDescription))")
             return .failure(.unknown(error.localizedDescription))
         }
     }
 
     func updatePassword(newPassword: String) async -> Result<Void, AuthError> {
         do {
-            logger.info("🔐 Updating password")
+            logger.info("\(L10n.Log.Auth.updatingPassword)")
 
             try await remoteDataSource.updatePassword(newPassword: newPassword)
 
-            logger.info("✅ Password updated successfully")
+            logger.info("\(L10n.Log.Auth.passwordUpdated)")
 
             return .success(())
 
         } catch let error as AuthError {
-            logger.error("❌ Password update failed: \(error.errorCode)")
+            logger.error("\(L10n.Log.Auth.passwordUpdateFailed(error.errorCode))")
             return .failure(error)
         } catch {
-            logger.error("❌ Password update failed: \(error.localizedDescription)")
+            logger.error("\(L10n.Log.Auth.passwordUpdateFailed(error.localizedDescription))")
             return .failure(.unknown(error.localizedDescription))
         }
     }
@@ -235,22 +235,22 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
 
     func deleteAccount() async -> Result<Void, AuthError> {
         do {
-            logger.info("🗑️ Deleting account")
+            logger.info("\(L10n.Log.Auth.deletingAccount)")
 
             try await remoteDataSource.deleteAccount()
 
             // Clear local tokens
             localDataSource.clearTokens()
 
-            logger.info("✅ Account deleted successfully")
+            logger.info("\(L10n.Log.Auth.accountDeleted)")
 
             return .success(())
 
         } catch let error as AuthError {
-            logger.error("❌ Account deletion failed: \(error.errorCode)")
+            logger.error("\(L10n.Log.Auth.accountDeletionFailed(error.errorCode))")
             return .failure(error)
         } catch {
-            logger.error("❌ Account deletion failed: \(error.localizedDescription)")
+            logger.error("\(L10n.Log.Auth.accountDeletionFailed(error.localizedDescription))")
             return .failure(.unknown(error.localizedDescription))
         }
     }

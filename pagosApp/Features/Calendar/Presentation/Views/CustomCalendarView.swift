@@ -3,6 +3,7 @@ import SwiftUI
 struct CustomCalendarView: View {
     @Binding var selectedDate: Date
     let payments: [PaymentUI]
+    let reminders: [Reminder]
 
     @State private var currentMonth: Date = Date()
     @State private var isExpanded = false
@@ -26,7 +27,7 @@ struct CustomCalendarView: View {
                     daysInMonth: daysInMonth,
                     selectedDate: selectedDate,
                     currentMonth: currentMonth,
-                    hasPayments: hasPayments,
+                    hasPayments: hasEvents,
                     onDateTap: { date in
                         selectedDate = date
                     }
@@ -35,7 +36,7 @@ struct CustomCalendarView: View {
                 CompactCalendarScrollView(
                     daysInCurrentWeek: daysInCurrentWeek,
                     selectedDate: selectedDate,
-                    hasPayments: hasPayments,
+                    hasPayments: hasEvents,
                     dayOfWeekString: dayOfWeekString,
                     onDateTap: { date in
                         selectedDate = date
@@ -101,8 +102,10 @@ struct CustomCalendarView: View {
 
     // MARK: - Helper Methods
 
-    private func hasPayments(on date: Date) -> Bool {
-        payments.contains { calendar.isDate($0.dueDate, inSameDayAs: date) }
+    private func hasEvents(on date: Date) -> Bool {
+        let hasPayment = payments.contains { calendar.isDate($0.dueDate, inSameDayAs: date) }
+        let hasReminder = reminders.contains { calendar.isDate($0.dueDate, inSameDayAs: date) }
+        return hasPayment || hasReminder
     }
 
     private func dayOfWeekString(for date: Date) -> String {

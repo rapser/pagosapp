@@ -9,7 +9,6 @@
 
 import Foundation
 import Observation
-import OSLog
 
 /// Lightweight coordinator for payment synchronization
 /// Maintains @Observable state for UI and delegates to Use Cases
@@ -25,8 +24,6 @@ final class PaymentSyncCoordinator {
     private let paymentRepository: PaymentRepositoryProtocol
     private let syncRepository: PaymentSyncRepositoryProtocol
     private let eventBus: EventBus
-
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentSyncCoordinator")
 
     // MARK: - Observable State (for UI)
 
@@ -63,18 +60,12 @@ final class PaymentSyncCoordinator {
 
     /// Perform full synchronization (upload + download)
     func performSync() async throws {
-        guard !isSyncing else {
-            logger.warning("⚠️ Sync already in progress")
-            return
-        }
+        guard !isSyncing else { return }
 
         isSyncing = true
         syncError = nil
         defer { isSyncing = false }
 
-        logger.info("🔄 Starting full synchronization")
-
-        // Delegate to SyncPaymentsUseCase
         let result = await syncPaymentsUseCase.execute()
 
         switch result {
@@ -82,24 +73,16 @@ final class PaymentSyncCoordinator {
             lastSyncDate = Date()
             UserDefaults.standard.set(lastSyncDate, forKey: lastSyncKey)
             syncError = nil
-
-            // Update pending count
             await updatePendingSyncCount()
-
-            // Publish domain event to notify views
             eventBus.publish(PaymentsSyncedEvent(syncedCount: 0))
-            logger.debug("📢 Published PaymentsSyncedEvent")
 
-            logger.info("✅ Synchronization completed successfully")
-
-        case .failure(let error):
-            logger.error("❌ Synchronization failed: \(error.errorCode)")
+        case .failure:
             syncError = NSError(
                 domain: "PaymentSyncCoordinator",
                 code: 503,
                 userInfo: [
-                    NSLocalizedDescriptionKey: "No se puede sincronizar en este momento",
-                    NSLocalizedRecoverySuggestionErrorKey: "Verifica tu conexión a internet. Puedes seguir trabajando localmente y sincronizar más tarde."
+                    NSLocalizedDescriptionKey: L10n.Sync.cannotSync,
+                    NSLocalizedRecoverySuggestionErrorKey: L10n.Sync.recoverySuggestion
                 ]
             )
             throw syncError!
@@ -109,27 +92,15 @@ final class PaymentSyncCoordinator {
     /// Perform initial sync if local database is empty
     func performInitialSyncIfNeeded(isAuthenticated: Bool) async {
         guard isAuthenticated else { return }
-
         do {
             let allPayments = try await paymentRepository.getAllLocalPayments()
-
-            guard allPayments.isEmpty else {
-                logger.info("Local database has \(allPayments.count) payments. Skipping initial sync.")
-                return
-            }
-
-            logger.info("Local database is empty. Performing initial sync...")
+            guard allPayments.isEmpty else { return }
             try await performSync()
-        } catch {
-            logger.error("Initial sync failed: \(error.localizedDescription)")
-        }
+        } catch {}
     }
 
-    /// Update pending sync count
     func updatePendingSyncCount() async {
-        let count = await getPendingSyncCountUseCase.execute()
-        pendingSyncCount = count
-        logger.info("📊 Pending sync count updated: \(count) payments")
+        pendingSyncCount = await getPendingSyncCountUseCase.execute()
     }
 
     /// Check if there are pending payments to sync
@@ -145,33 +116,18 @@ final class PaymentSyncCoordinator {
     /// - Returns: True if cleared successfully
     @discardableResult
     func clearLocalDatabase(force: Bool = false) async -> Bool {
-        logger.info("Clearing local database (force: \(force))")
-
-        // Check for pending syncs if not forcing
         if !force {
             let hasPending = await hasPendingSyncPayments()
-            if hasPending {
-                logger.warning("⚠️ Cannot clear database: there are unsynchronized payments")
-                return false
-            }
+            if hasPending { return false }
         }
-
         do {
             try await paymentRepository.clearAllLocalPayments()
-
-            // Reset sync state
             pendingSyncCount = 0
             lastSyncDate = nil
             UserDefaults.standard.removeObject(forKey: lastSyncKey)
-
-            // Publish domain event to notify views
             eventBus.publish(PaymentsSyncedEvent(syncedCount: 0))
-            logger.debug("📢 Published PaymentsSyncedEvent (database cleared)")
-
-            logger.info("✅ Local database cleared successfully")
             return true
         } catch {
-            logger.error("❌ Failed to clear database: \(error.localizedDescription)")
             return false
         }
     }

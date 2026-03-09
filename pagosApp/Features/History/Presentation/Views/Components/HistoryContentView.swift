@@ -9,6 +9,6 @@ struct HistoryContentView: View {
 
             HistoryBodyContent(viewModel: viewModel)
         }
-        .navigationTitle("Historial de Pagos")
+        .navigationTitle(L10n.History.navTitle)
     }
 }

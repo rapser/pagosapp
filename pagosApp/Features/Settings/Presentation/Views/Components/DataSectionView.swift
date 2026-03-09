@@ -5,8 +5,8 @@ struct DataSectionView: View {
 
     var body: some View {
         Section(
-            header: Text("Datos del Dispositivo").foregroundColor(Color("AppTextPrimary")),
-            footer: Text("Desvincular eliminará TODOS los datos locales de este dispositivo de forma permanente. Tus datos en la nube están seguros.")
+            header: Text(L10n.Settings.DataSection.sectionTitle).foregroundColor(Color("AppTextPrimary")),
+            footer: Text(L10n.Settings.DataSection.footer)
                 .font(.caption)
                 .foregroundColor(Color("AppTextSecondary"))
         ) {
@@ -15,7 +15,7 @@ struct DataSectionView: View {
             } label: {
                 HStack {
                     Image(systemName: "trash.fill")
-                    Text("Desvincular Dispositivo")
+                    Text(L10n.Settings.DataSection.unlinkButton)
                 }
             }
         }

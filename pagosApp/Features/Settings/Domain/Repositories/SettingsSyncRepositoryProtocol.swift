@@ -23,6 +23,6 @@ protocol SettingsSyncRepositoryProtocol {
     /// Current count of pending sync operations
     var pendingSyncCount: Int { get }
 
-    /// Current sync error if any
-    var syncError: PaymentSyncError? { get }
+    /// Current sync error if any (payments or reminders)
+    var syncError: Error? { get }
 }

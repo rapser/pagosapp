@@ -161,12 +161,14 @@ final class AuthDependencyContainer {
     func makeSessionCoordinator(
         errorHandler: ErrorHandler,
         settingsStore: SettingsStore,
-        paymentSyncCoordinator: PaymentSyncCoordinator
+        paymentSyncCoordinator: PaymentSyncCoordinator,
+        reminderSyncCoordinator: ReminderSyncCoordinator
     ) -> SessionCoordinator {
         return SessionCoordinator(
             errorHandler: errorHandler,
             settingsStore: settingsStore,
             paymentSyncCoordinator: paymentSyncCoordinator,
+            reminderSyncCoordinator: reminderSyncCoordinator,
             authDependencyContainer: self
         )
     }
