@@ -1,4 +1,5 @@
 import SwiftUI
+import OSLog
 
 struct PaymentsListView: View {
     @Environment(AppDependencies.self) private var dependencies
@@ -60,15 +61,17 @@ private struct PaymentsListContentWrapper: View {
             }
         }
         .task {
-            // Modern approach: use .task for initialization
-            guard viewModel == nil else { return }
-
+            guard viewModel == nil else {
+                Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentsListView").debug("📋 [VIEW] .task skipped (viewModel already set)")
+                return
+            }
+            Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentsListView").info("📋 [VIEW] .task: creating ViewModel and calling fetchPayments…")
             viewModel = dependencies.paymentDependencyContainer.makePaymentsListViewModel(
                 calendarEventDataSource: dependencies.calendarEventDataSource,
                 notificationDataSource: dependencies.notificationDataSource
             )
-
             await viewModel?.fetchPayments(showLoading: false)
+            Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentsListView").info("📋 [VIEW] .task: fetchPayments finished")
         }
         .sheet(isPresented: $showingAddPaymentSheet) {
             AddPaymentView()

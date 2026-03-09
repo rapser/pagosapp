@@ -32,6 +32,9 @@ struct EditReminderView: View {
                 Section(L10n.Reminders.dueDateLabel) {
                     DatePicker(L10n.Reminders.dueDateLabel, selection: $viewModel.dueDate, displayedComponents: .date)
                 }
+                Section {
+                    Toggle(L10n.Reminders.completedLabel, isOn: $viewModel.isCompleted)
+                }
             }
             .navigationTitle(L10n.Reminders.Edit.title)
             .navigationBarTitleDisplayMode(.inline)

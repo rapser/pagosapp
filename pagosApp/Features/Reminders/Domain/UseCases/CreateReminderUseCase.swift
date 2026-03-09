@@ -28,6 +28,7 @@ final class CreateReminderUseCase {
             title: trimmedTitle,
             description: (description.trimmingCharacters(in: .whitespacesAndNewlines)),
             dueDate: dueDate,
+            isCompleted: false,
             syncStatus: .local,
             lastSyncedAt: nil
         )

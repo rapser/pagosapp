@@ -55,7 +55,9 @@ final class ReminderRepositoryImpl: ReminderRepositoryProtocol {
         do {
             notificationDataSource.cancelReminderNotifications(reminderId: reminder.id)
             try await localDataSource.save(reminder)
-            notificationDataSource.scheduleReminderNotifications(reminderId: reminder.id, title: reminder.title, dueDate: reminder.dueDate)
+            if !reminder.isCompleted {
+                notificationDataSource.scheduleReminderNotifications(reminderId: reminder.id, title: reminder.title, dueDate: reminder.dueDate)
+            }
             return .success(reminder)
         } catch {
             logger.error("❌ Failed to update reminder: \(error.localizedDescription)")

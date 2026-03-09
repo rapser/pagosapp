@@ -64,7 +64,8 @@ final class ReminderDependencyContainer {
     func makeRemindersListViewModel() -> RemindersListViewModel {
         RemindersListViewModel(
             getAllRemindersUseCase: makeGetAllRemindersUseCase(),
-            deleteReminderUseCase: makeDeleteReminderUseCase()
+            deleteReminderUseCase: makeDeleteReminderUseCase(),
+            updateReminderUseCase: makeUpdateReminderUseCase()
         )
     }
 

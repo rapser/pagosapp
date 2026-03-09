@@ -48,6 +48,7 @@ final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol {
                 title: reminder.title,
                 description: reminder.description,
                 dueDate: reminder.dueDate,
+                isCompleted: reminder.isCompleted,
                 syncStatus: .synced,
                 lastSyncedAt: now
             )
@@ -96,6 +97,7 @@ final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol {
             title: reminder.title,
             description: reminder.description,
             dueDate: reminder.dueDate,
+            isCompleted: reminder.isCompleted,
             syncStatus: status,
             lastSyncedAt: status == .synced ? Date() : reminder.lastSyncedAt
         )

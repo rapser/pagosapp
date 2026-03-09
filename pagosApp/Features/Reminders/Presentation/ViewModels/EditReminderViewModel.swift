@@ -15,6 +15,7 @@ final class EditReminderViewModel {
     var title: String
     var reminderDescription: String
     var dueDate: Date
+    var isCompleted: Bool
     var isSaving = false
     var errorMessage: String?
     var showError = false
@@ -29,6 +30,7 @@ final class EditReminderViewModel {
         self.title = reminder.title
         self.reminderDescription = reminder.description
         self.dueDate = reminder.dueDate
+        self.isCompleted = reminder.isCompleted
         self.updateReminderUseCase = updateReminderUseCase
     }
 
@@ -43,6 +45,7 @@ final class EditReminderViewModel {
             title: title,
             description: reminderDescription,
             dueDate: dueDate,
+            isCompleted: isCompleted,
             syncStatus: newStatus,
             lastSyncedAt: reminder.lastSyncedAt
         )

@@ -161,6 +161,7 @@ final class PaymentsListViewModel {
     /// Fetch all payments from repository (reads from local SwiftData - fast)
     /// - Parameter showLoading: Whether to show loading indicator (default: true). Set to false for silent background refreshes.
     func fetchPayments(showLoading: Bool = true) async {
+        logger.info("📋 [LIST] fetchPayments called (showLoading: \(showLoading))")
         if showLoading {
             isLoading = true
         }
@@ -176,7 +177,7 @@ final class PaymentsListViewModel {
         case .success(let fetchedPayments):
             // Convert Domain -> UI using mapper
             payments = mapper.toUI(fetchedPayments)
-            logger.info("✅ Fetched \(fetchedPayments.count) payments from local storage (showLoading: \(showLoading))")
+            logger.info("📋 [LIST] ✅ Success: \(fetchedPayments.count) payments from local → UI array has \(self.payments.count); filter=\(String(describing: self.selectedFilter)); filteredCount=\(self.filteredPayments.count)")
 
             // Reschedule notifications for all payments on first load (to restore after app updates)
             if !hasRescheduledNotifications, let notificationsUseCase = scheduleNotificationsUseCase {
@@ -188,7 +189,7 @@ final class PaymentsListViewModel {
             }
 
         case .failure(let error):
-            logger.error("❌ Failed to fetch payments: \(error.errorCode)")
+            logger.error("📋 [LIST] ❌ Failed to fetch payments: \(error.errorCode) - \(error.localizedDescription)")
             showError(for: error)
         }
     }

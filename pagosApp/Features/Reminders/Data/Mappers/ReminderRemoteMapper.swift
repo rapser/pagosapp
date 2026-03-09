@@ -15,6 +15,7 @@ enum ReminderRemoteMapper {
             title: dto.title,
             description: dto.reminderDescription,
             dueDate: dto.dueDate,
+            isCompleted: dto.isCompleted,
             syncStatus: .synced,
             lastSyncedAt: dto.updatedAt ?? dto.createdAt
         )
@@ -32,6 +33,7 @@ enum ReminderRemoteMapper {
             title: reminder.title,
             reminderDescription: reminder.description,
             dueDate: reminder.dueDate,
+            isCompleted: reminder.isCompleted,
             createdAt: nil,
             updatedAt: reminder.lastSyncedAt
         )

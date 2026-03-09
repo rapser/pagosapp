@@ -2,8 +2,8 @@
 //  ModelContainerFactory.swift
 //  pagosApp
 //
-//  Factory for creating SwiftData ModelContainer instances
-//  Infrastructure Layer - Persistence Configuration
+//  Factory for creating SwiftData ModelContainer instances.
+//  Un solo store (pagos, perfil, recordatorios). No se modifica lógica de pagos.
 //
 
 import Foundation
@@ -14,8 +14,7 @@ import OSLog
 enum ModelContainerFactory {
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ModelContainerFactory")
 
-    /// Creates a configured ModelContainer for the app's data models
-    /// Implements automatic recovery on database corruption
+    /// Creates a configured ModelContainer for the app's data models (pagos, perfil, recordatorios).
     static func create() -> ModelContainer {
         let schema = Schema([PaymentLocalDTO.self, UserProfileLocalDTO.self, ReminderLocalDTO.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
@@ -24,8 +23,6 @@ enum ModelContainerFactory {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
             logger.error("\(L10n.Log.Db.modelContainerFailed(error.localizedDescription))")
-
-            // Attempt database recovery
             return recoverFromCorruption(schema: schema, configuration: modelConfiguration)
         }
     }
@@ -34,18 +31,14 @@ enum ModelContainerFactory {
     private static func recoverFromCorruption(schema: Schema, configuration: ModelConfiguration) -> ModelContainer {
         logger.warning("\(L10n.Log.Db.recoveryAttempt)")
 
-        // Remove corrupted database files
         if let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
             let storeURL = appSupportURL.appendingPathComponent("default.store")
-
             try? FileManager.default.removeItem(at: storeURL)
             try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("wal"))
             try? FileManager.default.removeItem(at: storeURL.appendingPathExtension("shm"))
-
             logger.info("\(L10n.Log.Db.corruptedRemoved)")
         }
 
-        // Attempt to create new container
         do {
             let newContainer = try ModelContainer(for: schema, configurations: [configuration])
             logger.info("\(L10n.Log.Db.recreated)")
