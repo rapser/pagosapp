@@ -12,15 +12,18 @@ import Foundation
 @MainActor
 final class CalendarDependencyContainer {
     private let paymentDependencyContainer: PaymentDependencyContainer
+    private let reminderDependencyContainer: ReminderDependencyContainer
     private let calendarEventDataSource: CalendarEventDataSource
 
     // MARK: - Initialization
 
     init(
         paymentDependencyContainer: PaymentDependencyContainer,
+        reminderDependencyContainer: ReminderDependencyContainer,
         calendarEventDataSource: CalendarEventDataSource
     ) {
         self.paymentDependencyContainer = paymentDependencyContainer
+        self.reminderDependencyContainer = reminderDependencyContainer
         self.calendarEventDataSource = calendarEventDataSource
     }
 
@@ -59,6 +62,7 @@ final class CalendarDependencyContainer {
             getAllPaymentsUseCase: makeGetAllPaymentsForCalendarUseCase(),
             getPaymentsByDateUseCase: makeGetPaymentsByDateUseCase(),
             getPaymentsByMonthUseCase: makeGetPaymentsByMonthUseCase(),
+            getAllRemindersUseCase: reminderDependencyContainer.makeGetAllRemindersUseCase(),
             calendarEventDataSource: calendarEventDataSource,
             mapper: PaymentUIMapper()
         )

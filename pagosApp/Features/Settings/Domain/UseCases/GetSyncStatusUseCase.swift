@@ -28,5 +28,5 @@ final class GetSyncStatusUseCase {
 /// Domain model for settings sync status
 struct SettingsSyncStatus {
     let pendingSyncCount: Int
-    let syncError: PaymentSyncError?
+    let syncError: Error?
 }

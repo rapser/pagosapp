@@ -57,12 +57,12 @@ struct ContentView: View {
                 return Alert(title: alertManager.title, message: alertManager.message)
             }
         }
-        .alert("Sesión Cerrada por Inactividad", isPresented: $session.showInactivityAlert) {
-            Button("Aceptar") {
+        .alert(L10n.Session.inactivityTitle, isPresented: $session.showInactivityAlert) {
+            Button(L10n.General.ok) {
                 session.showInactivityAlert = false
             }
         } message: {
-            Text("Tu sesión ha sido cerrada automáticamente debido a 1 semana de inactividad.")
+            Text(L10n.Session.inactivityMessage)
         }
     }
 }

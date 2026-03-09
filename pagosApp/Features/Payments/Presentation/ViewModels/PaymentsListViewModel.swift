@@ -9,20 +9,15 @@
 import Foundation
 import SwiftUI
 import Observation
-import OSLog
 
 @MainActor
 @Observable
 final class PaymentsListViewModel {
-    // MARK: - Observable Properties (UI State)
-
     var payments: [PaymentUI] = []
     var selectedFilter: PaymentFilterUI = .currentMonth
     var isLoading = false
     var errorMessage: String?
     var showError = false
-
-    // MARK: - Dependencies (Use Cases)
 
     private let getAllPaymentsUseCase: GetAllPaymentsUseCase
     private let deletePaymentUseCase: DeletePaymentUseCase
@@ -30,7 +25,6 @@ final class PaymentsListViewModel {
     private let scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase?
     private let eventBus: EventBus
     private let mapper: PaymentUIMapping
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentsListViewModel")
 
     // Track if we've already rescheduled notifications on first load
     private var hasRescheduledNotifications = false
@@ -48,7 +42,6 @@ final class PaymentsListViewModel {
             // Get the first day of next month
             guard let startOfCurrentMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now)),
                   let startOfNextMonth = calendar.date(byAdding: DateComponents(month: 1), to: startOfCurrentMonth) else {
-                logger.error("❌ Failed to calculate next month date")
                 return []
             }
             return payments.filter { $0.dueDate >= startOfNextMonth }
@@ -129,28 +122,24 @@ final class PaymentsListViewModel {
         // Listen to payment events and refresh UI
         Task { @MainActor in
             for await _ in eventBus.subscribe(to: PaymentCreatedEvent.self) {
-                logger.debug("📬 Received PaymentCreatedEvent")
                 await fetchPayments(showLoading: false)
             }
         }
 
         Task { @MainActor in
             for await _ in eventBus.subscribe(to: PaymentUpdatedEvent.self) {
-                logger.debug("📬 Received PaymentUpdatedEvent")
                 await fetchPayments(showLoading: false)
             }
         }
 
         Task { @MainActor in
             for await _ in eventBus.subscribe(to: PaymentDeletedEvent.self) {
-                logger.debug("📬 Received PaymentDeletedEvent")
                 await fetchPayments(showLoading: false)
             }
         }
 
         Task { @MainActor in
             for await _ in eventBus.subscribe(to: PaymentStatusToggledEvent.self) {
-                logger.debug("📬 Received PaymentStatusToggledEvent")
                 await fetchPayments(showLoading: false)
             }
         }
@@ -174,21 +163,15 @@ final class PaymentsListViewModel {
 
         switch result {
         case .success(let fetchedPayments):
-            // Convert Domain -> UI using mapper
             payments = mapper.toUI(fetchedPayments)
-            logger.info("✅ Fetched \(fetchedPayments.count) payments from local storage (showLoading: \(showLoading))")
-
-            // Reschedule notifications for all payments on first load (to restore after app updates)
             if !hasRescheduledNotifications, let notificationsUseCase = scheduleNotificationsUseCase {
                 hasRescheduledNotifications = true
                 Task { @MainActor in
                     notificationsUseCase.rescheduleAll(fetchedPayments)
-                    logger.info("✅ Rescheduled notifications for \(fetchedPayments.count) payments")
                 }
             }
 
         case .failure(let error):
-            logger.error("❌ Failed to fetch payments: \(error.errorCode)")
             showError(for: error)
         }
     }
@@ -203,11 +186,9 @@ final class PaymentsListViewModel {
 
         switch result {
         case .success:
-            logger.info("✅ Payment deleted: \(payment.name)")
-            // SwiftData notification will sync final state
+            break
 
         case .failure(let error):
-            logger.error("❌ Failed to delete payment: \(error.errorCode)")
             // Revert optimistic delete on failure - re-add payment
             payments.append(payment)
             showError(for: error)
@@ -238,12 +219,10 @@ final class PaymentsListViewModel {
         let result = await togglePaymentStatusUseCase.execute(mapper.toDomain(payment))
 
         switch result {
-        case .success(let updatedPayment):
-            logger.info("✅ Payment status updated: \(updatedPayment.name) - isPaid: \(updatedPayment.isPaid)")
-            // SwiftData notification will sync if there are differences
+        case .success:
+            break
 
         case .failure(let error):
-            logger.error("❌ Failed to update payment status: \(error.errorCode)")
             // Revert optimistic update on failure
             if let index = payments.firstIndex(where: { $0.id == payment.id }) {
                 payments[index] = payment
@@ -282,16 +261,7 @@ final class PaymentsListViewModel {
     // MARK: - Error Handling
 
     private func showError(for error: PaymentError) {
-        switch error {
-        case .deleteFailed(let details):
-            errorMessage = "No se pudo eliminar el pago: \(details)"
-        case .updateFailed(let details):
-            errorMessage = "No se pudo actualizar el pago: \(details)"
-        case .unknown(let details):
-            errorMessage = "Error: \(details)"
-        default:
-            errorMessage = "Ocurrió un error inesperado"
-        }
+        errorMessage = PaymentErrorMessageMapper.message(for: error)
         showError = true
     }
 }

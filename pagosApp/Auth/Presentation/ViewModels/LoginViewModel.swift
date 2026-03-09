@@ -141,26 +141,9 @@ final class LoginViewModel {
         !email.isEmpty && !password.isEmpty
     }
 
-    // MARK: - Error Mapping
+    // MARK: - Error Mapping (Auth module mapper)
 
     private func mapErrorToUserMessage(_ error: AuthError) -> String {
-        switch error {
-        case .invalidCredentials:
-            return "Email o contraseña incorrectos"
-        case .invalidEmail:
-            return "Email inválido"
-        case .weakPassword:
-            return "La contraseña debe tener al menos 6 caracteres"
-        case .networkError:
-            return "Error de conexión. Verifica tu internet"
-        case .sessionExpired:
-            return "Sesión expirada. Vuelve a iniciar sesión"
-        case .userNotFound:
-            return "Usuario no encontrado"
-        case .emailAlreadyExists:
-            return "El email ya está registrado"
-        case .unknown(let message):
-            return message
-        }
+        AuthErrorMessageMapper.message(for: error)
     }
 }

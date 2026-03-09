@@ -36,16 +36,11 @@ final class CreatePaymentUseCase {
     /// - Parameter payment: The payment entity to create
     /// - Returns: Result with created payment or error
     func execute(_ payment: Payment) async -> Result<Payment, PaymentError> {
-        logger.info("🔨 Creating payment: \(payment.name)")
-
-        // 1. Validate payment
         do {
             try validator.validate(payment)
         } catch let error as PaymentError {
-            logger.error("❌ Validation failed: \(error.errorCode)")
             return .failure(error)
         } catch {
-            logger.error("❌ Unexpected validation error: \(error.localizedDescription)")
             return .failure(.unknown(error.localizedDescription))
         }
 
@@ -57,43 +52,27 @@ final class CreatePaymentUseCase {
         // 3. Save to repository
         do {
             try await paymentRepository.savePayment(newPayment)
-            logger.info("✅ Payment created successfully: \(payment.name)")
 
-            // 4. Sync with calendar (if use case is available)
             if let syncUseCase = syncCalendarUseCase {
-                // Request calendar access first
                 let granted = await syncUseCase.requestAccess()
                 if granted {
-                    // Sync payment with calendar
-                    let syncResult = await syncUseCase.execute(newPayment)
-                    switch syncResult {
-                    case .success(let updatedPayment):
-                        logger.info("✅ Payment synced with calendar: \(updatedPayment.name)")
-                    case .failure(let error):
-                        logger.warning("⚠️ Failed to sync payment with calendar: \(error.errorCode)")
-                        // Don't fail the whole operation if calendar sync fails
-                    }
-                } else {
-                    logger.info("ℹ️ Calendar access denied, skipping calendar sync")
+                    _ = await syncUseCase.execute(newPayment)
                 }
             }
 
-            // 5. Schedule notifications (if use case is available)
             if let notificationsUseCase = scheduleNotificationsUseCase {
                 await MainActor.run {
                     notificationsUseCase.execute(newPayment)
                 }
             }
 
-            // Publish domain event (type-safe, reactive)
             await MainActor.run {
                 eventBus.publish(PaymentCreatedEvent(paymentId: newPayment.id))
-                logger.debug("📢 Published PaymentCreatedEvent")
             }
 
             return .success(newPayment)
         } catch {
-            logger.error("❌ Failed to create payment: \(error.localizedDescription)")
+            logger.error("Failed to create payment: \(error.localizedDescription)")
             return .failure(.saveFailed(error.localizedDescription))
         }
     }

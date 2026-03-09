@@ -2,9 +2,8 @@
 //  EmptyStateView.swift
 //  pagosApp
 //
-//  Created by miguel tomairo on 1/01/26.
+//  Statistics empty state: uses GenericEmptyStateView with currency/filter-specific copy
 //
-
 
 import SwiftUI
 import Charts
@@ -12,20 +11,22 @@ import Charts
 struct EmptyStateView: View {
     let currency: Currency
     let filter: StatsFilter
-    
+
+    private var title: String {
+        let currencyName = currency == .pen ? L10n.Statistics.currencySoles : L10n.Statistics.currencyDollars
+        return L10n.Statistics.emptyNoPayments(currencyName)
+    }
+
+    private var description: String {
+        L10n.Statistics.emptyForFilter(filter.rawValue)
+    }
+
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "chart.pie")
-                .font(.system(size: 50))
-                .foregroundColor(Color("AppTextSecondary"))
-            Text("No hay pagos en \(currency == .pen ? "Soles" : "Dólares")")
-                .font(.headline)
-                .foregroundColor(Color("AppTextPrimary"))
-            Text("para \"\(filter.rawValue)\"")
-                .font(.subheadline)
-                .foregroundColor(Color("AppTextSecondary"))
-        }
-        .frame(maxWidth: .infinity)
+        GenericEmptyStateView(
+            icon: "chart.pie",
+            title: title,
+            description: description
+        )
         .padding(.vertical, 60)
     }
 }

@@ -10,11 +10,11 @@ struct AboutSectionView: View {
     }
 
     var body: some View {
-        Section(header: Text("Acerca de").foregroundColor(Color("AppTextPrimary"))) {
+        Section(header: Text(L10n.Settings.sectionAbout).foregroundColor(Color("AppTextPrimary"))) {
             HStack {
                 Image(systemName: "info.circle.fill")
                     .foregroundColor(Color("AppPrimary"))
-                Text("Versión")
+                Text(L10n.Settings.aboutVersion)
                     .foregroundColor(Color("AppTextPrimary"))
                 Spacer()
                 Text("\(appVersion) (\(buildNumber))")
@@ -24,10 +24,10 @@ struct AboutSectionView: View {
             HStack {
                 Image(systemName: "apple.logo")
                     .foregroundColor(Color("AppPrimary"))
-                Text("Desarrollado por")
+                Text(L10n.Settings.aboutDevelopedBy)
                     .foregroundColor(Color("AppTextPrimary"))
                 Spacer()
-                Text("PagosApp Team")
+                Text(L10n.Settings.aboutTeam)
                     .foregroundColor(Color("AppTextSecondary"))
             }
         }
