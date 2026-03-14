@@ -35,14 +35,14 @@ struct PaymentGroupRowView: View {
             VStack(alignment: .trailing, spacing: 2) {
                 // Show amounts vertically with compact font (PEN first, then USD)
                 if let pen = group.penPayment {
-                    Text("S/\(String(format: "%.2f", pen.amount))")
+                    Text("S/ \(String(format: "%.2f", pen.amount))")
                         .font(.callout)
                         .fontWeight(.semibold)
                         .strikethrough(group.isPaid, color: Color("AppTextSecondary"))
                         .foregroundColor(group.displayColor)
                 }
                 if let usd = group.usdPayment {
-                    Text("$\(String(format: "%.2f", usd.amount))")
+                    Text("$ \(String(format: "%.2f", usd.amount))")
                         .font(.callout)
                         .fontWeight(.semibold)
                         .strikethrough(group.isPaid, color: Color("AppTextSecondary"))

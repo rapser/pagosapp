@@ -18,19 +18,25 @@ final class SettingsDependencyContainer {
     private let authDependencyContainer: AuthDependencyContainer
     private let userProfileDependencyContainer: UserProfileDependencyContainer
     private let eventBus: EventBus
+    private let notificationDataSource: NotificationDataSource
+    private let reminderDependencyContainer: ReminderDependencyContainer
 
     init(
         paymentSyncCoordinator: PaymentSyncCoordinator,
         reminderSyncCoordinator: ReminderSyncCoordinator,
         authDependencyContainer: AuthDependencyContainer,
         userProfileDependencyContainer: UserProfileDependencyContainer,
-        eventBus: EventBus
+        eventBus: EventBus,
+        notificationDataSource: NotificationDataSource,
+        reminderDependencyContainer: ReminderDependencyContainer
     ) {
         self.paymentSyncCoordinator = paymentSyncCoordinator
         self.reminderSyncCoordinator = reminderSyncCoordinator
         self.authDependencyContainer = authDependencyContainer
         self.userProfileDependencyContainer = userProfileDependencyContainer
         self.eventBus = eventBus
+        self.notificationDataSource = notificationDataSource
+        self.reminderDependencyContainer = reminderDependencyContainer
     }
 
     // MARK: - Repositories
@@ -82,6 +88,19 @@ final class SettingsDependencyContainer {
                 deleteLocalProfileUseCase: userProfileDependencyContainer.makeDeleteLocalProfileUseCase()
             ),
             eventBus: eventBus
+        )
+    }
+    
+    func makeNotificationDebugView() -> NotificationDebugView {
+        let viewModel = makeNotificationDebugViewModel()
+        return NotificationDebugView(viewModel: viewModel)
+    }
+    
+    func makeNotificationDebugViewModel() -> NotificationDebugViewModel {
+        NotificationDebugViewModel(
+            notificationDataSource: notificationDataSource,
+            getAllRemindersUseCase: reminderDependencyContainer.makeGetAllRemindersUseCase(),
+            rescheduleNotificationsUseCase: reminderDependencyContainer.makeRescheduleReminderNotificationsUseCase()
         )
     }
 }
