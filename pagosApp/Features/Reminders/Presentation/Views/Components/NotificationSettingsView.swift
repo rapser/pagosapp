@@ -38,7 +38,7 @@ struct NotificationSettingsView: View {
                 if hasAdvancedOptions {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Image(systemName: "clock.badge.plus")
+                            Image(systemName: "timer")
                                 .foregroundStyle(.orange)
                                 .font(.callout)
                             
