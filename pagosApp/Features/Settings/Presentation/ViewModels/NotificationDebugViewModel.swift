@@ -85,10 +85,9 @@ final class NotificationDebugViewModel {
         lastActionMessage = "✅ Programada notificación de prueba: \(title)"
         
         // Refresh after a short delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            Task {
-                await self.refreshStatus()
-            }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(500))
+            await refreshStatus()
         }
     }
     
@@ -110,10 +109,9 @@ final class NotificationDebugViewModel {
         }
         
         // Refresh status after rescheduling
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            Task {
-                await self.refreshStatus()
-            }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1))
+            await refreshStatus()
         }
     }
     
@@ -121,10 +119,9 @@ final class NotificationDebugViewModel {
         notificationDataSource.requestAuthorization()
         lastActionMessage = "🔐 Solicitando permisos de notificación..."
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            Task {
-                await self.refreshStatus()
-            }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1))
+            await refreshStatus()
         }
     }
     

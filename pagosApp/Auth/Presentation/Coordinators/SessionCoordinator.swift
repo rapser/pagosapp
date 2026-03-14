@@ -181,10 +181,17 @@ final class SessionCoordinator {
 
         // Notify that user logged in - other features can react (e.g., fetch user profile)
         // This respects Clean Architecture by not creating direct dependencies between features
+        let userInfo: [String: Any]?
+        if let userId = userId {
+            userInfo = ["userId": userId]
+        } else {
+            userInfo = nil
+        }
+        
         NotificationCenter.default.post(
             name: NSNotification.Name("UserDidLogin"),
             object: nil,
-            userInfo: userId != nil ? ["userId": userId!] : nil
+            userInfo: userInfo
         )
         logger.info("📢 Posted UserDidLogin notification with userId: \(userId?.uuidString ?? "nil")")
 
