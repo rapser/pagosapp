@@ -119,9 +119,19 @@ final class AppDependencies {
 
     static func mock() -> AppDependencies {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try! ModelContainer(for: PaymentLocalDTO.self, UserProfileLocalDTO.self, ReminderLocalDTO.self, configurations: config)
+        let container: ModelContainer
+        do {
+            container = try ModelContainer(for: PaymentLocalDTO.self, UserProfileLocalDTO.self, ReminderLocalDTO.self, configurations: config)
+        } catch {
+            fatalError("Failed to create ModelContainer for mock: \(error)")
+        }
+        
+        guard let url = URL(string: "https://mock.supabase.co") else {
+            fatalError("Invalid mock Supabase URL")
+        }
+        
         let mockSupabase = SupabaseClient(
-            supabaseURL: URL(string: "https://mock.supabase.co")!,
+            supabaseURL: url,
             supabaseKey: "mock_key"
         )
         return AppDependencies(

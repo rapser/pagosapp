@@ -25,7 +25,7 @@ struct ResetPasswordView: View {
 
             VStack(spacing: 20) {
 
-                Text("Restablecer Contraseña")
+                Text(L10n.Auth.ResetPassword.title)
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(Color("AppTextPrimary"))

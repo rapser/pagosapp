@@ -55,7 +55,8 @@ final class PaymentsListViewModel {
         var processedIds: Set<UUID> = []
 
         // Group payments by groupId (only for credit cards)
-        let paymentsByGroupId = Dictionary(grouping: filteredPayments.filter { $0.groupId != nil }) { $0.groupId! }
+        let paymentsWithGroupId = filteredPayments.filter { $0.groupId != nil }
+        let paymentsByGroupId = Dictionary(grouping: paymentsWithGroupId) { $0.groupId! }
 
         for (groupId, groupedPayments) in paymentsByGroupId {
             // Only group credit card payments
