@@ -21,9 +21,12 @@ final class ReminderRepositoryImpl: ReminderRepositoryProtocol {
     }
 
     func create(reminder: Reminder) async -> Result<Reminder, ReminderError> {
+        logger.info("📝 Creating reminder: \(reminder.title)")
         do {
             try await localDataSource.save(reminder)
+            logger.info("✅ Reminder saved successfully, scheduling notifications...")
             notificationDataSource.scheduleReminderNotifications(reminderId: reminder.id, title: reminder.title, dueDate: reminder.dueDate)
+            logger.info("✅ Reminder created successfully with notifications")
             return .success(reminder)
         } catch {
             logger.error("❌ Failed to create reminder: \(error.localizedDescription)")
@@ -52,11 +55,15 @@ final class ReminderRepositoryImpl: ReminderRepositoryProtocol {
     }
 
     func update(reminder: Reminder) async -> Result<Reminder, ReminderError> {
+        logger.info("📝 Updating reminder: \(reminder.title)")
         do {
             notificationDataSource.cancelReminderNotifications(reminderId: reminder.id)
             try await localDataSource.save(reminder)
             if !reminder.isCompleted {
+                logger.info("🔔 Reminder not completed, scheduling notifications...")
                 notificationDataSource.scheduleReminderNotifications(reminderId: reminder.id, title: reminder.title, dueDate: reminder.dueDate)
+            } else {
+                logger.info("✅ Reminder completed, notifications cancelled")
             }
             return .success(reminder)
         } catch {

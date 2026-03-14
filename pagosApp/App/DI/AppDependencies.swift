@@ -109,7 +109,9 @@ final class AppDependencies {
             reminderSyncCoordinator: reminderSyncCoordinator,
             authDependencyContainer: authDependencyContainer,
             userProfileDependencyContainer: userProfileDependencyContainer,
-            eventBus: eventBus
+            eventBus: eventBus,
+            notificationDataSource: notificationDataSource,
+            reminderDependencyContainer: reminderDependencyContainer
         )
     }
 
