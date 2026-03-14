@@ -18,6 +18,7 @@ struct Reminder: Sendable {
     let description: String
     let dueDate: Date
     let isCompleted: Bool
+    let notificationSettings: NotificationSettings
     let syncStatus: ReminderSyncStatus
     let lastSyncedAt: Date?
 }

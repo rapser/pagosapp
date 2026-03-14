@@ -32,6 +32,11 @@ struct AddReminderFormView: View {
             Section(L10n.Reminders.dueDateLabel) {
                 DatePicker(L10n.Reminders.dueDateLabel, selection: $viewModel.dueDate, displayedComponents: .date)
             }
+            
+            NotificationSettingsView(
+                notificationSettings: $viewModel.notificationSettings,
+                reminderType: viewModel.reminderType
+            )
         }
         .navigationTitle(L10n.Reminders.Add.title)
         .toolbar {

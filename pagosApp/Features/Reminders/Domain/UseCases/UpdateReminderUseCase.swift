@@ -30,6 +30,7 @@ final class UpdateReminderUseCase {
             description: reminder.description,
             dueDate: reminder.dueDate,
             isCompleted: reminder.isCompleted,
+            notificationSettings: reminder.notificationSettings,
             syncStatus: newStatus,
             lastSyncedAt: reminder.lastSyncedAt
         )

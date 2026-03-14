@@ -29,7 +29,8 @@ final class RescheduleReminderNotificationsUseCase {
         notificationDataSource.scheduleReminderNotifications(
             reminderId: reminder.id,
             title: reminder.title,
-            dueDate: reminder.dueDate
+            dueDate: reminder.dueDate,
+            notificationSettings: reminder.notificationSettings
         )
     }
 

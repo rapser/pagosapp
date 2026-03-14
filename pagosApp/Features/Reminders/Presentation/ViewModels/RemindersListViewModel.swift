@@ -47,6 +47,7 @@ final class RemindersListViewModel {
             description: reminder.description,
             dueDate: reminder.dueDate,
             isCompleted: !reminder.isCompleted,
+            notificationSettings: reminder.notificationSettings,
             syncStatus: reminder.syncStatus,
             lastSyncedAt: reminder.lastSyncedAt
         )

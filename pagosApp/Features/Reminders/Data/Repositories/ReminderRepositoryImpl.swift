@@ -25,7 +25,12 @@ final class ReminderRepositoryImpl: ReminderRepositoryProtocol {
         do {
             try await localDataSource.save(reminder)
             logger.info("✅ Reminder saved successfully, scheduling notifications...")
-            notificationDataSource.scheduleReminderNotifications(reminderId: reminder.id, title: reminder.title, dueDate: reminder.dueDate)
+            notificationDataSource.scheduleReminderNotifications(
+                reminderId: reminder.id, 
+                title: reminder.title, 
+                dueDate: reminder.dueDate, 
+                notificationSettings: reminder.notificationSettings
+            )
             logger.info("✅ Reminder created successfully with notifications")
             return .success(reminder)
         } catch {
@@ -61,7 +66,12 @@ final class ReminderRepositoryImpl: ReminderRepositoryProtocol {
             try await localDataSource.save(reminder)
             if !reminder.isCompleted {
                 logger.info("🔔 Reminder not completed, scheduling notifications...")
-                notificationDataSource.scheduleReminderNotifications(reminderId: reminder.id, title: reminder.title, dueDate: reminder.dueDate)
+                notificationDataSource.scheduleReminderNotifications(
+                    reminderId: reminder.id, 
+                    title: reminder.title, 
+                    dueDate: reminder.dueDate, 
+                    notificationSettings: reminder.notificationSettings
+                )
             } else {
                 logger.info("✅ Reminder completed, notifications cancelled")
             }
