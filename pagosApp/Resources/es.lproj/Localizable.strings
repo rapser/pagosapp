@@ -141,18 +141,14 @@
 "reminders.error.notFound" = "Recordatorio no encontrado";
 "reminders.error.unknown" = "Error: %@";
 "reminders.notifications.header" = "Notificaciones";
-"reminders.notifications.sectionTitle" = "Configuración de notificaciones";
-"reminders.notifications.defaultDescription" = "Se te notificará 3, 2, 1 días antes y el día del recordatorio.";
-"reminders.notifications.advancedTitle" = "Notificaciones avanzadas";
-"reminders.notifications.advancedDescription" = "Recibe notificaciones adicionales con mayor anticipación.";
+"reminders.notifications.sectionTitle" = "Configuración";
+"reminders.notifications.basicIncluded" = "Notificaciones básicas incluidas";
+"reminders.notifications.advancedTitle" = "Notificaciones anticipadas";
 "reminders.notifications.oneMonthBefore" = "1 mes antes";
 "reminders.notifications.twoWeeksBefore" = "2 semanas antes";
 "reminders.notifications.oneWeekBefore" = "1 semana antes";
-"reminders.notifications.noNotifications" = "Sin notificaciones configuradas";
-"reminders.notifications.dayOf" = "el mismo día";
-"reminders.notifications.oneDayBefore" = "1 día antes";
-"reminders.notifications.daysBefore" = "%d días antes";
-"reminders.notifications.willNotifyOn" = "Se enviarán notificaciones";
+"reminders.notifications.advancedInfo" = "Recibirás notificaciones anticipadas adicionales";
+"reminders.notifications.optimalConfig" = "Configuración óptima aplicada";
 
 // MARK: - Calendar
 "calendar.title" = "Calendario";
