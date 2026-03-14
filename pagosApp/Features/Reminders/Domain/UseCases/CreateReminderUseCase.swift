@@ -17,11 +17,21 @@ final class CreateReminderUseCase {
         self.repository = repository
     }
 
-    func execute(type: ReminderType, title: String, description: String, dueDate: Date) async -> Result<Reminder, ReminderError> {
+    func execute(
+        type: ReminderType, 
+        title: String, 
+        description: String, 
+        dueDate: Date, 
+        notificationSettings: NotificationSettings? = nil
+    ) async -> Result<Reminder, ReminderError> {
         let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmedTitle.isEmpty {
             return .failure(.invalidTitle)
         }
+        
+        // Use provided settings or get recommended settings for the type
+        let settings = notificationSettings ?? NotificationSettings.recommended(for: type)
+        
         let reminder = Reminder(
             id: UUID(),
             reminderType: type,
@@ -29,6 +39,7 @@ final class CreateReminderUseCase {
             description: (description.trimmingCharacters(in: .whitespacesAndNewlines)),
             dueDate: dueDate,
             isCompleted: false,
+            notificationSettings: settings,
             syncStatus: .local,
             lastSyncedAt: nil
         )

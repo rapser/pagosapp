@@ -140,6 +140,19 @@
 "reminders.error.deleteFailed" = "Não foi possível excluir: %@";
 "reminders.error.notFound" = "Lembrete não encontrado";
 "reminders.error.unknown" = "Erro: %@";
+"reminders.notifications.header" = "Notificações";
+"reminders.notifications.sectionTitle" = "Configurações de notificação";
+"reminders.notifications.defaultDescription" = "Você será notificado 3, 2, 1 dias antes e no dia do lembrete.";
+"reminders.notifications.advancedTitle" = "Notificações avançadas";
+"reminders.notifications.advancedDescription" = "Receba notificações adicionais com maior antecedência.";
+"reminders.notifications.oneMonthBefore" = "1 mês antes";
+"reminders.notifications.twoWeeksBefore" = "2 semanas antes";
+"reminders.notifications.oneWeekBefore" = "1 semana antes";
+"reminders.notifications.noNotifications" = "Sem notificações configuradas";
+"reminders.notifications.dayOf" = "no mesmo dia";
+"reminders.notifications.oneDayBefore" = "1 dia antes";
+"reminders.notifications.daysBefore" = "%d dias antes";
+"reminders.notifications.willNotifyOn" = "As notificações serão enviadas";
 
 // MARK: - Calendar
 "calendar.title" = "Calendário";

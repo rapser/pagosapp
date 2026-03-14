@@ -18,6 +18,9 @@ protocol SessionRepositoryProtocol {
 
     /// Get last active timestamp
     var lastActiveTimestamp: Date? { get }
+    
+    /// Check if session is expired synchronously (for UI initialization)
+    var isSessionExpiredSync: Bool { get }
 
     // MARK: - Session Operations
 

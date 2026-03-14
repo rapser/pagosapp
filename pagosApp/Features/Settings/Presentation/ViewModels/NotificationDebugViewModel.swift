@@ -74,10 +74,12 @@ final class NotificationDebugViewModel {
     
     func scheduleTestNotification(title: String, dueDate: Date) {
         let testId = UUID()
+        let defaultSettings = NotificationSettings()  // Use default settings for test
         notificationDataSource.scheduleReminderNotifications(
             reminderId: testId, 
             title: title, 
-            dueDate: dueDate
+            dueDate: dueDate,
+            notificationSettings: defaultSettings
         )
         
         lastActionMessage = "✅ Programada notificación de prueba: \(title)"

@@ -217,6 +217,21 @@ enum L10n {
             static let notFound = tr("reminders.error.notFound")
             static func unknown(_ detail: String) -> String { tr("reminders.error.unknown", detail) }
         }
+        enum Notifications {
+            static let header = tr("reminders.notifications.header")
+            static let sectionTitle = tr("reminders.notifications.sectionTitle")
+            static let defaultDescription = tr("reminders.notifications.defaultDescription")
+            static let advancedTitle = tr("reminders.notifications.advancedTitle")
+            static let advancedDescription = tr("reminders.notifications.advancedDescription")
+            static let oneMonthBefore = tr("reminders.notifications.oneMonthBefore")
+            static let twoWeeksBefore = tr("reminders.notifications.twoWeeksBefore")
+            static let oneWeekBefore = tr("reminders.notifications.oneWeekBefore")
+            static let noNotifications = tr("reminders.notifications.noNotifications")
+            static let dayOf = tr("reminders.notifications.dayOf")
+            static let oneDayBefore = tr("reminders.notifications.oneDayBefore")
+            static func daysBefore(_ days: Int) -> String { tr("reminders.notifications.daysBefore", days) }
+            static let willNotifyOn = tr("reminders.notifications.willNotifyOn")
+        }
     }
 
     // MARK: - Calendar
