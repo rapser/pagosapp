@@ -64,6 +64,7 @@ final class ReminderSwiftDataDataSource: ReminderLocalDataSource {
             existing.reminderDescription = dto.reminderDescription ?? ""
             existing.dueDate = dto.dueDate
             existing.isCompleted = dto.isCompleted ?? false
+            existing.notificationSettings = dto.notificationSettings
             existing.syncStatusRawValue = dto.syncStatusRawValue
             existing.lastSyncedAt = dto.lastSyncedAt
         } else {

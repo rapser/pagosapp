@@ -12,27 +12,11 @@ struct ReminderRowView: View {
     let reminder: Reminder
     var onToggleStatus: () -> Void
 
-    private var statusIcon: String {
-        reminder.isCompleted ? "checkmark.circle.fill" : "circle"
-    }
-
-    private var statusColor: Color {
-        reminder.isCompleted ? Color("AppSuccess") : Color("AppTextSecondary")
-    }
-
-    private var displayColor: Color {
-        reminder.isCompleted ? Color("AppSuccess") : Color("AppTextPrimary")
-    }
-
-    private var displayOpacity: Double {
-        reminder.isCompleted ? 0.7 : 1.0
-    }
-
     var body: some View {
         HStack {
             Button(action: onToggleStatus) {
-                Image(systemName: statusIcon)
-                    .foregroundColor(statusColor)
+                Image(systemName: reminder.statusIcon)
+                    .foregroundColor(reminder.statusColor)
                     .font(.title2)
             }
             .buttonStyle(.plain)
@@ -42,17 +26,17 @@ struct ReminderRowView: View {
                     .fontWeight(.bold)
                     .font(.body)
                     .strikethrough(reminder.isCompleted, color: Color("AppTextSecondary"))
-                    .foregroundColor(displayColor)
+                    .foregroundColor(reminder.displayColor)
                 Text(L10n.Reminders.typeDisplayName(reminder.reminderType))
                     .font(.caption)
                     .foregroundColor(Color("AppTextSecondary"))
             }
             Spacer()
-            Text(DateFormattingService.formatMedium(reminder.dueDate))
+            Text(reminder.formattedDate)
                 .font(.caption)
                 .strikethrough(reminder.isCompleted, color: Color("AppTextSecondary"))
-                .foregroundColor(displayColor)
+                .foregroundColor(reminder.displayColor)
         }
-        .opacity(displayOpacity)
+        .opacity(reminder.displayOpacity)
     }
 }

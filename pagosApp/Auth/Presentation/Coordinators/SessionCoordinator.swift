@@ -77,27 +77,33 @@ final class SessionCoordinator {
         self.isSessionActive = sessionRepository.hasActiveSession
 
         // IMPORTANT: Initialize isAuthenticated synchronously to avoid flash of login screen
-        // Check if user should be authenticated based on local session state
+        // More robust session validation - check both existence AND local expiration
         let hasCredentials = hasBiometricCredentialsUseCase.execute()
-
+        
         #if targetEnvironment(simulator)
         self.canUseBiometrics = true
         #endif
-
-        let shouldShowBiometric = settingsStore.isBiometricLockEnabled && hasCredentials && isSessionActive
+        
+        // Improved logic: verify session is both active AND not locally expired
+        let isLocalSessionValid = isSessionActive && !sessionRepository.isSessionExpiredSync
+        let shouldShowBiometric = settingsStore.isBiometricLockEnabled && hasCredentials && isLocalSessionValid
 
         if shouldShowBiometric {
             // User is logged in but needs Face ID unlock
             self.isAuthenticated = false
             logger.info("🔐 Init: Biometric lock enabled - will show Face ID screen")
-        } else if isSessionActive {
-            // Has active session, no biometric needed - authenticate immediately
+        } else if isLocalSessionValid {
+            // Has valid local session, no biometric needed - authenticate immediately
             self.isAuthenticated = true
-            logger.info("✅ Init: Has active session - authenticated immediately (no flash)")
+            logger.info("✅ Init: Valid local session - authenticated immediately (no flash)")
         } else {
-            // No session - show login
+            // No session or expired locally - show login
             self.isAuthenticated = false
-            logger.info("📱 Init: No active session - showing login screen")
+            if isSessionActive && sessionRepository.isSessionExpiredSync {
+                logger.info("📱 Init: Session expired locally - showing login screen")
+            } else {
+                logger.info("📱 Init: No active session - showing login screen")
+            }
         }
 
         // Listen for logout notifications
@@ -109,7 +115,7 @@ final class SessionCoordinator {
             }
         }
 
-        // Background verification and biometric check
+        // Background verification and biometric check - with delay to prevent immediate UI changes
         Task {
             guard !hasPerformedInitialCheck else {
                 logger.debug("⏭️ Skipping duplicate initial check")
@@ -118,17 +124,35 @@ final class SessionCoordinator {
             hasPerformedInitialCheck = true
 
             await checkBiometricAvailability()
+            
+            // Add minimum delay to prevent immediate UI changes after startup
+            // This allows the UI to settle before potentially changing authentication state
+            try? await Task.sleep(for: .seconds(1.5))
 
-            // Verify session remotely (background check - won't change UI unless expired)
+            // Only proceed with remote verification if user is still supposed to be authenticated
+            guard self.isAuthenticated else {
+                logger.debug("🔍 Skipping remote check - user not authenticated")
+                return
+            }
+
+            // Verify session remotely (background check - conservative approach)
             let hasActiveSession = await getAuthenticationStatusUseCase.execute()
-
+            
             logger.debug("🔍 Background check - Local session: \(self.isSessionActive), Remote session: \(hasActiveSession)")
-
-            // Only logout if session is NOT valid remotely but we think it is locally
+            
+            // More conservative logout logic - only logout if clearly expired AND we've been authenticated for a while
             if !hasActiveSession && self.isAuthenticated {
-                logger.warning("⚠️ Session expired remotely - logging out")
-                self.isAuthenticated = false
-                self.isSessionActive = false
+                // Double-check locally before forcing logout
+                let isLocallyExpired = await sessionRepository.isSessionExpired()
+                
+                if isLocallyExpired {
+                    logger.warning("⚠️ Session expired both locally and remotely - logging out")
+                    self.isAuthenticated = false
+                    self.isSessionActive = false
+                } else {
+                    // Remote check failed but local session is valid - might be network issue
+                    logger.info("ℹ️ Remote session check failed but local session valid - keeping authenticated")
+                }
             }
         }
     }
@@ -157,10 +181,17 @@ final class SessionCoordinator {
 
         // Notify that user logged in - other features can react (e.g., fetch user profile)
         // This respects Clean Architecture by not creating direct dependencies between features
+        let userInfo: [String: Any]?
+        if let userId = userId {
+            userInfo = ["userId": userId]
+        } else {
+            userInfo = nil
+        }
+        
         NotificationCenter.default.post(
             name: NSNotification.Name("UserDidLogin"),
             object: nil,
-            userInfo: userId != nil ? ["userId": userId!] : nil
+            userInfo: userInfo
         )
         logger.info("📢 Posted UserDidLogin notification with userId: \(userId?.uuidString ?? "nil")")
 

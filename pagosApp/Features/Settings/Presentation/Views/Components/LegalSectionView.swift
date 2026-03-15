@@ -20,7 +20,7 @@ struct LegalSectionView: View {
                 HStack {
                     Image(systemName: "doc.text.fill")
                         .foregroundColor(Color("AppPrimary"))
-                    Text("Términos y Condiciones")
+                    Text(L10n.Settings.legalTerms)
                         .foregroundColor(Color("AppTextPrimary"))
                     Spacer()
                     Image(systemName: "arrow.up.right")
