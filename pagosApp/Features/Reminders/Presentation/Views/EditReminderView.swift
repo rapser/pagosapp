@@ -32,6 +32,12 @@ struct EditReminderView: View {
                 Section(L10n.Reminders.dueDateLabel) {
                     DatePicker(L10n.Reminders.dueDateLabel, selection: $viewModel.dueDate, displayedComponents: .date)
                 }
+                
+                NotificationSettingsView(
+                    notificationSettings: $viewModel.notificationSettings,
+                    reminderType: viewModel.reminderType
+                )
+                
                 Section {
                     Toggle(L10n.Reminders.completedLabel, isOn: $viewModel.isCompleted)
                 }

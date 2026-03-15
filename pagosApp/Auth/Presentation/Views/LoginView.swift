@@ -18,7 +18,7 @@ struct LoginView: View {
             VStack(spacing: 20) {
                 Spacer()
 
-                Text("Bienvenido")
+                Text(L10n.Auth.Login.welcome)
                     .font(.largeTitle).bold()
                     .foregroundColor(Color("AppTextPrimary"))
 
@@ -53,7 +53,7 @@ struct LoginView: View {
                         },
                         forgotPasswordView: AnyView(
                             NavigationLink(destination: ForgotPasswordView(passwordRecoveryUseCase: viewModel.getPasswordRecoveryUseCase())) {
-                                Text("¿Olvidaste tu contraseña?")
+                                Text(L10n.Auth.Login.forgotPassword)
                                     .font(.callout)
                                     .padding(.top, 5)
                                     .foregroundColor(Color("AppTextSecondary"))
@@ -65,7 +65,7 @@ struct LoginView: View {
                                     registerViewModel: dependencies.authDependencyContainer.makeRegisterViewModel()
                                 )
                             ) {
-                                Text("¿No tienes cuenta? Regístrate aquí")
+                                Text(L10n.Auth.Login.noAccount)
                                     .font(.callout)
                                     .padding(.top)
                                     .foregroundColor(Color("AppPrimary"))

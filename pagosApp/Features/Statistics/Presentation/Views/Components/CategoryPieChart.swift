@@ -23,7 +23,7 @@ struct CategoryPieChart: View {
                     .font(.title3).bold()
                     .foregroundColor(Color("AppTextPrimary"))
                 Spacer()
-                Text("\(selectedCurrency.symbol)\(totalSpending, format: .number.precision(.fractionLength(2)))")
+                Text("\(selectedCurrency.symbol) \(totalSpending, format: .number.precision(.fractionLength(2)))")
                     .font(.title3)
                     .fontWeight(.semibold)
                     .foregroundColor(Color("AppPrimary"))
@@ -56,7 +56,7 @@ struct CategoryPieChart: View {
                             .foregroundColor(Color("AppTextPrimary"))
                         Spacer()
                         VStack(alignment: .trailing, spacing: 2) {
-                            Text("\(data.currency.symbol)\(data.totalAmount, format: .number.precision(.fractionLength(2)))")
+                            Text("\(data.currency.symbol) \(data.totalAmount, format: .number.precision(.fractionLength(2)))")
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
                                 .foregroundColor(Color("AppTextPrimary"))

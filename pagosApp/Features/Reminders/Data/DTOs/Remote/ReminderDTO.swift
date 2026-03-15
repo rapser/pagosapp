@@ -16,6 +16,7 @@ struct ReminderDTO: Codable, Identifiable {
     let reminderDescription: String
     let dueDate: Date
     let isCompleted: Bool
+    let notificationSettings: NotificationSettings?  // Optional for migration
     let createdAt: Date?
     let updatedAt: Date?
 
@@ -29,9 +30,21 @@ struct ReminderDTO: Codable, Identifiable {
         case title
         case reminderDescription = "description"
         case isCompleted = "is_completed"
+        case notificationSettings = "notification_settings"
     }
 
-    init(id: UUID, userId: UUID, reminderType: String, title: String, reminderDescription: String = "", dueDate: Date, isCompleted: Bool = false, createdAt: Date?, updatedAt: Date?) {
+    init(
+        id: UUID, 
+        userId: UUID, 
+        reminderType: String, 
+        title: String, 
+        reminderDescription: String = "", 
+        dueDate: Date, 
+        isCompleted: Bool = false, 
+        notificationSettings: NotificationSettings? = nil, 
+        createdAt: Date?, 
+        updatedAt: Date?
+    ) {
         self.id = id
         self.userId = userId
         self.reminderType = reminderType
@@ -39,6 +52,7 @@ struct ReminderDTO: Codable, Identifiable {
         self.reminderDescription = reminderDescription
         self.dueDate = dueDate
         self.isCompleted = isCompleted
+        self.notificationSettings = notificationSettings
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
@@ -52,6 +66,7 @@ struct ReminderDTO: Codable, Identifiable {
         reminderDescription = try container.decodeIfPresent(String.self, forKey: .reminderDescription) ?? ""
         dueDate = try ReminderDTO.decodeDate(from: container, forKey: .dueDate)
         isCompleted = try container.decodeIfPresent(Bool.self, forKey: .isCompleted) ?? false
+        notificationSettings = try container.decodeIfPresent(NotificationSettings.self, forKey: .notificationSettings)
         createdAt = try ReminderDTO.decodeOptionalDate(from: container, forKey: .createdAt)
         updatedAt = try ReminderDTO.decodeOptionalDate(from: container, forKey: .updatedAt)
     }

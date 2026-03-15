@@ -21,11 +21,11 @@ struct ForgotPasswordView: View {
             VStack(spacing: 20) {
                 Spacer()
                 
-                Text("Restablecer Contraseña")
+                Text(L10n.Auth.ForgotPassword.title)
                     .font(.largeTitle).bold()
                     .foregroundColor(Color("AppTextPrimary"))
                 
-                Text("Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.")
+                Text(L10n.Auth.ForgotPassword.description)
                     .font(.subheadline)
                     .multilineTextAlignment(.center)
                     .foregroundColor(Color("AppTextSecondary"))
@@ -90,7 +90,7 @@ struct ForgotPasswordView: View {
                         HStack(spacing: 4) {
                             Image(systemName: "chevron.left")
                                 .font(.system(size: 17, weight: .semibold))
-                            Text("Atrás")
+                            Text(L10n.Auth.ForgotPassword.back)
                         }
                         .foregroundColor(Color("AppTextPrimary"))
                     }
@@ -102,12 +102,12 @@ struct ForgotPasswordView: View {
                 showSuccessAlert = true
             }
         }
-        .alert("Correo Enviado", isPresented: $showSuccessAlert) {
+        .alert(L10n.Auth.ForgotPassword.emailSent, isPresented: $showSuccessAlert) {
             Button("OK", role: .cancel) {
                 dismiss()
             }
         } message: {
-            Text("Se ha enviado un correo para restablecer tu contraseña. Revisa tu bandeja de entrada.")
+            Text(L10n.Auth.ForgotPassword.emailSent)
         }
         .errorAlert(isPresented: $viewModel.showError, message: viewModel.errorMessage)
     }

@@ -11,10 +11,16 @@ import Observation
 @MainActor
 @Observable
 final class AddReminderViewModel {
-    var reminderType: ReminderType = .other
+    var reminderType: ReminderType = .other {
+        didSet {
+            // Update notification settings when type changes
+            notificationSettings = NotificationSettings.recommended(for: reminderType)
+        }
+    }
     var title: String = ""
     var reminderDescription: String = ""
     var dueDate: Date = Date()
+    var notificationSettings: NotificationSettings = NotificationSettings.recommended(for: .other)
     var isSaving = false
     var errorMessage: String?
     var showError = false
@@ -34,7 +40,13 @@ final class AddReminderViewModel {
         errorMessage = nil
         isSaving = true
         defer { isSaving = false }
-        switch await createReminderUseCase.execute(type: reminderType, title: title, description: reminderDescription, dueDate: dueDate) {
+        switch await createReminderUseCase.execute(
+            type: reminderType, 
+            title: title, 
+            description: reminderDescription, 
+            dueDate: dueDate, 
+            notificationSettings: notificationSettings
+        ) {
         case .success:
             didSave = true
         case .failure(let error):

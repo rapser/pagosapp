@@ -4,12 +4,12 @@ struct SecuritySectionView: View {
     @Environment(SessionCoordinator.self) private var sessionCoordinator
 
     var body: some View {
-        Section(header: Text("Seguridad").foregroundColor(Color("AppTextPrimary"))) {
+        Section(header: Text(L10n.Settings.Biometric.title).foregroundColor(Color("AppTextPrimary"))) {
             NavigationLink(destination: BiometricSettingsView().environment(sessionCoordinator)) {
                 HStack {
                     Image(systemName: "faceid")
                         .foregroundColor(Color("AppPrimary"))
-                    Text("Autenticación Biométrica")
+                    Text(L10n.Settings.Biometric.fastAccess)
                         .foregroundColor(Color("AppTextPrimary"))
                 }
             }
