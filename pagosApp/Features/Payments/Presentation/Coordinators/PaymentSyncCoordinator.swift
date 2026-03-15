@@ -77,7 +77,7 @@ final class PaymentSyncCoordinator {
             eventBus.publish(PaymentsSyncedEvent(syncedCount: 0))
 
         case .failure:
-            syncError = NSError(
+            let error = NSError(
                 domain: "PaymentSyncCoordinator",
                 code: 503,
                 userInfo: [
@@ -85,7 +85,7 @@ final class PaymentSyncCoordinator {
                     NSLocalizedRecoverySuggestionErrorKey: L10n.Sync.recoverySuggestion
                 ]
             )
-            throw syncError!
+            throw error
         }
     }
 

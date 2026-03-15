@@ -16,6 +16,7 @@ enum ReminderDomainMapper {
             description: dto.reminderDescription ?? "",
             dueDate: dto.dueDate,
             isCompleted: dto.isCompleted ?? false,
+            notificationSettings: dto.notificationSettings,
             syncStatus: dto.syncStatus,
             lastSyncedAt: dto.lastSyncedAt
         )
@@ -29,6 +30,7 @@ enum ReminderDomainMapper {
             reminderDescription: reminder.description,
             dueDate: reminder.dueDate,
             isCompleted: reminder.isCompleted,
+            notificationSettings: reminder.notificationSettings,
             syncStatus: reminder.syncStatus,
             lastSyncedAt: reminder.lastSyncedAt
         )

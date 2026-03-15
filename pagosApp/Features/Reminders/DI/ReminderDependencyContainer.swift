@@ -49,6 +49,10 @@ final class ReminderDependencyContainer {
         CreateReminderUseCase(repository: repository)
     }
 
+    func makeRescheduleReminderNotificationsUseCase() -> RescheduleReminderNotificationsUseCase {
+        RescheduleReminderNotificationsUseCase(notificationDataSource: notificationDataSource)
+    }
+
     func makeGetAllRemindersUseCase() -> GetAllRemindersUseCase {
         GetAllRemindersUseCase(repository: repository)
     }
@@ -65,7 +69,8 @@ final class ReminderDependencyContainer {
         RemindersListViewModel(
             getAllRemindersUseCase: makeGetAllRemindersUseCase(),
             deleteReminderUseCase: makeDeleteReminderUseCase(),
-            updateReminderUseCase: makeUpdateReminderUseCase()
+            updateReminderUseCase: makeUpdateReminderUseCase(),
+            rescheduleNotificationsUseCase: makeRescheduleReminderNotificationsUseCase()
         )
     }
 

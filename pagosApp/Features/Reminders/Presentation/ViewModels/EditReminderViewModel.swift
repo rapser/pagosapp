@@ -11,11 +11,19 @@ import Observation
 @MainActor
 @Observable
 final class EditReminderViewModel {
-    var reminderType: ReminderType
+    var reminderType: ReminderType {
+        didSet {
+            // Only update notification settings if they haven't been customized
+            if notificationSettings == NotificationSettings.recommended(for: oldValue) {
+                notificationSettings = NotificationSettings.recommended(for: reminderType)
+            }
+        }
+    }
     var title: String
     var reminderDescription: String
     var dueDate: Date
     var isCompleted: Bool
+    var notificationSettings: NotificationSettings
     var isSaving = false
     var errorMessage: String?
     var showError = false
@@ -31,6 +39,7 @@ final class EditReminderViewModel {
         self.reminderDescription = reminder.description
         self.dueDate = reminder.dueDate
         self.isCompleted = reminder.isCompleted
+        self.notificationSettings = reminder.notificationSettings
         self.updateReminderUseCase = updateReminderUseCase
     }
 
@@ -46,6 +55,7 @@ final class EditReminderViewModel {
             description: reminderDescription,
             dueDate: dueDate,
             isCompleted: isCompleted,
+            notificationSettings: notificationSettings,
             syncStatus: newStatus,
             lastSyncedAt: reminder.lastSyncedAt
         )
