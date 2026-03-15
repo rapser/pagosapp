@@ -19,11 +19,24 @@ final class RemindersListViewModel {
     private let getAllRemindersUseCase: GetAllRemindersUseCase
     private let deleteReminderUseCase: DeleteReminderUseCase
     private let updateReminderUseCase: UpdateReminderUseCase
+    private let rescheduleNotificationsUseCase: RescheduleReminderNotificationsUseCase?
+    
+    // More efficient: persists across app launches
+    private var hasRescheduledNotifications: Bool {
+        get { UserDefaults.standard.bool(forKey: "hasRescheduledReminderNotifications") }
+        set { UserDefaults.standard.set(newValue, forKey: "hasRescheduledReminderNotifications") }
+    }
 
-    init(getAllRemindersUseCase: GetAllRemindersUseCase, deleteReminderUseCase: DeleteReminderUseCase, updateReminderUseCase: UpdateReminderUseCase) {
+    init(
+        getAllRemindersUseCase: GetAllRemindersUseCase, 
+        deleteReminderUseCase: DeleteReminderUseCase, 
+        updateReminderUseCase: UpdateReminderUseCase,
+        rescheduleNotificationsUseCase: RescheduleReminderNotificationsUseCase? = nil
+    ) {
         self.getAllRemindersUseCase = getAllRemindersUseCase
         self.deleteReminderUseCase = deleteReminderUseCase
         self.updateReminderUseCase = updateReminderUseCase
+        self.rescheduleNotificationsUseCase = rescheduleNotificationsUseCase
     }
 
     func toggleCompletion(_ reminder: Reminder) async {
@@ -34,6 +47,7 @@ final class RemindersListViewModel {
             description: reminder.description,
             dueDate: reminder.dueDate,
             isCompleted: !reminder.isCompleted,
+            notificationSettings: reminder.notificationSettings,
             syncStatus: reminder.syncStatus,
             lastSyncedAt: reminder.lastSyncedAt
         )
@@ -52,9 +66,19 @@ final class RemindersListViewModel {
         isLoading = true
         defer { isLoading = false }
         errorMessage = nil
+        
         switch await getAllRemindersUseCase.execute() {
         case .success(let list):
             reminders = list.sorted { $0.dueDate < $1.dueDate }
+            
+            // Reschedule notifications for all reminders on first load (similar to payments)
+            if !hasRescheduledNotifications, let notificationsUseCase = rescheduleNotificationsUseCase {
+                hasRescheduledNotifications = true
+                Task { @MainActor in
+                    notificationsUseCase.rescheduleAll(list)
+                }
+            }
+            
         case .failure(let error):
             errorMessage = message(for: error)
             showError = true

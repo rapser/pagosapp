@@ -34,6 +34,28 @@ final class SessionRepositoryImpl: SessionRepositoryProtocol {
     var lastActiveTimestamp: Date? {
         userDefaults.object(forKey: lastActiveTimestampKey) as? Date
     }
+    
+    /// Check if session is expired synchronously (for UI initialization)
+    var isSessionExpiredSync: Bool {
+        #if DEBUG
+        // Don't check session timeout in debug mode
+        return false
+        #else
+        guard let lastActive = lastActiveTimestamp else {
+            logger.debug("⚠️ No last active timestamp found")
+            return true
+        }
+
+        let elapsedTime = Date().timeIntervalSince(lastActive)
+        let isExpired = elapsedTime > self.sessionTimeoutInSeconds
+
+        if isExpired {
+            logger.debug("⏰ Session expired (sync check) - elapsed: \(elapsedTime)s, timeout: \(self.sessionTimeoutInSeconds)s")
+        }
+
+        return isExpired
+        #endif
+    }
 
     // MARK: - Session Operations
 

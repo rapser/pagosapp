@@ -22,11 +22,14 @@ protocol NotificationDataSource {
     /// Cancel all notifications for a payment
     func cancelNotifications(paymentId: UUID)
 
-    /// Schedule notifications for a reminder (from 5 days before: 5, 4, 3, 2, 1 days before + same day 9 AM and 2 PM)
-    func scheduleReminderNotifications(reminderId: UUID, title: String, dueDate: Date)
+    /// Schedule notifications for a reminder using custom notification settings
+    func scheduleReminderNotifications(reminderId: UUID, title: String, dueDate: Date, notificationSettings: NotificationSettings)
 
     /// Cancel all notifications for a reminder
     func cancelReminderNotifications(reminderId: UUID)
+    
+    /// Debug function to check pending notifications
+    func debugPendingNotifications() async
 }
 
 /// UserNotifications implementation of NotificationDataSource
@@ -201,56 +204,119 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
 
     // MARK: - Reminder notifications (from 5 days before: 0=same day, 1..5 days before; same day 9 AM and 2 PM)
 
-    func scheduleReminderNotifications(reminderId: UUID, title: String, dueDate: Date) {
+    func scheduleReminderNotifications(reminderId: UUID, title: String, dueDate: Date, notificationSettings: NotificationSettings) {
         cancelReminderNotifications(reminderId: reminderId)
 
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
+        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
+            guard let self = self else { return }
+            
             Task { @MainActor in
-                guard settings.authorizationStatus == .authorized else { return }
+                guard settings.authorizationStatus == .authorized else { 
+                    self.logger.warning("⚠️ Notification authorization not granted for reminder notifications")
+                    return 
+                }
 
                 let calendar = Calendar.current
                 let now = Date()
-                let notificationDays = [0, 1, 2, 3, 4, 5] // Same day + 1 to 5 days before (reminders start earlier than payments)
+                let notificationDays = notificationSettings.allNotificationDays // Uses new customizable settings
                 let dateFormatter = DateFormatter()
                 dateFormatter.dateStyle = .medium
+                var scheduledCount = 0
+
+                self.logger.info("📅 Scheduling reminder notifications for: \(title) due on \(dateFormatter.string(from: dueDate))")
+                self.logger.info("🔔 Notification schedule: \(notificationDays) days before")
 
                 for daysBefore in notificationDays {
-                    guard let notificationDate = calendar.date(byAdding: .day, value: -daysBefore, to: dueDate) else { continue }
+                    guard let notificationDate = calendar.date(byAdding: .day, value: -daysBefore, to: dueDate) else { 
+                        self.logger.error("Failed to calculate notification date for \(daysBefore) days before")
+                        continue 
+                    }
 
                     if daysBefore == 0 {
+                        // Schedule two notifications for same day: 9 AM and 2 PM (like payments)
                         for (hour, suffix) in [(9, "9am"), (14, "2pm")] {
                             var comp = calendar.dateComponents([.year, .month, .day], from: notificationDate)
                             comp.hour = hour
                             comp.minute = 0
                             comp.second = 0
-                            guard let triggerDate = calendar.date(from: comp), triggerDate > now else { continue }
+                            
+                            guard let triggerDate = calendar.date(from: comp) else {
+                                self.logger.error("Failed to create trigger date for same day \(suffix)")
+                                continue 
+                            }
+                            
+                            guard triggerDate > now else {
+                                self.logger.info("Skipping past notification time: \(triggerDate)")
+                                continue 
+                            }
+                            
                             let id = "reminder-\(reminderId.uuidString)-0days-\(suffix)"
                             let content = UNMutableNotificationContent()
                             content.title = "Recordatorio"
                             content.subtitle = title
                             content.body = "Hoy: \(title)."
                             content.sound = .default
+                            
                             let trigger = UNCalendarNotificationTrigger(dateMatching: comp, repeats: false)
                             let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
-                            try? await UNUserNotificationCenter.current().add(request)
+                            
+                            do {
+                                try await UNUserNotificationCenter.current().add(request)
+                                scheduledCount += 1
+                                self.logger.info("✅ Scheduled same day reminder notification (\(suffix)) for: \(title)")
+                            } catch {
+                                self.logger.error("❌ Failed to schedule same day reminder notification (\(suffix)): \(error.localizedDescription)")
+                            }
                         }
                     } else {
+                        // Schedule notification for days before (at 9 AM)
                         var comp = calendar.dateComponents([.year, .month, .day], from: notificationDate)
                         comp.hour = 9
                         comp.minute = 0
                         comp.second = 0
-                        guard let triggerDate = calendar.date(from: comp), triggerDate > now else { continue }
+                        
+                        guard let triggerDate = calendar.date(from: comp) else {
+                            self.logger.error("Failed to create trigger date for \(daysBefore) days before")
+                            continue 
+                        }
+                        
+                        guard triggerDate > now else {
+                            self.logger.info("Skipping past notification date (\(daysBefore) days before): \(triggerDate)")
+                            continue 
+                        }
+                        
                         let id = "reminder-\(reminderId.uuidString)-\(daysBefore)days"
                         let content = UNMutableNotificationContent()
                         content.title = "Recordatorio"
-                        content.subtitle = "En \(daysBefore) día(s): \(title)"
+                        
+                        // Customize subtitle based on time frame
+                        if daysBefore >= 30 {
+                            content.subtitle = "En 1 mes: \(title)"
+                        } else if daysBefore >= 14 {
+                            content.subtitle = "En 2 semanas: \(title)"
+                        } else if daysBefore >= 7 {
+                            content.subtitle = "En 1 semana: \(title)"
+                        } else {
+                            content.subtitle = "En \(daysBefore) día(s): \(title)"
+                        }
+                        
                         content.body = "\(title) — \(dateFormatter.string(from: dueDate))"
                         content.sound = .default
+                        
                         let trigger = UNCalendarNotificationTrigger(dateMatching: comp, repeats: false)
                         let request = UNNotificationRequest(identifier: id, content: content, trigger: trigger)
-                        try? await UNUserNotificationCenter.current().add(request)
+                        
+                        do {
+                            try await UNUserNotificationCenter.current().add(request)
+                            scheduledCount += 1
+                            self.logger.info("✅ Scheduled reminder notification (\(daysBefore) days before) for: \(title)")
+                        } catch {
+                            self.logger.error("❌ Failed to schedule reminder notification (\(daysBefore) days before): \(error.localizedDescription)")
+                        }
                     }
                 }
+                
+                self.logger.info("📊 Total reminder notifications scheduled: \(scheduledCount) for \(title)")
             }
         }
     }
@@ -262,9 +328,31 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
             "reminder-\(reminderId.uuidString)-1days",
             "reminder-\(reminderId.uuidString)-2days",
             "reminder-\(reminderId.uuidString)-3days",
-            "reminder-\(reminderId.uuidString)-4days",
-            "reminder-\(reminderId.uuidString)-5days"
+            "reminder-\(reminderId.uuidString)-4days",  // Legacy (for old 5-day system)
+            "reminder-\(reminderId.uuidString)-5days",  // Legacy (for old 5-day system)
+            "reminder-\(reminderId.uuidString)-7days",  // 1 week before
+            "reminder-\(reminderId.uuidString)-14days", // 2 weeks before  
+            "reminder-\(reminderId.uuidString)-30days"  // 1 month before
         ]
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
+        logger.info("🗑️ Cancelled reminder notifications for ID: \(reminderId)")
+    }
+    
+    func debugPendingNotifications() async {
+        let pendingRequests = await UNUserNotificationCenter.current().pendingNotificationRequests()
+        logger.info("🔍 Total pending notifications: \(pendingRequests.count)")
+        
+        let reminderNotifications = pendingRequests.filter { $0.identifier.contains("reminder-") }
+        let paymentNotifications = pendingRequests.filter { !$0.identifier.contains("reminder-") }
+        
+        logger.info("📋 Reminder notifications: \(reminderNotifications.count)")
+        logger.info("💰 Payment notifications: \(paymentNotifications.count)")
+        
+        for request in reminderNotifications {
+            if let trigger = request.trigger as? UNCalendarNotificationTrigger {
+                logger.info("  - \(request.identifier): \(request.content.title) - \(request.content.subtitle)")
+                logger.info("    Trigger date: \(trigger.dateComponents)")
+            }
+        }
     }
 }

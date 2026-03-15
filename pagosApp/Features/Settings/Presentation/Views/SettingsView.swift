@@ -49,6 +49,15 @@ struct SettingsView: View {
                 // Datos del dispositivo (Desvincular - PELIGROSO)
                 DataSectionView(onUnlinkDeviceTapped: showUnlinkDeviceAlert)
 
+                // Debug (Solo en builds de desarrollo)
+                #if DEBUG
+                Section("Debug") {
+                    NavigationLink("Diagnóstico de Notificaciones") {
+                        dependencies.settingsDependencyContainer.makeNotificationDebugView()
+                    }
+                }
+                #endif
+
                 // Sesión (Cerrar sesión)
                 SessionSectionView(onLogoutTapped: showLogoutAlert)
             }
