@@ -7,12 +7,10 @@
 //
 
 import Foundation
-import Observation
-import OSLog
 
 @MainActor
 @Observable
-final class CalendarViewModel {
+final class CalendarViewModel: BaseViewModel {
     // MARK: - Observable Properties (UI State)
 
     var allPayments: [PaymentUI] = []
@@ -20,8 +18,6 @@ final class CalendarViewModel {
     var allReminders: [Reminder] = []
     var remindersForSelectedDate: [Reminder] = []
     var selectedDate: Date = Calendar.current.startOfDay(for: Date())
-    var isLoading = false
-    var errorMessage: String?
 
     // MARK: - Dependencies (Use Cases)
 
@@ -31,7 +27,6 @@ final class CalendarViewModel {
     private let getAllRemindersUseCase: GetAllRemindersUseCase
     private let calendarEventDataSource: CalendarEventDataSource
     private let mapper: PaymentUIMapping
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "CalendarViewModel")
 
     init(
         getAllPaymentsUseCase: GetAllPaymentsForCalendarUseCase,
@@ -47,50 +42,65 @@ final class CalendarViewModel {
         self.getAllRemindersUseCase = getAllRemindersUseCase
         self.calendarEventDataSource = calendarEventDataSource
         self.mapper = mapper
+        super.init(category: "CalendarViewModel")
     }
 
     // MARK: - Data Operations
 
     /// Load all payments and reminders (for calendar indicators)
     func loadAllPayments() async {
-        isLoading = true
-        defer { isLoading = false }
-
-        async let paymentsResult = getAllPaymentsUseCase.execute()
-        async let remindersResult = getAllRemindersUseCase.execute()
-
-        let (paymentsRes, remindersRes) = await (paymentsResult, remindersResult)
-
-        switch paymentsRes {
-        case .success(let payments):
-            allPayments = mapper.toUI(payments)
-            logger.info("✅ Loaded \(payments.count) payments for calendar")
-        case .failure(let error):
-            logger.error("❌ Failed to load payments: \(error.errorCode)")
-            errorMessage = "Error al cargar pagos"
-        }
-
-        switch remindersRes {
-        case .success(let reminders):
-            allReminders = reminders
-            logger.info("✅ Loaded \(reminders.count) reminders for calendar")
-        case .failure:
-            allReminders = []
-        }
+        await withLoadingAndErrorHandling(
+            operation: {
+                async let paymentsResult = self.getAllPaymentsUseCase.execute()
+                async let remindersResult = self.getAllRemindersUseCase.execute()
+                
+                let (paymentsRes, remindersRes) = await (paymentsResult, remindersResult)
+                
+                switch paymentsRes {
+                case .success(let payments):
+                    self.allPayments = self.mapper.toUI(payments)
+                    self.logDebug("Loaded \(payments.count) payments for calendar")
+                case .failure(let error):
+                    self.logError(error)
+                    throw error
+                }
+                
+                switch remindersRes {
+                case .success(let reminders):
+                    self.allReminders = reminders
+                    self.logDebug("Loaded \(reminders.count) reminders for calendar")
+                case .failure:
+                    self.allReminders = []
+                }
+                
+                return (paymentsRes, remindersRes)
+            },
+            onError: { _ in
+                self.setError("Error al cargar pagos")
+            }
+        )
     }
 
     /// Load payments and reminders for selected date
     func loadPaymentsForSelectedDate() async {
-        let result = await getPaymentsByDateUseCase.execute(for: selectedDate)
-
-        switch result {
-        case .success(let payments):
-            paymentsForSelectedDate = mapper.toUI(payments)
-            logger.info("✅ Loaded \(payments.count) payments for selected date")
-        case .failure(let error):
-            logger.error("❌ Failed to load payments for date: \(error.errorCode)")
-            errorMessage = "Error al cargar pagos para la fecha seleccionada"
-        }
+        await withLoadingAndErrorHandling(
+            operation: {
+                let result = await self.getPaymentsByDateUseCase.execute(for: self.selectedDate)
+                
+                switch result {
+                case .success(let payments):
+                    self.paymentsForSelectedDate = self.mapper.toUI(payments)
+                    self.logDebug("Loaded \(payments.count) payments for selected date")
+                    return payments
+                case .failure(let error):
+                    self.logError(error)
+                    throw error
+                }
+            },
+            onError: { _ in
+                self.setError("Error al cargar pagos para la fecha seleccionada")
+            }
+        )
 
         let calendar = Calendar.current
         remindersForSelectedDate = allReminders.filter { calendar.isDate($0.dueDate, inSameDayAs: selectedDate) }
@@ -98,15 +108,20 @@ final class CalendarViewModel {
 
     /// Load payments for a specific month
     func loadPaymentsForMonth(_ month: Date) async {
-        let result = await getPaymentsByMonthUseCase.execute(for: month)
-
-        switch result {
-        case .success(let payments):
-            logger.info("✅ Loaded \(payments.count) payments for month")
-
-        case .failure(let error):
-            logger.error("❌ Failed to load payments for month: \(error.errorCode)")
-        }
+        await withLoadingAndErrorHandling(
+            operation: {
+                let result = await self.getPaymentsByMonthUseCase.execute(for: month)
+                
+                switch result {
+                case .success(let payments):
+                    self.logDebug("Loaded \(payments.count) payments for month")
+                    return payments
+                case .failure(let error):
+                    self.logError(error)
+                    throw error
+                }
+            }
+        )
     }
 
     /// Update selected date and reload payments
@@ -185,7 +200,7 @@ final class CalendarViewModel {
         skipped = paymentsForSelectedDate.filter { $0.dueDate < Date() }.count
 
         completion(.success(added: added, updated: updated, skipped: skipped))
-        logger.info("✅ Calendar sync completed: \(added) added, \(updated) updated, \(skipped) skipped")
+        logDebug("Calendar sync completed: \(added) added, \(updated) updated, \(skipped) skipped")
     }
 
     enum SyncResult {
