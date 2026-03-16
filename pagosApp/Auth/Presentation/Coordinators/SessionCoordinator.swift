@@ -120,9 +120,10 @@ final class SessionCoordinator {
         }
 
         // Listen for logout notifications
-        Task {
+        Task { [weak self] in
+            guard let self else { return }
             for await _ in NotificationCenter.default.notifications(named: NSNotification.Name("UserDidLogout")) {
-                logger.info("📢 Received UserDidLogout notification - updating UI state")
+                self.logger.info("📢 Received UserDidLogout notification - updating UI state")
                 self.isAuthenticated = false
                 self.isSessionActive = false
             }
