@@ -39,31 +39,31 @@ final class PaymentHistoryViewModel: BaseViewModel {
 
     private func setupEventListeners() {
         // Listen to any payment changes and refresh history
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentCreatedEvent.self) {
-                logDebug("Received PaymentCreatedEvent")
-                await fetchPayments()
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentCreatedEvent.self) ?? AsyncStream.never {
+                self?.logDebug("Received PaymentCreatedEvent")
+                await self?.fetchPayments()
             }
         }
 
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentUpdatedEvent.self) {
-                logDebug("Received PaymentUpdatedEvent")
-                await fetchPayments()
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentUpdatedEvent.self) ?? AsyncStream.never {
+                self?.logDebug("Received PaymentUpdatedEvent")
+                await self?.fetchPayments()
             }
         }
 
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentDeletedEvent.self) {
-                logDebug("Received PaymentDeletedEvent")
-                await fetchPayments()
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentDeletedEvent.self) ?? AsyncStream.never {
+                self?.logDebug("Received PaymentDeletedEvent")
+                await self?.fetchPayments()
             }
         }
 
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentStatusToggledEvent.self) {
-                logDebug("Received PaymentStatusToggledEvent")
-                await fetchPayments()
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentStatusToggledEvent.self) ?? AsyncStream.never {
+                self?.logDebug("Received PaymentStatusToggledEvent")
+                await self?.fetchPayments()
             }
         }
     }

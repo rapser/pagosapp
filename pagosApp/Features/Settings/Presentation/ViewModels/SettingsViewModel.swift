@@ -57,33 +57,33 @@ final class SettingsViewModel: BaseViewModel {
 
     /// Setup event listeners for domain events
     private func setupEventListeners() {
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentsSyncedEvent.self) {
-                await updatePendingSyncCount()
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentsSyncedEvent.self) ?? AsyncStream.never {
+                await self?.updatePendingSyncCount()
             }
         }
 
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentCreatedEvent.self) {
-                await updatePendingSyncCount()
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentCreatedEvent.self) ?? AsyncStream.never {
+                await self?.updatePendingSyncCount()
             }
         }
 
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentUpdatedEvent.self) {
-                await updatePendingSyncCount()
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentUpdatedEvent.self) ?? AsyncStream.never {
+                await self?.updatePendingSyncCount()
             }
         }
 
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentDeletedEvent.self) {
-                await updatePendingSyncCount()
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentDeletedEvent.self) ?? AsyncStream.never {
+                await self?.updatePendingSyncCount()
             }
         }
 
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentStatusToggledEvent.self) {
-                await updatePendingSyncCount()
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentStatusToggledEvent.self) ?? AsyncStream.never {
+                await self?.updatePendingSyncCount()
             }
         }
     }

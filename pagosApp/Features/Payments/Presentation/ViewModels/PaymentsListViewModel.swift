@@ -109,27 +109,27 @@ final class PaymentsListViewModel: BaseViewModel {
 
     private func setupEventListeners() {
         // Listen to payment events and refresh UI
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentCreatedEvent.self) {
-                await fetchPayments(showLoading: false)
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentCreatedEvent.self) ?? AsyncStream.never {
+                await self?.fetchPayments(showLoading: false)
             }
         }
 
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentUpdatedEvent.self) {
-                await fetchPayments(showLoading: false)
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentUpdatedEvent.self) ?? AsyncStream.never {
+                await self?.fetchPayments(showLoading: false)
             }
         }
 
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentDeletedEvent.self) {
-                await fetchPayments(showLoading: false)
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentDeletedEvent.self) ?? AsyncStream.never {
+                await self?.fetchPayments(showLoading: false)
             }
         }
 
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentStatusToggledEvent.self) {
-                await fetchPayments(showLoading: false)
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentStatusToggledEvent.self) ?? AsyncStream.never {
+                await self?.fetchPayments(showLoading: false)
             }
         }
     }
