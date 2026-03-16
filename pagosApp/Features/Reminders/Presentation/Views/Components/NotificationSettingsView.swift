@@ -12,15 +12,6 @@ struct NotificationSettingsView: View {
     @Binding var notificationSettings: NotificationSettings
     let reminderType: ReminderType
     
-    private var isImportantType: Bool {
-        switch reminderType {
-        case .cardRenewal, .documents, .taxes, .membership, .subscription, .pension:
-            return true
-        case .savings, .deposit, .maintenance, .insurance, .health, .rent, .warranty, .certification, .other:
-            return false
-        }
-    }
-    
     var body: some View {
         Section {
             VStack(alignment: .leading, spacing: 12) {
@@ -41,7 +32,7 @@ struct NotificationSettingsView: View {
                 }
                 
                 // Advanced options based on type
-                if isImportantType {
+                if reminderType.requiresAdvancedNotifications {
                     VStack(spacing: 20) {
                         Toggle(L10n.Reminders.Notifications.oneMonthBefore, isOn: $notificationSettings.oneMonthBefore)
                             .toggleStyle(SwitchToggleStyle(tint: .orange))
@@ -68,7 +59,7 @@ struct NotificationSettingsView: View {
     }
     
     private var footerText: String {
-        if isImportantType {
+        if reminderType.requiresAdvancedNotifications {
             if notificationSettings.oneMonthBefore || notificationSettings.twoWeeksBefore {
                 return "💡 Notificaciones adicionales activadas para mayor anticipación"
             } else {

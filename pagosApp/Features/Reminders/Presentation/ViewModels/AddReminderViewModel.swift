@@ -10,7 +10,7 @@ import Observation
 
 @MainActor
 @Observable
-final class AddReminderViewModel {
+final class AddReminderViewModel: LoadingStateViewModel {
     var reminderType: ReminderType = .other {
         didSet {
             // Update notification settings when type changes
@@ -21,10 +21,12 @@ final class AddReminderViewModel {
     var reminderDescription: String = ""
     var dueDate: Date = Date()
     var notificationSettings: NotificationSettings = NotificationSettings.recommended(for: .other)
-    var isSaving = false
+    var didSave = false
+    
+    // LoadingStateViewModel conformance
+    var isLoading = false
     var errorMessage: String?
     var showError = false
-    var didSave = false
 
     private let createReminderUseCase: CreateReminderUseCase
 
@@ -37,21 +39,23 @@ final class AddReminderViewModel {
     }
 
     func save() async {
-        errorMessage = nil
-        isSaving = true
-        defer { isSaving = false }
-        switch await createReminderUseCase.execute(
-            type: reminderType, 
-            title: title, 
-            description: reminderDescription, 
-            dueDate: dueDate, 
-            notificationSettings: notificationSettings
-        ) {
-        case .success:
-            didSave = true
-        case .failure(let error):
-            errorMessage = message(for: error)
-            showError = true
+        let result = await withLoading {
+            await createReminderUseCase.execute(
+                type: reminderType,
+                title: title,
+                description: reminderDescription,
+                dueDate: dueDate,
+                notificationSettings: notificationSettings
+            )
+        }
+        
+        if let result = result {
+            switch result {
+            case .success:
+                didSave = true
+            case .failure(let error):
+                setError(message(for: error))
+            }
         }
     }
 
