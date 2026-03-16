@@ -42,6 +42,7 @@ final class AppDependencies {
     let sessionCoordinator: SessionCoordinator
     let paymentSyncCoordinator: PaymentSyncCoordinator
     let reminderSyncCoordinator: ReminderSyncCoordinator
+    let appSyncManager: AppSyncManager
 
     // MARK: - Initialization
 
@@ -100,6 +101,11 @@ final class AppDependencies {
         self.sessionCoordinator = authDependencyContainer.makeSessionCoordinator(
             errorHandler: errorHandler,
             settingsStore: settingsStore,
+            paymentSyncCoordinator: paymentSyncCoordinator,
+            reminderSyncCoordinator: reminderSyncCoordinator
+        )
+
+        self.appSyncManager = AppSyncManager(
             paymentSyncCoordinator: paymentSyncCoordinator,
             reminderSyncCoordinator: reminderSyncCoordinator
         )
