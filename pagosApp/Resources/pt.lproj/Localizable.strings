@@ -133,6 +133,12 @@
 "reminders.type.deposit" = "Depósito";
 "reminders.type.documents" = "Documentos";
 "reminders.type.taxes" = "Impostos";
+"reminders.type.maintenance" = "Manutenção";
+"reminders.type.insurance" = "Seguros";
+"reminders.type.health" = "Saúde";
+"reminders.type.rent" = "Aluguel";
+"reminders.type.warranty" = "Garantia";
+"reminders.type.certification" = "Certificação";
 "reminders.type.other" = "Outro";
 "reminders.error.invalidTitle" = "O título é obrigatório";
 "reminders.error.invalidDate" = "A data não é válida";

@@ -205,6 +205,12 @@ enum L10n {
             case .deposit: key = "reminders.type.deposit"
             case .documents: key = "reminders.type.documents"
             case .taxes: key = "reminders.type.taxes"
+            case .maintenance: key = "reminders.type.maintenance"
+            case .insurance: key = "reminders.type.insurance"
+            case .health: key = "reminders.type.health"
+            case .rent: key = "reminders.type.rent"
+            case .warranty: key = "reminders.type.warranty"
+            case .certification: key = "reminders.type.certification"
             case .other: key = "reminders.type.other"
             }
             return tr(key)
