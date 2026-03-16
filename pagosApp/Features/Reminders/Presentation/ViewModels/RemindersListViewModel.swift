@@ -6,15 +6,11 @@
 //
 
 import Foundation
-import Observation
 
 @MainActor
 @Observable
-final class RemindersListViewModel {
+final class RemindersListViewModel: BaseViewModel {
     var reminders: [Reminder] = []
-    var isLoading = false
-    var errorMessage: String?
-    var showError = false
 
     private let getAllRemindersUseCase: GetAllRemindersUseCase
     private let deleteReminderUseCase: DeleteReminderUseCase
@@ -37,6 +33,7 @@ final class RemindersListViewModel {
         self.deleteReminderUseCase = deleteReminderUseCase
         self.updateReminderUseCase = updateReminderUseCase
         self.rescheduleNotificationsUseCase = rescheduleNotificationsUseCase
+        super.init(category: "RemindersListViewModel")
     }
 
     func toggleCompletion(_ reminder: Reminder) async {
@@ -57,32 +54,41 @@ final class RemindersListViewModel {
                 reminders[index] = result
             }
         case .failure(let error):
-            errorMessage = message(for: error)
-            showError = true
+            logError(error)
+            setError(reminderErrorMessage(for: error))
         }
     }
 
     func loadReminders() async {
-        isLoading = true
-        defer { isLoading = false }
-        errorMessage = nil
-        
-        switch await getAllRemindersUseCase.execute() {
-        case .success(let list):
-            reminders = list.sorted { $0.dueDate < $1.dueDate }
-            
-            // Reschedule notifications for all reminders on first load (similar to payments)
-            if !hasRescheduledNotifications, let notificationsUseCase = rescheduleNotificationsUseCase {
-                hasRescheduledNotifications = true
-                Task { @MainActor in
-                    notificationsUseCase.rescheduleAll(list)
+        await withLoadingAndErrorHandling(
+            operation: {
+                let result = await self.getAllRemindersUseCase.execute()
+                
+                switch result {
+                case .success(let list):
+                    self.reminders = list.sorted { $0.dueDate < $1.dueDate }
+                    self.logDebug("Loaded \(list.count) reminders")
+                    
+                    // Reschedule notifications for all reminders on first load
+                    if !self.hasRescheduledNotifications, let notificationsUseCase = self.rescheduleNotificationsUseCase {
+                        self.hasRescheduledNotifications = true
+                        Task { @MainActor in
+                            notificationsUseCase.rescheduleAll(list)
+                        }
+                    }
+                    
+                    return list
+                case .failure(let error):
+                    self.logError(error)
+                    throw error
+                }
+            },
+            onError: { error in
+                if let reminderError = error as? ReminderError {
+                    self.setError(self.reminderErrorMessage(for: reminderError))
                 }
             }
-            
-        case .failure(let error):
-            errorMessage = message(for: error)
-            showError = true
-        }
+        )
     }
 
     func deleteReminder(id: UUID) async {
@@ -90,12 +96,12 @@ final class RemindersListViewModel {
         case .success:
             reminders.removeAll { $0.id == id }
         case .failure(let error):
-            errorMessage = message(for: error)
-            showError = true
+            logError(error)
+            setError(reminderErrorMessage(for: error))
         }
     }
 
-    private func message(for error: ReminderError) -> String {
+    private func reminderErrorMessage(for error: ReminderError) -> String {
         switch error {
         case .invalidTitle: return L10n.Reminders.Error.invalidTitle
         case .invalidDate: return L10n.Reminders.Error.invalidDate

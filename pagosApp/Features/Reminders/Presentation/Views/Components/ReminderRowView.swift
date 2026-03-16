@@ -20,6 +20,8 @@ struct ReminderRowView: View {
                     .font(.title2)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(reminder.isCompleted ? "Marcar como pendiente \(reminder.title)" : "Marcar como completado \(reminder.title)")
+            .accessibilityHint(reminder.isCompleted ? "Toca para cambiar a pendiente" : "Toca para completar el recordatorio")
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(reminder.title)
@@ -38,5 +40,8 @@ struct ReminderRowView: View {
                 .foregroundColor(reminder.displayColor)
         }
         .opacity(reminder.displayOpacity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(reminder.title), \(L10n.Reminders.typeDisplayName(reminder.reminderType)), vence \(reminder.formattedDate), \(reminder.isCompleted ? "completado" : "pendiente")")
+        .accessibilityAddTraits(reminder.isCompleted ? .isSelected : [])
     }
 }

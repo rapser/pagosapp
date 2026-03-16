@@ -6,11 +6,10 @@
 //
 
 import Foundation
-import Observation
 
 @MainActor
 @Observable
-final class AddReminderViewModel: LoadingStateViewModel {
+final class AddReminderViewModel: BaseViewModel {
     var reminderType: ReminderType = .other {
         didSet {
             // Update notification settings when type changes
@@ -22,11 +21,6 @@ final class AddReminderViewModel: LoadingStateViewModel {
     var dueDate: Date = Date()
     var notificationSettings: NotificationSettings = NotificationSettings.recommended(for: .other)
     var didSave = false
-    
-    // LoadingStateViewModel conformance
-    var isLoading = false
-    var errorMessage: String?
-    var showError = false
 
     private let createReminderUseCase: CreateReminderUseCase
 
@@ -36,6 +30,7 @@ final class AddReminderViewModel: LoadingStateViewModel {
 
     init(createReminderUseCase: CreateReminderUseCase) {
         self.createReminderUseCase = createReminderUseCase
+        super.init(category: "AddReminderViewModel")
     }
 
     func save() async {
