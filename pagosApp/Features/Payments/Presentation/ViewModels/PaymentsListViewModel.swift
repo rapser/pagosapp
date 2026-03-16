@@ -12,8 +12,18 @@ import SwiftUI
 @MainActor
 @Observable
 final class PaymentsListViewModel: BaseViewModel {
-    var payments: [PaymentUI] = []
-    var selectedFilter: PaymentFilterUI = .currentMonth
+    var payments: [PaymentUI] = [] {
+        didSet { recomputeGroupedPayments() }
+    }
+
+    private var filterSelection: PaymentFilterUI = .currentMonth
+    var selectedFilter: PaymentFilterUI {
+        get { filterSelection }
+        set {
+            filterSelection = newValue
+            recomputeGroupedPayments()
+        }
+    }
 
     private let getAllPaymentsUseCase: GetAllPaymentsUseCase
     private let deletePaymentUseCase: DeletePaymentUseCase
@@ -33,55 +43,41 @@ final class PaymentsListViewModel: BaseViewModel {
         return searchService.filter(payments, by: filter)
     }
 
-    /// Group dual-currency credit card payments for display
-    /// Returns sorted items (groups and individuals mixed by due date)
-    var groupedPayments: [PaymentListItemUI] {
+    /// Cached grouped payments — updated only when payments or filter change.
+    private(set) var groupedPayments: [PaymentListItemUI] = []
+
+    private func recomputeGroupedPayments() {
         var items: [PaymentListItemUI] = []
         var processedIds: Set<UUID> = []
 
-        // Group payments by groupId (only for credit cards)
         let paymentsWithGroupId = filteredPayments.filter { $0.groupId != nil }
         let paymentsByGroupId = Dictionary(grouping: paymentsWithGroupId) { $0.groupId! }
 
-        for (groupId, groupedPayments) in paymentsByGroupId {
-            // Only group credit card payments
-            guard groupedPayments.first?.category == .tarjetaCredito else {
-                // If not credit card, treat as individuals
-                for payment in groupedPayments {
+        for (groupId, grouped) in paymentsByGroupId {
+            guard grouped.first?.category == .tarjetaCredito else {
+                for payment in grouped {
                     items.append(.individual(payment))
                     processedIds.insert(payment.id)
                 }
                 continue
             }
 
-            let penPayment = groupedPayments.first { $0.currency == .pen }
-            let usdPayment = groupedPayments.first { $0.currency == .usd }
+            let penPayment = grouped.first { $0.currency == .pen }
+            let usdPayment = grouped.first { $0.currency == .usd }
 
-            // Create group
             if let group = PaymentGroupUI.from(penPayment: penPayment, usdPayment: usdPayment, groupId: groupId) {
                 items.append(.group(group))
-                if let pen = penPayment {
-                    processedIds.insert(pen.id)
-                }
-                if let usd = usdPayment {
-                    processedIds.insert(usd.id)
-                }
+                if let pen = penPayment { processedIds.insert(pen.id) }
+                if let usd = usdPayment { processedIds.insert(usd.id) }
             }
         }
 
-        // Add ungrouped payments
         for payment in filteredPayments where !processedIds.contains(payment.id) {
             items.append(.individual(payment))
         }
 
-        // Sort all items by due date
-        items.sort { item1, item2 in
-            let date1 = item1.dueDate
-            let date2 = item2.dueDate
-            return date1 < date2
-        }
-
-        return items
+        items.sort { $0.dueDate < $1.dueDate }
+        groupedPayments = items
     }
 
     // MARK: - Initialization

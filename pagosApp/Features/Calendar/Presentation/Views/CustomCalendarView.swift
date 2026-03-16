@@ -12,6 +12,7 @@ struct CustomCalendarView: View {
     private let daysOfWeek = ["D", "L", "M", "M", "J", "V", "S"]
 
     var body: some View {
+        let keys = buildEventKeys()
         VStack(spacing: 12) {
             MonthYearHeaderView(
                 monthYearString: monthYearString,
@@ -27,7 +28,10 @@ struct CustomCalendarView: View {
                     daysInMonth: daysInMonth,
                     selectedDate: selectedDate,
                     currentMonth: currentMonth,
-                    hasPayments: hasEvents,
+                    hasPayments: { date in
+                        let c = Calendar.current.dateComponents([.year, .month, .day], from: date)
+                        return keys.contains("\(c.year ?? 0)-\(c.month ?? 0)-\(c.day ?? 0)")
+                    },
                     onDateTap: { date in
                         selectedDate = date
                     }
@@ -36,7 +40,10 @@ struct CustomCalendarView: View {
                 CompactCalendarScrollView(
                     daysInCurrentWeek: daysInCurrentWeek,
                     selectedDate: selectedDate,
-                    hasPayments: hasEvents,
+                    hasPayments: { date in
+                        let c = Calendar.current.dateComponents([.year, .month, .day], from: date)
+                        return keys.contains("\(c.year ?? 0)-\(c.month ?? 0)-\(c.day ?? 0)")
+                    },
                     dayOfWeekString: dayOfWeekString,
                     onDateTap: { date in
                         selectedDate = date
@@ -49,11 +56,15 @@ struct CustomCalendarView: View {
 
     // MARK: - Helper Properties
 
+    private static let monthFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "es_ES")
+        f.dateFormat = "MMMM yyyy"
+        return f
+    }()
+
     private var monthYearString: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "es_ES")
-        formatter.dateFormat = "MMMM yyyy"
-        return formatter.string(from: currentMonth).capitalized
+        Self.monthFormatter.string(from: currentMonth).capitalized
     }
 
     private var daysInMonth: [Date?] {
@@ -102,10 +113,19 @@ struct CustomCalendarView: View {
 
     // MARK: - Helper Methods
 
-    private func hasEvents(on date: Date) -> Bool {
-        let hasPayment = payments.contains { calendar.isDate($0.dueDate, inSameDayAs: date) }
-        let hasReminder = reminders.contains { calendar.isDate($0.dueDate, inSameDayAs: date) }
-        return hasPayment || hasReminder
+    /// Builds a Set of "year-month-day" keys once per render — O(n).
+    /// All 30+ cell hasEvents checks then do O(1) lookup instead of O(n) each.
+    private func buildEventKeys() -> Set<String> {
+        var keys = Set<String>(minimumCapacity: payments.count + reminders.count)
+        for payment in payments {
+            let c = calendar.dateComponents([.year, .month, .day], from: payment.dueDate)
+            keys.insert("\(c.year ?? 0)-\(c.month ?? 0)-\(c.day ?? 0)")
+        }
+        for reminder in reminders {
+            let c = calendar.dateComponents([.year, .month, .day], from: reminder.dueDate)
+            keys.insert("\(c.year ?? 0)-\(c.month ?? 0)-\(c.day ?? 0)")
+        }
+        return keys
     }
 
     private func dayOfWeekString(for date: Date) -> String {
