@@ -10,18 +10,25 @@ import Foundation
 @MainActor
 @Observable
 final class RemindersListViewModel: BaseViewModel {
-    var reminders: [Reminder] = []
+    private var allReminders: [Reminder] = []
+
+    private var filterSelection: ReminderFilterUI = .currentMonth
+    var selectedFilter: ReminderFilterUI {
+        get { filterSelection }
+        set { filterSelection = newValue }
+    }
+
+    /// Reminders filtered by the selected segment
+    var reminders: [Reminder] {
+        let searchService = ReminderSearchService()
+        let filter = ReminderSearchService.ReminderFilter.from(selectedFilter)
+        return searchService.filter(allReminders, by: filter)
+    }
 
     private let getAllRemindersUseCase: GetAllRemindersUseCase
     private let deleteReminderUseCase: DeleteReminderUseCase
     private let updateReminderUseCase: UpdateReminderUseCase
     private let rescheduleNotificationsUseCase: RescheduleReminderNotificationsUseCase?
-    
-    // More efficient: persists across app launches
-    private var hasRescheduledNotifications: Bool {
-        get { UserDefaults.standard.bool(forKey: "hasRescheduledReminderNotifications") }
-        set { UserDefaults.standard.set(newValue, forKey: "hasRescheduledReminderNotifications") }
-    }
 
     init(
         getAllRemindersUseCase: GetAllRemindersUseCase, 
@@ -50,8 +57,8 @@ final class RemindersListViewModel: BaseViewModel {
         )
         switch await updateReminderUseCase.execute(updated) {
         case .success(let result):
-            if let index = reminders.firstIndex(where: { $0.id == result.id }) {
-                reminders[index] = result
+            if let index = allReminders.firstIndex(where: { $0.id == result.id }) {
+                allReminders[index] = result
             }
         case .failure(let error):
             logError(error)
@@ -66,12 +73,12 @@ final class RemindersListViewModel: BaseViewModel {
                 
                 switch result {
                 case .success(let list):
-                    self.reminders = list.sorted { $0.dueDate < $1.dueDate }
+                    self.allReminders = list.sorted { $0.dueDate < $1.dueDate }
                     self.logDebug("Loaded \(list.count) reminders")
                     
-                    // Reschedule notifications for all reminders on first load
-                    if !self.hasRescheduledNotifications, let notificationsUseCase = self.rescheduleNotificationsUseCase {
-                        self.hasRescheduledNotifications = true
+                    // Always reschedule notifications on every load to ensure accuracy
+                    // (covers reminders downloaded from sync, phone restarts, etc.)
+                    if let notificationsUseCase = self.rescheduleNotificationsUseCase {
                         Task { @MainActor in
                             notificationsUseCase.rescheduleAll(list)
                         }
@@ -94,7 +101,7 @@ final class RemindersListViewModel: BaseViewModel {
     func deleteReminder(id: UUID) async {
         switch await deleteReminderUseCase.execute(id: id) {
         case .success:
-            reminders.removeAll { $0.id == id }
+            allReminders.removeAll { $0.id == id }
         case .failure(let error):
             logError(error)
             setError(reminderErrorMessage(for: error))

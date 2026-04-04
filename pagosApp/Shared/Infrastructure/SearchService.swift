@@ -86,6 +86,8 @@ final class ReminderSearchService: SearchService {
     typealias Filter = ReminderFilter
     
     enum ReminderFilter {
+        case currentMonth
+        case futureMonths
         case byType(ReminderType)
         case upcoming(days: Int)
         case overdue
@@ -98,6 +100,16 @@ final class ReminderSearchService: SearchService {
         let calendar = Calendar.current
         
         switch filter {
+        case .currentMonth:
+            return reminders.filter { calendar.isDate($0.dueDate, equalTo: now, toGranularity: .month) }
+            
+        case .futureMonths:
+            guard let startOfCurrentMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now)),
+                  let startOfNextMonth = calendar.date(byAdding: DateComponents(month: 1), to: startOfCurrentMonth) else {
+                return []
+            }
+            return reminders.filter { $0.dueDate >= startOfNextMonth }
+            
         case .byType(let type):
             return reminders.filter { $0.reminderType == type }
             
@@ -158,6 +170,20 @@ extension PaymentSearchService.PaymentFilter {
             ])
         case .all:
             return .compound([]) // No filtering
+        }
+    }
+}
+
+// MARK: - Reminder Filter Adapter
+
+extension ReminderSearchService.ReminderFilter {
+    /// Convert ReminderFilterUI to unified filter system
+    static func from(_ filter: ReminderFilterUI) -> ReminderSearchService.ReminderFilter {
+        switch filter {
+        case .currentMonth:
+            return .currentMonth
+        case .futureMonths:
+            return .futureMonths
         }
     }
 }

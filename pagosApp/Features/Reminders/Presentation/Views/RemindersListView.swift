@@ -10,7 +10,30 @@ import SwiftUI
 struct RemindersListView: View {
     @Environment(AppDependencies.self) private var dependencies
     @State private var showingAddSheet = false
-    @State private var viewModel: RemindersListViewModel?
+
+    init() {
+        UISegmentedControl.appearance().backgroundColor = UIColor(named: "SegmentedBackground")
+
+        UISegmentedControl.appearance().selectedSegmentTintColor = UIColor { traitCollection in
+            if traitCollection.userInterfaceStyle == .dark {
+                return UIColor(named: "AppPrimary") ?? .systemBlue
+            } else {
+                return .white
+            }
+        }
+
+        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.white], for: .normal)
+
+        UISegmentedControl.appearance().setTitleTextAttributes([
+            .foregroundColor: UIColor { traitCollection in
+                if traitCollection.userInterfaceStyle == .dark {
+                    return .white
+                } else {
+                    return UIColor(named: "AppPrimary") ?? .systemBlue
+                }
+            }
+        ], for: .selected)
+    }
 
     var body: some View {
         RemindersListContentWrapper(showingAddSheet: $showingAddSheet)
@@ -69,17 +92,39 @@ private struct RemindersListContent: View {
     @Environment(AppDependencies.self) private var dependencies
 
     var body: some View {
-        if viewModel.isLoading {
-            ProgressView(L10n.General.loading)
-        } else if viewModel.reminders.isEmpty {
-            GenericEmptyStateView(
-                icon: "bell.badge",
-                title: L10n.Reminders.emptyTitle,
-                description: L10n.Reminders.emptyDescription
-            )
-        } else {
-            RemindersList(viewModel: viewModel, dependencies: dependencies)
+        VStack(spacing: 0) {
+            ReminderFilterPicker(selectedFilter: $viewModel.selectedFilter)
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .background(Color(uiColor: .systemGroupedBackground))
+
+            if viewModel.isLoading {
+                ProgressView(L10n.General.loading)
+            } else if viewModel.reminders.isEmpty {
+                GenericEmptyStateView(
+                    icon: "bell.badge",
+                    title: L10n.Reminders.emptyTitle,
+                    description: L10n.Reminders.emptyDescription
+                )
+            } else {
+                RemindersList(viewModel: viewModel, dependencies: dependencies)
+            }
         }
+    }
+}
+
+// MARK: - Filter Picker (Segmented Control)
+
+private struct ReminderFilterPicker: View {
+    @Binding var selectedFilter: ReminderFilterUI
+
+    var body: some View {
+        Picker(L10n.Reminders.filter, selection: $selectedFilter) {
+            ForEach(ReminderFilterUI.allCases) { filter in
+                Text(L10n.Reminders.filterDisplayName(filter)).tag(filter)
+            }
+        }
+        .pickerStyle(.segmented)
     }
 }
 
