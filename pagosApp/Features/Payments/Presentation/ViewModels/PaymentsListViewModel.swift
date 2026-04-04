@@ -8,16 +8,22 @@
 
 import Foundation
 import SwiftUI
-import Observation
 
 @MainActor
 @Observable
-final class PaymentsListViewModel {
-    var payments: [PaymentUI] = []
-    var selectedFilter: PaymentFilterUI = .currentMonth
-    var isLoading = false
-    var errorMessage: String?
-    var showError = false
+final class PaymentsListViewModel: BaseViewModel {
+    var payments: [PaymentUI] = [] {
+        didSet { recomputeGroupedPayments() }
+    }
+
+    private var filterSelection: PaymentFilterUI = .currentMonth
+    var selectedFilter: PaymentFilterUI {
+        get { filterSelection }
+        set {
+            filterSelection = newValue
+            recomputeGroupedPayments()
+        }
+    }
 
     private let getAllPaymentsUseCase: GetAllPaymentsUseCase
     private let deletePaymentUseCase: DeletePaymentUseCase
@@ -25,6 +31,7 @@ final class PaymentsListViewModel {
     private let scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase?
     private let eventBus: EventBus
     private let mapper: PaymentUIMapping
+    private let searchService: PaymentSearchService
 
     // Track if we've already rescheduled notifications on first load
     private var hasRescheduledNotifications = false
@@ -32,71 +39,45 @@ final class PaymentsListViewModel {
     // MARK: - Computed Properties
 
     var filteredPayments: [PaymentUI] {
-        let calendar = Calendar.current
-        let now = Date()
-
-        switch selectedFilter {
-        case .currentMonth:
-            return payments.filter { calendar.isDate($0.dueDate, equalTo: now, toGranularity: .month) }
-        case .futureMonths:
-            // Get the first day of next month
-            guard let startOfCurrentMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now)),
-                  let startOfNextMonth = calendar.date(byAdding: DateComponents(month: 1), to: startOfCurrentMonth) else {
-                return []
-            }
-            return payments.filter { $0.dueDate >= startOfNextMonth }
-        }
+        let filter = PaymentSearchService.PaymentFilter.from(selectedFilter)
+        return searchService.filter(payments, by: filter)
     }
 
-    /// Group dual-currency credit card payments for display
-    /// Returns sorted items (groups and individuals mixed by due date)
-    var groupedPayments: [PaymentListItemUI] {
+    /// Cached grouped payments — updated only when payments or filter change.
+    private(set) var groupedPayments: [PaymentListItemUI] = []
+
+    private func recomputeGroupedPayments() {
         var items: [PaymentListItemUI] = []
         var processedIds: Set<UUID> = []
 
-        // Group payments by groupId (only for credit cards)
         let paymentsWithGroupId = filteredPayments.filter { $0.groupId != nil }
         let paymentsByGroupId = Dictionary(grouping: paymentsWithGroupId) { $0.groupId! }
 
-        for (groupId, groupedPayments) in paymentsByGroupId {
-            // Only group credit card payments
-            guard groupedPayments.first?.category == .tarjetaCredito else {
-                // If not credit card, treat as individuals
-                for payment in groupedPayments {
+        for (groupId, grouped) in paymentsByGroupId {
+            guard grouped.first?.category == .tarjetaCredito else {
+                for payment in grouped {
                     items.append(.individual(payment))
                     processedIds.insert(payment.id)
                 }
                 continue
             }
 
-            let penPayment = groupedPayments.first { $0.currency == .pen }
-            let usdPayment = groupedPayments.first { $0.currency == .usd }
+            let penPayment = grouped.first { $0.currency == .pen }
+            let usdPayment = grouped.first { $0.currency == .usd }
 
-            // Create group
             if let group = PaymentGroupUI.from(penPayment: penPayment, usdPayment: usdPayment, groupId: groupId) {
                 items.append(.group(group))
-                if let pen = penPayment {
-                    processedIds.insert(pen.id)
-                }
-                if let usd = usdPayment {
-                    processedIds.insert(usd.id)
-                }
+                if let pen = penPayment { processedIds.insert(pen.id) }
+                if let usd = usdPayment { processedIds.insert(usd.id) }
             }
         }
 
-        // Add ungrouped payments
         for payment in filteredPayments where !processedIds.contains(payment.id) {
             items.append(.individual(payment))
         }
 
-        // Sort all items by due date
-        items.sort { item1, item2 in
-            let date1 = item1.dueDate
-            let date2 = item2.dueDate
-            return date1 < date2
-        }
-
-        return items
+        items.sort { $0.dueDate < $1.dueDate }
+        groupedPayments = items
     }
 
     // MARK: - Initialization
@@ -107,7 +88,8 @@ final class PaymentsListViewModel {
         togglePaymentStatusUseCase: TogglePaymentStatusUseCase,
         scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase? = nil,
         eventBus: EventBus,
-        mapper: PaymentUIMapping
+        mapper: PaymentUIMapping,
+        searchService: PaymentSearchService = PaymentSearchService()
     ) {
         self.getAllPaymentsUseCase = getAllPaymentsUseCase
         self.deletePaymentUseCase = deletePaymentUseCase
@@ -115,33 +97,35 @@ final class PaymentsListViewModel {
         self.scheduleNotificationsUseCase = scheduleNotificationsUseCase
         self.eventBus = eventBus
         self.mapper = mapper
+        self.searchService = searchService
+        super.init(category: "PaymentsListViewModel")
 
         setupEventListeners()
     }
 
     private func setupEventListeners() {
         // Listen to payment events and refresh UI
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentCreatedEvent.self) {
-                await fetchPayments(showLoading: false)
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentCreatedEvent.self) ?? AsyncStream.never {
+                await self?.fetchPayments(showLoading: false)
             }
         }
 
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentUpdatedEvent.self) {
-                await fetchPayments(showLoading: false)
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentUpdatedEvent.self) ?? AsyncStream.never {
+                await self?.fetchPayments(showLoading: false)
             }
         }
 
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentDeletedEvent.self) {
-                await fetchPayments(showLoading: false)
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentDeletedEvent.self) ?? AsyncStream.never {
+                await self?.fetchPayments(showLoading: false)
             }
         }
 
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentStatusToggledEvent.self) {
-                await fetchPayments(showLoading: false)
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentStatusToggledEvent.self) ?? AsyncStream.never {
+                await self?.fetchPayments(showLoading: false)
             }
         }
     }
@@ -151,30 +135,48 @@ final class PaymentsListViewModel {
     /// Fetch all payments from repository (reads from local SwiftData - fast)
     /// - Parameter showLoading: Whether to show loading indicator (default: true). Set to false for silent background refreshes.
     func fetchPayments(showLoading: Bool = true) async {
-        if showLoading {
-            isLoading = true
-        }
-        defer {
-            if showLoading {
-                isLoading = false
+        if !showLoading {
+            // For silent refreshes, don't use loading state management
+            let result = await getAllPaymentsUseCase.execute()
+            switch result {
+            case .success(let fetchedPayments):
+                payments = mapper.toUI(fetchedPayments)
+                logDebug("Fetched \(fetchedPayments.count) payments (silent refresh)")
+            case .failure(let error):
+                logError(error)
             }
+            return
         }
-
-        let result = await getAllPaymentsUseCase.execute()
-
-        switch result {
-        case .success(let fetchedPayments):
-            payments = mapper.toUI(fetchedPayments)
-            if !hasRescheduledNotifications, let notificationsUseCase = scheduleNotificationsUseCase {
-                hasRescheduledNotifications = true
-                Task { @MainActor in
-                    notificationsUseCase.rescheduleAll(fetchedPayments)
+        
+        // For normal fetches, use loading state management
+        await withLoadingAndErrorHandling(
+            operation: {
+                let result = await self.getAllPaymentsUseCase.execute()
+                switch result {
+                case .success(let fetchedPayments):
+                    self.payments = self.mapper.toUI(fetchedPayments)
+                    self.logDebug("Fetched \(fetchedPayments.count) payments")
+                    
+                    // Reschedule notifications once on first load
+                    if !self.hasRescheduledNotifications, let notificationsUseCase = self.scheduleNotificationsUseCase {
+                        self.hasRescheduledNotifications = true
+                        Task { @MainActor in
+                            notificationsUseCase.rescheduleAll(fetchedPayments)
+                        }
+                    }
+                    
+                    return fetchedPayments
+                case .failure(let error):
+                    self.logError(error)
+                    throw error
+                }
+            },
+            onError: { error in
+                if let paymentError = error as? PaymentError {
+                    self.setError(PaymentErrorMessageMapper.message(for: paymentError))
                 }
             }
-
-        case .failure(let error):
-            showError(for: error)
-        }
+        )
     }
 
     /// Delete a payment with optimistic UI update
@@ -192,7 +194,7 @@ final class PaymentsListViewModel {
         case .failure(let error):
             // Revert optimistic delete on failure - re-add payment
             payments.append(payment)
-            showError(for: error)
+            setError(PaymentErrorMessageMapper.message(for: error))
         }
     }
 
@@ -228,7 +230,7 @@ final class PaymentsListViewModel {
             if let index = payments.firstIndex(where: { $0.id == payment.id }) {
                 payments[index] = payment
             }
-            showError(for: error)
+            setError(PaymentErrorMessageMapper.message(for: error))
         }
     }
 
@@ -257,12 +259,5 @@ final class PaymentsListViewModel {
     /// Refresh data
     func refresh() async {
         await fetchPayments()
-    }
-
-    // MARK: - Error Handling
-
-    private func showError(for error: PaymentError) {
-        errorMessage = PaymentErrorMessageMapper.message(for: error)
-        showError = true
     }
 }

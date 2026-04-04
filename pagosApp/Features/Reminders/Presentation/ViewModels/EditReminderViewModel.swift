@@ -6,11 +6,10 @@
 //
 
 import Foundation
-import Observation
 
 @MainActor
 @Observable
-final class EditReminderViewModel {
+final class EditReminderViewModel: BaseViewModel {
     var reminderType: ReminderType {
         didSet {
             // Only update notification settings if they haven't been customized
@@ -25,8 +24,6 @@ final class EditReminderViewModel {
     var isCompleted: Bool
     var notificationSettings: NotificationSettings
     var isSaving = false
-    var errorMessage: String?
-    var showError = false
     var didSave = false
 
     let reminder: Reminder
@@ -41,12 +38,13 @@ final class EditReminderViewModel {
         self.isCompleted = reminder.isCompleted
         self.notificationSettings = reminder.notificationSettings
         self.updateReminderUseCase = updateReminderUseCase
+        super.init(category: "EditReminderViewModel")
     }
 
     func save() async {
-        errorMessage = nil
         isSaving = true
         defer { isSaving = false }
+        
         let newStatus: ReminderSyncStatus = reminder.syncStatus == .synced ? .modified : reminder.syncStatus
         let updated = Reminder(
             id: reminder.id,
@@ -59,16 +57,17 @@ final class EditReminderViewModel {
             syncStatus: newStatus,
             lastSyncedAt: reminder.lastSyncedAt
         )
+        
         switch await updateReminderUseCase.execute(updated) {
         case .success:
             didSave = true
         case .failure(let error):
-            errorMessage = message(for: error)
-            showError = true
+            logError(error)
+            setError(reminderErrorMessage(for: error))
         }
     }
 
-    private func message(for error: ReminderError) -> String {
+    private func reminderErrorMessage(for error: ReminderError) -> String {
         switch error {
         case .invalidTitle: return L10n.Reminders.Error.invalidTitle
         case .invalidDate: return L10n.Reminders.Error.invalidDate

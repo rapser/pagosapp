@@ -7,12 +7,10 @@
 //
 
 import Foundation
-import Observation
-import OSLog
 
 @MainActor
 @Observable
-final class StatisticsViewModel {
+final class StatisticsViewModel: BaseViewModel {
     // MARK: - Observable Properties (UI State)
 
     var categoryStats: [CategoryStats] = []
@@ -20,7 +18,6 @@ final class StatisticsViewModel {
     var totalSpending: Double = 0
     var selectedFilter: StatsFilter = .all
     var selectedCurrency: Currency = .pen
-    var errorMessage: String?
     var hasPENPayments: Bool = false
     var hasUSDPayments: Bool = false
 
@@ -30,7 +27,6 @@ final class StatisticsViewModel {
     private let calculateMonthlyStatsUseCase: CalculateMonthlyStatsUseCase
     private let getTotalSpendingUseCase: GetTotalSpendingUseCase
     private let checkPaymentsByCurrencyUseCase: CheckPaymentsByCurrencyUseCase
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "StatisticsViewModel")
 
     init(
         calculateCategoryStatsUseCase: CalculateCategoryStatsUseCase,
@@ -42,6 +38,7 @@ final class StatisticsViewModel {
         self.calculateMonthlyStatsUseCase = calculateMonthlyStatsUseCase
         self.getTotalSpendingUseCase = getTotalSpendingUseCase
         self.checkPaymentsByCurrencyUseCase = checkPaymentsByCurrencyUseCase
+        super.init(category: "StatisticsViewModel")
     }
 
     // MARK: - Data Operations
@@ -72,8 +69,8 @@ final class StatisticsViewModel {
             categoryStats = stats
 
         case .failure(let error):
-            logger.error("Failed to load category stats: \(error.errorCode)")
-            errorMessage = L10n.Statistics.errorCategory
+            logError(error)
+            setError(L10n.Statistics.errorCategory)
         }
     }
 
@@ -89,8 +86,8 @@ final class StatisticsViewModel {
             monthlyStats = stats
 
         case .failure(let error):
-            logger.error("Failed to load monthly stats: \(error.errorCode)")
-            errorMessage = L10n.Statistics.errorMonthly
+            logError(error)
+            setError(L10n.Statistics.errorMonthly)
         }
     }
 
@@ -106,7 +103,7 @@ final class StatisticsViewModel {
             totalSpending = total
 
         case .failure(let error):
-            logger.error("Failed to load total spending: \(error.errorCode)")
+            logError(error)
         }
     }
 

@@ -7,24 +7,17 @@
 //
 
 import Foundation
-import Observation
-import OSLog
-
-private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "ResetPasswordViewModel")
 
 @MainActor
 @Observable
-final class ResetPasswordViewModel {
+final class ResetPasswordViewModel: BaseViewModel {
     // MARK: - UI State
 
     var newPassword: String = ""
     var confirmPassword: String = ""
     var showPassword: Bool = false
     var showConfirmPassword: Bool = false
-    var isLoading: Bool = false
     var didResetPassword: Bool = false
-    var errorMessage: String?
-    var showError: Bool = false
 
     // MARK: - Dependencies (Use Cases)
 
@@ -34,48 +27,46 @@ final class ResetPasswordViewModel {
 
     init(passwordRecoveryUseCase: PasswordRecoveryUseCase) {
         self.passwordRecoveryUseCase = passwordRecoveryUseCase
+        super.init(category: "ResetPasswordViewModel")
     }
 
     // MARK: - Actions
 
     func resetPassword(token: String) async {
         guard !isLoading else { return }
+        logDebug("Attempting to reset password")
 
-        logger.info("🔐 Attempting to reset password")
-
-        // Validate passwords match
         guard newPassword == confirmPassword else {
-            errorMessage = "Las contraseñas no coinciden"
-            showError = true
+            setValidationError("Las contraseñas no coinciden")
             return
         }
 
-        // Validate password strength
         guard isPasswordStrong else {
-            errorMessage = "La contraseña debe tener al menos 6 caracteres"
-            showError = true
+            setValidationError("La contraseña debe tener al menos 6 caracteres")
             return
         }
 
-        isLoading = true
-        errorMessage = nil
-        showError = false
-        defer { isLoading = false }
-
-        let result = await passwordRecoveryUseCase.resetPassword(
-            token: token,
-            newPassword: newPassword
+        await withLoadingAndErrorHandling(
+            operation: {
+                let result = await self.passwordRecoveryUseCase.resetPassword(
+                    token: token,
+                    newPassword: self.newPassword
+                )
+                
+                switch result {
+                case .success:
+                    self.didResetPassword = true
+                    self.logDebug("Password reset successfully")
+                    return true
+                case .failure(let error):
+                    self.logDebug("Reset password failed: \(error.errorCode)")
+                    throw error
+                }
+            },
+            onError: { _ in
+                self.setError("Error al restablecer la contraseña. Inténtalo de nuevo.")
+            }
         )
-
-        switch result {
-        case .success:
-            didResetPassword = true
-            logger.info("✅ Password reset successfully")
-        case .failure(let error):
-            logger.error("❌ Failed to reset password: \(error.errorCode)")
-            errorMessage = "Error al restablecer la contraseña. Inténtalo de nuevo."
-            showError = true
-        }
     }
 
     // MARK: - Validation

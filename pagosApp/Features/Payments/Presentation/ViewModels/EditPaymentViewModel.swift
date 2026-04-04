@@ -8,12 +8,10 @@
 
 import Foundation
 import SwiftUI
-import Observation
-import OSLog
 
 @MainActor
 @Observable
-final class EditPaymentViewModel {
+final class EditPaymentViewModel: BaseViewModel {
     // MARK: - Observable Properties (UI State)
 
     var name: String
@@ -23,9 +21,6 @@ final class EditPaymentViewModel {
     var dueDate: Date
     var category: PaymentCategory
     var isPaid: Bool
-    var isLoading = false
-    var errorMessage: String?
-    var showError = false
 
     // MARK: - Dependencies (Use Cases)
 
@@ -34,7 +29,6 @@ final class EditPaymentViewModel {
     private let updatePaymentUseCase: UpdatePaymentUseCase
     private let togglePaymentStatusUseCase: TogglePaymentStatusUseCase
     private let mapper: PaymentUIMapping
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "EditPaymentViewModel")
 
     // Callback for successful update
     var onPaymentUpdated: (() -> Void)?
@@ -132,6 +126,7 @@ final class EditPaymentViewModel {
         self.dueDate = payment.dueDate
         self.category = payment.category
         self.isPaid = payment.isPaid
+        super.init(category: "EditPaymentViewModel")
     }
 
     // MARK: - Actions
@@ -139,7 +134,7 @@ final class EditPaymentViewModel {
     func saveChanges(onSuccess: (() -> Void)? = nil) async {
         // Validate
         guard isValid else {
-            showValidationError(L10n.Payments.Validation.completeFields)
+            setValidationError(L10n.Payments.Validation.completeFields)
             return
         }
 
@@ -159,7 +154,7 @@ final class EditPaymentViewModel {
     /// Save single currency payment
     private func saveSinglePayment(onSuccess: (() -> Void)?) async {
         guard let amountValue = amountValue else {
-            showValidationError(L10n.Payments.Validation.amountGreaterZero)
+            setValidationError(L10n.Payments.Validation.amountGreaterZero)
             return
         }
 
@@ -187,8 +182,8 @@ final class EditPaymentViewModel {
             onSuccess?()
 
         case .failure(let error):
-            logger.error("Failed to update payment: \(error.errorCode)")
-            showError(for: error)
+            logDebug("Failed to update payment: \(error.errorCode)")
+            setError(PaymentErrorMessageMapper.message(for: error))
         }
     }
 
@@ -197,7 +192,7 @@ final class EditPaymentViewModel {
         // amount is always PEN, amountUSD is always USD
         guard let penAmountValue = amountValue, penAmountValue > 0,
               let usdAmountValue = amountUSDValue, usdAmountValue > 0 else {
-            showValidationError(L10n.Payments.Validation.bothAmountsGreaterZero)
+            setValidationError(L10n.Payments.Validation.bothAmountsGreaterZero)
             return
         }
 
@@ -244,8 +239,8 @@ final class EditPaymentViewModel {
             onSuccess?()
 
         case (.failure(let error), _), (_, .failure(let error)):
-            logger.error("Failed to update dual-currency payment: \(error.errorCode)")
-            showError(for: error)
+            logDebug("Failed to update dual-currency payment: \(error.errorCode)")
+            setError(PaymentErrorMessageMapper.message(for: error))
         }
     }
 
@@ -300,20 +295,8 @@ final class EditPaymentViewModel {
             onPaymentUpdated?()
 
         case .failure(let error):
-            logger.error("Failed to toggle payment status: \(error.errorCode)")
-            showError(for: error)
+            logDebug("Failed to toggle payment status: \(error.errorCode)")
+            setError(PaymentErrorMessageMapper.message(for: error))
         }
-    }
-
-    // MARK: - Error Handling
-
-    private func showValidationError(_ message: String) {
-        errorMessage = message
-        showError = true
-    }
-
-    private func showError(for error: PaymentError) {
-        errorMessage = PaymentErrorMessageMapper.message(for: error)
-        showError = true
     }
 }

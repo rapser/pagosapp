@@ -8,12 +8,10 @@
 
 import Foundation
 import SwiftUI
-import Observation
-import OSLog
 
 @MainActor
 @Observable
-final class AddPaymentViewModel {
+final class AddPaymentViewModel: BaseViewModel {
     // MARK: - Observable Properties (UI State)
 
     var name: String = ""
@@ -22,15 +20,11 @@ final class AddPaymentViewModel {
     var currency: Currency = .pen
     var dueDate: Date = Date()
     var category: PaymentCategory = .servicios
-    var isLoading = false
-    var errorMessage: String?
-    var showError = false
 
     // MARK: - Dependencies (Use Cases)
 
     private let createPaymentUseCase: CreatePaymentUseCase
     private let mapper: PaymentUIMapping
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "AddPaymentViewModel")
 
     // Callback for successful creation
     var onPaymentCreated: (() -> Void)?
@@ -84,6 +78,7 @@ final class AddPaymentViewModel {
     init(createPaymentUseCase: CreatePaymentUseCase, mapper: PaymentUIMapping) {
         self.createPaymentUseCase = createPaymentUseCase
         self.mapper = mapper
+        super.init(category: "AddPaymentViewModel")
     }
 
     // MARK: - Private Helpers
@@ -110,12 +105,9 @@ final class AddPaymentViewModel {
     func savePayment() async {
         // Validate
         guard isValid else {
-            showValidationError(L10n.Payments.Validation.completeFields)
+            setValidationError(L10n.Payments.Validation.completeFields)
             return
         }
-
-        isLoading = true
-        defer { isLoading = false }
 
         // Check if dual-currency payment (credit card with both PEN and USD)
         if isDualCurrencyPayment {
@@ -138,24 +130,30 @@ final class AddPaymentViewModel {
             finalCurrency = .usd
             finalAmount = usdAmount
         } else {
-            showValidationError(L10n.Payments.Validation.amountGreaterZero)
+            setValidationError(L10n.Payments.Validation.amountGreaterZero)
             return
         }
 
         let paymentUI = createPaymentUI(amount: finalAmount, currency: finalCurrency)
 
-        // Convert to Domain and execute
-        let result = await createPaymentUseCase.execute(mapper.toDomain(paymentUI))
-
-        switch result {
-        case .success:
-            clearForm()
-            onPaymentCreated?()
-
-        case .failure(let error):
-            logger.error("Failed to save payment: \(error.errorCode)")
-            showError(for: error)
-        }
+        await withLoadingAndErrorHandling(
+            operation: {
+                let result = await self.createPaymentUseCase.execute(self.mapper.toDomain(paymentUI))
+                if case .failure(let error) = result {
+                    throw error
+                }
+                return result
+            },
+            onSuccess: { _ in
+                self.clearForm()
+                self.onPaymentCreated?()
+            },
+            onError: { error in
+                if let paymentError = error as? PaymentError {
+                    self.setError(PaymentErrorMessageMapper.message(for: paymentError))
+                }
+            }
+        )
     }
 
     /// Save dual-currency grouped payment (PEN + USD)
@@ -164,7 +162,7 @@ final class AddPaymentViewModel {
               let usdAmount = amountUSDValue,
               penAmount > 0,
               usdAmount > 0 else {
-            showValidationError(L10n.Payments.Validation.bothAmountsGreaterZero)
+            setValidationError(L10n.Payments.Validation.bothAmountsGreaterZero)
             return
         }
 
@@ -175,19 +173,28 @@ final class AddPaymentViewModel {
         let paymentPEN_UI = createPaymentUI(amount: penAmount, currency: .pen, groupId: sharedGroupId)
         let paymentUSD_UI = createPaymentUI(amount: usdAmount, currency: .usd, groupId: sharedGroupId)
 
-        // Convert to Domain and save both payments
-        let resultPEN = await createPaymentUseCase.execute(mapper.toDomain(paymentPEN_UI))
-        let resultUSD = await createPaymentUseCase.execute(mapper.toDomain(paymentUSD_UI))
-
-        switch (resultPEN, resultUSD) {
-        case (.success, .success):
-            clearForm()
-            onPaymentCreated?()
-
-        case (.failure(let error), _), (_, .failure(let error)):
-            logger.error("Failed to save dual-currency payment: \(error.errorCode)")
-            showError(for: error)
-        }
+        await withLoadingAndErrorHandling(
+            operation: {
+                let resultPEN = await self.createPaymentUseCase.execute(self.mapper.toDomain(paymentPEN_UI))
+                let resultUSD = await self.createPaymentUseCase.execute(self.mapper.toDomain(paymentUSD_UI))
+                
+                switch (resultPEN, resultUSD) {
+                case (.success, .success):
+                    return (resultPEN, resultUSD)
+                case (.failure(let error), _), (_, .failure(let error)):
+                    throw error
+                }
+            },
+            onSuccess: { _ in
+                self.clearForm()
+                self.onPaymentCreated?()
+            },
+            onError: { error in
+                if let paymentError = error as? PaymentError {
+                    self.setError(PaymentErrorMessageMapper.message(for: paymentError))
+                }
+            }
+        )
     }
 
     func clearForm() {
@@ -197,17 +204,5 @@ final class AddPaymentViewModel {
         currency = .pen
         dueDate = Date()
         category = .servicios
-    }
-
-    // MARK: - Error Handling
-
-    private func showValidationError(_ message: String) {
-        errorMessage = message
-        showError = true
-    }
-
-    private func showError(for error: PaymentError) {
-        errorMessage = PaymentErrorMessageMapper.message(for: error)
-        showError = true
     }
 }

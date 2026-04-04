@@ -11,19 +11,34 @@ import OSLog
 
 /// Repository implementation for Statistics feature
 /// Wraps PaymentRepository and provides statistics-specific queries
+@MainActor
 final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
     private let paymentRepository: PaymentRepositoryProtocol
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "StatisticsRepositoryImpl")
     private let calendar = Calendar.current
 
+    // Short-lived cache: all calls within loadStatistics() (~100ms) share one DB read.
+    private var paymentsCache: [Payment] = []
+    private var cacheTimestamp: Date = .distantPast
+    private let cacheLifetime: TimeInterval = 1.0
+
     init(paymentRepository: PaymentRepositoryProtocol) {
         self.paymentRepository = paymentRepository
     }
 
+    private func fetchPaymentsCached() async throws -> [Payment] {
+        if Date().timeIntervalSince(cacheTimestamp) < cacheLifetime {
+            return paymentsCache
+        }
+        let payments = try await paymentRepository.getAllLocalPayments()
+        paymentsCache = payments
+        cacheTimestamp = Date()
+        return payments
+    }
+
     func getAllPayments() async -> Result<[Payment], PaymentError> {
         do {
-            let payments = try await paymentRepository.getAllLocalPayments()
-            return .success(payments)
+            return .success(try await fetchPaymentsCached())
         } catch {
             logger.error("\(L10n.Log.Payments.failedToGet(error.localizedDescription))")
             return .failure(.unknown(error.localizedDescription))
@@ -34,10 +49,9 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
         filter: StatsFilter,
         currency: Currency
     ) async -> Result<[Payment], PaymentError> {
-        // Get all payments first
         let allPayments: [Payment]
         do {
-            allPayments = try await paymentRepository.getAllLocalPayments()
+            allPayments = try await fetchPaymentsCached()
         } catch {
             logger.error("\(L10n.Log.Payments.failedToGet(error.localizedDescription))")
             return .failure(.unknown(error.localizedDescription))
@@ -64,10 +78,9 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
         count: Int,
         currency: Currency
     ) async -> Result<[Payment], PaymentError> {
-        // Get all payments first
         let allPayments: [Payment]
         do {
-            allPayments = try await paymentRepository.getAllLocalPayments()
+            allPayments = try await fetchPaymentsCached()
         } catch {
             logger.error("\(L10n.Log.Payments.failedToGet(error.localizedDescription))")
             return .failure(.unknown(error.localizedDescription))

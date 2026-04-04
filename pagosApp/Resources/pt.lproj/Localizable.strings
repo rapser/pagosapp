@@ -114,6 +114,9 @@
 
 // MARK: - Reminders
 "reminders.listTitle" = "Lembretes";
+"reminders.filter" = "Filtrar";
+"reminders.filter.currentMonth" = "Próximos";
+"reminders.filter.futureMonths" = "Futuros";
 "reminders.emptyTitle" = "Sem lembretes";
 "reminders.emptyDescription" = "Adicione lembretes para renovações, vencimentos ou cobranças.";
 "reminders.add.title" = "Novo Lembrete";
@@ -133,6 +136,12 @@
 "reminders.type.deposit" = "Depósito";
 "reminders.type.documents" = "Documentos";
 "reminders.type.taxes" = "Impostos";
+"reminders.type.maintenance" = "Manutenção";
+"reminders.type.insurance" = "Seguros";
+"reminders.type.health" = "Saúde";
+"reminders.type.rent" = "Aluguel";
+"reminders.type.warranty" = "Garantia";
+"reminders.type.certification" = "Certificação";
 "reminders.type.other" = "Outro";
 "reminders.error.invalidTitle" = "O título é obrigatório";
 "reminders.error.invalidDate" = "A data não é válida";
