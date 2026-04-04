@@ -7,19 +7,16 @@
 //
 
 import Foundation
-import Observation
-import OSLog
 
 @MainActor
 @Observable
-final class SettingsViewModel {
+final class SettingsViewModel: BaseViewModel {
     // MARK: - Observable State
 
     var showingSyncError = false
     var syncErrorMessage = ""
     var pendingSyncCount: Int = 0
     var syncError: Error?
-    var isLoading = false
     /// Mensaje mostrado en el overlay de carga (sincronizando, cerrando sesión, etc.).
     var loadingMessage: String = ""
 
@@ -32,8 +29,6 @@ final class SettingsViewModel {
     private let logoutUseCase: LogoutUseCase
     private let unlinkDeviceUseCase: UnlinkDeviceUseCase
     private let eventBus: EventBus
-
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "SettingsViewModel")
 
     // MARK: - Initialization
 
@@ -53,10 +48,8 @@ final class SettingsViewModel {
         self.logoutUseCase = logoutUseCase
         self.unlinkDeviceUseCase = unlinkDeviceUseCase
         self.eventBus = eventBus
+        super.init(category: "SettingsViewModel")
 
-        // Note: Initial data fetch moved to .task in View (iOS 18 best practice)
-
-        // Setup event listeners
         setupEventListeners()
     }
 
@@ -64,35 +57,33 @@ final class SettingsViewModel {
 
     /// Setup event listeners for domain events
     private func setupEventListeners() {
-        // Listen to PaymentsSyncedEvent
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentsSyncedEvent.self) {
-                await updatePendingSyncCount()
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentsSyncedEvent.self) ?? AsyncStream.never {
+                await self?.updatePendingSyncCount()
             }
         }
 
-        // Listen to payment changes for sync count updates
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentCreatedEvent.self) {
-                await updatePendingSyncCount()
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentCreatedEvent.self) ?? AsyncStream.never {
+                await self?.updatePendingSyncCount()
             }
         }
 
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentUpdatedEvent.self) {
-                await updatePendingSyncCount()
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentUpdatedEvent.self) ?? AsyncStream.never {
+                await self?.updatePendingSyncCount()
             }
         }
 
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentDeletedEvent.self) {
-                await updatePendingSyncCount()
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentDeletedEvent.self) ?? AsyncStream.never {
+                await self?.updatePendingSyncCount()
             }
         }
 
-        Task { @MainActor in
-            for await _ in eventBus.subscribe(to: PaymentStatusToggledEvent.self) {
-                await updatePendingSyncCount()
+        Task { @MainActor [weak self] in
+            for await _ in self?.eventBus.subscribe(to: PaymentStatusToggledEvent.self) ?? AsyncStream.never {
+                await self?.updatePendingSyncCount()
             }
         }
     }
@@ -111,7 +102,7 @@ final class SettingsViewModel {
         do {
             try await performSyncUseCase.execute()
         } catch {
-            logger.error("\(L10n.Log.Settings.syncFailed(error.localizedDescription))")
+            logError(error, function: "performSync")
             syncErrorMessage = error.localizedDescription
             showingSyncError = true
         }
@@ -125,7 +116,6 @@ final class SettingsViewModel {
     func updatePendingSyncCount() async {
         await updatePendingSyncCountUseCase.execute()
 
-        // Get sync status through UseCase (Clean Architecture)
         let status = getSyncStatusUseCase.execute()
         pendingSyncCount = status.pendingSyncCount
         syncError = status.syncError
@@ -140,9 +130,8 @@ final class SettingsViewModel {
 
         let success = await clearLocalDatabaseUseCase.execute(force: true)
 
-        if success {
-        } else {
-            logger.error("\(L10n.Log.Settings.dbClearFailed)")
+        if !success {
+            logDebug("Database clear failed")
         }
 
         return success
@@ -158,7 +147,7 @@ final class SettingsViewModel {
         let result = await logoutUseCase.execute()
 
         if case .failure(let error) = result {
-            logger.error("\(L10n.Log.Settings.logoutFailed(error.errorCode))")
+            logDebug("Logout failed: \(error.errorCode)")
             syncErrorMessage = L10n.Settings.logoutError
             showingSyncError = true
         }
@@ -172,7 +161,7 @@ final class SettingsViewModel {
         let result = await unlinkDeviceUseCase.execute()
 
         if case .failure(let error) = result {
-            logger.error("\(L10n.Log.Settings.unlinkFailed(error.errorCode))")
+            logDebug("Unlink failed: \(error.errorCode)")
             syncErrorMessage = L10n.Settings.unlinkError
             showingSyncError = true
         }

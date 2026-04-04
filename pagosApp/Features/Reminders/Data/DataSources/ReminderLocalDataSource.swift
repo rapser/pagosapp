@@ -12,6 +12,8 @@ import OSLog
 
 protocol ReminderLocalDataSource {
     func fetchAll() async throws -> [Reminder]
+    func fetchPaginated(page: Int, pageSize: Int) async throws -> [Reminder]
+    func fetchCount() async throws -> Int
     func fetch(id: UUID) async throws -> Reminder?
     func save(_ reminder: Reminder) async throws
     func saveAll(_ reminders: [Reminder]) async throws
@@ -36,6 +38,25 @@ final class ReminderSwiftDataDataSource: ReminderLocalDataSource {
             logger.error("Failed to fetch reminders from SwiftData: \(error.localizedDescription)")
             return []
         }
+    }
+    
+    func fetchPaginated(page: Int, pageSize: Int) async throws -> [Reminder] {
+        var descriptor = FetchDescriptor<ReminderLocalDTO>(sortBy: [SortDescriptor(\.dueDate)])
+        descriptor.fetchOffset = (page - 1) * pageSize
+        descriptor.fetchLimit = pageSize
+        
+        do {
+            let dtos = try modelContext.fetch(descriptor)
+            return dtos.map { ReminderDomainMapper.toDomain($0) }
+        } catch {
+            logger.error("Failed to fetch paginated reminders: \(error.localizedDescription)")
+            return []
+        }
+    }
+    
+    func fetchCount() async throws -> Int {
+        let descriptor = FetchDescriptor<ReminderLocalDTO>()
+        return (try? modelContext.fetchCount(descriptor)) ?? 0
     }
 
     func fetch(id: UUID) async throws -> Reminder? {
@@ -75,9 +96,34 @@ final class ReminderSwiftDataDataSource: ReminderLocalDataSource {
     }
 
     func saveAll(_ reminders: [Reminder]) async throws {
-        for reminder in reminders {
-            try await save(reminder)
+        guard !reminders.isEmpty else { return }
+        
+        // Optimized: batch fetch existing IDs to minimize DB round trips
+        let reminderIds = reminders.map { $0.id }
+        let predicate = #Predicate<ReminderLocalDTO> { dto in
+            reminderIds.contains(dto.id)
         }
+        let descriptor = FetchDescriptor<ReminderLocalDTO>(predicate: predicate)
+        let existingDTOs = try modelContext.fetch(descriptor)
+        let existingById = Dictionary(uniqueKeysWithValues: existingDTOs.map { ($0.id, $0) })
+        
+        for reminder in reminders {
+            let dto = ReminderDomainMapper.toDTO(reminder)
+            if let existing = existingById[reminder.id] {
+                existing.reminderType = dto.reminderType
+                existing.title = dto.title
+                existing.reminderDescription = dto.reminderDescription ?? ""
+                existing.dueDate = dto.dueDate
+                existing.isCompleted = dto.isCompleted ?? false
+                existing.notificationSettings = dto.notificationSettings
+                existing.syncStatusRawValue = dto.syncStatusRawValue
+                existing.lastSyncedAt = dto.lastSyncedAt
+            } else {
+                modelContext.insert(dto)
+            }
+        }
+        
+        try modelContext.save()
     }
 
     func delete(id: UUID) async throws {

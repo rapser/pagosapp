@@ -30,6 +30,8 @@ struct CurrencyTabSelector: View {
             }
             .disabled(!hasPENPayments)
             .opacity(hasPENPayments ? 1.0 : 0.5)
+            .accessibilityLabel(hasPENPayments ? "Ver estadísticas en Soles" : "Sin pagos en Soles")
+            .accessibilityAddTraits(selectedCurrency == .pen ? .isSelected : [])
             
             // Tab Dólares
             Button {
@@ -44,6 +46,8 @@ struct CurrencyTabSelector: View {
             }
             .disabled(!hasUSDPayments)
             .opacity(hasUSDPayments ? 1.0 : 0.5)
+            .accessibilityLabel(hasUSDPayments ? "Ver estadísticas en Dólares" : "Sin pagos en Dólares")
+            .accessibilityAddTraits(selectedCurrency == .usd ? .isSelected : [])
         }
         .background(Color("AppBackground"))
         .cornerRadius(12)
@@ -53,5 +57,7 @@ struct CurrencyTabSelector: View {
                 .stroke(Color("AppTextSecondary").opacity(0.2), lineWidth: 1)
                 .padding(.horizontal)
         )
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Selector de moneda")
     }
 }

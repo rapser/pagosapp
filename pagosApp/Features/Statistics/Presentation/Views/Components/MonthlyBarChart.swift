@@ -26,6 +26,7 @@ struct MonthlyBarChart: View {
                 )
                 .foregroundStyle(Color("AppPrimary").gradient)
                 .cornerRadius(6)
+                .accessibilityLabel("\(data.month.formatted(.dateTime.month(.wide))): \(String(format: "%.2f", data.totalAmount))")
             }
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: monthlyData.count)) { value in
@@ -36,6 +37,7 @@ struct MonthlyBarChart: View {
             }
             .frame(height: 220)
             .padding(.horizontal)
+            .accessibilityLabel("Gráfico de gastos mensuales de los últimos 6 meses")
         }
     }
 }

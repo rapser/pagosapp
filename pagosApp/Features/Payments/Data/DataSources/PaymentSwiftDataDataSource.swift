@@ -12,7 +12,9 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
     }
 
     func fetchAll() async throws -> [Payment] {
-        let descriptor = FetchDescriptor<PaymentLocalDTO>()
+        let descriptor = FetchDescriptor<PaymentLocalDTO>(
+            sortBy: [SortDescriptor(\PaymentLocalDTO.dueDate, order: .forward)]
+        )
         do {
             let payments = try modelContext.fetch(descriptor).map { PaymentMapper.toDomain(from: $0) }
             return payments
@@ -23,20 +25,27 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
     }
 
     func fetch(id: UUID) async throws -> Payment? {
-        let descriptor = FetchDescriptor<PaymentLocalDTO>()
-        let payments = try modelContext.fetch(descriptor)
-        guard let payment = payments.first(where: { $0.id == id }) else {
-            return nil
+        // Optimized: use predicate to filter at database level instead of loading all
+        let predicate = #Predicate<PaymentLocalDTO> { dto in 
+            dto.id == id
         }
-        return PaymentMapper.toDomain(from: payment)
+        var descriptor = FetchDescriptor<PaymentLocalDTO>(predicate: predicate)
+        descriptor.fetchLimit = 1
+        
+        let payments = try modelContext.fetch(descriptor)
+        return payments.first.map { PaymentMapper.toDomain(from: $0) }
     }
 
     func save(_ payment: Payment) async throws {
+        // Optimized: use predicate to check for existing payment
+        let paymentId = payment.id
+        let predicate = #Predicate<PaymentLocalDTO> { dto in 
+            dto.id == paymentId
+        }
+        var descriptor = FetchDescriptor<PaymentLocalDTO>(predicate: predicate)
+        descriptor.fetchLimit = 1
 
-        let descriptor = FetchDescriptor<PaymentLocalDTO>()
-        let existingPayments = try modelContext.fetch(descriptor)
-
-        if let existing = existingPayments.first(where: { $0.id == payment.id }) {
+        if let existing = try modelContext.fetch(descriptor).first {
             existing.name = payment.name
             existing.amount = payment.amount
             existing.currency = payment.currency
@@ -55,21 +64,47 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
     }
 
     func saveAll(_ payments: [Payment]) async throws {
-        guard !payments.isEmpty else {
-            return
+        guard !payments.isEmpty else { return }
+
+        // Optimized: batch fetch existing IDs to minimize DB round trips
+        let paymentIds = payments.map { $0.id }
+        let predicate = #Predicate<PaymentLocalDTO> { dto in
+            paymentIds.contains(dto.id)
         }
+        let descriptor = FetchDescriptor<PaymentLocalDTO>(predicate: predicate)
+        let existingDTOs = try modelContext.fetch(descriptor)
+        let existingById = Dictionary(uniqueKeysWithValues: existingDTOs.map { ($0.id, $0) })
 
         for payment in payments {
-            try await save(payment)
+            if let existing = existingById[payment.id] {
+                existing.name = payment.name
+                existing.amount = payment.amount
+                existing.currency = payment.currency
+                existing.dueDate = payment.dueDate
+                existing.isPaid = payment.isPaid
+                existing.category = payment.category
+                existing.eventIdentifier = payment.eventIdentifier
+                existing.syncStatus = payment.syncStatus
+                existing.lastSyncedAt = payment.lastSyncedAt
+            } else {
+                let newDTO = PaymentMapper.toLocalDTO(from: payment)
+                modelContext.insert(newDTO)
+            }
         }
+
+        try modelContext.save()
     }
 
     func delete(_ payment: Payment) async throws {
+        // Optimized: use predicate to find specific payment
+        let paymentId = payment.id
+        let predicate = #Predicate<PaymentLocalDTO> { dto in 
+            dto.id == paymentId
+        }
+        var descriptor = FetchDescriptor<PaymentLocalDTO>(predicate: predicate)
+        descriptor.fetchLimit = 1
 
-        let descriptor = FetchDescriptor<PaymentLocalDTO>()
-        let existingPayments = try modelContext.fetch(descriptor)
-
-        guard let existing = existingPayments.first(where: { $0.id == payment.id }) else { return }
+        guard let existing = try modelContext.fetch(descriptor).first else { return }
 
         modelContext.delete(existing)
         try modelContext.save()
@@ -77,9 +112,20 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
 
     func deleteAll(_ payments: [Payment]) async throws {
         guard !payments.isEmpty else { return }
-        for payment in payments {
-            try await delete(payment)
+        
+        // Optimized: batch delete by IDs
+        let paymentIds = payments.map { $0.id }
+        let predicate = #Predicate<PaymentLocalDTO> { dto in
+            paymentIds.contains(dto.id)
         }
+        let descriptor = FetchDescriptor<PaymentLocalDTO>(predicate: predicate)
+        let existingDTOs = try modelContext.fetch(descriptor)
+        
+        for dto in existingDTOs {
+            modelContext.delete(dto)
+        }
+        
+        try modelContext.save()
     }
 
     func clear() async throws {

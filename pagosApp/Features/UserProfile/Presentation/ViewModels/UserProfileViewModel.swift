@@ -7,16 +7,12 @@
 //
 
 import Foundation
-import Observation
-import OSLog
 
 @MainActor
 @Observable
-final class UserProfileViewModel {
+final class UserProfileViewModel: BaseViewModel {
     // MARK: - UI State
     var profile: UserProfileUI?
-    var isLoading = false
-    var errorMessage: String?
     var isSaving = false
 
     // MARK: - Editing State
@@ -31,7 +27,6 @@ final class UserProfileViewModel {
     private let updateUserProfileUseCase: UpdateUserProfileUseCase
     private let deleteLocalProfileUseCase: DeleteLocalProfileUseCase
     private let mapper: UserProfileUIMapping
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "UserProfileViewModel")
 
     init(
         fetchUserProfileUseCase: FetchUserProfileUseCase,
@@ -45,13 +40,14 @@ final class UserProfileViewModel {
         self.updateUserProfileUseCase = updateUserProfileUseCase
         self.deleteLocalProfileUseCase = deleteLocalProfileUseCase
         self.mapper = mapper
+        super.init(category: "UserProfileViewModel")
     }
 
     // MARK: - Data Operations
 
     /// Load user profile from local storage (offline-first, fast - no loading indicator)
     func loadLocalProfile() async {
-        errorMessage = nil
+        clearError()
         let result = await getLocalProfileUseCase.execute()
 
         switch result {
@@ -59,8 +55,8 @@ final class UserProfileViewModel {
             profile = loadedProfile.map { mapper.toUI($0) }
 
         case .failure(let error):
-            logger.error("Error loading local profile: \(error.errorCode)")
-            errorMessage = L10n.Profile.errorLoadLocal
+            logError(error)
+            setError(L10n.Profile.errorLoadLocal)
         }
     }
 
@@ -68,7 +64,7 @@ final class UserProfileViewModel {
     /// Called during login
     func fetchAndSaveProfile(userId: UUID) async -> Bool {
         isLoading = true
-        errorMessage = nil
+        clearError()
 
         let result = await fetchUserProfileUseCase.execute(userId: userId)
 
@@ -79,8 +75,8 @@ final class UserProfileViewModel {
             return true
 
         case .failure(let error):
-            logger.error("Error fetching profile: \(error.errorCode)")
-            errorMessage = L10n.Profile.errorLoad(error.errorCode)
+            logError(error)
+            setError(L10n.Profile.errorLoad(error.errorCode))
             isLoading = false
             return false
         }
@@ -89,12 +85,12 @@ final class UserProfileViewModel {
     /// Update user profile
     func updateProfile(with editableProfile: EditableProfileUI) async -> Bool {
         guard let currentProfile = profile else {
-            errorMessage = L10n.Profile.errorNoProfile
+            setError(L10n.Profile.errorNoProfile)
             return false
         }
 
         isSaving = true
-        errorMessage = nil
+        clearError()
 
         // Apply changes to create updated UI entity
         let updatedProfileUI = editableProfile.applyTo(currentProfile)
@@ -109,8 +105,8 @@ final class UserProfileViewModel {
             return true
 
         case .failure(let error):
-            logger.error("Error updating profile: \(error.errorCode)")
-            errorMessage = L10n.Profile.errorUpdate(error.errorCode)
+            logError(error)
+            setError(L10n.Profile.errorUpdate(error.errorCode))
             isSaving = false
             return false
         }
@@ -125,7 +121,7 @@ final class UserProfileViewModel {
             profile = nil
 
         case .failure(let error):
-            logger.error("Error clearing local profile: \(error.errorCode)")
+            logError(error)
         }
     }
 

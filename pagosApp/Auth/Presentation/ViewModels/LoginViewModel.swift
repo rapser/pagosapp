@@ -7,24 +7,17 @@
 //
 
 import Foundation
-import Observation
-import OSLog
-
-private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "LoginViewModel")
 
 /// ViewModel for Login screen using Clean Architecture
 @MainActor
 @Observable
-final class LoginViewModel {
+final class LoginViewModel: BaseViewModel {
     // MARK: - UI State
 
     var email: String = ""
     var password: String = ""
     var rememberMe: Bool = false
     var showPassword: Bool = true  // Por defecto la contraseña está oculta (solo puntos)
-    var isLoading: Bool = false
-    var errorMessage: String?
-    var showError: Bool = false
     var canUseBiometric: Bool = false
     var biometricType: BiometricType = .none
 
@@ -51,6 +44,7 @@ final class LoginViewModel {
         self.biometricLoginUseCase = biometricLoginUseCase
         self.passwordRecoveryUseCase = passwordRecoveryUseCase
         self.hasBiometricCredentialsUseCase = hasBiometricCredentialsUseCase
+        super.init(category: "LoginViewModel")
     }
 
     // MARK: - Actions
@@ -58,27 +52,24 @@ final class LoginViewModel {
     /// Login with email and password
     func login() async {
         guard !isLoading else { return }
-
-        logger.info("🔑 Attempting login")
+        logDebug("Attempting login")
 
         isLoading = true
-        errorMessage = nil
-        showError = false
+        clearError()
 
         let result = await loginUseCase.execute(email: email, password: password)
 
         switch result {
         case .success(let session):
-            logger.info("✅ Login successful")
+            logDebug("Login successful")
             // Keep isLoading = true until navigation completes
             // LoginView will disappear when SessionCoordinator sets isAuthenticated = true
             onLoginSuccess?(session)
             // Note: isLoading stays true - prevents flash of login button before home appears
 
         case .failure(let error):
-            logger.error("❌ Login failed: \(error.errorCode)")
-            errorMessage = mapErrorToUserMessage(error)
-            showError = true
+            logDebug("Login failed: \(error.errorCode)")
+            setError(AuthErrorMessageMapper.message(for: error))
             isLoading = false
         }
     }
@@ -86,27 +77,24 @@ final class LoginViewModel {
     /// Login with biometric (Face ID/Touch ID)
     func loginWithBiometric() async {
         guard !isLoading else { return }
-
-        logger.info("🔐 Attempting biometric login")
+        logDebug("Attempting biometric login")
 
         isLoading = true
-        errorMessage = nil
-        showError = false
+        clearError()
 
         let result = await biometricLoginUseCase.execute()
 
         switch result {
         case .success(let session):
-            logger.info("✅ Biometric login successful")
+            logDebug("Biometric login successful")
             // Keep isLoading = true until navigation completes
             // LoginView will disappear when SessionCoordinator sets isAuthenticated = true
             onLoginSuccess?(session)
             // Note: isLoading stays true - prevents flash of login button before home appears
 
         case .failure(let error):
-            logger.error("❌ Biometric login failed: \(error.errorCode)")
-            errorMessage = mapErrorToUserMessage(error)
-            showError = true
+            logDebug("Biometric login failed: \(error.errorCode)")
+            setError(AuthErrorMessageMapper.message(for: error))
             isLoading = false
         }
     }
@@ -139,11 +127,5 @@ final class LoginViewModel {
 
     var isFormValid: Bool {
         !email.isEmpty && !password.isEmpty
-    }
-
-    // MARK: - Error Mapping (Auth module mapper)
-
-    private func mapErrorToUserMessage(_ error: AuthError) -> String {
-        AuthErrorMessageMapper.message(for: error)
     }
 }
