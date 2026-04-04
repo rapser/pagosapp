@@ -114,6 +114,9 @@
 
 // MARK: - Reminders
 "reminders.listTitle" = "Recordatorios";
+"reminders.filter" = "Filtrar";
+"reminders.filter.currentMonth" = "Próximos";
+"reminders.filter.futureMonths" = "Futuros";
 "reminders.emptyTitle" = "Sin recordatorios";
 "reminders.emptyDescription" = "Añade recordatorios para renovaciones, vencimientos o cobros.";
 "reminders.add.title" = "Nuevo Recordatorio";

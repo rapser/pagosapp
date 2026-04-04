@@ -17,6 +17,7 @@ final class ReminderSyncCoordinator {
     private let getPendingSyncCountUseCase: GetPendingReminderSyncCountUseCase
     private let syncRepository: ReminderSyncRepositoryProtocol
     private let localDataSource: ReminderLocalDataSource
+    private let rescheduleNotificationsUseCase: RescheduleReminderNotificationsUseCase
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ReminderSyncCoordinator")
 
     var isSyncing = false
@@ -30,12 +31,14 @@ final class ReminderSyncCoordinator {
         syncRemindersUseCase: SyncRemindersUseCase,
         getPendingSyncCountUseCase: GetPendingReminderSyncCountUseCase,
         syncRepository: ReminderSyncRepositoryProtocol,
-        localDataSource: ReminderLocalDataSource
+        localDataSource: ReminderLocalDataSource,
+        rescheduleNotificationsUseCase: RescheduleReminderNotificationsUseCase
     ) {
         self.syncRemindersUseCase = syncRemindersUseCase
         self.getPendingSyncCountUseCase = getPendingSyncCountUseCase
         self.syncRepository = syncRepository
         self.localDataSource = localDataSource
+        self.rescheduleNotificationsUseCase = rescheduleNotificationsUseCase
         self.lastSyncDate = UserDefaults.standard.object(forKey: lastSyncKey) as? Date
     }
 
@@ -57,11 +60,22 @@ final class ReminderSyncCoordinator {
             UserDefaults.standard.set(lastSyncDate, forKey: lastSyncKey)
             syncError = nil
             await updatePendingSyncCount()
+            await rescheduleAllReminderNotifications()
             logger.info("✅ Reminder synchronization completed successfully")
         case .failure(let error):
             logger.error("❌ Reminder synchronization failed: \(error)")
             syncError = error
             throw error
+        }
+    }
+
+    private func rescheduleAllReminderNotifications() async {
+        do {
+            let reminders = try await localDataSource.fetchAll()
+            rescheduleNotificationsUseCase.rescheduleAll(reminders)
+            logger.info("🔔 Rescheduled notifications for \(reminders.count) reminders after sync")
+        } catch {
+            logger.error("⚠️ Failed to reschedule reminder notifications after sync: \(error.localizedDescription)")
         }
     }
 

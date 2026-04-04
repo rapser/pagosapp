@@ -179,6 +179,7 @@ enum L10n {
     // MARK: - Reminders
     enum Reminders {
         static let listTitle = tr("reminders.listTitle")
+        static let filter = tr("reminders.filter")
         static let emptyTitle = tr("reminders.emptyTitle")
         static let emptyDescription = tr("reminders.emptyDescription")
         enum Add {
@@ -214,6 +215,12 @@ enum L10n {
             case .other: key = "reminders.type.other"
             }
             return tr(key)
+        }
+        static func filterDisplayName(_ filter: ReminderFilterUI) -> String {
+            switch filter {
+            case .currentMonth: return tr("reminders.filter.currentMonth")
+            case .futureMonths: return tr("reminders.filter.futureMonths")
+            }
         }
         enum Error {
             static let invalidTitle = tr("reminders.error.invalidTitle")

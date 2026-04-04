@@ -114,6 +114,9 @@
 
 // MARK: - Reminders
 "reminders.listTitle" = "Reminders";
+"reminders.filter" = "Filter";
+"reminders.filter.currentMonth" = "Upcoming";
+"reminders.filter.futureMonths" = "Future";
 "reminders.emptyTitle" = "No reminders";
 "reminders.emptyDescription" = "Add reminders for renewals, expirations or payments to collect.";
 "reminders.add.title" = "New Reminder";
