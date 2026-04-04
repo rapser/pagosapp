@@ -14,6 +14,8 @@ struct PaymentRowView: View {
                     .font(.title2)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(payment.isPaid ? "Marcar como pendiente \(payment.name)" : "Marcar como pagado \(payment.name)")
+            .accessibilityHint(payment.isPaid ? "Toca para cambiar a pendiente" : "Toca para marcar como pagado")
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(payment.name)
@@ -36,5 +38,8 @@ struct PaymentRowView: View {
             }
         }
         .opacity(payment.displayOpacity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(payment.name), \(payment.formattedAmount), vence \(payment.formattedDate), \(payment.isPaid ? "pagado" : "pendiente")")
+        .accessibilityAddTraits(payment.isPaid ? .isSelected : [])
     }
 }

@@ -8,16 +8,14 @@
 
 import Foundation
 import UserNotifications
-import OSLog
 
 @MainActor
 @Observable
-final class NotificationDebugViewModel {
+final class NotificationDebugViewModel: BaseViewModel {
     var authorizationStatus: UNAuthorizationStatus = .notDetermined
     var pendingCount: Int = 0
     var reminderCount: Int = 0
     var paymentCount: Int = 0
-    var isLoading = false
     var reminderNotifications: [String] = []
     var paymentNotifications: [String] = []
     var lastActionMessage: String = ""
@@ -25,7 +23,6 @@ final class NotificationDebugViewModel {
     private let notificationDataSource: NotificationDataSource
     private let getAllRemindersUseCase: GetAllRemindersUseCase
     private let rescheduleNotificationsUseCase: RescheduleReminderNotificationsUseCase
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "NotificationDebugViewModel")
 
     init(
         notificationDataSource: NotificationDataSource,
@@ -35,6 +32,7 @@ final class NotificationDebugViewModel {
         self.notificationDataSource = notificationDataSource
         self.getAllRemindersUseCase = getAllRemindersUseCase
         self.rescheduleNotificationsUseCase = rescheduleNotificationsUseCase
+        super.init(category: "NotificationDebugViewModel")
     }
     
     func refreshStatus() async {
@@ -92,19 +90,19 @@ final class NotificationDebugViewModel {
     }
     
     func rescheduleAllReminderNotifications() async {
-        logger.info("🔄 Starting reschedule of all reminder notifications...")
+        logDebug("Starting reschedule of all reminder notifications")
         lastActionMessage = "🔄 Reescalando notificaciones de recordatorios..."
         
         let result = await getAllRemindersUseCase.execute()
         
         switch result {
         case .success(let reminders):
-            logger.info("📋 Found \(reminders.count) reminders to reschedule")
+            logDebug("Found \(reminders.count) reminders to reschedule")
             rescheduleNotificationsUseCase.rescheduleAll(reminders)
             lastActionMessage = "✅ Reescaladas \(reminders.count) notificaciones de recordatorios"
             
         case .failure(let error):
-            logger.error("❌ Failed to get reminders: \(error)")
+            logError(error)
             lastActionMessage = "❌ Error al obtener recordatorios: \(error)"
         }
         

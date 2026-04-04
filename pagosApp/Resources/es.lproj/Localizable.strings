@@ -114,6 +114,9 @@
 
 // MARK: - Reminders
 "reminders.listTitle" = "Recordatorios";
+"reminders.filter" = "Filtrar";
+"reminders.filter.currentMonth" = "Próximos";
+"reminders.filter.futureMonths" = "Futuros";
 "reminders.emptyTitle" = "Sin recordatorios";
 "reminders.emptyDescription" = "Añade recordatorios para renovaciones, vencimientos o cobros.";
 "reminders.add.title" = "Nuevo Recordatorio";
@@ -132,8 +135,12 @@
 "reminders.type.savings" = "Ahorro";
 "reminders.type.deposit" = "Depósito";
 "reminders.type.documents" = "Documentos";
-"reminders.type.taxes" = "Impuestos";
-"reminders.type.other" = "Otro";
+"reminders.type.taxes" = "Impuestos";"reminders.type.maintenance" = "Mantenimiento";
+"reminders.type.insurance" = "Seguros";
+"reminders.type.health" = "Salud";
+"reminders.type.rent" = "Alquiler";
+"reminders.type.warranty" = "Garantía";
+"reminders.type.certification" = "Certificación";"reminders.type.other" = "Otro";
 "reminders.error.invalidTitle" = "El título es obligatorio";
 "reminders.error.invalidDate" = "La fecha no es válida";
 "reminders.error.saveFailed" = "No se pudo guardar: %@";

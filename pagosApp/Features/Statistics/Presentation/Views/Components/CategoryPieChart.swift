@@ -39,10 +39,12 @@ struct CategoryPieChart: View {
                     )
                     .cornerRadius(5)
                     .foregroundStyle(by: .value("Categoría", L10n.Payments.categoryDisplayName(data.category)))
+                    .accessibilityLabel("\(L10n.Payments.categoryDisplayName(data.category)): \(data.currency.symbol) \(String(format: "%.2f", data.totalAmount))")
                 }
                 .frame(height: 280)
                 .chartLegend(position: .bottom, alignment: .center)
                 .padding(.horizontal)
+                .accessibilityLabel("Gráfico de gastos por categoría")
             }
 
             // Lista de categorías

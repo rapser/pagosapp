@@ -24,6 +24,10 @@ final class ReminderDependencyContainer {
         ReminderSupabaseDataSource(client: supabaseClient)
     }()
 
+    private lazy var remoteMapper: ReminderRemoteDTOMapping = {
+        ReminderRemoteDTOMapper()
+    }()
+
     private lazy var repository: ReminderRepositoryProtocol = {
         ReminderRepositoryImpl(
             localDataSource: localDataSource,
@@ -35,7 +39,8 @@ final class ReminderDependencyContainer {
         ReminderSyncRepositoryImpl(
             remoteDataSource: remoteDataSource,
             localDataSource: localDataSource,
-            supabaseClient: supabaseClient
+            supabaseClient: supabaseClient,
+            remoteMapper: remoteMapper
         )
     }()
 
@@ -95,7 +100,8 @@ final class ReminderDependencyContainer {
             ),
             getPendingSyncCountUseCase: GetPendingReminderSyncCountUseCase(syncRepository: syncRepository),
             syncRepository: syncRepository,
-            localDataSource: localDataSource
+            localDataSource: localDataSource,
+            rescheduleNotificationsUseCase: makeRescheduleReminderNotificationsUseCase()
         )
     }
 }
