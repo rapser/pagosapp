@@ -7,15 +7,11 @@
 //
 
 import Foundation
-import Observation
-import OSLog
-
-private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "RegisterViewModel")
 
 /// ViewModel for Registration screen using Clean Architecture
 @MainActor
 @Observable
-final class RegisterViewModel {
+final class RegisterViewModel: BaseViewModel {
     // MARK: - UI State
 
     var email: String = ""
@@ -23,9 +19,6 @@ final class RegisterViewModel {
     var confirmPassword: String = ""
     var showPassword: Bool = false
     var showConfirmPassword: Bool = false
-    var isLoading: Bool = false
-    var errorMessage: String?
-    var showError: Bool = false
 
     // MARK: - Dependencies (Use Cases)
 
@@ -39,6 +32,7 @@ final class RegisterViewModel {
 
     init(registerUseCase: RegisterUseCase) {
         self.registerUseCase = registerUseCase
+        super.init(category: "RegisterViewModel")
     }
 
     // MARK: - Actions
@@ -46,37 +40,37 @@ final class RegisterViewModel {
     /// Register new user
     func register() async {
         guard !isLoading else { return }
+        logDebug("Attempting registration")
 
-        logger.info("📝 Attempting registration")
-
-        // Validate passwords match
         guard password == confirmPassword else {
-            errorMessage = "Las contraseñas no coinciden"
-            showError = true
+            setValidationError("Las contraseñas no coinciden")
             return
         }
 
-        isLoading = true
-        errorMessage = nil
-        showError = false
-        defer { isLoading = false }
-
-        let result = await registerUseCase.execute(
-            email: email,
-            password: password,
-            metadata: nil
+        await withLoadingAndErrorHandling(
+            operation: {
+                let result = await self.registerUseCase.execute(
+                    email: self.email,
+                    password: self.password,
+                    metadata: nil
+                )
+                
+                switch result {
+                case .success(let session):
+                    self.logDebug("Registration successful")
+                    self.onRegistrationSuccess?(session)
+                    return session
+                case .failure(let error):
+                    self.logDebug("Registration failed: \(error.errorCode)")
+                    throw error
+                }
+            },
+            onError: { error in
+                if let authError = error as? AuthError {
+                    self.setError(AuthErrorMessageMapper.message(for: authError))
+                }
+            }
         )
-
-        switch result {
-        case .success(let session):
-            logger.info("✅ Registration successful")
-            onRegistrationSuccess?(session)
-
-        case .failure(let error):
-            logger.error("❌ Registration failed: \(error.errorCode)")
-            errorMessage = mapErrorToUserMessage(error)
-            showError = true
-        }
     }
 
     // MARK: - Validation
@@ -95,11 +89,5 @@ final class RegisterViewModel {
 
     var isPasswordStrong: Bool {
         PasswordValidator.isValid(password)
-    }
-
-    // MARK: - Error Mapping (Auth module mapper)
-
-    private func mapErrorToUserMessage(_ error: AuthError) -> String {
-        AuthErrorMessageMapper.message(for: error)
     }
 }

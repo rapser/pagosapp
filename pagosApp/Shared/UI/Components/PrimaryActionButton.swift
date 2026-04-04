@@ -42,5 +42,8 @@ struct PrimaryActionButton: View {
             .cornerRadius(10)
         }
         .disabled(isLoading || !isValid)
+        .accessibilityLabel(isLoading ? loadingTitle : title)
+        .accessibilityHint(!isValid ? "El formulario no está completo" : "")
+        .accessibilityAddTraits(.isButton)
     }
 }

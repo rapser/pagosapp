@@ -19,7 +19,23 @@ enum ReminderType: String, Sendable, CaseIterable, Codable {
     case deposit        // Depósito
     case documents      // DNI, pasaporte, vencimiento documentos
     case taxes          // Impuestos municipal, anual, etc.
+    case maintenance    // Mantenimiento
+    case insurance      // Seguros
+    case health         // Salud
+    case rent           // Alquiler
+    case warranty       // Garantía
+    case certification  // Certificación
     case other
+    
+    /// Types that require advanced notification settings (longer lead times)
+    var requiresAdvancedNotifications: Bool {
+        switch self {
+        case .cardRenewal, .documents, .taxes, .membership, .subscription, .pension:
+            return true
+        case .savings, .deposit, .maintenance, .insurance, .health, .rent, .warranty, .certification, .other:
+            return false
+        }
+    }
 }
 
 extension ReminderType {

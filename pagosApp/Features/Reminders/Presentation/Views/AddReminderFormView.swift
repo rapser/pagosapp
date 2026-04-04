@@ -53,9 +53,9 @@ struct AddReminderFormView: View {
                 .disabled(!viewModel.isValid)
             }
         }
-        .disabled(viewModel.isSaving)
+        .disabled(viewModel.isLoading)
         .overlay {
-            if viewModel.isSaving {
+            if viewModel.isLoading {
                 ProgressView(L10n.Reminders.Edit.saving)
                     .padding()
                     .background(Color(UIColor.systemBackground))

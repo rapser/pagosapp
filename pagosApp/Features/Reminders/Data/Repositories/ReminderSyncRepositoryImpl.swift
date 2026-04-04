@@ -14,15 +14,18 @@ final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol {
     private let remoteDataSource: ReminderRemoteDataSource
     private let localDataSource: ReminderLocalDataSource
     private let supabaseClient: SupabaseClient
+    private let remoteMapper: ReminderRemoteDTOMapping
 
     init(
         remoteDataSource: ReminderRemoteDataSource,
         localDataSource: ReminderLocalDataSource,
-        supabaseClient: SupabaseClient
+        supabaseClient: SupabaseClient,
+        remoteMapper: ReminderRemoteDTOMapping
     ) {
         self.remoteDataSource = remoteDataSource
         self.localDataSource = localDataSource
         self.supabaseClient = supabaseClient
+        self.remoteMapper = remoteMapper
     }
 
     func getCurrentUserId() async throws -> UUID {
@@ -33,7 +36,7 @@ final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol {
     }
 
     func uploadReminders(_ reminders: [Reminder], userId: UUID) async throws {
-        let dtos = ReminderRemoteMapper.toRemoteDTO(reminders, userId: userId)
+        let dtos = reminders.map { remoteMapper.toRemoteDTO($0, userId: userId) }
         try await remoteDataSource.upsertAll(dtos, userId: userId)
 
         let now = Date()
@@ -55,7 +58,7 @@ final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol {
 
     func downloadReminders(userId: UUID) async throws -> [Reminder] {
         let dtos = try await remoteDataSource.fetchAll(userId: userId)
-        return ReminderRemoteMapper.toDomain(dtos)
+        return remoteMapper.toDomain(dtos)
     }
 
     func syncDeletion(reminderId: UUID) async throws {

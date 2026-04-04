@@ -54,5 +54,18 @@ struct PaymentGroupRowView: View {
             }
         }
         .opacity(group.displayOpacity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel({
+            var label = "\(group.name), \(L10n.Payments.categoryDisplayName(group.category))"
+            if let pen = group.penPayment {
+                label += ", S/ \(String(format: "%.2f", pen.amount))"
+            }
+            if let usd = group.usdPayment {
+                label += ", $ \(String(format: "%.2f", usd.amount))"
+            }
+            label += ", vence \(group.formattedDate), \(group.isPaid ? "pagado" : "pendiente")"
+            return label
+        }())
+        .accessibilityAddTraits(group.isPaid ? .isSelected : [])
     }
 }

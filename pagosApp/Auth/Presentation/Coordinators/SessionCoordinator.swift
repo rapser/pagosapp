@@ -40,6 +40,9 @@ final class SessionCoordinator {
     private let getCurrentUserIdUseCase: GetCurrentUserIdUseCase
     private let clearBiometricCredentialsUseCase: ClearBiometricCredentialsUseCase
     private let hasBiometricCredentialsUseCase: HasBiometricCredentialsUseCase
+    private let checkBiometricAvailabilityUseCase: CheckBiometricAvailabilityUseCaseProtocol
+    private let verifyRemoteSessionUseCase: VerifyRemoteSessionUseCaseProtocol
+    private let coordinateSyncUseCase: CoordinateSyncUseCaseProtocol
     private let errorHandler: ErrorHandler
     private let settingsStore: SettingsStore
     private let paymentSyncCoordinator: PaymentSyncCoordinator
@@ -73,6 +76,16 @@ final class SessionCoordinator {
         self.getCurrentUserIdUseCase = authDependencyContainer.makeGetCurrentUserIdUseCase()
         self.clearBiometricCredentialsUseCase = authDependencyContainer.makeClearBiometricCredentialsUseCase()
         self.hasBiometricCredentialsUseCase = authDependencyContainer.makeHasBiometricCredentialsUseCase()
+        
+        // Initialize new specialized UseCases
+        self.checkBiometricAvailabilityUseCase = CheckBiometricAvailabilityUseCase()
+        self.verifyRemoteSessionUseCase = VerifyRemoteSessionUseCase(
+            getAuthenticationStatusUseCase: authDependencyContainer.makeGetAuthenticationStatusUseCase()
+        )
+        self.coordinateSyncUseCase = CoordinateSyncUseCase(
+            paymentSyncCoordinator: paymentSyncCoordinator,
+            reminderSyncCoordinator: reminderSyncCoordinator
+        )
 
         self.isSessionActive = sessionRepository.hasActiveSession
 
@@ -107,9 +120,10 @@ final class SessionCoordinator {
         }
 
         // Listen for logout notifications
-        Task {
+        Task { [weak self] in
+            guard let self else { return }
             for await _ in NotificationCenter.default.notifications(named: NSNotification.Name("UserDidLogout")) {
-                logger.info("📢 Received UserDidLogout notification - updating UI state")
+                self.logger.info("📢 Received UserDidLogout notification - updating UI state")
                 self.isAuthenticated = false
                 self.isSessionActive = false
             }
@@ -125,24 +139,22 @@ final class SessionCoordinator {
 
             await checkBiometricAvailability()
             
-            // Add minimum delay to prevent immediate UI changes after startup
-            // This allows the UI to settle before potentially changing authentication state
-            try? await Task.sleep(for: .seconds(1.5))
-
             // Only proceed with remote verification if user is still supposed to be authenticated
             guard self.isAuthenticated else {
                 logger.debug("🔍 Skipping remote check - user not authenticated")
                 return
             }
 
-            // Verify session remotely (background check - conservative approach)
-            let hasActiveSession = await getAuthenticationStatusUseCase.execute()
+            // Use specialized UseCase for remote session verification
+            let verificationResult = await verifyRemoteSessionUseCase.execute(allowNetworkDelay: true)
             
-            logger.debug("🔍 Background check - Local session: \(self.isSessionActive), Remote session: \(hasActiveSession)")
             
-            // More conservative logout logic - only logout if clearly expired AND we've been authenticated for a while
-            if !hasActiveSession && self.isAuthenticated {
-                // Double-check locally before forcing logout
+            // Handle verification results conservatively
+            switch verificationResult {
+            case .valid:
+                logger.debug("✅ Remote session verification passed")
+            case .invalid:
+                // Verify locally before forced logout
                 let isLocallyExpired = await sessionRepository.isSessionExpired()
                 
                 if isLocallyExpired {
@@ -150,16 +162,19 @@ final class SessionCoordinator {
                     self.isAuthenticated = false
                     self.isSessionActive = false
                 } else {
-                    // Remote check failed but local session is valid - might be network issue
-                    logger.info("ℹ️ Remote session check failed but local session valid - keeping authenticated")
+                    logger.info("🔄 Remote session expired but local valid - treating as network issue")
                 }
+            case .networkError(let error):
+                logger.info("🌐 Network error during remote verification: \(error.localizedDescription) - keeping local session")
+            case .timeout:
+                logger.info("⏰ Remote verification timed out - keeping local session")
             }
         }
     }
 
     private func checkBiometricAvailability() async {
-        let canUse = await biometricLoginUseCase.canUseBiometricLogin()
-        canUseBiometrics = canUse
+        // Use specialized UseCase for biometric availability check
+        self.canUseBiometrics = await checkBiometricAvailabilityUseCase.execute()
 
         #if targetEnvironment(simulator)
         canUseBiometrics = true
@@ -195,11 +210,10 @@ final class SessionCoordinator {
         )
         logger.info("📢 Posted UserDidLogin notification with userId: \(userId?.uuidString ?? "nil")")
 
-        // Sync payments in background (non-blocking)
-        // User will see local SwiftData immediately, sync updates in background
+        // Use specialized UseCase for sync coordination (non-blocking)
         Task.detached { @MainActor in
             self.logger.info("🔄 Starting background sync after login")
-            try? await self.paymentSyncCoordinator.performSync()
+            await self.coordinateSyncUseCase.handlePostLoginSync()
         }
     }
 

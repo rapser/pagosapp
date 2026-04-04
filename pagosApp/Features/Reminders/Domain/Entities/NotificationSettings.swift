@@ -52,25 +52,13 @@ struct NotificationSettings: Codable, Sendable, Equatable {
     /// Get recommended settings based on reminder type
     static func recommended(for type: ReminderType) -> NotificationSettings {
         switch type {
-        case .cardRenewal, .documents:
-            // Important documents: notify well in advance
-            return NotificationSettings(oneMonthBefore: true, twoWeeksBefore: true, oneWeekBefore: true)
+        case .cardRenewal, .documents, .taxes, .membership, .subscription, .pension:
+            // Important types: 1 month before, 2 weeks before + standard (3, 2, 1, 0 days)
+            return NotificationSettings(oneMonthBefore: true, twoWeeksBefore: true, oneWeekBefore: false)
             
-        case .membership, .subscription:
-            // Subscriptions: moderate advance notice
-            return NotificationSettings(oneMonthBefore: false, twoWeeksBefore: true, oneWeekBefore: true)
-            
-        case .taxes:
-            // Tax deadlines: maximum advance notice
-            return NotificationSettings(oneMonthBefore: true, twoWeeksBefore: true, oneWeekBefore: true)
-            
-        case .pension, .savings, .deposit:
-            // Financial operations: standard + 1 week
+        case .savings, .deposit, .maintenance, .insurance, .health, .rent, .warranty, .certification, .other:
+            // Simple types: 1 week before + standard (3, 2, 1, 0 days)
             return NotificationSettings(oneMonthBefore: false, twoWeeksBefore: false, oneWeekBefore: true)
-            
-        case .other:
-            // Other: just standard notifications
-            return NotificationSettings()
         }
     }
 }
