@@ -99,6 +99,16 @@ struct NotificationDebugView: View {
                         .foregroundStyle(.white)
                         .background(.orange)
                         .cornerRadius(8)
+
+                        Button("💳 Reescalar TODAS las Notificaciones de Pagos") {
+                            Task {
+                                await viewModel.rescheduleAllPaymentNotifications()
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .foregroundStyle(.white)
+                        .background(.green)
+                        .cornerRadius(8)
                     }
                     .padding()
                     .background(Color(.systemGray6))
@@ -220,7 +230,9 @@ struct NotificationDebugView: View {
     let mockViewModel = NotificationDebugViewModel(
         notificationDataSource: mockNotificationDataSource,
         getAllRemindersUseCase: mockContainer.reminderDependencyContainer.makeGetAllRemindersUseCase(),
-        rescheduleNotificationsUseCase: mockContainer.reminderDependencyContainer.makeRescheduleReminderNotificationsUseCase()
+        rescheduleNotificationsUseCase: mockContainer.reminderDependencyContainer.makeRescheduleReminderNotificationsUseCase(),
+        getAllPaymentsUseCase: mockContainer.paymentDependencyContainer.makeGetAllPaymentsUseCase(),
+        schedulePaymentNotificationsUseCase: mockContainer.paymentDependencyContainer.makeSchedulePaymentNotificationsUseCase(notificationDataSource: mockNotificationDataSource)
     )
-    return NotificationDebugView(viewModel: mockViewModel)
+    NotificationDebugView(viewModel: mockViewModel)
 }
