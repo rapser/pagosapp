@@ -23,15 +23,21 @@ final class NotificationDebugViewModel: BaseViewModel {
     private let notificationDataSource: NotificationDataSource
     private let getAllRemindersUseCase: GetAllRemindersUseCase
     private let rescheduleNotificationsUseCase: RescheduleReminderNotificationsUseCase
+    private let getAllPaymentsUseCase: GetAllPaymentsUseCase
+    private let schedulePaymentNotificationsUseCase: SchedulePaymentNotificationsUseCase
 
     init(
         notificationDataSource: NotificationDataSource,
         getAllRemindersUseCase: GetAllRemindersUseCase,
-        rescheduleNotificationsUseCase: RescheduleReminderNotificationsUseCase
+        rescheduleNotificationsUseCase: RescheduleReminderNotificationsUseCase,
+        getAllPaymentsUseCase: GetAllPaymentsUseCase,
+        schedulePaymentNotificationsUseCase: SchedulePaymentNotificationsUseCase
     ) {
         self.notificationDataSource = notificationDataSource
         self.getAllRemindersUseCase = getAllRemindersUseCase
         self.rescheduleNotificationsUseCase = rescheduleNotificationsUseCase
+        self.getAllPaymentsUseCase = getAllPaymentsUseCase
+        self.schedulePaymentNotificationsUseCase = schedulePaymentNotificationsUseCase
         super.init(category: "NotificationDebugViewModel")
     }
     
@@ -123,6 +129,29 @@ final class NotificationDebugViewModel: BaseViewModel {
         }
     }
     
+    func rescheduleAllPaymentNotifications() async {
+        logDebug("Starting reschedule of all payment notifications")
+        lastActionMessage = "🔄 Reescalando notificaciones de pagos..."
+
+        let result = await getAllPaymentsUseCase.execute()
+
+        switch result {
+        case .success(let payments):
+            logDebug("Found \(payments.count) payments to reschedule")
+            schedulePaymentNotificationsUseCase.rescheduleAll(payments)
+            lastActionMessage = "✅ Reescaladas notificaciones para \(payments.count) pagos"
+
+        case .failure(let error):
+            logError(error)
+            lastActionMessage = "❌ Error al obtener pagos: \(error)"
+        }
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1))
+            await refreshStatus()
+        }
+    }
+
     func cancelAllNotifications() async {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         lastActionMessage = "🗑️ Canceladas todas las notificaciones"

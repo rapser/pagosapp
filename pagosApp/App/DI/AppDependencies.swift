@@ -117,7 +117,8 @@ final class AppDependencies {
             userProfileDependencyContainer: userProfileDependencyContainer,
             eventBus: eventBus,
             notificationDataSource: notificationDataSource,
-            reminderDependencyContainer: reminderDependencyContainer
+            reminderDependencyContainer: reminderDependencyContainer,
+            paymentDependencyContainer: paymentDependencyContainer
         )
     }
 

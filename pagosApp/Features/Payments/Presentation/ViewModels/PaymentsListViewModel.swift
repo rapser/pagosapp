@@ -142,6 +142,14 @@ final class PaymentsListViewModel: BaseViewModel {
             case .success(let fetchedPayments):
                 payments = mapper.toUI(fetchedPayments)
                 logDebug("Fetched \(fetchedPayments.count) payments (silent refresh)")
+
+                // Reschedule notifications once on first load (even for silent refresh)
+                if !hasRescheduledNotifications, let notificationsUseCase = scheduleNotificationsUseCase {
+                    hasRescheduledNotifications = true
+                    Task { @MainActor in
+                        notificationsUseCase.rescheduleAll(fetchedPayments)
+                    }
+                }
             case .failure(let error):
                 logError(error)
             }
