@@ -20,7 +20,7 @@
 "auth.login.useBiometric" = "Usar %@";
 "auth.register.title" = "Crear Cuenta";
 "auth.register.back" = "Atrás";
-"auth.register.passwordHintMin" = "Mínimo 6 caracteres";
+"auth.register.passwordHintMin" = "Mínimo 8 caracteres";
 "auth.register.passwordMatch" = "Las contraseñas coinciden";
 "auth.forgotPassword.title" = "Restablecer Contraseña";
 "auth.forgotPassword.description" = "Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.";
@@ -135,12 +135,14 @@
 "reminders.type.savings" = "Ahorro";
 "reminders.type.deposit" = "Depósito";
 "reminders.type.documents" = "Documentos";
-"reminders.type.taxes" = "Impuestos";"reminders.type.maintenance" = "Mantenimiento";
+"reminders.type.taxes" = "Impuestos";
+"reminders.type.maintenance" = "Mantenimiento";
 "reminders.type.insurance" = "Seguros";
 "reminders.type.health" = "Salud";
 "reminders.type.rent" = "Alquiler";
 "reminders.type.warranty" = "Garantía";
-"reminders.type.certification" = "Certificación";"reminders.type.other" = "Otro";
+"reminders.type.certification" = "Certificación";
+"reminders.type.other" = "Otro";
 "reminders.error.invalidTitle" = "El título es obligatorio";
 "reminders.error.invalidDate" = "La fecha no es válida";
 "reminders.error.saveFailed" = "No se pudo guardar: %@";
@@ -274,7 +276,7 @@
 // MARK: - Auth Errors
 "auth.error.invalidCredentials" = "Email o contraseña incorrectos";
 "auth.error.emailExists" = "El email ya está registrado";
-"auth.error.weakPassword" = "La contraseña debe tener al menos 6 caracteres";
+"auth.error.weakPassword" = "La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y un símbolo";
 "auth.error.invalidEmail" = "Email inválido";
 "auth.error.userNotFound" = "Usuario no encontrado";
 "auth.error.sessionExpired" = "Sesión expirada. Vuelve a iniciar sesión";

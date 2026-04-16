@@ -20,7 +20,7 @@
 "auth.login.useBiometric" = "Usar %@";
 "auth.register.title" = "Criar Conta";
 "auth.register.back" = "Voltar";
-"auth.register.passwordHintMin" = "Mínimo 6 caracteres";
+"auth.register.passwordHintMin" = "Mínimo 8 caracteres";
 "auth.register.passwordMatch" = "As senhas coincidem";
 "auth.forgotPassword.title" = "Redefinir Senha";
 "auth.forgotPassword.description" = "Digite seu e-mail e enviaremos um link para redefinir sua senha.";
@@ -276,7 +276,7 @@
 // MARK: - Auth Errors
 "auth.error.invalidCredentials" = "E-mail ou senha incorretos";
 "auth.error.emailExists" = "Este e-mail já está cadastrado";
-"auth.error.weakPassword" = "A senha deve ter pelo menos 6 caracteres";
+"auth.error.weakPassword" = "A senha deve ter pelo menos 8 caracteres e incluir uma maiúscula, um número e um símbolo";
 "auth.error.invalidEmail" = "E-mail inválido";
 "auth.error.userNotFound" = "Usuário não encontrado";
 "auth.error.sessionExpired" = "Sessão expirada. Entre novamente";
