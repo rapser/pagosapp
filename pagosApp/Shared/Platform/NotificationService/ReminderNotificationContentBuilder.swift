@@ -52,10 +52,11 @@ struct ReminderNotificationContentBuilder: NotificationContentBuilder {
         daysUntilDue: Int,
         timeOfDay: TimeOfDay?
     ) -> String {
-        if daysUntilDue == 0, let timeOfDay = timeOfDay {
-            return "reminder-\(entityId.uuidString)-0days-\(timeOfDay.suffix)"
-        } else {
-            return "reminder-\(entityId.uuidString)-\(daysUntilDue)days"
-        }
+        LocalNotificationIdentifiers.identifier(
+            kind: .reminder,
+            entityId: entityId,
+            daysUntilDue: daysUntilDue,
+            timeOfDay: timeOfDay
+        )
     }
 }

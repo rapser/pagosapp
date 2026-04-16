@@ -51,8 +51,8 @@ final class NotificationDebugViewModel: BaseViewModel {
         let pendingRequests = await UNUserNotificationCenter.current().pendingNotificationRequests()
         pendingCount = pendingRequests.count
         
-        let reminderRequests = pendingRequests.filter { $0.identifier.contains("reminder-") }
-        let paymentRequests = pendingRequests.filter { !$0.identifier.contains("reminder-") }
+        let reminderRequests = pendingRequests.filter { LocalNotificationIdentifiers.isReminderNotificationIdentifier($0.identifier) }
+        let paymentRequests = pendingRequests.filter { LocalNotificationIdentifiers.isPaymentNotificationIdentifier($0.identifier) }
         
         reminderCount = reminderRequests.count
         paymentCount = paymentRequests.count
