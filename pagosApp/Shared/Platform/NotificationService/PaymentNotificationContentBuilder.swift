@@ -42,10 +42,11 @@ struct PaymentNotificationContentBuilder: NotificationContentBuilder {
         daysUntilDue: Int,
         timeOfDay: TimeOfDay?
     ) -> String {
-        if daysUntilDue == 0, let timeOfDay = timeOfDay {
-            return "\(entityId.uuidString)-0days-\(timeOfDay.suffix)"
-        } else {
-            return "\(entityId.uuidString)-\(daysUntilDue)days"
-        }
+        LocalNotificationIdentifiers.identifier(
+            kind: .payment,
+            entityId: entityId,
+            daysUntilDue: daysUntilDue,
+            timeOfDay: timeOfDay
+        )
     }
 }
