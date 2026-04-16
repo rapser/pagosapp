@@ -20,7 +20,7 @@
 "auth.login.useBiometric" = "Use %@";
 "auth.register.title" = "Create Account";
 "auth.register.back" = "Back";
-"auth.register.passwordHintMin" = "Minimum 6 characters";
+"auth.register.passwordHintMin" = "Minimum 8 characters";
 "auth.register.passwordMatch" = "Passwords match";
 "auth.forgotPassword.title" = "Reset Password";
 "auth.forgotPassword.description" = "Enter your email and we'll send you a link to reset your password.";
@@ -276,7 +276,7 @@
 // MARK: - Auth Errors
 "auth.error.invalidCredentials" = "Incorrect email or password";
 "auth.error.emailExists" = "This email is already registered";
-"auth.error.weakPassword" = "Password must be at least 6 characters";
+"auth.error.weakPassword" = "Password must be at least 8 characters and include an uppercase letter, a number, and a symbol";
 "auth.error.invalidEmail" = "Invalid email";
 "auth.error.userNotFound" = "User not found";
 "auth.error.sessionExpired" = "Session expired. Please sign in again";
