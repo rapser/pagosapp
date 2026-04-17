@@ -6,7 +6,7 @@
 [![Swift](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
 [![Xcode](https://img.shields.io/badge/Xcode-16.4%2B-blue.svg)](https://developer.apple.com/xcode/)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean-green.svg)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
-[![Version](https://img.shields.io/badge/Version-1.0.0(15)-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.0.0(20)-blue.svg)](CHANGELOG.md)
 
 ---
 
@@ -17,9 +17,9 @@
 ### 🎯 ¿Qué hace la App?
 
 - **Gestión de Pagos Recurrentes**: Crea, edita y organiza todos tus pagos mensuales (Netflix, tarjetas de crédito, servicios, etc.)
-- **Recordatorios**: Gestiona eventos que no son pagos (renovación de tarjeta, membresías, cobros, impuestos, ahorro, etc.) con título, descripción y fecha; notificaciones desde 5 días antes
+- **Recordatorios**: Gestiona eventos que no son pagos (renovación de tarjeta, membresías, cobros, impuestos, ahorro, etc.) con título, descripción y fecha; notificaciones con ventana estándar **3, 2, 1 y 0 días** antes del vencimiento (más opciones avanzadas según tipo)
 - **Sincronización con Calendario iOS**: Pagos y recordatorios se muestran en el calendario nativo
-- **Notificaciones**: Recordatorios para pagos (2 días antes + mismo día) y para recordatorios (desde 5 días antes)
+- **Notificaciones**: **Pagos** a **3, 2 y 1 día** antes más el **día del vencimiento** (9:00 y 14:00). **Recordatorios**: misma ventana estándar u opciones avanzadas (p. ej. 7 / 14 / 30 días) según `NotificationSettings`
 - **Multi-moneda**: Soporte para PEN (Soles) y USD (Dólares) con conversión automática
 - **Estadísticas e Historial**: Gráficos de gastos por categoría, tendencias mensuales e historial; accesibles desde Ajustes
 - **Offline-First**: Funciona sin internet; sincronización manual (pagos + recordatorios) desde Ajustes
@@ -59,8 +59,8 @@
 - ✅ Soporte para calendarios compartidos
 
 ### 🔔 Notificaciones
-- ✅ **Pagos**: Notificaciones 2 días antes, 1 día antes y el mismo día (9:00 y 14:00)
-- ✅ **Recordatorios**: Notificaciones desde 5 días antes hasta el mismo día (9:00 y 14:00)
+- ✅ **Pagos**: **3, 2 y 1 día** antes del vencimiento más el **mismo día** (9:00 y 14:00)
+- ✅ **Recordatorios**: ventana estándar **3, 2, 1 y 0 días** (9:00 y 14:00); tipos de recordatorio pueden activar avisos a **7 / 14 / 30 días** adicionales
 - ✅ Restauración automática al iniciar sesión; cancelación al marcar completado o eliminar
 - ✅ Alertas de errores con sugerencias de recuperación
 
@@ -94,7 +94,7 @@
 ### 🌐 Internacionalización (i18n)
 - ✅ Español por defecto (fallback)
 - ✅ Inglés y portugués
-- ✅ Textos de UI y mensajes de error centralizados en `Localizable.strings`
+- ✅ Textos de UI, notificaciones locales y mensajes de error vía `Localizable.strings` + `Localizable.stringsdict` (plurales) y capa **L10n** (`L10n.swift`)
 
 ---
 
@@ -698,7 +698,12 @@ struct PaymentRemoteDTO: Codable, Sendable { /* ... */ }
 ### Observability & Reactive Systems
 - **EventBus**: Sistema reactivo type-safe con AsyncStream (reemplaza NotificationCenter)
 - **DomainEvent**: Eventos de dominio (PaymentCreated, PaymentUpdated, PaymentDeleted, PaymentsSynced, etc.)
-- **Logging**: Solo logs de error esenciales; consola limpia (sin logs informativos/debug en producción)
+- **Logging**: **OSLog** en puntos críticos; trazas muy verbosas de arranque/auth/red se mantienen al mínimo para una consola Xcode más limpia (errores y advertencias relevantes se conservan)
+
+### CI y calidad
+- **GitHub Actions** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)): **build** con `xcodebuild` (simulador iOS genérico) + **SwiftLint** en cada push/PR a `main`, `master` o `develop` (runner `macos-15`).
+- **SwiftLint**: configuración en [`.swiftlint.yml`](.swiftlint.yml) en la raíz del repo.
+- **Documentación técnica**: [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md), ADRs en [`docs/adr/`](docs/adr/), ingeniería (sync, concurrencia) en [`docs/engineering/`](docs/engineering/), runbooks SSL en [`docs/runbooks/`](docs/runbooks/).
 
 ---
 
@@ -709,6 +714,7 @@ struct PaymentRemoteDTO: Codable, Sendable { /* ... */ }
 - **Swift**: 6.0
 - **macOS**: Sequoia 15.0+ (desarrollo)
 - **Cuenta Supabase**: [Crear gratis](https://supabase.com)
+- **SwiftLint** (opcional, local): `brew install swiftlint` — mismo chequeo que en CI
 
 ---
 
@@ -718,7 +724,7 @@ struct PaymentRemoteDTO: Codable, Sendable { /* ... */ }
 
 ```bash
 git clone <url-del-repositorio>
-cd pagosApp
+cd <nombre-de-la-carpeta-del-repo>   # raíz: deben verse las carpetas pagosApp/, Config/, etc.
 ```
 
 ### 2️⃣ Configurar Supabase
@@ -763,6 +769,12 @@ open pagosApp.xcodeproj
 
 ✅ La app está lista para usar en simulador o dispositivo físico.
 
+### 6️⃣ SwiftLint (opcional, antes de commitear)
+
+```bash
+swiftlint lint
+```
+
 ---
 
 ## 📁 Estructura del Proyecto
@@ -770,7 +782,10 @@ open pagosApp.xcodeproj
 ```
 pagosApp/
 ├── App/
-│   └── pagosAppApp.swift                    # Entry point + DI setup
+│   ├── pagosAppApp.swift                    # @main → `PagosAppApp` (punto de entrada)
+│   ├── Main/                                # AppBootstrapView, ContentView, ciclo de vida, deep links
+│   ├── Configuration/                       # SupabaseClientFactory, SSL pinning, ModelContainer, AppConfiguration
+│   └── DI/                                  # AppDependencies y contenedores por feature
 │
 ├── Features/                                # ✅ Organización por feature
 │   ├── Auth/
@@ -798,7 +813,7 @@ pagosApp/
 │   │   ├── Domain/
 │   │   │   ├── Entities/                   # Payment, Currency, Category
 │   │   │   ├── Repositories/               # PaymentRepositoryProtocol
-│   │   │   ├── UseCases/                   # CreatePaymentUseCase, UpdatePaymentUseCase, 
+│   │   │   ├── UseCases/                   # CreatePaymentUseCase, UpdatePaymentUseCase,
 │   │   │   │                                 # SyncPaymentWithCalendarUseCase,
 │   │   │   │                                 # SchedulePaymentNotificationsUseCase, etc.
 │   │   │   └── Errors/                     # PaymentError
@@ -818,40 +833,21 @@ pagosApp/
 │   │       ├── Coordinators/               # PaymentSyncCoordinator
 │   │       └── DI/                         # PaymentDependencyContainer
 │   │
-│   ├── Reminders/                          # Feature: Recordatorios (tipos, título, descripción, fecha; sync Supabase)
-│   ├── Calendar/                           # Feature: Calendar (pagos + recordatorios)
-│   ├── Statistics/                         # Feature: Stats & charts (acceso desde Ajustes)
-│   ├── History/                            # Feature: Payment history (acceso desde Ajustes)
-│   ├── Settings/                           # Feature: Ajustes, sync, Historial, Estadísticas
-│   └── UserProfile/                        # Feature: User profile
+│   ├── Reminders/                          # Recordatorios (sync Supabase)
+│   ├── Calendar/                           # Calendario (pagos + recordatorios)
+│   ├── Statistics/                         # Estadísticas (desde Ajustes)
+│   ├── History/                            # Historial de pagos (desde Ajustes)
+│   ├── Settings/                           # Ajustes, sync, depuración opcional
+│   └── UserProfile/                        # Perfil de usuario
 │
-├── Shared/                                 # Código compartido entre features
+└── Shared/                                 # Código compartido (L10n, UI, infra, notificaciones…)
 │   ├── Models/                             # Currency, SyncStatus, etc.
 │   ├── Extensions/                         # String+, Date+, etc.
-│   ├── Managers/                           # ErrorHandler, NotificationManager
-│   └── Utils/                              # Validators, Formatters
-│
-├── Config/
-│   ├── Secrets.xcconfig                    # ❌ NO commitear (gitignored)
-│   ├── Secrets.template.xcconfig           # ✅ Template público
-│   └── README.md                           # Instrucciones de configuración
-│
-└── Database/
-    ├── payments.sql                        # Tabla payments (Supabase)
-    ├── reminders.sql                       # Tabla reminders (Supabase)
-    ├── user_profiles.sql                   # Tabla user_profiles (Supabase)
-    └── README.md                            # Orden de ejecución y uso
-
-Tests/
-└── pagosAppTests/
-    ├── Domain/
-    │   └── UseCases/                       # Tests de Use Cases
-    ├── Data/
-    │   ├── Repositories/                   # Tests de Repositories
-    │   └── Mappers/                        # Tests de Mappers
-    └── Presentation/
-        └── ViewModels/                     # Tests de ViewModels
+│   ├── Managers/                           # ErrorHandler, AlertManager, …
+│   └── …                                   # Ver repo para módulos completos
 ```
+
+En la **raíz del repositorio** (junto a la carpeta `pagosApp/`): `Config/` (secrets y template), `Database/` (SQL Supabase), [`.github/workflows/`](.github/workflows/ci.yml) (CI: build + SwiftLint) y el target de tests **`pagosAppTests/`** (`EmailValidatorTests`, `PasswordValidatorTests`, etc.).
 
 ---
 
@@ -861,24 +857,22 @@ Tests/
 # Ejecutar todos los tests
 ⌘ + U
 
-# O desde terminal
-xcodebuild test -scheme pagosApp -destination 'platform=iOS Simulator,name=iPhone 15 Pro'
+# O desde terminal (ajusta el simulador al que tengas instalado)
+xcodebuild test -scheme pagosApp -project pagosApp.xcodeproj \
+  -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
 
-**Cobertura Actual**: ~50-60%
-
-**Tests Implementados**:
-- ✅ Use Cases: Lógica de negocio
-- ✅ Mappers: Conversiones DTO ↔ Domain ↔ UI
-- ✅ Validators: Email, Payment, UserProfile
-- ✅ ViewModels: Estados y flujos UI
-- ✅ Repositories (mocks): Inyección de dependencias
+**Estado actual**: suite **mínima** centrada en **validadores** (email, contraseña) y test de arranque del target; ampliar use cases, mappers, sync y UI está en el roadmap de calidad (ver [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md)).
 
 ---
 
 ## 📚 Documentación Adicional
 
-- **[CHANGELOG.md](CHANGELOG.md)**: Historial completo de cambios (versión 1.0.0 build 15)
+- **[CHANGELOG.md](CHANGELOG.md)**: Historial de versiones (marketing **1.0.0**, build actual en Xcode)
+- **[TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md)**: Auditoría técnica y métricas del repo
+- **[docs/adr/](docs/adr/)**: Decisiones de arquitectura (capas, sync, notificaciones, DI)
+- **[docs/engineering/](docs/engineering/)**: Contratos de coordinadores de sync, checklist de concurrencia
+- **[docs/runbooks/](docs/runbooks/)**: Operación de SSL pinning / certificados
 - **[Config/README.md](Config/README.md)**: Setup de credenciales
 - **[Database/README.md](Database/README.md)**: Scripts SQL (payments, reminders, user_profiles) y orden de ejecución
 
@@ -894,6 +888,7 @@ xcodebuild test -scheme pagosApp -destination 'platform=iOS Simulator,name=iPhon
 - 👤 **Session Management**: Sesiones seguras con renovación automática
 - 📱 **Biometrics**: Face ID/Touch ID opcional
 - 🔑 **Build-time Injection**: Credenciales inyectadas en compilación
+- 🔏 **SSL pinning (opcional)**: si incluyes certificados `.cer` en el bundle, `SupabaseClientFactory` usa `URLSession` con delegado de pinning; sin `.cer`, el cliente usa sesión estándar (ver runbooks en `docs/runbooks/`)
 
 ---
 
@@ -913,7 +908,8 @@ xcodebuild test -scheme pagosApp -destination 'platform=iOS Simulator,name=iPhon
 - ✅ Clean Architecture (Domain/Data/Presentation)
 - ✅ @Observable para state management
 - ✅ async/await (no Combine)
-- ✅ Tests para nueva funcionalidad
+- ✅ **SwiftLint** sin errores en CI (`.swiftlint.yml`)
+- ✅ Tests para nueva funcionalidad cuando toquen lógica crítica
 - ✅ Documentación inline
 
 ---
@@ -924,7 +920,8 @@ Ver [CHANGELOG.md](CHANGELOG.md) para historial completo de cambios.
 
 ### Highlights
 
-- **2026-03 (v1.0.0 build 15)**: Recordatorios (módulo completo, sync Supabase, notificaciones 5 días antes), i18n (ES/EN/PT), Calendario con pagos + recordatorios, Historial/Estadísticas desde Ajustes, limpieza de logs
+- **2026-04 (v1.0.0 build 20+)**: GitHub Actions (build + SwiftLint), ajustes de calidad de código, pinning SSL con API moderna (`SecTrustCopyCertificateChain`), consola más silenciosa en rutas calientes
+- **2026-03 (v1.0.0 build 15)**: Recordatorios (módulo completo, sync Supabase, notificaciones configurables), i18n (ES/EN/PT) ampliado, Calendario con pagos + recordatorios, Historial/Estadísticas desde Ajustes
 - **2026-01 (v1.0.0 build 14)**: EventBus type-safe + Migración completa de NotificationCenter + Clean Architecture 100%
 - **2026-01 (v1.0.0 build 11)**: Edición de pagos agrupados + Sincronización con calendario + Notificaciones locales restauradas
 - **2026-01 (v1.0.0 build 10)**: Clean Architecture completa + Entity renaming + Swift 6 concurrency
