@@ -25,18 +25,18 @@ struct GenderPickerRow: View {
                 .frame(width: 25)
 
             if isEditing {
-                Picker("Género", selection: genderBinding) {
+                Picker(L10n.Profile.fieldGender, selection: genderBinding) {
                     ForEach(UserProfile.Gender.allCases, id: \.self) { gender in
-                        Text(gender.displayName).tag(gender)
+                        Text(L10n.Profile.genderLabel(gender)).tag(gender)
                     }
                 }
                 .foregroundColor(Color("AppTextPrimary"))
             } else {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Género")
+                    Text(L10n.Profile.fieldGender)
                         .font(.caption)
                         .foregroundColor(Color("AppTextSecondary"))
-                    Text(selectedGender?.displayName ?? "No especificado")
+                    Text(selectedGender.map { L10n.Profile.genderLabel($0) } ?? L10n.Profile.notSpecified)
                         .foregroundColor(selectedGender != nil ? Color("AppTextPrimary") : Color("AppTextSecondary"))
                 }
             }

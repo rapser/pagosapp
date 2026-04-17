@@ -25,27 +25,42 @@ enum L10n {
         static let retry = tr("general.retry")
         static let error = tr("general.error")
         static let loading = tr("general.loading")
+        static let yes = tr("general.yes")
+        static let no = tr("general.no")
+        static let networkOffline = tr("general.network.offline")
+        static let networkTimeout = tr("general.network.timeout")
+        static let networkGeneric = tr("general.network.generic")
     }
 
     // MARK: - Auth
     enum Auth {
+        enum Field {
+            static let email = tr("auth.field.email")
+            static let password = tr("auth.field.password")
+            static let confirmPassword = tr("auth.field.confirmPassword")
+        }
         enum Login {
             static let welcome = tr("auth.login.welcome")
             static let forgotPassword = tr("auth.login.forgotPassword")
             static let noAccount = tr("auth.login.noAccount")
             static func useBiometric(_ name: String) -> String { tr("auth.login.useBiometric", name) }
+            static let signIn = tr("auth.login.signIn")
+            static let signingIn = tr("auth.login.signingIn")
         }
         enum Register {
             static let title = tr("auth.register.title")
             static let back = tr("auth.register.back")
             static let passwordHintMin = tr("auth.register.passwordHintMin")
             static let passwordMatch = tr("auth.register.passwordMatch")
+            static let signUp = tr("auth.register.signUp")
+            static let signingUp = tr("auth.register.signingUp")
         }
         enum ForgotPassword {
             static let title = tr("auth.forgotPassword.title")
             static let description = tr("auth.forgotPassword.description")
             static let back = tr("auth.forgotPassword.back")
             static let emailSent = tr("auth.forgotPassword.emailSent")
+            static let sendFailed = tr("auth.forgotPassword.sendFailed")
         }
         enum ResetPassword {
             static let title = tr("auth.resetPassword.title")
@@ -55,6 +70,16 @@ enum L10n {
             static let button = tr("auth.resetPassword.button")
             static let goToLogin = tr("auth.resetPassword.goToLogin")
             static let successMessage = tr("auth.resetPassword.successMessage")
+            static let promptNewPassword = tr("auth.resetPassword.promptNewPassword")
+            static let successAlertTitle = tr("auth.resetPassword.successAlertTitle")
+            static let resetFailedRetry = tr("auth.resetPassword.resetFailedRetry")
+        }
+        enum Biometric {
+            static func useToAccess(_ name: String) -> String { tr("auth.biometric.useToAccess", name) }
+            static func signInWith(_ name: String) -> String { tr("auth.biometric.signInWith", name) }
+            static func a11ySignIn(_ name: String) -> String { tr("auth.biometric.a11ySignIn", name) }
+            static let a11yHintLoading = tr("auth.biometric.a11yHintLoading")
+            static func a11yHintIdle(_ name: String) -> String { tr("auth.biometric.a11yHintIdle", name) }
         }
     }
 
@@ -182,6 +207,7 @@ enum L10n {
         static let filter = tr("reminders.filter")
         static let emptyTitle = tr("reminders.emptyTitle")
         static let emptyDescription = tr("reminders.emptyDescription")
+        static let placeholderComingSoon = tr("reminders.placeholder.comingSoon")
         enum Add {
             static let title = tr("reminders.add.title")
         }
@@ -260,6 +286,8 @@ enum L10n {
         static let alertNoPaymentsMessage = tr("calendar.alert.noPaymentsToSyncMessage")
         static let alertAccessDenied = tr("calendar.alert.accessDenied")
         static let alertAccessDeniedMessage = tr("calendar.alert.accessDeniedMessage")
+        static let errorLoadPayments = tr("calendar.error.loadPayments")
+        static let errorLoadPaymentsForDate = tr("calendar.error.loadPaymentsForDate")
     }
 
     // MARK: - Settings
@@ -346,6 +374,19 @@ enum L10n {
         static let fieldName = tr("profile.field.name")
         static let fieldCity = tr("profile.field.city")
         static let fieldCountry = tr("profile.field.country")
+        static let fieldGender = tr("profile.field.gender")
+        static let fieldBirthDate = tr("profile.field.birthDate")
+        static let selectDate = tr("profile.selectDate")
+        static let notSpecified = tr("profile.notSpecified")
+        static let datePickerTitle = tr("profile.datePickerTitle")
+        static func genderLabel(_ gender: UserProfile.Gender) -> String {
+            switch gender {
+            case .masculino: return tr("gender.masculino")
+            case .femenino: return tr("gender.femenino")
+            case .otro: return tr("gender.otro")
+            case .prefierNoDecir: return tr("gender.prefieroNoDecir")
+            }
+        }
         static let noProfileTitle = tr("profile.noProfile.title")
         static let noProfileDescription = tr("profile.noProfile.description")
         static let updatedTitle = tr("profile.updated.title")
@@ -379,6 +420,7 @@ enum L10n {
         static let userNotFound = tr("auth.error.userNotFound")
         static let sessionExpired = tr("auth.error.sessionExpired")
         static let network = tr("auth.error.network")
+        static func tooManyAttempts(_ dateString: String) -> String { tr("auth.error.tooManyAttempts", dateString) }
         static func unknown(_ message: String) -> String { tr("auth.error.unknown", message) }
     }
 
@@ -390,6 +432,111 @@ enum L10n {
         static let history = tr("tab.history")
         static let statistics = tr("tab.statistics")
         static let settings = tr("tab.settings")
+    }
+
+    // MARK: - Local push notifications (UNUserNotificationCenter)
+    enum LocalNotifications {
+        enum Payment {
+            static let title = tr("notifications.payment.title")
+            static func subtitleSameDay(_ paymentName: String) -> String { tr("notifications.payment.subtitle.sameDay", paymentName) }
+            static func bodySameDay(_ amountFormatted: String) -> String { tr("notifications.payment.body.sameDay", amountFormatted) }
+            static func subtitleOneDayBefore(_ paymentName: String) -> String { tr("notifications.payment.subtitle.oneDayBefore", paymentName) }
+            static func subtitleNDaysBefore(_ days: Int, _ paymentName: String) -> String { tr("notifications.payment.subtitle.nDaysBefore", days, paymentName) }
+            static func bodyAmount(_ amountFormatted: String) -> String { tr("notifications.payment.body.amount", amountFormatted) }
+        }
+
+        enum Reminder {
+            static let title = tr("notifications.reminder.title")
+            static func bodySameDay(_ reminderTitle: String) -> String { tr("notifications.reminder.body.sameDay", reminderTitle) }
+            static func subtitleMonth(_ reminderTitle: String) -> String { tr("notifications.reminder.subtitle.month", reminderTitle) }
+            static func subtitleTwoWeeks(_ reminderTitle: String) -> String { tr("notifications.reminder.subtitle.twoWeeks", reminderTitle) }
+            static func subtitleWeek(_ reminderTitle: String) -> String { tr("notifications.reminder.subtitle.week", reminderTitle) }
+            static func subtitleOneDay(_ reminderTitle: String) -> String { tr("notifications.reminder.subtitle.oneDay", reminderTitle) }
+            static func subtitleNDays(_ days: Int, _ reminderTitle: String) -> String { tr("notifications.reminder.subtitle.nDays", days, reminderTitle) }
+            static func bodyWithDate(_ reminderTitle: String, _ dateFormatted: String) -> String { tr("notifications.reminder.body.withDate", reminderTitle, dateFormatted) }
+        }
+    }
+
+    // MARK: - Debug (developer / QA screens only)
+    enum Debug {
+        enum Notifications {
+            static let navTitle = tr("debug.notifications.navTitle")
+            static let statusTitle = tr("debug.notifications.statusTitle")
+            static let authorization = tr("debug.notifications.authorization")
+            static let pending = tr("debug.notifications.pending")
+            static let subReminders = tr("debug.notifications.subReminders")
+            static let subPayments = tr("debug.notifications.subPayments")
+            static let lastAction = tr("debug.notifications.lastAction")
+            static let testSectionTitle = tr("debug.notifications.testSectionTitle")
+            static let reminderTitlePlaceholder = tr("debug.notifications.reminderTitlePlaceholder")
+            static let dueDateLabel = tr("debug.notifications.dueDateLabel")
+            static let scheduleTest = tr("debug.notifications.scheduleTest")
+            static let rescheduleAllReminders = tr("debug.notifications.rescheduleAllReminders")
+            static let rescheduleAllPayments = tr("debug.notifications.rescheduleAllPayments")
+            static func remindersListTitle(_ count: Int) -> String { tr("debug.notifications.remindersListTitle", count) }
+            static func paymentsListTitle(_ count: Int) -> String { tr("debug.notifications.paymentsListTitle", count) }
+            static let refresh = tr("debug.notifications.refresh")
+            static let viewLogs = tr("debug.notifications.viewLogs")
+            static let requestPermission = tr("debug.notifications.requestPermission")
+            static let cancelAll = tr("debug.notifications.cancelAll")
+            static let authAuthorized = tr("debug.notifications.auth.authorized")
+            static let authDenied = tr("debug.notifications.auth.denied")
+            static let authNotDetermined = tr("debug.notifications.auth.notDetermined")
+            static let authProvisional = tr("debug.notifications.auth.provisional")
+            static let authEphemeral = tr("debug.notifications.auth.ephemeral")
+            static let authUnknown = tr("debug.notifications.auth.unknown")
+            static let triggerUnknown = tr("debug.notifications.triggerUnknown")
+            static func messageTestScheduled(_ title: String) -> String { tr("debug.notifications.msg.testScheduled", title) }
+            static let messageReschedulingReminders = tr("debug.notifications.msg.reschedulingReminders")
+            static func messageRescheduledReminders(_ count: Int) -> String { tr("debug.notifications.msg.rescheduledReminders", count) }
+            static func messageErrorFetchReminders(_ detail: String) -> String { tr("debug.notifications.msg.errorFetchReminders", detail) }
+            static let messageReschedulingPayments = tr("debug.notifications.msg.reschedulingPayments")
+            static func messageRescheduledPayments(_ count: Int) -> String { tr("debug.notifications.msg.rescheduledPayments", count) }
+            static func messageErrorFetchPayments(_ detail: String) -> String { tr("debug.notifications.msg.errorFetchPayments", detail) }
+            static let messageCancelledAll = tr("debug.notifications.msg.cancelledAll")
+            static let messageLogsToConsole = tr("debug.notifications.msg.logsToConsole")
+            static let messageRequestingPermission = tr("debug.notifications.msg.requestingPermission")
+        }
+
+        enum Session {
+            static let navTitle = tr("debug.session.navTitle")
+            static let sectionCurrent = tr("debug.session.sectionCurrent")
+            static let sectionDetails = tr("debug.session.sectionDetails")
+            static let sectionActions = tr("debug.session.sectionActions")
+            static let sectionInstructions = tr("debug.session.sectionInstructions")
+            static let isAuthenticated = tr("debug.session.isAuthenticated")
+            static let isSessionActive = tr("debug.session.isSessionActive")
+            static let canUseBiometric = tr("debug.session.canUseBiometric")
+            static let checkYes = tr("debug.session.checkYes")
+            static let checkNo = tr("debug.session.checkNo")
+            static let refreshCount = tr("debug.session.refreshCount")
+            static let refreshInfo = tr("debug.session.refreshInfo")
+            static let forceCheck = tr("debug.session.forceCheck")
+            static let simulateRestart = tr("debug.session.simulateRestart")
+            static let clearData = tr("debug.session.clearData")
+            static let instructionIntro = tr("debug.session.instructionIntro")
+            static let instructionRestart = tr("debug.session.instructionRestart")
+            static let instructionWatch = tr("debug.session.instructionWatch")
+            static func infoLocalActive(_ value: String) -> String { tr("debug.session.info.localActive", value) }
+            static func infoLocalExpired(_ value: String) -> String { tr("debug.session.info.localExpired", value) }
+            static func infoRemoteValid(_ value: String) -> String { tr("debug.session.info.remoteValid", value) }
+            static func infoLastActive(_ value: String) -> String { tr("debug.session.info.lastActive", value) }
+            static func infoElapsedSeconds(_ seconds: Int) -> String { tr("debug.session.info.elapsedSeconds", seconds) }
+            static let infoLastActiveNone = tr("debug.session.info.lastActiveNone")
+            static let infoDebugMode = tr("debug.session.info.debugMode")
+            static let infoReleaseMode = tr("debug.session.info.releaseMode")
+        }
+
+        enum NotificationSettings {
+            static let navTitle = tr("debug.notificationSettings.navTitle")
+            static let sectionPension = tr("debug.notificationSettings.sectionPension")
+            static let sectionSavings = tr("debug.notificationSettings.sectionSavings")
+            static let sectionOther = tr("debug.notificationSettings.sectionOther")
+            static let sectionDebugInfo = tr("debug.notificationSettings.sectionDebugInfo")
+            static func pensionDays(_ list: String) -> String { tr("debug.notificationSettings.pensionDays", list) }
+            static func savingsDays(_ list: String) -> String { tr("debug.notificationSettings.savingsDays", list) }
+            static func otherDays(_ list: String) -> String { tr("debug.notificationSettings.otherDays", list) }
+        }
     }
 
     // MARK: - Logs (consola; idioma según preferencia del dispositivo/app)

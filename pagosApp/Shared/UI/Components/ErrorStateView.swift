@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ErrorStateView: View {
-    var title: String = "Error"
+    var title: String = L10n.General.error
     var message: String?
     var onRetry: (() -> Void)?
 

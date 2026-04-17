@@ -1,0 +1,20 @@
+# SwiftLint — reglas permisivas iniciales; endurecer con el tiempo.
+included:
+  - pagosApp
+excluded:
+  - pagosApp.xcodeproj
+  - pagosApp/Shared/L10n/L10n.swift
+line_length: 220
+file_length:
+  warning: 600
+  error: 900
+function_body_length:
+  warning: 80
+  error: 120
+type_body_length:
+  warning: 400
+  error: 600
+identifier_name:
+  min_length: 1
+disabled_rules:
+  - trailing_whitespace
