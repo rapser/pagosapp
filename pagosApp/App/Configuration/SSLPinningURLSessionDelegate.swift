@@ -40,4 +40,3 @@ final class SSLPinningURLSessionDelegate: NSObject, URLSessionDelegate {
         completionHandler(.useCredential, URLCredential(trust: serverTrust))
     }
 }
-
