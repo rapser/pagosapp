@@ -12,7 +12,7 @@
 | **Fecha auditoría**| 11 de abril de 2026                    |
 | **Última revisión**| 16 de abril de 2026                    |
 | **Tipo**           | Auditoría completa (inicial estática; revisión contrastada con repo) |
-| **Alcance**        | 301 archivos Swift / ~14,000 LOC       |
+| **Alcance**        | 311 archivos Swift (~308 app + 3 tests) / ~22,200 LOC (tracked, abr. 2026) |
 
 ---
 
@@ -28,11 +28,11 @@
 │ Concurrencia & Thread Safety  ██████████░ 92%   │
 │ Testing                       ██░░░░░░░░░ 20%   │
 │ Performance                   █████████░░ 82%   │
-│ CI/CD & DevOps                ████░░░░░░░ 42%   │
+│ CI/CD & DevOps                █████░░░░░░ 48%   │
 │ Escalabilidad                 ████████░░░ 82%   │
 │ Internacionalización          ██████████░ 99%   │
 ├─────────────────────────────────────────────────┤
-│ PUNTUACIÓN GLOBAL             █████████░ 86%   │
+│ PUNTUACIÓN GLOBAL             █████████░ 87%   │
 │ GRADO: A (Bueno; foco: ampliar tests + CI con   │
 │         tests en runner y release automation)   │
 └─────────────────────────────────────────────────┘
@@ -49,7 +49,7 @@
   - **Feature toggles**: no existe `FeatureFlagService` / flags remotos.
   - **Runtime validation**: ejecutar checklist TSan/Instruments (`docs/engineering/CONCURRENCY_VALIDATION.md`).
 
-**Nota de revisión (16-abr-2026)**: ADRs en `docs/adr/`, runbooks SSL en `docs/runbooks/`, contrato de sync y checklist de concurrencia en `docs/engineering/`, lockout de login en cliente (`LoginAttemptTracking`), **internacionalización ampliada**: notificaciones locales (`L10n.LocalNotifications`, `notifications.*`), **flujos de auth en UI** (registro, login por email/contraseña, biométrica, restablecer contraseña), **perfil** (género con `gender.*`, fecha de nacimiento, filas de solo lectura), **errores de calendario** en `CalendarViewModel`, **errores de red genéricos** en `BaseViewModel` (`general.network.*`), **pantallas de depuración** (`L10n.Debug.*`: notificaciones, sesión, ajustes de notificación), placeholder de recordatorios, títulos por defecto de alertas/estado de error; claves repartidas en `es` / `en` / `pt` / `Base`. También `.swiftlint.yml` y `.github/workflows/ci.yml`.
+**Nota de revisión (16-abr-2026)**: Métricas de alcance (archivos Swift, LOC, `Task {`, `@MainActor`) **recontrastadas** con el árbol git rastreado y búsqueda estática en código. ADRs en `docs/adr/`, runbooks SSL en `docs/runbooks/`, contrato de sync y checklist de concurrencia en `docs/engineering/`, lockout de login en cliente (`LoginAttemptTracking`), **internacionalización ampliada**: notificaciones locales (`L10n.LocalNotifications`, `notifications.*`), **flujos de auth en UI** (registro, login por email/contraseña, biométrica, restablecer contraseña), **perfil** (género con `gender.*`, fecha de nacimiento, filas de solo lectura), **errores de calendario** en `CalendarViewModel`, **errores de red genéricos** en `BaseViewModel` (`general.network.*`), **pantallas de depuración** (`L10n.Debug.*`: notificaciones, sesión, ajustes de notificación), placeholder de recordatorios, títulos por defecto de alertas/estado de error; claves repartidas en `es` / `en` / `pt` / `Base`. También `.swiftlint.yml` y `.github/workflows/ci.yml`.
 
 ---
 
@@ -299,13 +299,13 @@ Los casos de la tabla anterior para **email/password** están en el repo (`Email
 
 ### 6.1 Retain Cycles
 
-**Búsqueda**: 41 instancias de `Task {` analizadas.
+**Búsqueda**: **85** líneas con `Task {` en el target principal (reconteo abr. 2026; ver §10.3).
 
-**Resultado**: ✅ **Sin retain cycles detectados**
+**Resultado**: ✅ **Sin ciclos evidentes** en la revisión estática; donde `self` se captura en el mismo closure suele aparecer `[weak self]` (19 líneas) o el tipo ya vive en `@MainActor`. Siguen siendo recomendables revisiones puntuales en los `Task {` sin `weak` explícito y validación con Instruments/TSan.
 
-Todos los `Task` que capturan `self` usan `[weak self]`:
+Patrón recomendado cuando el closure retiene el coordinador/VM:
 ```swift
-// ✅ CORRECTO — Patrón consistente en toda la codebase
+// ✅ Patrón seguro cuando hay riesgo de retención
 Task { @MainActor [weak self] in
     guard let self else { return }
     await self.fetchPayments()
@@ -418,13 +418,13 @@ No existe mecanismo de feature flags. Recomendación: implementar un `FeatureFla
 
 ### 9.2 Métricas de Complejidad
 
-| Archivo | Líneas Estimadas | Complejidad | Estado |
-|---------|-----------------|-------------|--------|
-| `SessionCoordinator.swift` | 313 | Alta | ⚠️ 6 dependencias, múltiples estados |
-| `PaymentsListViewModel.swift` | ~250 | Media-Alta | ✅ Bien organizado |
-| `PaymentDependencyContainer.swift` | ~280 | Media | ✅ Factory methods bien estructurados |
-| `AppDependencies.swift` | ~150 | Media | ✅ God object controlado |
-| `NotificationDataSource.swift` | ~180 | Media | ✅ Scheduler + `LocalNotificationIdentifiers` (prefijos `payment-`/`reminder-`) |
+| Archivo | Líneas (wc -l, abr. 2026) | Complejidad | Estado |
+|---------|---------------------------|-------------|--------|
+| `SessionCoordinator.swift` | 389 | Alta | ⚠️ 6 dependencias, múltiples estados |
+| `PaymentsListViewModel.swift` | 278 | Media-Alta | ✅ Bien organizado |
+| `PaymentDependencyContainer.swift` | 267 | Media | ✅ Factory methods bien estructurados |
+| `AppDependencies.swift` | 164 | Media | ✅ God object controlado |
+| `NotificationDataSource.swift` | 157 | Media | ✅ Scheduler + `LocalNotificationIdentifiers` (prefijos `payment-`/`reminder-`) |
 
 ### 9.3 Code Smells Detectados
 
@@ -464,24 +464,20 @@ El proyecto fue construido con Swift 6 strict concurrency desde el inicio, lo qu
 
 ### 10.2 Distribución de @MainActor
 
-```
-@MainActor clases:       ~28 (ViewModels, Coordinators, DataSources)
-@MainActor funciones:    ~45 (Repository operations con SwiftData)
-nonisolated funciones:   ~8  (Delegate callbacks)
-```
+**Medición textual** (líneas que contienen `@MainActor` en `pagosApp/**/*.swift`): **~126** ocurrencias (grep, abr. 2026). Con el tamaño actual del código, este número sirve sobre todo como **indicador de uso intensivo de aislamiento al hilo principal**; un inventario exacto tipos vs miembros requeriría análisis AST (Xcode / swift-syntax).
 
 ### 10.3 Análisis de Task Creations
 
-**Total**: 41 instancias de `Task {`
+**Total**: **85** líneas que contienen `Task {` en el target principal (búsqueda línea a línea; abr. 2026).
 
-| Patrón | Conteo | Estado |
-|--------|--------|--------|
-| `Task { [weak self] in` | ~25 | ✅ |
-| `Task { @MainActor [weak self] in` | ~12 | ✅ |
-| `Task { @MainActor in` (sin self) | ~4 | ✅ |
-| `Task {` sin captura (top-level) | ~0 | ✅ |
+| Patrón (misma línea de apertura) | Conteo | Estado |
+|----------------------------------|--------|--------|
+| `Task {` + `[weak self]` | 19 | ✅ |
+|   de ellas con `@MainActor` | 14 | ✅ |
+| `Task {` + `@MainActor` sin `[weak self]` en la misma línea | 13 | ✅ Revisar cancelación / prioridad donde aplique |
+| `Task {` sin `@MainActor` ni `[weak self]` en la misma línea | 53 | ⚠️ Revisión puntual (muchas vistas/VM ya están en MainActor por tipo) |
 
-**Resultado**: Sin Task leaks ni retain cycles detectados.
+**Resultado**: No se detectaron patrones obvios de retain cycle en la muestra revisada; conviene seguir aplicando el checklist de [`CONCURRENCY_VALIDATION.md`](docs/engineering/CONCURRENCY_VALIDATION.md) ante nuevos `Task {`.
 
 ### 10.4 Potenciales Race Conditions
 
@@ -704,6 +700,7 @@ SEMANA 4+: P2-P3 (Mejoras)
 ## ⚠️ LIMITACIONES DE LA AUDITORÍA
 
 - La auditoría inicial fue **estática**; las revisiones posteriores contrastan con el **estado del repo** y documentación añadida (`docs/`), pero no sustituyen una revisión de seguridad de terceros.
+- Conteos de **LOC**, archivos Swift y patrones `Task {` / `@MainActor` son **heurísticos** (archivos rastreados por git + grep / recorrido por líneas); pueden diferir ligeramente de métricas IDE o AST.
 - No se evaluó comportamiento real de red (latencias, edge cases de Supabase SDK) en esta actualización.
 - No se evaluó uso real de memoria en dispositivos físicos (Instruments) más allá del checklist propuesto en `docs/engineering/CONCURRENCY_VALIDATION.md`.
 - El schema de Supabase solo fue analizado para los archivos `.sql` disponibles.
@@ -711,5 +708,5 @@ SEMANA 4+: P2-P3 (Mejoras)
 
 ---
 
-*Technical Audit Report — auditoría inicial 11 de abril de 2026; revisión de pendientes 17 de abril de 2026; actualización i18n (notificaciones locales + presentación y debug) 16 de abril de 2026*  
+*Technical Audit Report — auditoría inicial 11 de abril de 2026; actualización i18n (notificaciones locales + presentación y debug) 16 de abril de 2026; reconteo de alcance, complejidad y concurrencia 16 de abril de 2026*  
 *Principal iOS Solutions Architect · Análisis estático + contrastación con estado del repositorio*

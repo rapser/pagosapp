@@ -8,6 +8,13 @@
 
 import Foundation
 
+/// Named components extracted from keychain credentials (avoids large tuples).
+struct KeychainSessionComponents {
+    let accessToken: String
+    let refreshToken: String
+    let userId: UUID
+}
+
 /// Mapper for converting between Keychain DTOs and Domain entities
 struct KeychainAuthDTOMapper {
 
@@ -15,10 +22,14 @@ struct KeychainAuthDTOMapper {
 
     /// Extract session components from Keychain credentials
     /// - Parameter dto: KeychainCredentialsDTO
-    /// - Returns: Tuple with tokens and userId
-    func toSessionComponents(_ dto: KeychainCredentialsDTO) -> (accessToken: String, refreshToken: String, userId: UUID) {
+    /// - Returns: Tokens and user id for session assembly
+    func toSessionComponents(_ dto: KeychainCredentialsDTO) -> KeychainSessionComponents {
         let userId = UUID(uuidString: dto.userId) ?? UUID()
-        return (dto.accessToken, dto.refreshToken, userId)
+        return KeychainSessionComponents(
+            accessToken: dto.accessToken,
+            refreshToken: dto.refreshToken,
+            userId: userId
+        )
     }
 
     // MARK: - Domain to DTO
