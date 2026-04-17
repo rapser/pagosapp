@@ -19,6 +19,8 @@ enum AuthError: Error, Equatable {
     case sessionExpired
     case networkError(String)
     case unknown(String)
+    /// Too many failed password attempts; try again after `lockoutUntil`.
+    case tooManyLoginAttempts(lockoutUntil: Date)
 
     /// Error code for logging and debugging
     var errorCode: String {
@@ -39,6 +41,8 @@ enum AuthError: Error, Equatable {
             return "AUTH_007"
         case .unknown:
             return "AUTH_999"
+        case .tooManyLoginAttempts:
+            return "AUTH_008"
         }
     }
 
@@ -56,6 +60,8 @@ enum AuthError: Error, Equatable {
             return lhsMsg == rhsMsg
         case (.unknown(let lhsMsg), .unknown(let rhsMsg)):
             return lhsMsg == rhsMsg
+        case (.tooManyLoginAttempts(let l), .tooManyLoginAttempts(let r)):
+            return l.timeIntervalSince1970 == r.timeIntervalSince1970
         default:
             return false
         }

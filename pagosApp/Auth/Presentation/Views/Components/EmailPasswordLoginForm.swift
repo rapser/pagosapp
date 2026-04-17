@@ -20,7 +20,7 @@ struct EmailPasswordLoginForm: View {
                 .font(.system(size: 80))
                 .foregroundColor(Color("AppTextSecondary"))
 
-            TextField("Correo electrónico", text: $email)
+            TextField(L10n.Auth.Field.email, text: $email)
                 .keyboardType(.emailAddress)
                 .textContentType(.emailAddress)
                 .autocapitalization(.none)
@@ -31,7 +31,7 @@ struct EmailPasswordLoginForm: View {
                 .disabled(isLoading)
 
             SecureTextFieldWithToggle(
-                placeholder: "Contraseña",
+                placeholder: L10n.Auth.Field.password,
                 text: $password,
                 isSecure: $showPassword,
                 textContentType: .password,
@@ -51,7 +51,7 @@ struct EmailPasswordLoginForm: View {
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             .scaleEffect(0.8)
                     }
-                    Text(isLoading ? "Iniciando sesión..." : "Iniciar Sesión")
+                    Text(isLoading ? L10n.Auth.Login.signingIn : L10n.Auth.Login.signIn)
                 }
                 .font(.headline)
                 .foregroundColor(.white)
@@ -71,7 +71,7 @@ struct EmailPasswordLoginForm: View {
 
             if canUseBiometric {
                 Button(action: onSwitchToBiometric) {
-                    Text("Usar \(biometricName)")
+                    Text(L10n.Auth.Login.useBiometric(biometricName))
                         .font(.callout)
                         .padding(.top, 5)
                         .foregroundColor(Color("AppTextSecondary"))

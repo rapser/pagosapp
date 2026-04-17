@@ -26,6 +26,9 @@ final class ReminderSyncCoordinator {
     var syncError: Error?
 
     private let lastSyncKey = "lastReminderSyncDate"
+    private let maxRetryAttempts = 3
+    private let minimumSyncTriggerInterval: TimeInterval = 10
+    private var lastSyncTriggerDate: Date?
 
     init(
         syncRemindersUseCase: SyncRemindersUseCase,
@@ -47,25 +50,60 @@ final class ReminderSyncCoordinator {
             logger.warning("⚠️ Reminder sync already in progress")
             return
         }
+        if let lastSyncTriggerDate,
+           Date().timeIntervalSince(lastSyncTriggerDate) < minimumSyncTriggerInterval {
+            logger.info("⏭️ Reminder sync skipped due to cooldown")
+            return
+        }
         isSyncing = true
+        lastSyncTriggerDate = Date()
         syncError = nil
         defer { isSyncing = false }
 
-        logger.info("🔄 Starting reminder synchronization")
-        let result = await syncRemindersUseCase.execute()
+        func shouldRetry(_ error: ReminderSyncError) -> Bool {
+            switch error {
+            case .notAuthenticated:
+                return false
+            case .uploadFailed, .downloadFailed, .unknown:
+                return true
+            }
+        }
 
-        switch result {
-        case .success:
-            lastSyncDate = Date()
-            UserDefaults.standard.set(lastSyncDate, forKey: lastSyncKey)
-            syncError = nil
-            await updatePendingSyncCount()
-            await rescheduleAllReminderNotifications()
-            logger.info("✅ Reminder synchronization completed successfully")
-        case .failure(let error):
-            logger.error("❌ Reminder synchronization failed: \(error)")
-            syncError = error
-            throw error
+        func retryDelayNanoseconds(forAttempt attempt: Int) -> UInt64 {
+            // 0.5s, 1s, 2s (+ jitter up to 250ms)
+            let baseDelays: [UInt64] = [500_000_000, 1_000_000_000, 2_000_000_000]
+            let base = baseDelays[min(max(attempt - 1, 0), baseDelays.count - 1)]
+            let jitter = UInt64.random(in: 0...250_000_000)
+            return base + jitter
+        }
+
+        logger.info("🔄 Starting reminder synchronization")
+
+        for attempt in 1...maxRetryAttempts {
+            let result = await syncRemindersUseCase.execute()
+
+            switch result {
+            case .success:
+                lastSyncDate = Date()
+                UserDefaults.standard.set(lastSyncDate, forKey: lastSyncKey)
+                syncError = nil
+                await updatePendingSyncCount()
+                await rescheduleAllReminderNotifications()
+                logger.info("✅ Reminder synchronization completed successfully")
+                return
+
+            case .failure(let error):
+                logger.error("❌ Reminder synchronization failed: \(error)")
+                syncError = error
+
+                let isLastAttempt = attempt == maxRetryAttempts
+                if !isLastAttempt, shouldRetry(error) {
+                    let delay = retryDelayNanoseconds(forAttempt: attempt)
+                    try? await Task.sleep(nanoseconds: delay)
+                    continue
+                }
+                throw error
+            }
         }
     }
 
