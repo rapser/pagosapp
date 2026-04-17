@@ -34,7 +34,7 @@ final class VerifyRemoteSessionUseCase: VerifyRemoteSessionUseCaseProtocol {
         do {
             // Add delay for network stability if requested 
             if allowNetworkDelay {
-                try await Task.sleep(for: .seconds(1.5))
+                try await Task.sleep(for: SessionVerificationTiming.networkStabilityDelay)
             }
             
             let hasActiveSession = await getAuthenticationStatusUseCase.execute()

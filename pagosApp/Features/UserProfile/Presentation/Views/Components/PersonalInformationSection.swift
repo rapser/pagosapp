@@ -73,8 +73,8 @@ struct PersonalInformationSection: View {
             } else {
                 ProfileFieldRow(
                     icon: "person.2.fill",
-                    title: "Género",
-                    value: profile.gender?.displayName
+                    title: L10n.Profile.fieldGender,
+                    value: profile.gender.map { L10n.Profile.genderLabel($0) }
                 )
             }
 
@@ -91,7 +91,7 @@ struct PersonalInformationSection: View {
             } else {
                 ProfileFieldRow(
                     icon: "calendar",
-                    title: "Fecha de nacimiento",
+                    title: L10n.Profile.fieldBirthDate,
                     value: profile.dateOfBirth?.formatted(date: .long, time: .omitted)
                 )
             }

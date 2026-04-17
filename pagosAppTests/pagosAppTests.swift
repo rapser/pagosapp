@@ -5,12 +5,12 @@
 //  Created by miguel tomairo on 5/09/25.
 //
 
+import Foundation
 import Testing
 
 struct pagosAppTests {
 
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+    @Test func bundleLoads() {
+        #expect(Bundle.main.bundleIdentifier != nil)
     }
-
 }

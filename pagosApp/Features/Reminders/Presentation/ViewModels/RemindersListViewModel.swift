@@ -76,13 +76,10 @@ final class RemindersListViewModel: BaseViewModel {
                     self.allReminders = list.sorted { $0.dueDate < $1.dueDate }
                     self.logDebug("Loaded \(list.count) reminders")
                     
-                    // Always reschedule notifications on every load to ensure accuracy
-                    // (covers reminders downloaded from sync, phone restarts, etc.)
-                    if let notificationsUseCase = self.rescheduleNotificationsUseCase {
-                        Task { @MainActor in
-                            notificationsUseCase.rescheduleAll(list)
-                        }
-                    }
+                    ListNotificationBootstrap.runReminderRescheduleAfterFetch(
+                        reminders: list,
+                        useCase: self.rescheduleNotificationsUseCase
+                    )
                     
                     return list
                 case .failure(let error):

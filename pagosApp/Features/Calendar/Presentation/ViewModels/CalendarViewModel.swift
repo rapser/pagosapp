@@ -76,7 +76,7 @@ final class CalendarViewModel: BaseViewModel {
                 return (paymentsRes, remindersRes)
             },
             onError: { _ in
-                self.setError("Error al cargar pagos")
+                self.setError(L10n.Calendar.errorLoadPayments)
             }
         )
     }
@@ -98,7 +98,7 @@ final class CalendarViewModel: BaseViewModel {
                 }
             },
             onError: { _ in
-                self.setError("Error al cargar pagos para la fecha seleccionada")
+                self.setError(L10n.Calendar.errorLoadPaymentsForDate)
             }
         )
 
