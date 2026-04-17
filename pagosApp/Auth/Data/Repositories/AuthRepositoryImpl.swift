@@ -33,8 +33,6 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
 
     func signUp(credentials: RegistrationCredentials) async -> Result<AuthSession, AuthError> {
         do {
-            logger.info("\(L10n.Log.Auth.signUp)")
-
             // Sign up via remote data source
             let sessionDTO = try await remoteDataSource.signUp(
                 email: credentials.email,
@@ -49,8 +47,6 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             let keychainDTO = KeychainAuthDTOMapper().toDTO(from: session)
             try localDataSource.saveTokens(keychainDTO)
 
-            logger.info("\(L10n.Log.Auth.signUpSuccess)")
-
             return .success(session)
 
         } catch let error as AuthError {
@@ -64,8 +60,6 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
 
     func signIn(credentials: LoginCredentials) async -> Result<AuthSession, AuthError> {
         do {
-            logger.info("\(L10n.Log.Auth.signIn)")
-
             // Sign in via remote data source
             let sessionDTO = try await remoteDataSource.signIn(
                 email: credentials.email,
@@ -79,8 +73,6 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             let keychainDTO = KeychainAuthDTOMapper().toDTO(from: session)
             try localDataSource.saveTokens(keychainDTO)
 
-            logger.info("\(L10n.Log.Auth.signInSuccess)")
-
             return .success(session)
 
         } catch let error as AuthError {
@@ -93,12 +85,9 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
     }
 
     func signOut() async -> Result<Void, AuthError> {
-        logger.info("\(L10n.Log.Auth.signOut)")
-
         do {
             try await remoteDataSource.signOut()
             localDataSource.clearTokens()
-            logger.info("\(L10n.Log.Auth.signOutSuccess)")
             return .success(())
         } catch {
             // Offline-first: local logout should still succeed, but remote signOut failure must be observable.
@@ -111,28 +100,21 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
 
     func getCurrentSession() async -> AuthSession? {
         do {
-            logger.debug("\(L10n.Log.Auth.gettingSession)")
-
             // Try to get session from remote
             if let sessionDTO = try await remoteDataSource.getCurrentSession() {
                 let session = mapper.toDomain(sessionDTO)
-                logger.debug("\(L10n.Log.Auth.sessionRetrieved)")
                 return session
             }
 
-            logger.debug("\(L10n.Log.Auth.noRemoteSession)")
             return nil
 
         } catch {
-            logger.debug("\(L10n.Log.Auth.sessionFailed(error.localizedDescription))")
             return nil
         }
     }
 
     func refreshSession(refreshToken: String) async -> Result<AuthSession, AuthError> {
         do {
-            logger.info("\(L10n.Log.Auth.refreshingSession)")
-
             // Refresh session via remote
             let sessionDTO = try await remoteDataSource.refreshSession(refreshToken: refreshToken)
 
@@ -142,8 +124,6 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             // Save new tokens locally
             let keychainDTO = KeychainAuthDTOMapper().toDTO(from: session)
             try localDataSource.saveTokens(keychainDTO)
-
-            logger.info("\(L10n.Log.Auth.sessionRefreshed)")
 
             return .success(session)
 
@@ -160,11 +140,7 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
 
     func sendPasswordResetEmail(email: String) async -> Result<Void, AuthError> {
         do {
-            logger.info("\(L10n.Log.Auth.passwordResetEmail)")
-
             try await remoteDataSource.sendPasswordResetEmail(email: email)
-
-            logger.info("\(L10n.Log.Auth.passwordResetEmailSent)")
 
             return .success(())
 
@@ -179,11 +155,7 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
 
     func resetPassword(token: String, newPassword: String) async -> Result<Void, AuthError> {
         do {
-            logger.info("\(L10n.Log.Auth.resettingPassword)")
-
             try await remoteDataSource.resetPassword(token: token, newPassword: newPassword)
-
-            logger.info("\(L10n.Log.Auth.passwordResetSuccess)")
 
             return .success(())
 
@@ -198,11 +170,7 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
 
     func updateEmail(newEmail: String) async -> Result<Void, AuthError> {
         do {
-            logger.info("\(L10n.Log.Auth.updatingEmail)")
-
             try await remoteDataSource.updateEmail(newEmail: newEmail)
-
-            logger.info("\(L10n.Log.Auth.emailUpdated)")
 
             return .success(())
 
@@ -217,11 +185,7 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
 
     func updatePassword(newPassword: String) async -> Result<Void, AuthError> {
         do {
-            logger.info("\(L10n.Log.Auth.updatingPassword)")
-
             try await remoteDataSource.updatePassword(newPassword: newPassword)
-
-            logger.info("\(L10n.Log.Auth.passwordUpdated)")
 
             return .success(())
 
@@ -238,14 +202,10 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
 
     func deleteAccount() async -> Result<Void, AuthError> {
         do {
-            logger.info("\(L10n.Log.Auth.deletingAccount)")
-
             try await remoteDataSource.deleteAccount()
 
             // Clear local tokens
             localDataSource.clearTokens()
-
-            logger.info("\(L10n.Log.Auth.accountDeleted)")
 
             return .success(())
 
