@@ -23,10 +23,6 @@ enum SupabaseClientFactory {
             let url = try AppConfiguration.supabaseURL
             let key = try AppConfiguration.supabaseKey
 
-            logger.info("✅ Supabase URL: \(url.absoluteString)")
-            logger.info("✅ Supabase Key length: \(key.count) characters")
-            logger.info("✅ Supabase client initialized successfully")
-
             let session = makePinnedSessionIfPossible()
             let options = SupabaseClientOptions(global: .init(session: session))
             return SupabaseClient(supabaseURL: url, supabaseKey: key, options: options)
@@ -47,7 +43,6 @@ enum SupabaseClientFactory {
         let pinned = certificateURLs.compactMap { try? Data(contentsOf: $0) }
 
         guard !pinned.isEmpty else {
-            logger.info("ℹ️ No pinned certificates found in bundle; using custom URLSession without pinning")
             return URLSession(configuration: configuration)
         }
 

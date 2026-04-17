@@ -104,26 +104,18 @@ final class SessionCoordinator {
         if shouldShowBiometric {
             // User is logged in but needs Face ID unlock
             self.isAuthenticated = false
-            logger.info("🔐 Init: Biometric lock enabled - will show Face ID screen")
         } else if isLocalSessionValid {
             // Has valid local session, no biometric needed - authenticate immediately
             self.isAuthenticated = true
-            logger.info("✅ Init: Valid local session - authenticated immediately (no flash)")
         } else {
             // No session or expired locally - show login
             self.isAuthenticated = false
-            if isSessionActive && sessionRepository.isSessionExpiredSync {
-                logger.info("📱 Init: Session expired locally - showing login screen")
-            } else {
-                logger.info("📱 Init: No active session - showing login screen")
-            }
         }
 
         // Listen for logout notifications
         Task { [weak self] in
             guard let self else { return }
             for await _ in NotificationCenter.default.notifications(named: NSNotification.Name("UserDidLogout")) {
-                self.logger.info("📢 Received UserDidLogout notification - updating UI state")
                 self.isAuthenticated = false
                 self.isSessionActive = false
             }
@@ -132,7 +124,6 @@ final class SessionCoordinator {
         // Background verification and biometric check - with delay to prevent immediate UI changes
         Task {
             guard !hasPerformedInitialCheck else {
-                logger.debug("⏭️ Skipping duplicate initial check")
                 return
             }
             hasPerformedInitialCheck = true
@@ -141,7 +132,6 @@ final class SessionCoordinator {
             
             // Only proceed with remote verification if user is still supposed to be authenticated
             guard self.isAuthenticated else {
-                logger.debug("🔍 Skipping remote check - user not authenticated")
                 return
             }
 
@@ -152,7 +142,7 @@ final class SessionCoordinator {
             // Handle verification results conservatively
             switch verificationResult {
             case .valid:
-                logger.debug("✅ Remote session verification passed")
+                break
             case .invalid:
                 // Verify locally before forced logout
                 let isLocallyExpired = await sessionRepository.isSessionExpired()
@@ -162,12 +152,12 @@ final class SessionCoordinator {
                     self.isAuthenticated = false
                     self.isSessionActive = false
                 } else {
-                    logger.info("🔄 Remote session expired but local valid - treating as network issue")
+                    break
                 }
-            case .networkError(let error):
-                logger.info("🌐 Network error during remote verification: \(error.localizedDescription) - keeping local session")
+            case .networkError:
+                break
             case .timeout:
-                logger.info("⏰ Remote verification timed out - keeping local session")
+                break
             }
         }
     }
@@ -178,7 +168,6 @@ final class SessionCoordinator {
 
         #if targetEnvironment(simulator)
         canUseBiometrics = true
-        logger.info("🧪 Simulator detected: Face ID enabled for testing")
         #endif
     }
 
@@ -208,11 +197,9 @@ final class SessionCoordinator {
             object: nil,
             userInfo: userInfo
         )
-        logger.info("📢 Posted UserDidLogin notification with userId: \(userId?.uuidString ?? "nil")")
 
         // Use specialized UseCase for sync coordination (non-blocking)
         Task.detached { @MainActor in
-            self.logger.info("🔄 Starting background sync after login")
             await self.coordinateSyncUseCase.handlePostLoginSync()
         }
     }
@@ -253,10 +240,8 @@ final class SessionCoordinator {
         switch result {
         case .success(let isValid):
             if !isValid {
-                logger.info("⏰ Session validation failed - checking if should logout")
                 await checkAndLogoutIfOnline()
             } else {
-                logger.debug("✅ Session is valid")
                 await sessionRepository.updateLastActiveTimestamp()
             }
 
@@ -270,12 +255,9 @@ final class SessionCoordinator {
 
     /// Check if online and logout only if connected (allows offline work)
     private func checkAndLogoutIfOnline() async {
-        logger.info("🔍 Checking if should logout due to inactivity...")
-
         do {
             // Use Use Case to ensure valid session (Clean Architecture)
             try await ensureValidSessionUseCase.execute()
-            logger.info("✅ Valid session in backend - not logging out")
             await sessionRepository.updateLastActiveTimestamp()
         } catch {
             logger.warning("⚠️ Could not verify session: \(error.localizedDescription)")
@@ -285,11 +267,7 @@ final class SessionCoordinator {
 
             if isAuthenticated {
                 // Online but session expired -> logout
-                logger.info("🌐 Connection available but session expired - logging out due to inactivity")
                 await performLogout(inactivity: true, clearCredentials: true)
-            } else {
-                // Offline -> don't logout
-                logger.info("📴 No connection - user can continue working offline indefinitely")
             }
         }
     }
@@ -303,8 +281,6 @@ final class SessionCoordinator {
 
     /// Unlink device - clears all local data
     func unlinkDevice() async {
-        logger.info("🔓 Unlinking device - clearing all local data")
-
         isLoading = true
         defer { isLoading = false }
 
@@ -319,13 +295,9 @@ final class SessionCoordinator {
 
         self.isAuthenticated = false
         self.isSessionActive = false
-
-        logger.info("✅ Device unlinked - all local data removed")
     }
 
     private func performLogout(inactivity: Bool, clearCredentials: Bool) async {
-        logger.info("🚪 Performing logout")
-
         isLoading = true
         defer { isLoading = false }
 
@@ -333,9 +305,6 @@ final class SessionCoordinator {
 
         if clearCredentials {
             _ = clearBiometricCredentialsUseCase.execute()
-            logger.info("🗑️ Credentials deleted from Keychain")
-        } else {
-            logger.info("🔐 Credentials kept in Keychain (biometric enabled)")
         }
 
         await endSession(inactivity: inactivity)
@@ -357,15 +326,12 @@ final class SessionCoordinator {
             return
         }
 
-        logger.info("🔐 Delegating biometric authentication to BiometricLoginUseCase")
-
         // No loading indicator - Face ID shows its own system UI
         let result = await biometricLoginUseCase.execute()
 
         switch result {
         case .success:
             await startSession()
-            logger.info("✅ Biometric login successful")
 
         case .failure(let error):
             logger.error("❌ Biometric login failed: \(error.errorCode)")
@@ -379,7 +345,6 @@ final class SessionCoordinator {
         await sessionRepository.clearSession()
 
         self.isSessionActive = false
-        logger.info("🔐 Credentials removed from Keychain (biometric disabled)")
     }
 
     /// Check if biometric credentials are stored

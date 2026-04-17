@@ -139,7 +139,6 @@ final class KeychainBiometricCredentialsDataSource: BiometricCredentialsDataSour
 
         let status = SecItemCopyMatching(query as CFDictionary, nil)
         let hasCredentials = status == errSecSuccess
-        logger.debug("🔍 Has stored credentials: \(hasCredentials)")
         return hasCredentials
     }
 
