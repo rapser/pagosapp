@@ -12,20 +12,33 @@
 "general.retry" = "Tentar novamente";
 "general.error" = "Erro";
 "general.loading" = "Carregando...";
+"general.yes" = "Sim";
+"general.no" = "Não";
+"general.network.offline" = "Sem conexão com a internet";
+"general.network.timeout" = "A solicitação expirou";
+"general.network.generic" = "Erro de rede";
 
 // MARK: - Auth
+"auth.field.email" = "E-mail";
+"auth.field.password" = "Senha";
+"auth.field.confirmPassword" = "Confirmar senha";
 "auth.login.welcome" = "Bem-vindo";
 "auth.login.forgotPassword" = "Esqueceu sua senha?";
 "auth.login.noAccount" = "Não tem conta? Cadastre-se aqui";
 "auth.login.useBiometric" = "Usar %@";
+"auth.login.signIn" = "Entrar";
+"auth.login.signingIn" = "Entrando...";
 "auth.register.title" = "Criar Conta";
 "auth.register.back" = "Voltar";
 "auth.register.passwordHintMin" = "Mínimo 8 caracteres";
 "auth.register.passwordMatch" = "As senhas coincidem";
+"auth.register.signUp" = "Cadastrar";
+"auth.register.signingUp" = "Cadastrando...";
 "auth.forgotPassword.title" = "Redefinir Senha";
 "auth.forgotPassword.description" = "Digite seu e-mail e enviaremos um link para redefinir sua senha.";
 "auth.forgotPassword.back" = "Voltar";
 "auth.forgotPassword.emailSent" = "Um e-mail para redefinir sua senha foi enviado. Verifique sua caixa de entrada.";
+"auth.forgotPassword.sendFailed" = "Não foi possível enviar o e-mail de redefinição. Tente novamente.";
 "auth.resetPassword.title" = "Redefinir Senha";
 "auth.resetPassword.newPassword" = "Nova Senha";
 "auth.resetPassword.confirmPassword" = "Confirmar Senha";
@@ -33,6 +46,14 @@
 "auth.resetPassword.button" = "Redefinir Senha";
 "auth.resetPassword.goToLogin" = "Ir para Login";
 "auth.resetPassword.successMessage" = "Sua senha foi redefinida com sucesso. Agora você pode entrar com sua nova senha.";
+"auth.resetPassword.promptNewPassword" = "Digite sua nova senha.";
+"auth.resetPassword.successAlertTitle" = "Senha atualizada!";
+"auth.resetPassword.resetFailedRetry" = "Não foi possível redefinir a senha. Tente novamente.";
+"auth.biometric.useToAccess" = "Use %@ para entrar";
+"auth.biometric.signInWith" = "Entrar com %@";
+"auth.biometric.a11ySignIn" = "Entrar com %@";
+"auth.biometric.a11yHintLoading" = "Autenticando";
+"auth.biometric.a11yHintIdle" = "Toque para autenticar com %@";
 
 // MARK: - Payments
 "payments.list.title" = "Meus Pagamentos";
@@ -114,6 +135,7 @@
 
 // MARK: - Reminders
 "reminders.listTitle" = "Lembretes";
+"reminders.placeholder.comingSoon" = "Em breve";
 "reminders.filter" = "Filtrar";
 "reminders.filter.currentMonth" = "Próximos";
 "reminders.filter.futureMonths" = "Futuros";
@@ -175,6 +197,8 @@
 "calendar.alert.noPaymentsToSyncMessage" = "Não há pagamentos para sincronizar na data selecionada.";
 "calendar.alert.accessDenied" = "Acesso Negado";
 "calendar.alert.accessDeniedMessage" = "Por favor, habilite o acesso ao calendário em Ajustes.";
+"calendar.error.loadPayments" = "Erro ao carregar pagamentos";
+"calendar.error.loadPaymentsForDate" = "Erro ao carregar pagamentos para a data selecionada";
 
 // MARK: - Settings
 "settings.title" = "Ajustes";
@@ -246,6 +270,11 @@
 "profile.field.name" = "Nome";
 "profile.field.city" = "Cidade";
 "profile.field.country" = "País";
+"profile.field.gender" = "Gênero";
+"profile.field.birthDate" = "Data de nascimento";
+"profile.selectDate" = "Selecionar";
+"profile.notSpecified" = "Não especificado";
+"profile.datePickerTitle" = "Data";
 "profile.noProfile.title" = "Sem Perfil";
 "profile.noProfile.description" = "Nenhuma informação de perfil encontrada.";
 "profile.updated.title" = "Perfil atualizado";
@@ -265,6 +294,94 @@
 "sync.cannotSync" = "Não é possível sincronizar no momento";
 "sync.recoverySuggestion" = "Verifique sua conexão com a internet. Você pode continuar trabalhando localmente e sincronizar depois.";
 
+// MARK: - Local push notifications
+"notifications.payment.title" = "Lembrete de pagamento";
+"notifications.payment.subtitle.sameDay" = "Vence hoje: %@!";
+"notifications.payment.body.sameDay" = "Não esqueça de pagar %@.";
+"notifications.payment.subtitle.oneDayBefore" = "Em 1 dia: %@";
+"notifications.payment.subtitle.nDaysBefore" = "Em %d dias: %@";
+"notifications.payment.body.amount" = "Valor: %@";
+"notifications.reminder.title" = "Lembrete";
+"notifications.reminder.body.sameDay" = "Hoje: %@.";
+"notifications.reminder.subtitle.month" = "Daqui a 1 mês: %@";
+"notifications.reminder.subtitle.twoWeeks" = "Daqui a 2 semanas: %@";
+"notifications.reminder.subtitle.week" = "Daqui a 1 semana: %@";
+"notifications.reminder.subtitle.oneDay" = "Em 1 dia: %@";
+"notifications.reminder.subtitle.nDays" = "Em %d dias: %@";
+"notifications.reminder.body.withDate" = "%@ — %@";
+
+// MARK: - Debug
+"debug.notifications.navTitle" = "Depuração de notificações";
+"debug.notifications.statusTitle" = "Estado das notificações";
+"debug.notifications.authorization" = "Autorização:";
+"debug.notifications.pending" = "Notificações pendentes:";
+"debug.notifications.subReminders" = "- Lembretes:";
+"debug.notifications.subPayments" = "- Pagamentos:";
+"debug.notifications.lastAction" = "Última ação";
+"debug.notifications.testSectionTitle" = "Teste de notificação";
+"debug.notifications.reminderTitlePlaceholder" = "Título do lembrete";
+"debug.notifications.dueDateLabel" = "Data de vencimento";
+"debug.notifications.scheduleTest" = "Agendar notificação de teste";
+"debug.notifications.rescheduleAllReminders" = "🔄 Reagendar TODAS as notificações de lembretes";
+"debug.notifications.rescheduleAllPayments" = "💳 Reagendar TODAS as notificações de pagamentos";
+"debug.notifications.remindersListTitle" = "Notificações de lembretes (%d)";
+"debug.notifications.paymentsListTitle" = "Notificações de pagamentos (%d)";
+"debug.notifications.refresh" = "Atualizar estado";
+"debug.notifications.viewLogs" = "Ver logs detalhados";
+"debug.notifications.requestPermission" = "Solicitar permissão";
+"debug.notifications.cancelAll" = "Cancelar todas as notificações";
+"debug.notifications.auth.authorized" = "Autorizada";
+"debug.notifications.auth.denied" = "Negada";
+"debug.notifications.auth.notDetermined" = "Não determinada";
+"debug.notifications.auth.provisional" = "Provisória";
+"debug.notifications.auth.ephemeral" = "Efêmera";
+"debug.notifications.auth.unknown" = "Desconhecida";
+"debug.notifications.triggerUnknown" = "Gatilho desconhecido";
+"debug.notifications.msg.testScheduled" = "✅ Notificação de teste agendada: %@";
+"debug.notifications.msg.reschedulingReminders" = "🔄 Reagendando notificações de lembretes...";
+"debug.notifications.msg.rescheduledReminders" = "✅ Reagendadas %d notificações de lembretes";
+"debug.notifications.msg.errorFetchReminders" = "❌ Erro ao obter lembretes: %@";
+"debug.notifications.msg.reschedulingPayments" = "🔄 Reagendando notificações de pagamentos...";
+"debug.notifications.msg.rescheduledPayments" = "✅ Reagendadas notificações para %d pagamentos";
+"debug.notifications.msg.errorFetchPayments" = "❌ Erro ao obter pagamentos: %@";
+"debug.notifications.msg.cancelledAll" = "🗑️ Todas as notificações canceladas";
+"debug.notifications.msg.logsToConsole" = "🔍 Logs detalhados enviados ao console";
+"debug.notifications.msg.requestingPermission" = "🔐 Solicitando permissão de notificação...";
+"debug.session.navTitle" = "Depuração de sessão";
+"debug.session.sectionCurrent" = "Estado atual da sessão";
+"debug.session.sectionDetails" = "Detalhes da sessão";
+"debug.session.sectionActions" = "Ações de teste";
+"debug.session.sectionInstructions" = "Instruções";
+"debug.session.isAuthenticated" = "Autenticado";
+"debug.session.isSessionActive" = "Sessão ativa";
+"debug.session.canUseBiometric" = "Pode usar biometria";
+"debug.session.checkYes" = "✅ Sim";
+"debug.session.checkNo" = "❌ Não";
+"debug.session.refreshCount" = "Contador de atualização";
+"debug.session.refreshInfo" = "Atualizar informações da sessão";
+"debug.session.forceCheck" = "Forçar verificação da sessão";
+"debug.session.simulateRestart" = "Simular reinício do app";
+"debug.session.clearData" = "Limpar todos os dados da sessão";
+"debug.session.instructionIntro" = "Use esta tela para testar o arranque da sessão e evitar flicker na tela de login.";
+"debug.session.instructionRestart" = "«Simular reinício do app» testa a lógica de arranque sem fechar o aplicativo.";
+"debug.session.instructionWatch" = "Observe mudanças imediatas versus verificações em segundo plano.";
+"debug.session.info.localActive" = "Ativa local: %@";
+"debug.session.info.localExpired" = "Expirada local: %@";
+"debug.session.info.remoteValid" = "Válida remotamente: %@";
+"debug.session.info.lastActive" = "Última atividade: %@";
+"debug.session.info.elapsedSeconds" = "Decorrido: %d s";
+"debug.session.info.lastActiveNone" = "Última atividade: nenhuma";
+"debug.session.info.debugMode" = "Modo depuração: tempo de sessão desativado";
+"debug.session.info.releaseMode" = "Modo release: tempo de sessão de 1 semana ativo";
+"debug.notificationSettings.navTitle" = "Depuração de ajustes de notificação";
+"debug.notificationSettings.sectionPension" = "Lembrete pensão";
+"debug.notificationSettings.sectionSavings" = "Lembrete poupança";
+"debug.notificationSettings.sectionOther" = "Outros lembretes";
+"debug.notificationSettings.sectionDebugInfo" = "Informação de depuração";
+"debug.notificationSettings.pensionDays" = "Dias pensão: %@";
+"debug.notificationSettings.savingsDays" = "Dias poupança: %@";
+"debug.notificationSettings.otherDays" = "Dias outros: %@";
+
 // MARK: - Tab bar
 "tab.payments" = "Pagamentos";
 "tab.reminders" = "Lembretes";
@@ -281,6 +398,7 @@
 "auth.error.userNotFound" = "Usuário não encontrado";
 "auth.error.sessionExpired" = "Sessão expirada. Entre novamente";
 "auth.error.network" = "Erro de conexão. Verifique sua internet";
+"auth.error.tooManyAttempts" = "Muitas tentativas falhadas. Tente novamente após %@.";
 "auth.error.unknown" = "%@";
 
 // MARK: - Gender

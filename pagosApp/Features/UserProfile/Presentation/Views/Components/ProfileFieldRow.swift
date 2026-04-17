@@ -16,7 +16,7 @@ struct ProfileFieldRow: View {
     init(icon: String, title: String, value: String?, isOptional: Bool = true) {
         self.icon = icon
         self.title = title
-        self.value = value ?? "No especificado"
+        self.value = value ?? L10n.Profile.notSpecified
         self.isOptional = isOptional
     }
     

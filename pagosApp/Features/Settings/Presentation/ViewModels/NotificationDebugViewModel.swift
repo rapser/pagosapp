@@ -61,7 +61,7 @@ final class NotificationDebugViewModel: BaseViewModel {
             let triggerInfo = if let trigger = request.trigger as? UNCalendarNotificationTrigger {
                 "\(trigger.dateComponents.day ?? 0)/\(trigger.dateComponents.month ?? 0) \(trigger.dateComponents.hour ?? 0):\(String(format: "%02d", trigger.dateComponents.minute ?? 0))"
             } else {
-                "Unknown trigger"
+                L10n.Debug.Notifications.triggerUnknown
             }
             return "\(request.content.subtitle) - \(triggerInfo)"
         }
@@ -70,7 +70,7 @@ final class NotificationDebugViewModel: BaseViewModel {
             let triggerInfo = if let trigger = request.trigger as? UNCalendarNotificationTrigger {
                 "\(trigger.dateComponents.day ?? 0)/\(trigger.dateComponents.month ?? 0) \(trigger.dateComponents.hour ?? 0):\(String(format: "%02d", trigger.dateComponents.minute ?? 0))"
             } else {
-                "Unknown trigger"
+                L10n.Debug.Notifications.triggerUnknown
             }
             return "\(request.content.subtitle) - \(triggerInfo)"
         }
@@ -86,7 +86,7 @@ final class NotificationDebugViewModel: BaseViewModel {
             notificationSettings: defaultSettings
         )
         
-        lastActionMessage = "✅ Programada notificación de prueba: \(title)"
+        lastActionMessage = L10n.Debug.Notifications.messageTestScheduled(title)
         
         // Refresh after a short delay
         Task { @MainActor in
@@ -97,7 +97,7 @@ final class NotificationDebugViewModel: BaseViewModel {
     
     func rescheduleAllReminderNotifications() async {
         logDebug("Starting reschedule of all reminder notifications")
-        lastActionMessage = "🔄 Reescalando notificaciones de recordatorios..."
+        lastActionMessage = L10n.Debug.Notifications.messageReschedulingReminders
         
         let result = await getAllRemindersUseCase.execute()
         
@@ -105,11 +105,11 @@ final class NotificationDebugViewModel: BaseViewModel {
         case .success(let reminders):
             logDebug("Found \(reminders.count) reminders to reschedule")
             rescheduleNotificationsUseCase.rescheduleAll(reminders)
-            lastActionMessage = "✅ Reescaladas \(reminders.count) notificaciones de recordatorios"
-            
+            lastActionMessage = L10n.Debug.Notifications.messageRescheduledReminders(reminders.count)
+
         case .failure(let error):
             logError(error)
-            lastActionMessage = "❌ Error al obtener recordatorios: \(error)"
+            lastActionMessage = L10n.Debug.Notifications.messageErrorFetchReminders(error.localizedDescription)
         }
         
         // Refresh status after rescheduling
@@ -121,7 +121,7 @@ final class NotificationDebugViewModel: BaseViewModel {
     
     func requestAuthorization() {
         notificationDataSource.requestAuthorization()
-        lastActionMessage = "🔐 Solicitando permisos de notificación..."
+        lastActionMessage = L10n.Debug.Notifications.messageRequestingPermission
         
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(1))
@@ -131,7 +131,7 @@ final class NotificationDebugViewModel: BaseViewModel {
     
     func rescheduleAllPaymentNotifications() async {
         logDebug("Starting reschedule of all payment notifications")
-        lastActionMessage = "🔄 Reescalando notificaciones de pagos..."
+        lastActionMessage = L10n.Debug.Notifications.messageReschedulingPayments
 
         let result = await getAllPaymentsUseCase.execute()
 
@@ -139,11 +139,11 @@ final class NotificationDebugViewModel: BaseViewModel {
         case .success(let payments):
             logDebug("Found \(payments.count) payments to reschedule")
             schedulePaymentNotificationsUseCase.rescheduleAll(payments)
-            lastActionMessage = "✅ Reescaladas notificaciones para \(payments.count) pagos"
+            lastActionMessage = L10n.Debug.Notifications.messageRescheduledPayments(payments.count)
 
         case .failure(let error):
             logError(error)
-            lastActionMessage = "❌ Error al obtener pagos: \(error)"
+            lastActionMessage = L10n.Debug.Notifications.messageErrorFetchPayments(error.localizedDescription)
         }
 
         Task { @MainActor in
@@ -154,12 +154,12 @@ final class NotificationDebugViewModel: BaseViewModel {
 
     func cancelAllNotifications() async {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
-        lastActionMessage = "🗑️ Canceladas todas las notificaciones"
+        lastActionMessage = L10n.Debug.Notifications.messageCancelledAll
         await refreshStatus()
     }
     
     func debugPendingNotifications() async {
         await notificationDataSource.debugPendingNotifications()
-        lastActionMessage = "🔍 Logs detallados enviados a consola"
+        lastActionMessage = L10n.Debug.Notifications.messageLogsToConsole
     }
 }

@@ -37,12 +37,12 @@ final class ResetPasswordViewModel: BaseViewModel {
         logDebug("Attempting to reset password")
 
         guard newPassword == confirmPassword else {
-            setValidationError("Las contraseñas no coinciden")
+            setValidationError(L10n.Auth.ResetPassword.passwordsDontMatch)
             return
         }
 
         guard isPasswordStrong else {
-            setValidationError("La contraseña debe tener al menos 6 caracteres")
+            setValidationError(L10n.AuthErrorKeys.weakPassword)
             return
         }
 
@@ -64,7 +64,7 @@ final class ResetPasswordViewModel: BaseViewModel {
                 }
             },
             onError: { _ in
-                self.setError("Error al restablecer la contraseña. Inténtalo de nuevo.")
+                self.setError(L10n.Auth.ResetPassword.resetFailedRetry)
             }
         )
     }

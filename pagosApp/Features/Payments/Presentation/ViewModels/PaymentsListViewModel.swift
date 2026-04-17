@@ -154,13 +154,11 @@ final class PaymentsListViewModel: BaseViewModel {
                 payments = mapper.toUI(fetchedPayments)
                 logDebug("Fetched \(fetchedPayments.count) payments (silent refresh)")
 
-                // Reschedule notifications once on first load (even for silent refresh)
-                if !hasRescheduledNotifications, let notificationsUseCase = scheduleNotificationsUseCase {
-                    hasRescheduledNotifications = true
-                    Task { @MainActor in
-                        notificationsUseCase.rescheduleAll(fetchedPayments)
-                    }
-                }
+                ListNotificationBootstrap.runPaymentRescheduleIfNeeded(
+                    hasAlreadyRescheduled: &hasRescheduledNotifications,
+                    payments: fetchedPayments,
+                    useCase: scheduleNotificationsUseCase
+                )
             case .failure(let error):
                 logError(error)
             }
@@ -176,13 +174,11 @@ final class PaymentsListViewModel: BaseViewModel {
                     self.payments = self.mapper.toUI(fetchedPayments)
                     self.logDebug("Fetched \(fetchedPayments.count) payments")
                     
-                    // Reschedule notifications once on first load
-                    if !self.hasRescheduledNotifications, let notificationsUseCase = self.scheduleNotificationsUseCase {
-                        self.hasRescheduledNotifications = true
-                        Task { @MainActor in
-                            notificationsUseCase.rescheduleAll(fetchedPayments)
-                        }
-                    }
+                    ListNotificationBootstrap.runPaymentRescheduleIfNeeded(
+                        hasAlreadyRescheduled: &self.hasRescheduledNotifications,
+                        payments: fetchedPayments,
+                        useCase: self.scheduleNotificationsUseCase
+                    )
                     
                     return fetchedPayments
                 case .failure(let error):
