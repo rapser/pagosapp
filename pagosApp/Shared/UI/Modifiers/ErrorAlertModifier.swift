@@ -33,7 +33,7 @@ extension View {
     func errorAlert(
         isPresented: Binding<Bool>,
         message: String?,
-        title: String = "Error",
+        title: String = L10n.General.error,
         onDismiss: (() -> Void)? = nil
     ) -> some View {
         modifier(ErrorAlertModifier(isPresented: isPresented, message: message, title: title, onDismiss: onDismiss))

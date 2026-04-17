@@ -13,7 +13,7 @@ import SwiftUI
 @Observable
 final class PaymentsListViewModel: BaseViewModel {
     var payments: [PaymentUI] = [] {
-        didSet { recomputeGroupedPayments() }
+        didSet { scheduleGroupedPaymentsRecompute() }
     }
 
     private var filterSelection: PaymentFilterUI = .currentMonth
@@ -21,7 +21,7 @@ final class PaymentsListViewModel: BaseViewModel {
         get { filterSelection }
         set {
             filterSelection = newValue
-            recomputeGroupedPayments()
+            scheduleGroupedPaymentsRecompute()
         }
     }
 
@@ -35,6 +35,8 @@ final class PaymentsListViewModel: BaseViewModel {
 
     // Track if we've already rescheduled notifications on first load
     private var hasRescheduledNotifications = false
+    private var recomputeTask: Task<Void, Never>?
+    private let recomputeDebounceNanoseconds: UInt64 = 150_000_000
 
     // MARK: - Computed Properties
 
@@ -45,6 +47,15 @@ final class PaymentsListViewModel: BaseViewModel {
 
     /// Cached grouped payments — updated only when payments or filter change.
     private(set) var groupedPayments: [PaymentListItemUI] = []
+
+    private func scheduleGroupedPaymentsRecompute() {
+        recomputeTask?.cancel()
+        recomputeTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: self?.recomputeDebounceNanoseconds ?? 0)
+            guard !Task.isCancelled else { return }
+            self?.recomputeGroupedPayments()
+        }
+    }
 
     private func recomputeGroupedPayments() {
         var items: [PaymentListItemUI] = []
@@ -142,6 +153,12 @@ final class PaymentsListViewModel: BaseViewModel {
             case .success(let fetchedPayments):
                 payments = mapper.toUI(fetchedPayments)
                 logDebug("Fetched \(fetchedPayments.count) payments (silent refresh)")
+
+                ListNotificationBootstrap.runPaymentRescheduleIfNeeded(
+                    hasAlreadyRescheduled: &hasRescheduledNotifications,
+                    payments: fetchedPayments,
+                    useCase: scheduleNotificationsUseCase
+                )
             case .failure(let error):
                 logError(error)
             }
@@ -157,13 +174,11 @@ final class PaymentsListViewModel: BaseViewModel {
                     self.payments = self.mapper.toUI(fetchedPayments)
                     self.logDebug("Fetched \(fetchedPayments.count) payments")
                     
-                    // Reschedule notifications once on first load
-                    if !self.hasRescheduledNotifications, let notificationsUseCase = self.scheduleNotificationsUseCase {
-                        self.hasRescheduledNotifications = true
-                        Task { @MainActor in
-                            notificationsUseCase.rescheduleAll(fetchedPayments)
-                        }
-                    }
+                    ListNotificationBootstrap.runPaymentRescheduleIfNeeded(
+                        hasAlreadyRescheduled: &self.hasRescheduledNotifications,
+                        payments: fetchedPayments,
+                        useCase: self.scheduleNotificationsUseCase
+                    )
                     
                     return fetchedPayments
                 case .failure(let error):

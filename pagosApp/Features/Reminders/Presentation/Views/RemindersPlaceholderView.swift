@@ -14,7 +14,7 @@ struct RemindersPlaceholderView: View {
             ContentUnavailableView(
                 L10n.Tab.reminders,
                 systemImage: "bell.badge",
-                description: Text("Próximamente")
+                description: Text(L10n.Reminders.placeholderComingSoon)
             )
             .navigationTitle(L10n.Tab.reminders)
         }
