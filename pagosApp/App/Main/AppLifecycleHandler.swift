@@ -18,7 +18,7 @@ struct AppLifecycleHandler: ViewModifier {
                     stopForegroundCheckTimer()
                 }
             }
-            .onChange(of: scenePhase) { oldValue, newPhase in
+            .onChange(of: scenePhase) { _, newPhase in
                 if newPhase == .active {
                     if sessionCoordinator.isAuthenticated {
                         sessionCoordinator.checkSession()
