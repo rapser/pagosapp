@@ -9,7 +9,7 @@
 import SwiftUI
 
 @main
-struct pagosAppApp: App {
+struct PagosAppApp: App {
     var body: some Scene {
         WindowGroup {
             AppBootstrapView()
