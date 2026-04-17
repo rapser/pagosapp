@@ -12,20 +12,33 @@
 "general.retry" = "Retry";
 "general.error" = "Error";
 "general.loading" = "Loading...";
+"general.yes" = "Yes";
+"general.no" = "No";
+"general.network.offline" = "No internet connection";
+"general.network.timeout" = "The request timed out";
+"general.network.generic" = "A network error occurred";
 
 // MARK: - Auth
+"auth.field.email" = "Email";
+"auth.field.password" = "Password";
+"auth.field.confirmPassword" = "Confirm password";
 "auth.login.welcome" = "Welcome";
 "auth.login.forgotPassword" = "Forgot your password?";
 "auth.login.noAccount" = "Don't have an account? Sign up here";
 "auth.login.useBiometric" = "Use %@";
+"auth.login.signIn" = "Sign In";
+"auth.login.signingIn" = "Signing in...";
 "auth.register.title" = "Create Account";
 "auth.register.back" = "Back";
-"auth.register.passwordHintMin" = "Minimum 6 characters";
+"auth.register.passwordHintMin" = "Minimum 8 characters";
 "auth.register.passwordMatch" = "Passwords match";
+"auth.register.signUp" = "Sign up";
+"auth.register.signingUp" = "Signing up...";
 "auth.forgotPassword.title" = "Reset Password";
 "auth.forgotPassword.description" = "Enter your email and we'll send you a link to reset your password.";
 "auth.forgotPassword.back" = "Back";
 "auth.forgotPassword.emailSent" = "An email to reset your password has been sent. Check your inbox.";
+"auth.forgotPassword.sendFailed" = "Could not send the reset email. Please try again.";
 "auth.resetPassword.title" = "Reset Password";
 "auth.resetPassword.newPassword" = "New Password";
 "auth.resetPassword.confirmPassword" = "Confirm Password";
@@ -33,6 +46,14 @@
 "auth.resetPassword.button" = "Reset Password";
 "auth.resetPassword.goToLogin" = "Go to Login";
 "auth.resetPassword.successMessage" = "Your password has been reset successfully. You can now sign in with your new password.";
+"auth.resetPassword.promptNewPassword" = "Enter your new password.";
+"auth.resetPassword.successAlertTitle" = "Password updated!";
+"auth.resetPassword.resetFailedRetry" = "Could not reset your password. Please try again.";
+"auth.biometric.useToAccess" = "Use %@ to sign in";
+"auth.biometric.signInWith" = "Sign in with %@";
+"auth.biometric.a11ySignIn" = "Sign in with %@";
+"auth.biometric.a11yHintLoading" = "Authenticating";
+"auth.biometric.a11yHintIdle" = "Tap to authenticate with %@";
 
 // MARK: - Payments
 "payments.list.title" = "My Payments";
@@ -114,6 +135,7 @@
 
 // MARK: - Reminders
 "reminders.listTitle" = "Reminders";
+"reminders.placeholder.comingSoon" = "Coming soon";
 "reminders.filter" = "Filter";
 "reminders.filter.currentMonth" = "Upcoming";
 "reminders.filter.futureMonths" = "Future";
@@ -175,6 +197,8 @@
 "calendar.alert.noPaymentsToSyncMessage" = "No payments to sync for the selected date.";
 "calendar.alert.accessDenied" = "Access Denied";
 "calendar.alert.accessDeniedMessage" = "Please enable calendar access in Settings.";
+"calendar.error.loadPayments" = "Could not load payments";
+"calendar.error.loadPaymentsForDate" = "Could not load payments for the selected date";
 
 // MARK: - Settings
 "settings.title" = "Settings";
@@ -246,6 +270,11 @@
 "profile.field.name" = "Name";
 "profile.field.city" = "City";
 "profile.field.country" = "Country";
+"profile.field.gender" = "Gender";
+"profile.field.birthDate" = "Date of birth";
+"profile.selectDate" = "Select";
+"profile.notSpecified" = "Not specified";
+"profile.datePickerTitle" = "Date";
 "profile.noProfile.title" = "No Profile";
 "profile.noProfile.description" = "No profile information found.";
 "profile.updated.title" = "Profile updated";
@@ -265,6 +294,94 @@
 "sync.cannotSync" = "Cannot sync at this time";
 "sync.recoverySuggestion" = "Check your internet connection. You can keep working locally and sync later.";
 
+// MARK: - Local push notifications
+"notifications.payment.title" = "Payment reminder";
+"notifications.payment.subtitle.sameDay" = "Due today: %@!";
+"notifications.payment.body.sameDay" = "Don't forget to pay %@.";
+"notifications.payment.subtitle.oneDayBefore" = "In 1 day: %@";
+"notifications.payment.subtitle.nDaysBefore" = "In %d days: %@";
+"notifications.payment.body.amount" = "Amount: %@";
+"notifications.reminder.title" = "Reminder";
+"notifications.reminder.body.sameDay" = "Today: %@.";
+"notifications.reminder.subtitle.month" = "In 1 month: %@";
+"notifications.reminder.subtitle.twoWeeks" = "In 2 weeks: %@";
+"notifications.reminder.subtitle.week" = "In 1 week: %@";
+"notifications.reminder.subtitle.oneDay" = "In 1 day: %@";
+"notifications.reminder.subtitle.nDays" = "In %d days: %@";
+"notifications.reminder.body.withDate" = "%@ — %@";
+
+// MARK: - Debug
+"debug.notifications.navTitle" = "Notification debug";
+"debug.notifications.statusTitle" = "Notification status";
+"debug.notifications.authorization" = "Authorization:";
+"debug.notifications.pending" = "Pending notifications:";
+"debug.notifications.subReminders" = "- Reminders:";
+"debug.notifications.subPayments" = "- Payments:";
+"debug.notifications.lastAction" = "Last action";
+"debug.notifications.testSectionTitle" = "Test notification";
+"debug.notifications.reminderTitlePlaceholder" = "Reminder title";
+"debug.notifications.dueDateLabel" = "Due date";
+"debug.notifications.scheduleTest" = "Schedule test notification";
+"debug.notifications.rescheduleAllReminders" = "🔄 Reschedule ALL reminder notifications";
+"debug.notifications.rescheduleAllPayments" = "💳 Reschedule ALL payment notifications";
+"debug.notifications.remindersListTitle" = "Reminder notifications (%d)";
+"debug.notifications.paymentsListTitle" = "Payment notifications (%d)";
+"debug.notifications.refresh" = "Refresh status";
+"debug.notifications.viewLogs" = "View detailed logs";
+"debug.notifications.requestPermission" = "Request permission";
+"debug.notifications.cancelAll" = "Cancel all notifications";
+"debug.notifications.auth.authorized" = "Authorized";
+"debug.notifications.auth.denied" = "Denied";
+"debug.notifications.auth.notDetermined" = "Not determined";
+"debug.notifications.auth.provisional" = "Provisional";
+"debug.notifications.auth.ephemeral" = "Ephemeral";
+"debug.notifications.auth.unknown" = "Unknown";
+"debug.notifications.triggerUnknown" = "Unknown trigger";
+"debug.notifications.msg.testScheduled" = "✅ Scheduled test notification: %@";
+"debug.notifications.msg.reschedulingReminders" = "🔄 Rescheduling reminder notifications...";
+"debug.notifications.msg.rescheduledReminders" = "✅ Rescheduled %d reminder notifications";
+"debug.notifications.msg.errorFetchReminders" = "❌ Error loading reminders: %@";
+"debug.notifications.msg.reschedulingPayments" = "🔄 Rescheduling payment notifications...";
+"debug.notifications.msg.rescheduledPayments" = "✅ Rescheduled notifications for %d payments";
+"debug.notifications.msg.errorFetchPayments" = "❌ Error loading payments: %@";
+"debug.notifications.msg.cancelledAll" = "🗑️ Cancelled all notifications";
+"debug.notifications.msg.logsToConsole" = "🔍 Detailed logs sent to console";
+"debug.notifications.msg.requestingPermission" = "🔐 Requesting notification permission...";
+"debug.session.navTitle" = "Session debug";
+"debug.session.sectionCurrent" = "Current session state";
+"debug.session.sectionDetails" = "Session details";
+"debug.session.sectionActions" = "Test actions";
+"debug.session.sectionInstructions" = "Instructions";
+"debug.session.isAuthenticated" = "Is authenticated";
+"debug.session.isSessionActive" = "Is session active";
+"debug.session.canUseBiometric" = "Can use biometric";
+"debug.session.checkYes" = "✅ Yes";
+"debug.session.checkNo" = "❌ No";
+"debug.session.refreshCount" = "Refresh count";
+"debug.session.refreshInfo" = "Refresh session info";
+"debug.session.forceCheck" = "Force session check";
+"debug.session.simulateRestart" = "Simulate app restart";
+"debug.session.clearData" = "Clear all session data";
+"debug.session.instructionIntro" = "Use this screen to test session startup and avoid login screen flicker.";
+"debug.session.instructionRestart" = "“Simulate app restart” tests startup logic without closing the app.";
+"debug.session.instructionWatch" = "Watch for immediate state changes vs delayed background checks.";
+"debug.session.info.localActive" = "Local active: %@";
+"debug.session.info.localExpired" = "Local expired: %@";
+"debug.session.info.remoteValid" = "Remote valid: %@";
+"debug.session.info.lastActive" = "Last active: %@";
+"debug.session.info.elapsedSeconds" = "Elapsed: %d s";
+"debug.session.info.lastActiveNone" = "Last active: none";
+"debug.session.info.debugMode" = "Debug mode: session timeout disabled";
+"debug.session.info.releaseMode" = "Release mode: 1-week session timeout active";
+"debug.notificationSettings.navTitle" = "Notification settings debug";
+"debug.notificationSettings.sectionPension" = "Pension reminder";
+"debug.notificationSettings.sectionSavings" = "Savings reminder";
+"debug.notificationSettings.sectionOther" = "Other reminder";
+"debug.notificationSettings.sectionDebugInfo" = "Debug info";
+"debug.notificationSettings.pensionDays" = "Pension days: %@";
+"debug.notificationSettings.savingsDays" = "Savings days: %@";
+"debug.notificationSettings.otherDays" = "Other days: %@";
+
 // MARK: - Tab bar
 "tab.payments" = "Payments";
 "tab.reminders" = "Reminders";
@@ -276,11 +393,12 @@
 // MARK: - Auth Errors
 "auth.error.invalidCredentials" = "Incorrect email or password";
 "auth.error.emailExists" = "This email is already registered";
-"auth.error.weakPassword" = "Password must be at least 6 characters";
+"auth.error.weakPassword" = "Password must be at least 8 characters and include an uppercase letter, a number, and a symbol";
 "auth.error.invalidEmail" = "Invalid email";
 "auth.error.userNotFound" = "User not found";
 "auth.error.sessionExpired" = "Session expired. Please sign in again";
 "auth.error.network" = "Connection error. Check your internet";
+"auth.error.tooManyAttempts" = "Too many failed attempts. Try again after %@.";
 "auth.error.unknown" = "%@";
 
 // MARK: - Gender

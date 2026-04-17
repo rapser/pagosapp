@@ -13,11 +13,11 @@ struct RegistrationView: View {
             VStack(spacing: 20) {
                 Spacer()
 
-                Text("Crear Cuenta")
+                Text(L10n.Auth.Register.title)
                     .font(.largeTitle).bold()
                     .foregroundColor(Color("AppTextPrimary"))
 
-                TextField("Correo electrónico", text: $viewModel.email)
+                TextField(L10n.Auth.Field.email, text: $viewModel.email)
                     .keyboardType(.emailAddress)
                     .textContentType(.emailAddress)
                     .autocapitalization(.none)
@@ -28,7 +28,7 @@ struct RegistrationView: View {
                     .disabled(viewModel.isLoading)
 
                 SecureTextFieldWithToggle(
-                    placeholder: "Contraseña",
+                    placeholder: L10n.Auth.Field.password,
                     text: $viewModel.password,
                     isSecure: $viewModel.showPassword,
                     textContentType: .newPassword,
@@ -36,7 +36,7 @@ struct RegistrationView: View {
                 )
 
                 SecureTextFieldWithToggle(
-                    placeholder: "Confirmar Contraseña",
+                    placeholder: L10n.Auth.Field.confirmPassword,
                     text: $viewModel.confirmPassword,
                     isSecure: $viewModel.showConfirmPassword,
                     textContentType: .newPassword,
@@ -47,14 +47,14 @@ struct RegistrationView: View {
                 if !viewModel.password.isEmpty {
                     ValidationHintRow(
                         isValid: viewModel.isPasswordStrong,
-                        message: "Mínimo 6 caracteres"
+                        message: L10n.Auth.Register.passwordHintMin
                     )
                 }
 
                 if !viewModel.confirmPassword.isEmpty {
                     ValidationHintRow(
                         isValid: viewModel.passwordsMatch,
-                        message: "Las contraseñas coinciden"
+                        message: L10n.Auth.Register.passwordMatch
                     )
                 }
 
@@ -75,7 +75,7 @@ struct RegistrationView: View {
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                 .scaleEffect(0.8)
                         }
-                        Text(viewModel.isLoading ? "Registrando..." : "Registrarse")
+                        Text(viewModel.isLoading ? L10n.Auth.Register.signingUp : L10n.Auth.Register.signUp)
                     }
                     .font(.headline)
                     .foregroundColor(.white)
@@ -96,7 +96,7 @@ struct RegistrationView: View {
                         .allowsHitTesting(true)
                 }
             }
-            .navigationTitle("Crear Cuenta")
+            .navigationTitle(L10n.Auth.Register.title)
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .toolbar {
@@ -107,7 +107,7 @@ struct RegistrationView: View {
                         HStack(spacing: 4) {
                             Image(systemName: "chevron.left")
                                 .font(.system(size: 17, weight: .semibold))
-                            Text("Atrás")
+                            Text(L10n.Auth.Register.back)
                         }
                         .foregroundColor(Color("AppTextPrimary"))
                     }

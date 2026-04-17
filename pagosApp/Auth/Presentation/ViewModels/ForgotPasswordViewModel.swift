@@ -48,7 +48,7 @@ final class ForgotPasswordViewModel: BaseViewModel {
                 }
             },
             onError: { _ in
-                self.setError("Error al enviar el correo de restablecimiento. Inténtalo de nuevo.")
+                self.setError(L10n.Auth.ForgotPassword.sendFailed)
             }
         )
     }

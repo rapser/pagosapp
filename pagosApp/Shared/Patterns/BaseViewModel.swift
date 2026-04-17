@@ -90,11 +90,11 @@ extension BaseViewModel {
         if let networkError = error as? URLError {
             switch networkError.code {
             case .notConnectedToInternet:
-                setError("No internet connection available")
+                setError(L10n.General.networkOffline)
             case .timedOut:
-                setError("Request timed out")
+                setError(L10n.General.networkTimeout)
             default:
-                setError("Network error occurred")
+                setError(L10n.General.networkGeneric)
             }
         } else {
             setError(error.localizedDescription)

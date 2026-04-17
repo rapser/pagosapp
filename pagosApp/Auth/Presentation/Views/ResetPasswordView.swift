@@ -30,20 +30,20 @@ struct ResetPasswordView: View {
                     .fontWeight(.bold)
                     .foregroundColor(Color("AppTextPrimary"))
 
-                Text("Ingresa tu nueva contraseña.")
+                Text(L10n.Auth.ResetPassword.promptNewPassword)
                     .font(.subheadline)
                     .multilineTextAlignment(.center)
                     .foregroundColor(Color("AppTextSecondary"))
                     .padding(.horizontal)
 
-                SecureField("Nueva Contraseña", text: $viewModel.newPassword)
+                SecureField(L10n.Auth.ResetPassword.newPassword, text: $viewModel.newPassword)
                     .padding()
                     .background(Color("AppBackground"))
                     .cornerRadius(10)
                     .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 5)
                     .disabled(viewModel.isLoading)
 
-                SecureField("Confirmar Contraseña", text: $viewModel.confirmPassword)
+                SecureField(L10n.Auth.ResetPassword.confirmPassword, text: $viewModel.confirmPassword)
                     .padding()
                     .background(Color("AppBackground"))
                     .cornerRadius(10)
@@ -51,7 +51,7 @@ struct ResetPasswordView: View {
                     .disabled(viewModel.isLoading)
 
                 if !viewModel.passwordsMatch && !viewModel.confirmPassword.isEmpty {
-                    Text("Las contraseñas no coinciden")
+                    Text(L10n.Auth.ResetPassword.passwordsDontMatch)
                         .foregroundColor(.red)
                         .font(.caption)
                 }
@@ -67,7 +67,7 @@ struct ResetPasswordView: View {
                         await viewModel.resetPassword(token: token)
                     }
                 }) {
-                    Text("Restablecer Contraseña")
+                    Text(L10n.Auth.ResetPassword.button)
                         .font(.headline)
                         .foregroundColor(.white)
                         .padding()
@@ -91,14 +91,13 @@ struct ResetPasswordView: View {
                 showSuccessAlert = true
             }
         }
-        .alert("¡Contraseña Actualizada!", isPresented: $showSuccessAlert) {
-            Button("Ir al Login", role: .cancel) {
+        .alert(L10n.Auth.ResetPassword.successAlertTitle, isPresented: $showSuccessAlert) {
+            Button(L10n.Auth.ResetPassword.goToLogin, role: .cancel) {
                 dismiss()
             }
         } message: {
-            Text("Tu contraseña ha sido restablecida exitosamente. Ahora puedes iniciar sesión con tu nueva contraseña.")
+            Text(L10n.Auth.ResetPassword.successMessage)
         }
         .errorAlert(isPresented: $viewModel.showError, message: viewModel.errorMessage)
     }
 }
-

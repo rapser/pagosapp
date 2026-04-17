@@ -14,15 +14,18 @@ final class LoginUseCase {
     private let authRepository: AuthRepositoryProtocol
     private let emailValidator: EmailValidator.Type
     private let passwordValidator: PasswordValidator.Type
+    private let loginAttemptTracker: LoginAttemptTracking
 
     init(
         authRepository: AuthRepositoryProtocol,
         emailValidator: EmailValidator.Type = EmailValidator.self,
-        passwordValidator: PasswordValidator.Type = PasswordValidator.self
+        passwordValidator: PasswordValidator.Type = PasswordValidator.self,
+        loginAttemptTracker: LoginAttemptTracking = UserDefaultsLoginAttemptTracker.shared
     ) {
         self.authRepository = authRepository
         self.emailValidator = emailValidator
         self.passwordValidator = passwordValidator
+        self.loginAttemptTracker = loginAttemptTracker
     }
 
     /// Execute login
@@ -31,6 +34,8 @@ final class LoginUseCase {
     ///   - password: User password
     /// - Returns: Result with AuthSession or AuthError
     func execute(email: String, password: String) async -> Result<AuthSession, AuthError> {
+        let normalizedEmail = email.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+
         // Validate email format
         do {
             try emailValidator.validate(email)
@@ -45,12 +50,26 @@ final class LoginUseCase {
             return .failure(error as? AuthError ?? .weakPassword)
         }
 
+        if let lockoutUntil = loginAttemptTracker.lockoutUntilIfActive(forNormalizedEmail: normalizedEmail),
+           lockoutUntil > Date() {
+            return .failure(.tooManyLoginAttempts(lockoutUntil: lockoutUntil))
+        }
+
         // Create credentials
         let credentials = LoginCredentials(email: email, password: password)
 
         // Execute sign in
         let result = await authRepository.signIn(credentials: credentials)
 
-        return result
+        switch result {
+        case .success(let session):
+            loginAttemptTracker.recordSuccessfulLogin(forNormalizedEmail: normalizedEmail)
+            return .success(session)
+        case .failure(let error):
+            if case .invalidCredentials = error {
+                loginAttemptTracker.recordFailedPasswordAttempt(forNormalizedEmail: normalizedEmail)
+            }
+            return .failure(error)
+        }
     }
 }

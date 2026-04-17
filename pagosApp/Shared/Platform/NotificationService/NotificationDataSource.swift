@@ -102,15 +102,7 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
     }
 
     func cancelNotifications(paymentId: UUID) {
-        let identifiers = [
-            "\(paymentId.uuidString)-0days-9am",      // Same day 9 AM
-            "\(paymentId.uuidString)-0days-2pm",      // Same day 2 PM
-            "\(paymentId.uuidString)-1days",          // 1 day before
-            "\(paymentId.uuidString)-2days",          // 2 days before
-            "\(paymentId.uuidString)-3days",          // 3 days before
-            "\(paymentId.uuidString)-0days",          // Legacy identifier (por si quedó alguno)
-            "\(paymentId.uuidString)-0days-immediate" // Legacy identifier (por si quedó alguno)
-        ]
+        let identifiers = LocalNotificationIdentifiers.allPaymentCancellationIdentifiers(entityId: paymentId)
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
     }
 
@@ -140,18 +132,7 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
     }
 
     func cancelReminderNotifications(reminderId: UUID) {
-        let identifiers = [
-            "reminder-\(reminderId.uuidString)-0days-9am",
-            "reminder-\(reminderId.uuidString)-0days-2pm",
-            "reminder-\(reminderId.uuidString)-1days",
-            "reminder-\(reminderId.uuidString)-2days",
-            "reminder-\(reminderId.uuidString)-3days",
-            "reminder-\(reminderId.uuidString)-4days",  // Legacy (for old 5-day system)
-            "reminder-\(reminderId.uuidString)-5days",  // Legacy (for old 5-day system)
-            "reminder-\(reminderId.uuidString)-7days",  // 1 week before
-            "reminder-\(reminderId.uuidString)-14days", // 2 weeks before  
-            "reminder-\(reminderId.uuidString)-30days"  // 1 month before
-        ]
+        let identifiers = LocalNotificationIdentifiers.allReminderCancellationIdentifiers(entityId: reminderId)
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
         logger.info("🗑️ Cancelled reminder notifications for ID: \(reminderId)")
     }
@@ -160,8 +141,8 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
         let pendingRequests = await UNUserNotificationCenter.current().pendingNotificationRequests()
         logger.info("🔍 Total pending notifications: \(pendingRequests.count)")
         
-        let reminderNotifications = pendingRequests.filter { $0.identifier.contains("reminder-") }
-        let paymentNotifications = pendingRequests.filter { !$0.identifier.contains("reminder-") }
+        let reminderNotifications = pendingRequests.filter { LocalNotificationIdentifiers.isReminderNotificationIdentifier($0.identifier) }
+        let paymentNotifications = pendingRequests.filter { LocalNotificationIdentifiers.isPaymentNotificationIdentifier($0.identifier) }
         
         logger.info("📋 Reminder notifications: \(reminderNotifications.count)")
         logger.info("💰 Payment notifications: \(paymentNotifications.count)")

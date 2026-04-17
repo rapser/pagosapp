@@ -14,7 +14,7 @@ struct BiometricLoginSection: View {
                 .accessibilityLabel(biometricName)
                 .accessibilityHidden(true)  // Decorative, handled by button label
 
-            Text("Usa \(biometricName) para acceder")
+            Text(L10n.Auth.Biometric.useToAccess(biometricName))
                 .font(.headline)
                 .foregroundColor(Color("AppTextPrimary"))
                 .padding(.top, 8)
@@ -23,7 +23,7 @@ struct BiometricLoginSection: View {
                 HStack {
                     Image(systemName: biometricIcon)
                         .accessibilityHidden(true)
-                    Text("Ingresar con \(biometricName)")
+                    Text(L10n.Auth.Biometric.signInWith(biometricName))
                 }
                 .font(.headline)
                 .foregroundColor(.white)
@@ -34,8 +34,8 @@ struct BiometricLoginSection: View {
             }
             .padding(.top, 20)
             .disabled(isLoading)
-            .accessibilityLabel("Iniciar sesión con \(biometricName)")
-            .accessibilityHint(isLoading ? "Autenticando" : "Toca para autenticarte con \(biometricName)")
+            .accessibilityLabel(L10n.Auth.Biometric.a11ySignIn(biometricName))
+            .accessibilityHint(isLoading ? L10n.Auth.Biometric.a11yHintLoading : L10n.Auth.Biometric.a11yHintIdle(biometricName))
         }
     }
 }

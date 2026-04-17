@@ -95,15 +95,18 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
     func signOut() async -> Result<Void, AuthError> {
         logger.info("\(L10n.Log.Auth.signOut)")
 
-        // Sign out from remote (best effort - don't fail if offline)
-        try? await remoteDataSource.signOut()
-
-        // Clear local tokens
-        localDataSource.clearTokens()
-
-        logger.info("\(L10n.Log.Auth.signOutSuccess)")
-
-        return .success(())
+        do {
+            try await remoteDataSource.signOut()
+            localDataSource.clearTokens()
+            logger.info("\(L10n.Log.Auth.signOutSuccess)")
+            return .success(())
+        } catch {
+            // Offline-first: local logout should still succeed, but remote signOut failure must be observable.
+            let detail = L10n.Log.Generic.withContext("auth.signOut", error.localizedDescription)
+            logger.error("\(detail)")
+            localDataSource.clearTokens()
+            return .failure(.networkError(error.localizedDescription))
+        }
     }
 
     func getCurrentSession() async -> AuthSession? {
