@@ -14,6 +14,7 @@ final class DownloadRemoteChangesUseCase {
     private let syncRepository: PaymentSyncRepositoryProtocol
     private let paymentRepository: PaymentRepositoryProtocol
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "DownloadRemoteChangesUseCase")
+    private let keepLocalWhenPendingSyncStatuses: Set<SyncStatus> = [.local, .modified, .error]
 
     init(
         syncRepository: PaymentSyncRepositoryProtocol,
@@ -33,7 +34,8 @@ final class DownloadRemoteChangesUseCase {
 
             for remotePayment in remotePayments {
                 if let existingPayment = localPayments.first(where: { $0.id == remotePayment.id }) {
-                    if existingPayment.syncStatus != .modified && existingPayment.syncStatus != .local {
+                    // Merge policy: server-wins by default, but preserve any local pending changes.
+                    if !keepLocalWhenPendingSyncStatuses.contains(existingPayment.syncStatus) {
                         try await paymentRepository.savePayment(remotePayment)
                     }
                 } else {

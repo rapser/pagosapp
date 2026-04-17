@@ -73,23 +73,41 @@ final class KeychainAuthDataSource: AuthLocalDataSource {
 
     // MARK: - Private Keychain Operations
 
-    /// Save access token securely
-    private func saveAccessToken(_ token: String) throws {
-        let data = Data(token.utf8)
-        let query: [String: Any] = [
+    private func upsertGenericPassword(account: String, data: Data) throws {
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: accessTokenKey,
+            kSecAttrAccount as String: account
+        ]
+
+        let updateAttributes: [String: Any] = [
             kSecValueData as String: data
         ]
 
-        SecItemDelete(query as CFDictionary) // Delete existing
-        let status = SecItemAdd(query as CFDictionary, nil)
-
-        guard status == errSecSuccess else {
-            logger.error("Failed to save access token: \(status)")
-            throw NSError(domain: "KeychainAuthDataSource", code: Int(status), userInfo: nil)
+        let updateStatus = SecItemUpdate(query as CFDictionary, updateAttributes as CFDictionary)
+        if updateStatus == errSecSuccess {
+            return
         }
+
+        if updateStatus == errSecItemNotFound {
+            query[kSecValueData as String] = data
+            query[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+            let addStatus = SecItemAdd(query as CFDictionary, nil)
+            guard addStatus == errSecSuccess else {
+                logger.error("Failed to add keychain item (\(account)): \(addStatus)")
+                throw NSError(domain: "KeychainAuthDataSource", code: Int(addStatus), userInfo: nil)
+            }
+            return
+        }
+
+        logger.error("Failed to update keychain item (\(account)): \(updateStatus)")
+        throw NSError(domain: "KeychainAuthDataSource", code: Int(updateStatus), userInfo: nil)
+    }
+
+    /// Save access token securely
+    private func saveAccessToken(_ token: String) throws {
+        let data = Data(token.utf8)
+        try upsertGenericPassword(account: accessTokenKey, data: data)
     }
 
     /// Get access token
@@ -116,20 +134,7 @@ final class KeychainAuthDataSource: AuthLocalDataSource {
     /// Save refresh token securely
     private func saveRefreshToken(_ token: String) throws {
         let data = Data(token.utf8)
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: refreshTokenKey,
-            kSecValueData as String: data
-        ]
-
-        SecItemDelete(query as CFDictionary) // Delete existing
-        let status = SecItemAdd(query as CFDictionary, nil)
-
-        guard status == errSecSuccess else {
-            logger.error("Failed to save refresh token: \(status)")
-            throw NSError(domain: "KeychainAuthDataSource", code: Int(status), userInfo: nil)
-        }
+        try upsertGenericPassword(account: refreshTokenKey, data: data)
     }
 
     /// Get refresh token
@@ -156,20 +161,7 @@ final class KeychainAuthDataSource: AuthLocalDataSource {
     /// Save user ID securely
     private func saveUserId(_ userId: String) throws {
         let data = Data(userId.utf8)
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: userIdKey,
-            kSecValueData as String: data
-        ]
-
-        SecItemDelete(query as CFDictionary) // Delete existing
-        let status = SecItemAdd(query as CFDictionary, nil)
-
-        guard status == errSecSuccess else {
-            logger.error("Failed to save user ID: \(status)")
-            throw NSError(domain: "KeychainAuthDataSource", code: Int(status), userInfo: nil)
-        }
+        try upsertGenericPassword(account: userIdKey, data: data)
     }
 
     /// Get user ID

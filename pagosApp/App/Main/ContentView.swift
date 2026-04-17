@@ -16,7 +16,7 @@ struct ContentView: View {
                 AuthenticatedRootView()
             } else {
                 let loginViewModel = dependencies.authDependencyContainer.makeLoginViewModel()
-                LoginView(loginViewModel: loginViewModel, onLoginSuccess: { session in
+                LoginView(loginViewModel: loginViewModel, onLoginSuccess: { _ in
                     Task {
                         await sessionCoordinator.startSession()
                     }

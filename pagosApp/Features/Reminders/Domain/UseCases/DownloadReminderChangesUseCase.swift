@@ -13,6 +13,7 @@ final class DownloadReminderChangesUseCase {
     private let syncRepository: ReminderSyncRepositoryProtocol
     private let localDataSource: ReminderLocalDataSource
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "DownloadReminderChangesUseCase")
+    private let keepLocalWhenPendingSyncStatuses: Set<ReminderSyncStatus> = [.local, .modified, .error]
 
     init(syncRepository: ReminderSyncRepositoryProtocol, localDataSource: ReminderLocalDataSource) {
         self.syncRepository = syncRepository
@@ -28,7 +29,8 @@ final class DownloadReminderChangesUseCase {
             let local = try await localDataSource.fetchAll()
             for reminder in remote {
                 if let existing = local.first(where: { $0.id == reminder.id }) {
-                    if existing.syncStatus != .modified && existing.syncStatus != .local {
+                    // Merge policy: server-wins by default, but preserve any local pending changes.
+                    if !keepLocalWhenPendingSyncStatuses.contains(existing.syncStatus) {
                         try await localDataSource.save(reminder)
                         logger.info("Updated local reminder from remote: \(reminder.title)")
                     } else {

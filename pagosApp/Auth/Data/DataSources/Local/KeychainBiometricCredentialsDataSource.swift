@@ -25,9 +25,6 @@ final class KeychainBiometricCredentialsDataSource: BiometricCredentialsDataSour
     func saveCredentials(email: String, password: String) -> Bool {
         logger.info("💾 Saving biometric credentials")
 
-        // Delete existing credentials first
-        _ = deleteCredentials()
-
         guard let passwordData = password.data(using: .utf8) else {
             logger.error("Failed to encode password")
             return false
@@ -45,39 +42,34 @@ final class KeychainBiometricCredentialsDataSource: BiometricCredentialsDataSour
             return false
         }
 
-        // Email query
-        let emailQuery: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: emailKey,
-            kSecValueData as String: email.data(using: .utf8)!,
-            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
-            kSecAttrSynchronizable as String: false // Never sync to iCloud
-        ]
-
-        // Password query with biometric protection
-        let passwordQuery: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: passwordKey,
-            kSecValueData as String: passwordData,
-            kSecAttrAccessControl as String: accessControl,
-            kSecAttrSynchronizable as String: false // Never sync to iCloud
-        ]
-
-        // Save email
-        let emailStatus = SecItemAdd(emailQuery as CFDictionary, nil)
-        guard emailStatus == errSecSuccess else {
-            logger.error("Failed to save email: \(emailStatus)")
+        guard let emailData = email.data(using: .utf8) else {
+            logger.error("Failed to encode email")
             return false
         }
 
-        // Save password
-        let passwordStatus = SecItemAdd(passwordQuery as CFDictionary, nil)
-        guard passwordStatus == errSecSuccess else {
-            logger.error("Failed to save password: \(passwordStatus)")
-            // Rollback email if password fails
-            _ = deleteCredentials()
+        do {
+            try upsertGenericPassword(
+                account: emailKey,
+                data: emailData,
+                accessControl: nil,
+                synchronizable: false
+            )
+
+            do {
+                try upsertGenericPassword(
+                    account: passwordKey,
+                    data: passwordData,
+                    accessControl: accessControl,
+                    synchronizable: false
+                )
+            } catch {
+                logger.error("Failed to save password: \(error.localizedDescription)")
+                // Best-effort rollback to avoid leaving email without password
+                _ = deleteCredentials()
+                return false
+            }
+        } catch {
+            logger.error("Failed to save email: \(error.localizedDescription)")
             return false
         }
 
@@ -152,6 +144,48 @@ final class KeychainBiometricCredentialsDataSource: BiometricCredentialsDataSour
     }
 
     // MARK: - Private Helpers
+
+    private func upsertGenericPassword(
+        account: String,
+        data: Data,
+        accessControl: SecAccessControl?,
+        synchronizable: Bool
+    ) throws {
+        var query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account
+        ]
+
+        let updateAttributes: [String: Any] = [
+            kSecValueData as String: data
+        ]
+
+        let updateStatus = SecItemUpdate(query as CFDictionary, updateAttributes as CFDictionary)
+        if updateStatus == errSecSuccess {
+            return
+        }
+
+        if updateStatus == errSecItemNotFound {
+            query[kSecValueData as String] = data
+            query[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+            query[kSecAttrSynchronizable as String] = synchronizable
+
+            if let accessControl {
+                query[kSecAttrAccessControl as String] = accessControl
+            }
+
+            let addStatus = SecItemAdd(query as CFDictionary, nil)
+            guard addStatus == errSecSuccess else {
+                logger.error("Failed to add keychain item (\(account)): \(addStatus)")
+                throw NSError(domain: "KeychainBiometricCredentialsDataSource", code: Int(addStatus), userInfo: nil)
+            }
+            return
+        }
+
+        logger.error("Failed to update keychain item (\(account)): \(updateStatus)")
+        throw NSError(domain: "KeychainBiometricCredentialsDataSource", code: Int(updateStatus), userInfo: nil)
+    }
 
     private func retrieveEmail(context: LAContext?) -> String? {
         var query: [String: Any] = [
@@ -245,26 +279,18 @@ final class KeychainBiometricCredentialsDataSource: BiometricCredentialsDataSour
     private func setBool(_ value: Bool, forKey key: String) -> Bool {
         let data = Data([value ? 1 : 0])
 
-        // Delete existing value first
-        let deleteQuery: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: key
-        ]
-        SecItemDelete(deleteQuery as CFDictionary)
-
-        // Add new value
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: key,
-            kSecValueData as String: data,
-            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
-            kSecAttrSynchronizable as String: false
-        ]
-
-        let status = SecItemAdd(query as CFDictionary, nil)
-        return status == errSecSuccess
+        do {
+            try upsertGenericPassword(
+                account: key,
+                data: data,
+                accessControl: nil,
+                synchronizable: false
+            )
+            return true
+        } catch {
+            logger.error("Failed to save boolean flag (\(key)): \(error.localizedDescription)")
+            return false
+        }
     }
 
     /// Retrieve a boolean flag from Keychain

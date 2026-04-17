@@ -10,6 +10,9 @@ import Foundation
 
 /// Protocol for remote payment data operations
 protocol PaymentRemoteDataSource {
+    /// Fetch a page of payments for a user (pagination).
+    func fetchPage(userId: UUID, limit: Int, offset: Int) async throws -> [PaymentDTO]
+
     /// Fetch all payments for a user
     func fetchAll(userId: UUID) async throws -> [PaymentDTO]
 

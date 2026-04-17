@@ -170,13 +170,13 @@ final class AddPaymentViewModel: BaseViewModel {
         let sharedGroupId = UUID()
 
         // Create PEN and USD payments using helper method
-        let paymentPEN_UI = createPaymentUI(amount: penAmount, currency: .pen, groupId: sharedGroupId)
-        let paymentUSD_UI = createPaymentUI(amount: usdAmount, currency: .usd, groupId: sharedGroupId)
+        let paymentPenUI = createPaymentUI(amount: penAmount, currency: .pen, groupId: sharedGroupId)
+        let paymentUsdUI = createPaymentUI(amount: usdAmount, currency: .usd, groupId: sharedGroupId)
 
         await withLoadingAndErrorHandling(
             operation: {
-                let resultPEN = await self.createPaymentUseCase.execute(self.mapper.toDomain(paymentPEN_UI))
-                let resultUSD = await self.createPaymentUseCase.execute(self.mapper.toDomain(paymentUSD_UI))
+                let resultPEN = await self.createPaymentUseCase.execute(self.mapper.toDomain(paymentPenUI))
+                let resultUSD = await self.createPaymentUseCase.execute(self.mapper.toDomain(paymentUsdUI))
                 
                 switch (resultPEN, resultUSD) {
                 case (.success, .success):

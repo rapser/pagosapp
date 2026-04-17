@@ -20,6 +20,7 @@ final class SettingsDependencyContainer {
     private let eventBus: EventBus
     private let notificationDataSource: NotificationDataSource
     private let reminderDependencyContainer: ReminderDependencyContainer
+    private let paymentDependencyContainer: PaymentDependencyContainer
 
     // Single repository instance shared across all use cases
     private lazy var sharedSettingsSyncRepository: SettingsSyncRepositoryProtocol = SettingsSyncRepositoryImpl(
@@ -34,7 +35,8 @@ final class SettingsDependencyContainer {
         userProfileDependencyContainer: UserProfileDependencyContainer,
         eventBus: EventBus,
         notificationDataSource: NotificationDataSource,
-        reminderDependencyContainer: ReminderDependencyContainer
+        reminderDependencyContainer: ReminderDependencyContainer,
+        paymentDependencyContainer: PaymentDependencyContainer
     ) {
         self.paymentSyncCoordinator = paymentSyncCoordinator
         self.reminderSyncCoordinator = reminderSyncCoordinator
@@ -43,6 +45,7 @@ final class SettingsDependencyContainer {
         self.eventBus = eventBus
         self.notificationDataSource = notificationDataSource
         self.reminderDependencyContainer = reminderDependencyContainer
+        self.paymentDependencyContainer = paymentDependencyContainer
     }
 
     // MARK: - Repositories
@@ -103,7 +106,9 @@ final class SettingsDependencyContainer {
         NotificationDebugViewModel(
             notificationDataSource: notificationDataSource,
             getAllRemindersUseCase: reminderDependencyContainer.makeGetAllRemindersUseCase(),
-            rescheduleNotificationsUseCase: reminderDependencyContainer.makeRescheduleReminderNotificationsUseCase()
+            rescheduleNotificationsUseCase: reminderDependencyContainer.makeRescheduleReminderNotificationsUseCase(),
+            getAllPaymentsUseCase: paymentDependencyContainer.makeGetAllPaymentsUseCase(),
+            schedulePaymentNotificationsUseCase: paymentDependencyContainer.makeSchedulePaymentNotificationsUseCase(notificationDataSource: notificationDataSource)
         )
     }
 }
