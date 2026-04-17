@@ -26,7 +26,8 @@ final class SSLPinningURLSessionDelegate: NSObject, URLSessionDelegate {
             return
         }
 
-        guard let serverCertificate = SecTrustGetCertificateAtIndex(serverTrust, 0) else {
+        guard let chain = SecTrustCopyCertificateChain(serverTrust) as? [SecCertificate],
+              let serverCertificate = chain.first else {
             completionHandler(.cancelAuthenticationChallenge, nil)
             return
         }
