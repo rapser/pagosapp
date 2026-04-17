@@ -11,57 +11,57 @@ struct DatePickerRow: View {
     let isEditing: Bool
     @Binding var selectedDate: Date?
     @Binding var showPicker: Bool
-    
+
     private var dateBinding: Binding<Date> {
         Binding(
             get: { selectedDate ?? Date() },
             set: { selectedDate = $0 }
         )
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             HStack {
                 Image(systemName: "calendar")
                     .foregroundColor(Color("AppPrimary"))
                     .frame(width: 25)
-                
+
                 if isEditing {
                     Button {
                         showPicker.toggle()
                     } label: {
                         HStack {
-                            Text("Fecha de nacimiento")
+                            Text(L10n.Profile.fieldBirthDate)
                                 .foregroundColor(Color("AppTextPrimary"))
                             Spacer()
                             if let date = selectedDate {
                                 Text(date, format: .dateTime.day().month().year())
                                     .foregroundColor(Color("AppTextSecondary"))
                             } else {
-                                Text("Seleccionar")
+                                Text(L10n.Profile.selectDate)
                                     .foregroundColor(Color("AppTextSecondary"))
                             }
                         }
                     }
                 } else {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Fecha de nacimiento")
+                        Text(L10n.Profile.fieldBirthDate)
                             .font(.caption)
                             .foregroundColor(Color("AppTextSecondary"))
                         if let date = selectedDate {
                             Text(date, format: .dateTime.day().month().year())
                                 .foregroundColor(Color("AppTextPrimary"))
                         } else {
-                            Text("No especificado")
+                            Text(L10n.Profile.notSpecified)
                                 .foregroundColor(Color("AppTextSecondary"))
                         }
                     }
                 }
             }
-            
+
             if isEditing && showPicker {
                 DatePicker(
-                    "Fecha",
+                    L10n.Profile.datePickerTitle,
                     selection: dateBinding,
                     displayedComponents: .date
                 )

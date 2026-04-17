@@ -43,7 +43,7 @@ final class RegisterViewModel: BaseViewModel {
         logDebug("Attempting registration")
 
         guard password == confirmPassword else {
-            setValidationError("Las contraseñas no coinciden")
+            setValidationError(L10n.Auth.ResetPassword.passwordsDontMatch)
             return
         }
 

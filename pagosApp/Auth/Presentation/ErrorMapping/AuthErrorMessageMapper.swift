@@ -11,25 +11,29 @@ import Foundation
 /// Maps domain AuthError to user-facing message strings (Auth module only)
 enum AuthErrorMessageMapper {
 
-    /// Auth is an autonomous library; strings stay here. For i18n, Auth can expose a localizer protocol later.
     static func message(for error: AuthError) -> String {
         switch error {
         case .invalidCredentials:
-            return "Email o contraseña incorrectos"
+            return L10n.AuthErrorKeys.invalidCredentials
         case .emailAlreadyExists:
-            return "El email ya está registrado"
+            return L10n.AuthErrorKeys.emailExists
         case .weakPassword:
-            return "La contraseña debe tener al menos 6 caracteres"
+            return L10n.AuthErrorKeys.weakPassword
         case .invalidEmail:
-            return "Email inválido"
+            return L10n.AuthErrorKeys.invalidEmail
         case .userNotFound:
-            return "Usuario no encontrado"
+            return L10n.AuthErrorKeys.userNotFound
         case .sessionExpired:
-            return "Sesión expirada. Vuelve a iniciar sesión"
+            return L10n.AuthErrorKeys.sessionExpired
         case .networkError:
-            return "Error de conexión. Verifica tu internet"
+            return L10n.AuthErrorKeys.network
+        case .tooManyLoginAttempts(let until):
+            let formatter = DateFormatter()
+            formatter.dateStyle = .medium
+            formatter.timeStyle = .short
+            return L10n.AuthErrorKeys.tooManyAttempts(formatter.string(from: until))
         case .unknown(let message):
-            return message
+            return L10n.AuthErrorKeys.unknown(message)
         }
     }
 }

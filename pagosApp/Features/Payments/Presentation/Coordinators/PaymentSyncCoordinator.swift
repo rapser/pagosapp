@@ -33,6 +33,9 @@ final class PaymentSyncCoordinator {
     var syncError: Error?
 
     private let lastSyncKey = "lastPaymentSyncDate"
+    private let maxRetryAttempts = 3
+    private let minimumSyncTriggerInterval: TimeInterval = 10
+    private var lastSyncTriggerDate: Date?
 
     // MARK: - Initialization
 
@@ -58,34 +61,72 @@ final class PaymentSyncCoordinator {
 
     // MARK: - Sync Operations (Delegate to Use Cases)
 
+    private func shouldRetry(_ error: PaymentSyncError) -> Bool {
+        switch error {
+        case .notAuthenticated, .sessionExpired, .conflictError:
+            return false
+        case .networkError, .uploadFailed, .downloadFailed:
+            return true
+        case .unknown:
+            return true
+        }
+    }
+
+    private func retryDelayNanoseconds(forAttempt attempt: Int) -> UInt64 {
+        // 0.5s, 1s, 2s (+ jitter up to 250ms)
+        let baseDelays: [UInt64] = [500_000_000, 1_000_000_000, 2_000_000_000]
+        let base = baseDelays[min(max(attempt - 1, 0), baseDelays.count - 1)]
+        let jitter = UInt64.random(in: 0...250_000_000)
+        return base + jitter
+    }
+
+    private func shouldThrottleSyncTrigger() -> Bool {
+        guard let lastSyncTriggerDate else { return false }
+        return Date().timeIntervalSince(lastSyncTriggerDate) < minimumSyncTriggerInterval
+    }
+
     /// Perform full synchronization (upload + download)
     func performSync() async throws {
         guard !isSyncing else { return }
+        guard !shouldThrottleSyncTrigger() else { return }
 
         isSyncing = true
+        lastSyncTriggerDate = Date()
         syncError = nil
         defer { isSyncing = false }
 
-        let result = await syncPaymentsUseCase.execute()
+        for attempt in 1...maxRetryAttempts {
+            let result = await syncPaymentsUseCase.execute()
 
-        switch result {
-        case .success:
-            lastSyncDate = Date()
-            UserDefaults.standard.set(lastSyncDate, forKey: lastSyncKey)
-            syncError = nil
-            await updatePendingSyncCount()
-            eventBus.publish(PaymentsSyncedEvent(syncedCount: 0))
+            switch result {
+            case .success:
+                lastSyncDate = Date()
+                UserDefaults.standard.set(lastSyncDate, forKey: lastSyncKey)
+                syncError = nil
+                await updatePendingSyncCount()
+                eventBus.publish(PaymentsSyncedEvent(syncedCount: 0))
+                return
 
-        case .failure:
-            let error = NSError(
-                domain: "PaymentSyncCoordinator",
-                code: 503,
-                userInfo: [
-                    NSLocalizedDescriptionKey: L10n.Sync.cannotSync,
-                    NSLocalizedRecoverySuggestionErrorKey: L10n.Sync.recoverySuggestion
-                ]
-            )
-            throw error
+            case .failure(let syncError):
+                self.syncError = syncError
+
+                let isLastAttempt = attempt == maxRetryAttempts
+                if !isLastAttempt, shouldRetry(syncError) {
+                    let delay = retryDelayNanoseconds(forAttempt: attempt)
+                    try? await Task.sleep(nanoseconds: delay)
+                    continue
+                }
+
+                let error = NSError(
+                    domain: "PaymentSyncCoordinator",
+                    code: 503,
+                    userInfo: [
+                        NSLocalizedDescriptionKey: L10n.Sync.cannotSync,
+                        NSLocalizedRecoverySuggestionErrorKey: L10n.Sync.recoverySuggestion
+                    ]
+                )
+                throw error
+            }
         }
     }
 
