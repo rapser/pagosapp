@@ -702,7 +702,7 @@ struct PaymentRemoteDTO: Codable, Sendable { /* ... */ }
 
 ### CI y calidad
 - **GitHub Actions** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)): **build** con `xcodebuild` (simulador iOS genérico) + **SwiftLint** en cada push/PR a `main`, `master` o `develop` (runner `macos-15`).
-- **Fastlane**: menú local con `bundle exec fastlane menu`; en CI, **lane explícita** (`bundle exec fastlane release_app_store_connect`, etc.). Lista de comandos: `bundle exec fastlane reference`. Detalle en [fastlane/README.md](fastlane/README.md).
+- **Fastlane**: menú `bundle exec fastlane menu`; guía replicable en [fastlane/SETUP.md](fastlane/SETUP.md); resumen en [fastlane/README.md](fastlane/README.md).
 - **SwiftLint**: configuración en [`.swiftlint.yml`](.swiftlint.yml) en la raíz del repo.
 - **Documentación técnica**: [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md), ADRs en [`docs/adr/`](docs/adr/), ingeniería (sync, concurrencia) en [`docs/engineering/`](docs/engineering/), runbooks SSL en [`docs/runbooks/`](docs/runbooks/).
 
@@ -778,7 +778,12 @@ swiftlint lint
 
 ### 7️⃣ Fastlane (IPA y subida a TestFlight)
 
-**Menú local:** `bundle exec fastlane menu`. **CI / scripts:** `bundle exec fastlane <lane>`. **Referencia:** `bundle exec fastlane reference`. [App Store Connect API](https://developer.apple.com/documentation/appstoreconnectapi/creating_api_keys_for_app_store_connect_api) y plantilla: **`fastlane/.env.example`**. No pongas el PEM en **`APP_STORE_CONNECT_API_KEY`** (JSON). Para el fichero **`.p8`** usa **`APP_STORE_CONNECT_P8_PATH`** (no uses `APP_STORE_CONNECT_API_KEY_PATH` para el `.p8`: en Fastlane esa variable es para un JSON). Detalle en **`fastlane/.env.example`**.
+**Guía completa (recomendada para otro proyecto o si algo falla):** [fastlane/SETUP.md](fastlane/SETUP.md) — Ruby, API Key, variables **`APP_STORE_CONNECT_P8_PATH`** vs **`APP_STORE_CONNECT_API_KEY_PATH`**, errores típicos (`JSON::ParserError`, Ruby 4), CI y checklist.
+
+**Resumen:** menú local `bundle exec fastlane menu`; en CI, lane explícita `bundle exec fastlane release_app_store_connect` (u otra). Lista de lanes: `bundle exec fastlane reference`. Plantilla de variables: **`fastlane/.env.example`**. [App Store Connect API — crear claves](https://developer.apple.com/documentation/appstoreconnectapi/creating_api_keys_for_app_store_connect_api).
+
+- El **`.p8`** va en **`APP_STORE_CONNECT_P8_PATH`**. No uses **`APP_STORE_CONNECT_API_KEY_PATH`** para el `.p8` (en Fastlane/Pilot eso es ruta a **JSON**, no al PEM de Apple).
+- No pegues el PEM en **`APP_STORE_CONNECT_API_KEY`** (esa variable es JSON).
 
 ```bash
 gem install bundler   # si hace falta, con el Ruby de Homebrew
@@ -859,7 +864,7 @@ pagosApp/
 │   └── …                                   # Ver repo para módulos completos
 ```
 
-En la **raíz del repositorio** (junto a la carpeta `pagosApp/`): `Config/` (secrets y template), `Database/` (SQL Supabase), [`.github/workflows/`](.github/workflows/ci.yml) (CI: build + SwiftLint), **`fastlane/`** + `Gemfile` (IPA; ver [fastlane/README.md](fastlane/README.md)) y el target de tests **`pagosAppTests/`**.
+En la **raíz del repositorio** (junto a la carpeta `pagosApp/`): `Config/` (secrets y template), `Database/` (SQL Supabase), [`.github/workflows/`](.github/workflows/ci.yml) (CI: build + SwiftLint), **`fastlane/`** + `Gemfile` (IPA; [fastlane/SETUP.md](fastlane/SETUP.md), [fastlane/README.md](fastlane/README.md)) y el target de tests **`pagosAppTests/`**.
 
 ---
 
