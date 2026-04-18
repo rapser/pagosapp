@@ -91,10 +91,29 @@ platform :ios do
   private_lane :gym_app_store_ipa do
     stamp_build_timestamp
     FileUtils.mkdir_p(OUTPUT_DIR)
-    # En GitHub Actions importamos certificado Apple Distribution; el .pbxproj usa
-    # "Apple Development" en Release para desarrollo local. Sin override, gym falla al
-    # archivar/exportar para App Store (identidad de desarrollo vs distribución).
-    gym_args = {
+    # En Actions: xcargs globales con CODE_SIGN_IDENTITY rompen SPM (swift-crypto_Crypto, etc.).
+    # Solo ajustamos firma manual en el target de la app vía update_code_signing_settings.
+    if ENV["GITHUB_ACTIONS"] == "true"
+      profile_name = ENV["CI_PROVISIONING_PROFILE_NAME"].to_s.strip
+      if profile_name.empty?
+        UI.user_error!(
+          "Falta CI_PROVISIONING_PROFILE_NAME. El workflow testflight-develop.yml debe " \
+          "exportarlo al instalar PROVISIONING_PROFILE_BASE64."
+        )
+      end
+      team = ENV["FASTLANE_TEAM_ID"].to_s.strip
+      team = "8AJBS923B3" if team.empty?
+      update_code_signing_settings(
+        path: PROJECT,
+        use_automatic_signing: false,
+        targets: [SCHEME],
+        team_id: team,
+        bundle_identifier: "com.rapser.payapp",
+        profile_name: profile_name,
+        code_sign_identity: "Apple Distribution"
+      )
+    end
+    gym(
       project: PROJECT,
       scheme: SCHEME,
       configuration: "Release",
@@ -105,15 +124,7 @@ platform :ios do
       silent: false,
       skip_package_ipa: false,
       destination: "generic/platform=iOS"
-    }
-    if ENV["GITHUB_ACTIONS"] == "true"
-      team = ENV["FASTLANE_TEAM_ID"].to_s.strip
-      # Valor con espacio: sin comillas, xcodebuild trata "Distribution" como acción (error 65).
-      xc = 'CODE_SIGN_IDENTITY="Apple Distribution"'
-      xc += " DEVELOPMENT_TEAM=#{team}" unless team.empty?
-      gym_args[:xcargs] = xc
-    end
-    gym(**gym_args)
+    )
   end
 
   private_lane :upload_ipa_testflight do |options|
