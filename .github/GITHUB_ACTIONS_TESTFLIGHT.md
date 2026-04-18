@@ -40,8 +40,8 @@ En GitHub Actions el llavero está vacío: hace falta **certificado Apple Distri
 
 | Secret | Descripción |
 |--------|-------------|
-| `BUILD_CERTIFICATE_BASE64` | Exporta tu certificado **Distribution** como `.p12` y codifícalo: `base64 < DistributionCert.p12 \| tr -d '\n'`. |
-| `P12_PASSWORD` | Contraseña con la que exportaste el `.p12`. |
+| `BUILD_CERTIFICATE_BASE64` | Exporta el certificado **Apple Distribution** (o *iPhone Distribution* en cuentas antiguas) como `.p12` **incluyendo la clave privada** (en Acceso a Llaveros: certificado → exportar). Codifica: `base64 < DistributionCert.p12 \| tr -d '\n'`. **No** uses el certificado *Apple Development*. El Team ID del certificado debe coincidir con el del perfil App Store (p. ej. `8AJBS923B3` en el proyecto). |
+| `P12_PASSWORD` | Contraseña con la que exportaste el `.p12` (si falla, Xcode suele mostrar *No signing certificate "iOS Distribution" found* / sin clave privada). |
 | `KEYCHAIN_PASSWORD` | Cualquier cadena fuerte (solo la usa el job para crear un llavero temporal en el runner). |
 | `PROVISIONING_PROFILE_BASE64` | El fichero **`.mobileprovision`** del perfil **App Store** (descargado del portal o de Xcode), en Base64 una línea: `base64 < MyApp_AppStore.mobileprovision \| tr -d '\n'`. |
 
