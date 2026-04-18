@@ -30,7 +30,6 @@ final class BiometricRepositoryImpl: BiometricRepositoryProtocol {
             let canEvaluate = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
 
             #if targetEnvironment(simulator)
-            logger.info("🧪 Simulator detected: Biometrics enabled for testing")
             return true
             #else
             if let error = error {

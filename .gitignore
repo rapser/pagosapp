@@ -16,7 +16,10 @@ Pods/
 # Carthage
 Carthage/Build/
 
-# fastlane
+# fastlane / gym / Ruby
+build/
+.bundle/
+vendor/bundle/
 fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
@@ -24,6 +27,8 @@ fastlane/test_output
 
 # Secrets and Configuration
 pagosApp/Config/Secrets.xcconfig
+.env
+fastlane/.env
 
 # macOS
 .DS_Store
