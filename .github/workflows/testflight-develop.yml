@@ -1,0 +1,126 @@
+# TestFlight en `develop` solo si el push toca app / firma / proyecto (paths).
+# Pushes que solo cambian p. ej. `.github/workflows/ci.yml` u otros paths no listados
+# no disparan este workflow (evita un archive+TestFlight innecesario).
+# Sigue disponible `workflow_dispatch` para lanzar a mano cuando haga falta.
+#
+# develop → main: este archivo NO dispara nada en `main`.
+
+name: TestFlight (push a develop)
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - "pagosApp/**"
+      - "pagosAppTests/**"
+      - "fastlane/**"
+      - "pagosApp.xcodeproj/**"
+      - "Gemfile"
+      - "Gemfile.lock"
+      - ".ruby-version"
+  workflow_dispatch:
+
+concurrency:
+  group: testflight-develop-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FASTLANE_SKIP_UPDATE_CHECK: "1"
+
+permissions:
+  contents: read
+
+jobs:
+  testflight:
+    name: Archive + subir a TestFlight
+    runs-on: macos-15
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ruby + Bundler
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Escribir AuthKey .p8 desde secret (Base64)
+        env:
+          ASC_P8_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ASC_P8_BASE64:-}" ]; then
+            echo "::error::Falta el secret APP_STORE_CONNECT_API_KEY_CONTENT_BASE64. Genera Base64 del .p8: base64 < AuthKey_XXX.p8 | tr -d '\n' (ver .github/GITHUB_ACTIONS_TESTFLIGHT.md)"
+            exit 1
+          fi
+          KEY_PATH="$RUNNER_TEMP/AuthKey_ci.p8"
+          echo -n "$ASC_P8_BASE64" | base64 --decode > "$KEY_PATH"
+          chmod 600 "$KEY_PATH"
+          echo "APP_STORE_CONNECT_P8_PATH=$KEY_PATH" >> "$GITHUB_ENV"
+
+      - name: Variables App Store Connect API
+        run: |
+          {
+            echo "APP_STORE_CONNECT_API_KEY_ID=${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}"
+            echo "APP_STORE_CONNECT_ISSUER_ID=${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}"
+          } >> "$GITHUB_ENV"
+          if [ -n "${{ secrets.FASTLANE_TEAM_ID }}" ]; then
+            echo "FASTLANE_TEAM_ID=${{ secrets.FASTLANE_TEAM_ID }}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Importar certificado Distribution + perfil (si los secretos existen)
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BUILD_CERTIFICATE_BASE64:-}" ] || [ -z "${P12_PASSWORD:-}" ] || [ -z "${KEYCHAIN_PASSWORD:-}" ] || [ -z "${PROVISIONING_PROFILE_BASE64:-}" ]; then
+            echo "::warning::Secretos de firma incompletos. gym suele fallar sin certificado .p12 y perfil App Store en el runner. Configura los secretos listados en .github/GITHUB_ACTIONS_TESTFLIGHT.md"
+            exit 0
+          fi
+          KEYCHAIN="$RUNNER_TEMP/ios_signing.keychain-db"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          CERT="$RUNNER_TEMP/dist.p12"
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode > "$CERT"
+          security import "$CERT" -k "$KEYCHAIN" -P "$P12_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security -T /usr/bin/productbuild
+          security list-keychain -d user -s "$KEYCHAIN"
+          security default-keychain -s "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" || true
+          echo "=== Identidades codesigning (debe aparecer Apple Distribution con clave privada) ==="
+          security find-identity -v -p codesigning
+          if ! security find-identity -v -p codesigning | grep -qE 'Apple Distribution|iPhone Distribution'; then
+            echo "::error::No hay certificado de **distribución** con clave privada en el llavero. Revisa BUILD_CERTIFICATE_BASE64 + P12_PASSWORD: el .p12 debe ser el export de **Apple Distribution** (no Apple Development), incluir la clave privada, y ser del mismo Team que el perfil App Store. Ver .github/GITHUB_ACTIONS_TESTFLIGHT.md"
+            exit 1
+          fi
+          PROV_RAW="$RUNNER_TEMP/profile.mobileprovision"
+          echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode > "$PROV_RAW"
+          PLIST=$(mktemp)
+          security cms -D -i "$PROV_RAW" > "$PLIST"
+          UUID=$(/usr/libexec/PlistBuddy -c 'Print UUID' "$PLIST")
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print Name' "$PLIST" | tr -d '\r\n')
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          cp "$PROV_RAW" "$HOME/Library/MobileDevice/Provisioning Profiles/$UUID.mobileprovision"
+          echo "Perfil instalado UUID=$UUID name=$PROFILE_NAME"
+          echo "CI_PROVISIONING_PROFILE_UUID=$UUID" >> "$GITHUB_ENV"
+          {
+            echo "CI_PROVISIONING_PROFILE_NAME<<PROVNAME_EOF"
+            printf '%s' "$PROFILE_NAME"
+            echo ""
+            echo "PROVNAME_EOF"
+          } >> "$GITHUB_ENV"
+
+      - name: Fastlane — release a TestFlight
+        run: bundle exec fastlane release_app_store_connect
+
+      - name: Últimas líneas del log de gym (si falló)
+        if: failure()
+        run: |
+          LOG="$HOME/Library/Logs/gym/pagosApp-pagosApp.log"
+          if [ -f "$LOG" ]; then echo "---- tail $LOG ----"; tail -n 150 "$LOG"; else echo "No existe $LOG"; fi

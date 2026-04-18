@@ -1,0 +1,310 @@
+# frozen_string_literal: true
+
+require "fileutils"
+require "dotenv"
+
+# Raíz del repo (padre de fastlane/)
+repo_root = File.expand_path("..", __dir__)
+Dotenv.load(File.join(repo_root, ".env"), File.join(__dir__, ".env"))
+
+default_platform(:ios)
+
+platform :ios do
+  PROJECT = "pagosApp.xcodeproj"
+  SCHEME = "pagosApp"
+  OUTPUT_DIR = "build"
+  IPA_NAME_APPSTORE = "PagosApp-appstore"
+
+  private_lane :load_app_store_connect_api_key do
+    # APP_STORE_CONNECT_API_KEY debe ser JSON (no PEM). Pilot lo parsea con JSON.parse.
+    ENV.delete("APP_STORE_CONNECT_API_KEY")
+
+    # En Fastlane oficial, APP_STORE_CONNECT_API_KEY_PATH / PILOT_API_KEY_PATH apuntan a un
+    # fichero JSON (Token.from_json_file), NO al AuthKey.p8 de Apple. Si dejas el .p8 ahí,
+    # upload_to_testflight falla con: invalid number: '-----BEGIN' (JSON::ParserError).
+    key_id = ENV["APP_STORE_CONNECT_API_KEY_ID"].to_s.strip
+    issuer = ENV["APP_STORE_CONNECT_ISSUER_ID"].to_s.strip
+    p8_path = ENV["APP_STORE_CONNECT_P8_PATH"].to_s.strip
+    p8_path = ENV["APP_STORE_CONNECT_API_KEY_PATH"].to_s.strip if p8_path.empty?
+    ENV.delete("APP_STORE_CONNECT_API_KEY_PATH")
+    ENV.delete("PILOT_API_KEY_PATH")
+    ENV.delete("SIGH_API_KEY_PATH")
+
+    b64 = ENV["APP_STORE_CONNECT_API_KEY_CONTENT_BASE64"].to_s.strip
+    raw = ENV["APP_STORE_CONNECT_API_KEY_CONTENT"].to_s.strip
+
+    if key_id.empty? || issuer.empty?
+      UI.user_error!(
+        "Faltan APP_STORE_CONNECT_API_KEY_ID y/o APP_STORE_CONNECT_ISSUER_ID.\n" \
+        "Plantilla: fastlane/.env.example"
+      )
+    end
+
+    base = { key_id: key_id, issuer_id: issuer, duration: 1200, in_house: false }
+
+    if !b64.empty?
+      require "base64"
+      pem = begin
+        Base64.strict_decode64(b64)
+      rescue ArgumentError
+        UI.user_error!("APP_STORE_CONNECT_API_KEY_CONTENT_BASE64 no es Base64 válido.")
+      end
+      app_store_connect_api_key(**base.merge(key_content: pem))
+    elsif !raw.empty?
+      app_store_connect_api_key(**base.merge(key_content: raw))
+    elsif !p8_path.empty?
+      key_abs = File.expand_path(p8_path)
+      UI.user_error!("No existe el archivo .p8 en: #{key_abs}") unless File.file?(key_abs)
+      app_store_connect_api_key(**base.merge(key_filepath: key_abs))
+    else
+      UI.user_error!(
+        "Falta el material de la clave .p8. Define una de:\n" \
+        "  APP_STORE_CONNECT_P8_PATH  (recomendado: ruta al AuthKey.p8 de Apple)\n" \
+        "  APP_STORE_CONNECT_API_KEY_PATH  (solo compatibilidad; Fastlane lo reserva para JSON — ver .env.example)\n" \
+        "  APP_STORE_CONNECT_API_KEY_CONTENT_BASE64\n" \
+        "  APP_STORE_CONNECT_API_KEY_CONTENT\n" \
+        "Plantilla: fastlane/.env.example"
+      )
+    end
+  end
+
+  private_lane :print_app_version_summary do
+    ver = get_version_number(xcodeproj: PROJECT, target: SCHEME)
+    build = get_build_number(xcodeproj: PROJECT)
+    UI.success("Versión generada: #{ver}(#{build})")
+  end
+
+  private_lane :stamp_build_timestamp do
+    if ENV["SKIP_AUTO_INCREMENT_BUILD"] == "1"
+      UI.message("Saltando auto-incremento de build (SKIP_AUTO_INCREMENT_BUILD=1)")
+    else
+      # YYYYMM.DD.HHmm (ej. 202604.16.1019): año-mes, día, hora y minuto.
+      stamp = Time.now.strftime("%Y%m.%d.%H%M")
+      increment_build_number(
+        build_number: stamp,
+        xcodeproj: PROJECT
+      )
+      UI.important("CFBundleVersion (build) = #{stamp} — se actualizó #{PROJECT}")
+    end
+  end
+
+  private_lane :gym_app_store_ipa do
+    stamp_build_timestamp
+    FileUtils.mkdir_p(OUTPUT_DIR)
+    # En Actions: xcargs globales con CODE_SIGN_IDENTITY rompen SPM (swift-crypto_Crypto, etc.).
+    # Solo ajustamos firma manual en el target de la app vía update_code_signing_settings.
+    export_opts = nil
+    if ENV["GITHUB_ACTIONS"] == "true"
+      profile_name = ENV["CI_PROVISIONING_PROFILE_NAME"].to_s.strip
+      if profile_name.empty?
+        UI.user_error!(
+          "Falta CI_PROVISIONING_PROFILE_NAME. El workflow testflight-develop.yml debe " \
+          "exportarlo al instalar PROVISIONING_PROFILE_BASE64."
+        )
+      end
+      team = ENV["FASTLANE_TEAM_ID"].to_s.strip
+      team = "8AJBS923B3" if team.empty?
+      profile_uuid = ENV["CI_PROVISIONING_PROFILE_UUID"].to_s.strip
+      signing_params = {
+        path: PROJECT,
+        use_automatic_signing: false,
+        targets: [SCHEME],
+        build_configurations: ["Release"],
+        sdk: "iphoneos*",
+        team_id: team,
+        profile_name: profile_name,
+        code_sign_identity: "Apple Distribution"
+      }
+      signing_params[:profile_uuid] = profile_uuid unless profile_uuid.empty?
+      update_code_signing_settings(**signing_params)
+      export_opts = {
+        signingStyle: "manual",
+        teamID: team,
+        provisioningProfiles: {
+          "com.rapser.payapp" => profile_name
+        }
+      }
+    end
+    gym_args = {
+      project: PROJECT,
+      scheme: SCHEME,
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: OUTPUT_DIR,
+      output_name: IPA_NAME_APPSTORE,
+      clean: true,
+      silent: false,
+      skip_package_ipa: false,
+      destination: "generic/platform=iOS"
+    }
+    gym_args[:export_options] = export_opts if export_opts
+    gym(**gym_args)
+  end
+
+  private_lane :upload_ipa_testflight do |options|
+    load_app_store_connect_api_key
+
+    ipa_path = lane_context[SharedValues::IPA_OUTPUT_PATH]
+    if ipa_path.nil? || !File.file?(ipa_path)
+      ipa_path = Dir.glob(File.join(OUTPUT_DIR, "#{IPA_NAME_APPSTORE}.ipa")).max_by { |f| File.mtime(f) }
+    end
+    UI.user_error!("No se encontró el IPA generado. Revisa el archive / export.") if ipa_path.nil? || !File.file?(ipa_path)
+
+    # Misma API de subida para ambos flujos; la diferencia Xcode "App Store Connect" vs
+    # "TestFlight solo internos" es sobre todo quién puede instalar y si activas externos / revisión beta en la web.
+    internal_only = options[:internal_only] == true
+
+    upload_to_testflight(
+      ipa: ipa_path,
+      skip_waiting_for_build_processing: true,
+      distribute_external: false,
+      notify_external_testers: false
+    )
+
+    if internal_only
+      UI.success(
+        "✅ Subido a TestFlight (flujo interno). En App Store Connect: usa solo testers internos; " \
+        "los externos requieren Beta App Review cuando los añadas."
+      )
+    else
+      UI.success(
+        "✅ Subido a App Store Connect / TestFlight. El build puede usarse para internos y, cuando quieras, " \
+        "para grupos externos (revisión beta) y para enviar la app a revisión de la tienda."
+      )
+    end
+    print_app_version_summary
+  end
+
+  desc "Solo pone el número de build por marca de tiempo (sin archive)"
+  lane :stamp_build do
+    stamp_build_timestamp
+    print_app_version_summary
+  end
+
+  desc "Lista comandos útiles (referencia / CI; no abre menú)"
+  lane :reference do
+    UI.message <<~TXT
+
+      Guía de configuración (otro proyecto / errores): fastlane/SETUP.md
+
+      Menú numerado:
+        bundle exec fastlane menu
+
+      Lanes explícitas (sin menú):
+        bundle exec fastlane ipa_pruebas
+        bundle exec fastlane ipa_app_store
+        bundle exec fastlane release_app_store_connect
+        bundle exec fastlane release_testflight_internal
+        bundle exec fastlane upload_testflight
+    TXT
+  end
+
+  private_lane :report_menu_elapsed do |options|
+    t0 = options[:start_time]
+    return if t0.nil?
+
+    secs = Time.now.to_f - t0.to_f
+    if secs < 60
+      seg = secs.round.to_i
+      UI.success("⏱ Todo el proceso tomó #{seg} segundos.")
+    else
+      minutos = (secs / 60.0).ceil.to_i
+      UI.success("⏱ Todo el proceso tomó #{minutos} minutos.")
+    end
+  end
+
+  desc "Menú: IPA local o pipelines de subida a TestFlight"
+  lane :menu do
+    opciones = [
+      "Solo IPA — Ad Hoc (dispositivos registrados)",
+      "Solo IPA — App Store (sin subir; luego Transporter o lane de subida)",
+      "Archive + subir — App Store Connect / TestFlight (camino completo: luego puedes revisión tienda)",
+      "Archive + subir — enfoque TestFlight interno (testers internos; externos = beta review en ASC)",
+      "Solo subir IPA App Store ya generado (build/; requiere .env con API Key)"
+    ]
+
+    UI.header("PagosApp — elige una opción")
+    opciones.each_with_index do |texto, i|
+      UI.message("#{i + 1}. #{texto}")
+    end
+    UI.message("")
+
+    entrada = begin
+      UI.input("Escribe el número y pulsa Enter (1–#{opciones.length}):").to_s.strip
+    rescue Interrupt
+      UI.important("Menú cancelado (Ctrl+C).")
+      nil
+    end
+
+    unless entrada.nil?
+      idx = Integer(entrada, exception: false)
+      UI.user_error!("Número no válido: #{entrada.inspect} — usa un entero entre 1 y #{opciones.length}.") if idx.nil? || idx < 1 || idx > opciones.length
+
+      start_time = Time.now
+      begin
+        case idx
+        when 1 then ipa_pruebas
+        when 2 then ipa_app_store
+        when 3 then release_app_store_connect
+        when 4 then release_testflight_internal
+        when 5 then upload_testflight
+        end
+      ensure
+        report_menu_elapsed(start_time: start_time)
+      end
+    end
+  end
+
+  desc "Archive + IPA Ad Hoc"
+  lane :ipa_pruebas do
+    stamp_build_timestamp
+    FileUtils.mkdir_p(OUTPUT_DIR)
+    gym(
+      project: PROJECT,
+      scheme: SCHEME,
+      configuration: "Release",
+      export_method: "ad-hoc",
+      output_directory: OUTPUT_DIR,
+      output_name: "PagosApp-pruebas",
+      clean: true,
+      silent: false,
+      skip_package_ipa: false
+    )
+    UI.success("✅ IPA Ad Hoc en #{File.expand_path(OUTPUT_DIR)}")
+    print_app_version_summary
+  end
+
+  desc "Archive + IPA App Store (sin subir)"
+  lane :ipa_app_store do
+    gym_app_store_ipa
+    UI.success("✅ IPA App Store en #{File.expand_path(OUTPUT_DIR)}")
+    print_app_version_summary
+  end
+
+  desc "Archive + subida a ASC/TestFlight (equivalente a App Store Connect en Organizer)"
+  lane :release_app_store_connect do
+    gym_app_store_ipa
+    upload_ipa_testflight(internal_only: false)
+  end
+
+  desc "Archive + subida con enfoque solo testers internos (equivalente a TestFlight internal en Organizer)"
+  lane :release_testflight_internal do
+    gym_app_store_ipa
+    upload_ipa_testflight(internal_only: true)
+  end
+
+  desc "Sube el último IPA app-store ya generado (requiere API Key en .env)"
+  lane :upload_testflight do
+    load_app_store_connect_api_key
+    ipa_path = Dir.glob(File.join(OUTPUT_DIR, "#{IPA_NAME_APPSTORE}.ipa")).max_by { |f| File.mtime(f) }
+    UI.user_error!("No hay IPA en #{OUTPUT_DIR}. Ejecuta ipa_app_store o release_* antes.") if ipa_path.nil?
+
+    upload_to_testflight(
+      ipa: ipa_path,
+      skip_waiting_for_build_processing: true,
+      distribute_external: false,
+      notify_external_testers: false
+    )
+    print_app_version_summary
+  end
+end
