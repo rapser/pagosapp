@@ -1,3 +1,4 @@
+# Build + SwiftLint en PR/push. La subida a TestFlight NO va aquí: ver testflight-develop.yml (solo push a develop).
 name: CI
 
 on:
