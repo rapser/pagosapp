@@ -1,6 +1,7 @@
 # Build + SwiftLint en PR. En `develop` no corremos CI en `push`: el merge ya pasó
 # checks en el PR; el push a `develop` dispara solo TestFlight (testflight-develop.yml).
 # Push a main/master sigue corriendo CI; TestFlight no va aquí.
+# PR develop → main/master: sin jobs (release; `develop` ya pasó CI en su PR hacia develop).
 name: CI
 
 on:
@@ -15,6 +16,7 @@ env:
 jobs:
   build:
     name: Build (iOS Simulator)
+    if: ${{ github.event_name != 'pull_request' || github.head_ref != 'develop' || (github.base_ref != 'main' && github.base_ref != 'master') }}
     runs-on: macos-15
     steps:
       - name: Checkout
@@ -30,6 +32,7 @@ jobs:
 
   swiftlint:
     name: SwiftLint
+    if: ${{ github.event_name != 'pull_request' || github.head_ref != 'develop' || (github.base_ref != 'main' && github.base_ref != 'master') }}
     runs-on: macos-15
     steps:
       - name: Checkout
