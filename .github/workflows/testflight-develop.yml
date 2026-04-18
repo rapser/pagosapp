@@ -1,8 +1,9 @@
-# TestFlight solo cuando el código llega a `develop` (p. ej. tras merge de un PR
-# desde feature/* u otra rama). No se ejecuta en PRs ni en push a `main`.
+# TestFlight en `develop` solo si el push toca app / firma / proyecto (paths).
+# Pushes que solo cambian p. ej. `.github/workflows/ci.yml` u otros paths no listados
+# no disparan este workflow (evita un archive+TestFlight innecesario).
+# Sigue disponible `workflow_dispatch` para lanzar a mano cuando haga falta.
 #
-# develop → main: este archivo NO dispara nada en `main`. Para activar despliegue
-# desde `main` en el futuro, añadiría otro workflow o un job aquí con `branches: [main]`.
+# develop → main: este archivo NO dispara nada en `main`.
 
 name: TestFlight (push a develop)
 
@@ -10,6 +11,14 @@ on:
   push:
     branches:
       - develop
+    paths:
+      - "pagosApp/**"
+      - "pagosAppTests/**"
+      - "fastlane/**"
+      - "pagosApp.xcodeproj/**"
+      - "Gemfile"
+      - "Gemfile.lock"
+      - ".ruby-version"
   workflow_dispatch:
 
 concurrency:
