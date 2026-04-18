@@ -1,10 +1,11 @@
+# Build + SwiftLint solo en PRs hacia `develop`.
+# `main` / `master`: sin este workflow (merge directo sin checks ni jobs en GitHub Actions).
+# Push a `develop` no dispara CI (checks en el PR a develop); TestFlight: testflight-develop.yml.
 name: CI
 
 on:
-  push:
-    branches: [main, master, develop]
   pull_request:
-    branches: [main, master, develop]
+    branches: [develop]
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

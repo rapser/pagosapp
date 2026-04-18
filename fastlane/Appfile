@@ -1,0 +1,8 @@
+# Identificador de la app (debe coincidir con Xcode)
+app_identifier("com.rapser.payapp")
+
+# Team de Apple Developer (mismo que DEVELOPMENT_TEAM en el proyecto)
+team_id(ENV.fetch("FASTLANE_TEAM_ID", "8AJBS923B3"))
+
+# Opcional: Apple ID para acciones que aún usen login clásico (evitar si usas API Key)
+# apple_id(ENV["FASTLANE_APPLE_ID"])

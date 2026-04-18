@@ -38,10 +38,8 @@ class BaseViewModel: LoadingStateViewModel {
     
     // MARK: - Common Methods
     
-    /// Log debug messages with automatic class context
-    func logDebug(_ message: String, function: String = #function, line: Int = #line) {
-        logger.debug("\(function):\(line) - \(message)")
-    }
+    /// Debug hook for ViewModels; logging disabled to keep Xcode console quiet.
+    func logDebug(_ message: String, function: String = #function, line: Int = #line) {}
     
     /// Log error messages with automatic class context
     func logError(_ error: Error, function: String = #function, line: Int = #line) {
