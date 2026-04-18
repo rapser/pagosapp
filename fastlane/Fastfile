@@ -108,7 +108,8 @@ platform :ios do
     }
     if ENV["GITHUB_ACTIONS"] == "true"
       team = ENV["FASTLANE_TEAM_ID"].to_s.strip
-      xc = "CODE_SIGN_IDENTITY=Apple Distribution"
+      # Valor con espacio: sin comillas, xcodebuild trata "Distribution" como acción (error 65).
+      xc = 'CODE_SIGN_IDENTITY="Apple Distribution"'
       xc += " DEVELOPMENT_TEAM=#{team}" unless team.empty?
       gym_args[:xcargs] = xc
     end
