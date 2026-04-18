@@ -67,12 +67,6 @@ final class GenericNotificationScheduler {
 
         let calendar = Calendar.current
         let now = Date()
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .medium
-        var scheduledCount = 0
-
-        self.logger.info("📅 Scheduling notifications for: \(title) due on \(dateFormatter.string(from: dueDate))")
-        self.logger.info("🔔 Notification schedule: \(notificationDays) days before")
 
         for daysBefore in notificationDays {
             guard let notificationDate = calendar.date(byAdding: .day, value: -daysBefore, to: dueDate) else { 
@@ -83,7 +77,7 @@ final class GenericNotificationScheduler {
             if daysBefore == 0 {
                 // Schedule notifications for same day: morning and afternoon
                 for timeOfDay in TimeOfDay.allCases {
-                    let success = await self.scheduleNotification(
+                    _ = await self.scheduleNotification(
                         calendar: calendar,
                         notificationDate: notificationDate,
                         now: now,
@@ -93,14 +87,10 @@ final class GenericNotificationScheduler {
                         timeOfDay: timeOfDay,
                         contentBuilder: contentBuilder
                     )
-                    
-                    if success {
-                        scheduledCount += 1
-                    }
                 }
             } else {
                 // Schedule notification for days before (at 9 AM)
-                let success = await self.scheduleNotification(
+                _ = await self.scheduleNotification(
                     calendar: calendar,
                     notificationDate: notificationDate,
                     now: now,
@@ -110,14 +100,8 @@ final class GenericNotificationScheduler {
                     timeOfDay: .morning,
                     contentBuilder: contentBuilder
                 )
-                
-                if success {
-                    scheduledCount += 1
-                }
             }
         }
-        
-        self.logger.info("📊 Total notifications scheduled: \(scheduledCount) for \(title)")
     }
     
     private func scheduleNotification(
@@ -142,7 +126,6 @@ final class GenericNotificationScheduler {
         }
         
         guard triggerDate > now else {
-            self.logger.info("Skipping past notification time: \(triggerDate)")
             return false
         }
         
@@ -163,7 +146,6 @@ final class GenericNotificationScheduler {
         
         do {
             try await UNUserNotificationCenter.current().add(request)
-            self.logger.info("✅ Scheduled \(daysBefore) days before notification (\(timeOfDay.suffix)) for: \(title)")
             return true
         } catch {
             self.logger.error("❌ Failed to schedule \(daysBefore) days before notification (\(timeOfDay.suffix)): \(error.localizedDescription)")
