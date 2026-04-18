@@ -89,9 +89,15 @@ jobs:
           PLIST=$(mktemp)
           security cms -D -i "$PROV_RAW" > "$PLIST"
           UUID=$(/usr/libexec/PlistBuddy -c 'Print UUID' "$PLIST")
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print Name' "$PLIST")
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
           cp "$PROV_RAW" "$HOME/Library/MobileDevice/Provisioning Profiles/$UUID.mobileprovision"
-          echo "Perfil instalado UUID=$UUID"
+          echo "Perfil instalado UUID=$UUID name=$PROFILE_NAME"
+          {
+            echo "CI_PROVISIONING_PROFILE_NAME<<EOF"
+            echo "$PROFILE_NAME"
+            echo "EOF"
+          } >> "$GITHUB_ENV"
 
       - name: Fastlane — release a TestFlight
         run: bundle exec fastlane release_app_store_connect
