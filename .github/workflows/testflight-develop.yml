@@ -84,20 +84,34 @@ jobs:
           security list-keychain -d user -s "$KEYCHAIN"
           security default-keychain -s "$KEYCHAIN"
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" || true
+          echo "=== Identidades codesigning (debe aparecer Apple Distribution con clave privada) ==="
+          security find-identity -v -p codesigning
+          if ! security find-identity -v -p codesigning | grep -qE 'Apple Distribution|iPhone Distribution'; then
+            echo "::error::No hay certificado de **distribución** con clave privada en el llavero. Revisa BUILD_CERTIFICATE_BASE64 + P12_PASSWORD: el .p12 debe ser el export de **Apple Distribution** (no Apple Development), incluir la clave privada, y ser del mismo Team que el perfil App Store. Ver .github/GITHUB_ACTIONS_TESTFLIGHT.md"
+            exit 1
+          fi
           PROV_RAW="$RUNNER_TEMP/profile.mobileprovision"
           echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode > "$PROV_RAW"
           PLIST=$(mktemp)
           security cms -D -i "$PROV_RAW" > "$PLIST"
           UUID=$(/usr/libexec/PlistBuddy -c 'Print UUID' "$PLIST")
-          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print Name' "$PLIST")
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print Name' "$PLIST" | tr -d '\r\n')
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
           cp "$PROV_RAW" "$HOME/Library/MobileDevice/Provisioning Profiles/$UUID.mobileprovision"
           echo "Perfil instalado UUID=$UUID name=$PROFILE_NAME"
+          echo "CI_PROVISIONING_PROFILE_UUID=$UUID" >> "$GITHUB_ENV"
           {
-            echo "CI_PROVISIONING_PROFILE_NAME<<EOF"
-            echo "$PROFILE_NAME"
-            echo "EOF"
+            echo "CI_PROVISIONING_PROFILE_NAME<<PROVNAME_EOF"
+            printf '%s' "$PROFILE_NAME"
+            echo ""
+            echo "PROVNAME_EOF"
           } >> "$GITHUB_ENV"
 
       - name: Fastlane — release a TestFlight
         run: bundle exec fastlane release_app_store_connect
+
+      - name: Últimas líneas del log de gym (si falló)
+        if: failure()
+        run: |
+          LOG="$HOME/Library/Logs/gym/pagosApp-pagosApp.log"
+          if [ -f "$LOG" ]; then echo "---- tail $LOG ----"; tail -n 150 "$LOG"; else echo "No existe $LOG"; fi
