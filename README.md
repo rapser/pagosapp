@@ -702,6 +702,7 @@ struct PaymentRemoteDTO: Codable, Sendable { /* ... */ }
 
 ### CI y calidad
 - **GitHub Actions** ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)): **build** con `xcodebuild` (simulador iOS genérico) + **SwiftLint** en cada push/PR a `main`, `master` o `develop` (runner `macos-15`).
+- **TestFlight en CI** ([`.github/workflows/testflight-develop.yml`](.github/workflows/testflight-develop.yml)): solo en **`push` a `develop`** (tras merge del PR); no en `main`. Secretos y firma: [`.github/GITHUB_ACTIONS_TESTFLIGHT.md`](.github/GITHUB_ACTIONS_TESTFLIGHT.md).
 - **Fastlane**: menú `bundle exec fastlane menu`; guía replicable en [fastlane/SETUP.md](fastlane/SETUP.md); resumen en [fastlane/README.md](fastlane/README.md).
 - **SwiftLint**: configuración en [`.swiftlint.yml`](.swiftlint.yml) en la raíz del repo.
 - **Documentación técnica**: [TECHNICAL_AUDIT.md](TECHNICAL_AUDIT.md), ADRs en [`docs/adr/`](docs/adr/), ingeniería (sync, concurrencia) en [`docs/engineering/`](docs/engineering/), runbooks SSL en [`docs/runbooks/`](docs/runbooks/).

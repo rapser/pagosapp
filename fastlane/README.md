@@ -11,7 +11,8 @@ bundle exec fastlane menu       # menú numerado
 bundle exec fastlane reference  # lista de lanes (CI / copiar)
 ```
 
-Plantilla de variables (sin secretos): **[.env.example](.env.example)**
+Plantilla de variables (sin secretos): **[.env.example](.env.example)**  
+CI / GitHub Actions + TestFlight: **[`../.github/GITHUB_ACTIONS_TESTFLIGHT.md`](../.github/GITHUB_ACTIONS_TESTFLIGHT.md)**
 
 ## Lanes (referencia)
 
