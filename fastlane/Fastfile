@@ -148,6 +148,8 @@ platform :ios do
   lane :reference do
     UI.message <<~TXT
 
+      Guía de configuración (otro proyecto / errores): fastlane/SETUP.md
+
       Menú numerado:
         bundle exec fastlane menu
 
