@@ -1,9 +1,11 @@
-# Build + SwiftLint en PR/push. La subida a TestFlight NO va aquí: ver testflight-develop.yml (solo push a develop).
+# Build + SwiftLint en PR. En `develop` no corremos CI en `push`: el merge ya pasó
+# checks en el PR; el push a `develop` dispara solo TestFlight (testflight-develop.yml).
+# Push a main/master sigue corriendo CI; TestFlight no va aquí.
 name: CI
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [main, master]
   pull_request:
     branches: [main, master, develop]
 
