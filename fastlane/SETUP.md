@@ -118,12 +118,14 @@ En **CI**, si no quieres fichero en disco, puedes usar **`APP_STORE_CONNECT_API_
 
 ## 7. CI (GitHub Actions u otro)
 
-- Invoca **una lane concreta** (`bundle exec fastlane release_...`), sin menú interactivo.
-- Inyecta secretos como **`APP_STORE_CONNECT_API_KEY_CONTENT_BASE64`**, Key ID e Issuer (ver `.env.example`).
-- En el runner hace falta **firma** (`match`, certificados en secretos, etc.); solo la API Key no basta para `gym` en una máquina limpia.
-- Variable útil: `FASTLANE_SKIP_UPDATE_CHECK=1`.
+En este repo el flujo de **TestFlight en GitHub** está descrito en **[`.github/GITHUB_ACTIONS_TESTFLIGHT.md`](../.github/GITHUB_ACTIONS_TESTFLIGHT.md)** y el workflow en **[`.github/workflows/testflight-develop.yml`](../.github/workflows/testflight-develop.yml)**:
 
-Ejemplo mínimo (cuando tengas firma en el runner):
+- Se ejecuta en **`push` a `develop`** (típico tras **merge** de un PR hacia `develop`), **no** en PRs ni en push a `main`.
+- Invoca **`bundle exec fastlane release_app_store_connect`** (sin menú).
+- Secretos: API Key en Base64, Key ID, Issuer; y para **firma** en el runner: `.p12` Distribution + perfil App Store en Base64 (o `match` si lo añades al `Fastfile`).
+- Variable útil: `FASTLANE_SKIP_UPDATE_CHECK=1` (ya la pone el workflow).
+
+Ejemplo mínimo genérico (otro proyecto):
 
 ```yaml
 - uses: ruby/setup-ruby@v1
@@ -131,9 +133,9 @@ Ejemplo mínimo (cuando tengas firma en el runner):
     ruby-version: .ruby-version
     bundler-cache: true
 - env:
-    APP_STORE_CONNECT_API_KEY_CONTENT_BASE64: ${{ secrets.ASC_P8_BASE64 }}
-    APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-    APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+    APP_STORE_CONNECT_API_KEY_CONTENT_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT_BASE64 }}
+    APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+    APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
     FASTLANE_SKIP_UPDATE_CHECK: "1"
   run: bundle exec fastlane release_app_store_connect
 ```
