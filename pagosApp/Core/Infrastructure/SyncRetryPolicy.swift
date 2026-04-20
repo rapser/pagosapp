@@ -30,3 +30,23 @@ enum SyncRetryPolicy {
         try? await Task.sleep(nanoseconds: delayNanoseconds(forAttempt: attempt))
     }
 }
+
+/// Cooldown for sync entry points so burst events do not stack concurrent sync work.
+@MainActor
+final class SyncTriggerThrottle {
+    private let minimumInterval: TimeInterval
+    private var lastTriggerDate: Date?
+
+    init(minimumInterval: TimeInterval) {
+        self.minimumInterval = minimumInterval
+    }
+
+    /// Records this trigger and returns `true` if sync may proceed, `false` if still within cooldown.
+    func consumeTriggerIfAllowed(now: Date = Date()) -> Bool {
+        if let last = lastTriggerDate, now.timeIntervalSince(last) < minimumInterval {
+            return false
+        }
+        lastTriggerDate = now
+        return true
+    }
+}

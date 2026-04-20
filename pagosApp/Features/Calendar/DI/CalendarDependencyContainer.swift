@@ -14,17 +14,20 @@ final class CalendarDependencyContainer {
     private let paymentDependencyContainer: PaymentDependencyContainer
     private let reminderDependencyContainer: ReminderDependencyContainer
     private let calendarEventDataSource: CalendarEventDataSource
+    private let log: DomainLogWriter
 
     // MARK: - Initialization
 
     init(
         paymentDependencyContainer: PaymentDependencyContainer,
         reminderDependencyContainer: ReminderDependencyContainer,
-        calendarEventDataSource: CalendarEventDataSource
+        calendarEventDataSource: CalendarEventDataSource,
+        log: DomainLogWriter
     ) {
         self.paymentDependencyContainer = paymentDependencyContainer
         self.reminderDependencyContainer = reminderDependencyContainer
         self.calendarEventDataSource = calendarEventDataSource
+        self.log = log
     }
 
     // MARK: - Repository
@@ -39,19 +42,22 @@ final class CalendarDependencyContainer {
 
     func makeGetAllPaymentsForCalendarUseCase() -> GetAllPaymentsForCalendarUseCase {
         return GetAllPaymentsForCalendarUseCase(
-            calendarRepository: makeCalendarRepository()
+            calendarRepository: makeCalendarRepository(),
+            log: log
         )
     }
 
     func makeGetPaymentsByDateUseCase() -> GetPaymentsByDateUseCase {
         return GetPaymentsByDateUseCase(
-            calendarRepository: makeCalendarRepository()
+            calendarRepository: makeCalendarRepository(),
+            log: log
         )
     }
 
     func makeGetPaymentsByMonthUseCase() -> GetPaymentsByMonthUseCase {
         return GetPaymentsByMonthUseCase(
-            calendarRepository: makeCalendarRepository()
+            calendarRepository: makeCalendarRepository(),
+            log: log
         )
     }
 

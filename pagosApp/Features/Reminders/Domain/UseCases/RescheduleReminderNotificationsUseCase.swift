@@ -7,15 +7,17 @@
 //
 
 import Foundation
-import OSLog
 
 /// Use case for rescheduling local notifications for reminders
 final class RescheduleReminderNotificationsUseCase {
-    private let notificationDataSource: NotificationDataSource
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "RescheduleReminderNotificationsUseCase")
+    private static let logCategory = "RescheduleReminderNotificationsUseCase"
 
-    init(notificationDataSource: NotificationDataSource) {
+    private let notificationDataSource: NotificationDataSource
+    private let log: DomainLogWriter
+
+    init(notificationDataSource: NotificationDataSource, log: DomainLogWriter) {
         self.notificationDataSource = notificationDataSource
+        self.log = log
     }
 
     @MainActor
@@ -41,14 +43,14 @@ final class RescheduleReminderNotificationsUseCase {
 
     @MainActor
     func rescheduleAll(_ reminders: [Reminder]) {
-        logger.info("📅 Rescheduling notifications for \(reminders.count) reminders")
+        log.info("📅 Rescheduling notifications for \(reminders.count) reminders", category: Self.logCategory)
         let activeReminders = reminders.filter { !$0.isCompleted }
-        logger.info("📋 Active reminders (not completed): \(activeReminders.count)")
+        log.info("📋 Active reminders (not completed): \(activeReminders.count)", category: Self.logCategory)
         
         for reminder in reminders {
             execute(reminder)
         }
         
-        logger.info("✅ Finished rescheduling all reminder notifications")
+        log.info("✅ Finished rescheduling all reminder notifications", category: Self.logCategory)
     }
 }

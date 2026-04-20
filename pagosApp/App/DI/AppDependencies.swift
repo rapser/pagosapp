@@ -25,6 +25,7 @@ final class AppDependencies {
     let calendarEventDataSource: CalendarEventDataSource
     let alertManager: AlertManager
     let eventBus: EventBus
+    let domainLog: DomainLogWriter
 
     // MARK: - Feature Containers (Clean Architecture)
 
@@ -59,35 +60,44 @@ final class AppDependencies {
         self.calendarEventDataSource = EventKitCalendarDataSource()
         self.alertManager = AlertManager()
         self.eventBus = InMemoryEventBus()
+        self.domainLog = OSLogDomainLogWriter()
 
         // Feature Dependency Containers (Clean Architecture)
-        self.authDependencyContainer = AuthDependencyContainer(supabaseClient: supabaseClient)
+        self.authDependencyContainer = AuthDependencyContainer(
+            supabaseClient: supabaseClient,
+            log: domainLog
+        )
 
         self.paymentDependencyContainer = PaymentDependencyContainer(
             supabaseClient: supabaseClient,
             modelContext: modelContext,
-            eventBus: eventBus
+            eventBus: eventBus,
+            log: domainLog
         )
 
         self.userProfileDependencyContainer = UserProfileDependencyContainer(
             supabaseClient: supabaseClient,
-            modelContext: modelContext
+            modelContext: modelContext,
+            log: domainLog
         )
 
         self.reminderDependencyContainer = ReminderDependencyContainer(
             modelContext: modelContext,
             notificationDataSource: notificationDataSource,
-            supabaseClient: supabaseClient
+            supabaseClient: supabaseClient,
+            log: domainLog
         )
 
         self.calendarDependencyContainer = CalendarDependencyContainer(
             paymentDependencyContainer: paymentDependencyContainer,
             reminderDependencyContainer: reminderDependencyContainer,
-            calendarEventDataSource: calendarEventDataSource
+            calendarEventDataSource: calendarEventDataSource,
+            log: domainLog
         )
 
         self.statisticsDependencyContainer = StatisticsDependencyContainer(
-            paymentDependencyContainer: paymentDependencyContainer
+            paymentDependencyContainer: paymentDependencyContainer,
+            log: domainLog
         )
 
         self.historyDependencyContainer = HistoryDependencyContainer(

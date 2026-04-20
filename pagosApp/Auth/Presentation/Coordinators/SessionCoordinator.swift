@@ -57,6 +57,7 @@ final class SessionCoordinator {
         settingsStore: SettingsStore,
         paymentSyncCoordinator: PaymentSyncCoordinator,
         reminderSyncCoordinator: ReminderSyncCoordinator,
+        coordinateSyncUseCase: CoordinateSyncUseCaseProtocol,
         authDependencyContainer: AuthDependencyContainer
     ) {
         self.errorHandler = errorHandler
@@ -82,10 +83,7 @@ final class SessionCoordinator {
         self.verifyRemoteSessionUseCase = VerifyRemoteSessionUseCase(
             getAuthenticationStatusUseCase: authDependencyContainer.makeGetAuthenticationStatusUseCase()
         )
-        self.coordinateSyncUseCase = CoordinateSyncUseCase(
-            paymentSyncCoordinator: paymentSyncCoordinator,
-            reminderSyncCoordinator: reminderSyncCoordinator
-        )
+        self.coordinateSyncUseCase = coordinateSyncUseCase
 
         self.isSessionActive = sessionRepository.hasActiveSession
 

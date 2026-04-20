@@ -15,6 +15,7 @@ final class ReminderDependencyContainer {
     private let modelContext: ModelContext
     private let notificationDataSource: NotificationDataSource
     private let supabaseClient: SupabaseClient
+    private let log: DomainLogWriter
 
     private lazy var localDataSource: ReminderLocalDataSource = {
         ReminderSwiftDataDataSource(modelContext: modelContext)
@@ -44,10 +45,16 @@ final class ReminderDependencyContainer {
         )
     }()
 
-    init(modelContext: ModelContext, notificationDataSource: NotificationDataSource, supabaseClient: SupabaseClient) {
+    init(
+        modelContext: ModelContext,
+        notificationDataSource: NotificationDataSource,
+        supabaseClient: SupabaseClient,
+        log: DomainLogWriter
+    ) {
         self.modelContext = modelContext
         self.notificationDataSource = notificationDataSource
         self.supabaseClient = supabaseClient
+        self.log = log
     }
 
     func makeCreateReminderUseCase() -> CreateReminderUseCase {
@@ -55,7 +62,10 @@ final class ReminderDependencyContainer {
     }
 
     func makeRescheduleReminderNotificationsUseCase() -> RescheduleReminderNotificationsUseCase {
-        RescheduleReminderNotificationsUseCase(notificationDataSource: notificationDataSource)
+        RescheduleReminderNotificationsUseCase(
+            notificationDataSource: notificationDataSource,
+            log: log
+        )
     }
 
     func makeGetAllRemindersUseCase() -> GetAllRemindersUseCase {
@@ -95,8 +105,12 @@ final class ReminderDependencyContainer {
     func makeReminderSyncCoordinator() -> ReminderSyncCoordinator {
         ReminderSyncCoordinator(
             syncRemindersUseCase: SyncRemindersUseCase(
-                uploadUseCase: UploadReminderChangesUseCase(syncRepository: syncRepository),
-                downloadUseCase: DownloadReminderChangesUseCase(syncRepository: syncRepository, localDataSource: localDataSource)
+                uploadUseCase: UploadReminderChangesUseCase(syncRepository: syncRepository, log: log),
+                downloadUseCase: DownloadReminderChangesUseCase(
+                    syncRepository: syncRepository,
+                    localDataSource: localDataSource,
+                    log: log
+                )
             ),
             getPendingSyncCountUseCase: GetPendingReminderSyncCountUseCase(syncRepository: syncRepository),
             syncRepository: syncRepository,

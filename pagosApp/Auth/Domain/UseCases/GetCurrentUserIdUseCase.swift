@@ -10,9 +10,9 @@ import Foundation
 
 /// Use Case to retrieve the current authenticated user's ID
 final class GetCurrentUserIdUseCase {
-    private let authRepository: AuthRepositoryProtocol
+    private let authRepository: AuthSessionRepositoryProtocol
 
-    init(authRepository: AuthRepositoryProtocol) {
+    init(authRepository: AuthSessionRepositoryProtocol) {
         self.authRepository = authRepository
     }
 

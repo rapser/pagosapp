@@ -11,13 +11,13 @@ import Foundation
 /// Use case for authenticating user with email and password
 @MainActor
 final class LoginUseCase {
-    private let authRepository: AuthRepositoryProtocol
+    private let authRepository: AuthSessionRepositoryProtocol
     private let emailValidator: EmailValidator.Type
     private let passwordValidator: PasswordValidator.Type
     private let loginAttemptTracker: LoginAttemptTracking
 
     init(
-        authRepository: AuthRepositoryProtocol,
+        authRepository: AuthSessionRepositoryProtocol,
         emailValidator: EmailValidator.Type = EmailValidator.self,
         passwordValidator: PasswordValidator.Type = PasswordValidator.self,
         loginAttemptTracker: LoginAttemptTracking = UserDefaultsLoginAttemptTracker.shared

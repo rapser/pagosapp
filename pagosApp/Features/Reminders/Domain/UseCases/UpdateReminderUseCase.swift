@@ -7,11 +7,9 @@
 //
 
 import Foundation
-import OSLog
 
 final class UpdateReminderUseCase {
     private let repository: ReminderRepositoryProtocol
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "UpdateReminderUseCase")
 
     init(repository: ReminderRepositoryProtocol) {
         self.repository = repository

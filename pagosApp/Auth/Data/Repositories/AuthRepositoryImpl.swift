@@ -11,8 +11,7 @@ import OSLog
 
 private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "AuthRepositoryImpl")
 
-/// Implementation of AuthRepositoryProtocol
-/// Coordinates between remote and local data sources
+/// Implementation of `AuthRepositoryProtocol` (session + credentials + account).
 @MainActor
 final class AuthRepositoryImpl: AuthRepositoryProtocol {
     private let remoteDataSource: AuthRemoteDataSource

@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import SwiftUI
 
 /// Represents a group of related payments (dual-currency credit cards)
 /// Used only in PaymentsListView for visual grouping
@@ -46,9 +45,9 @@ struct PaymentGroupUI: Identifiable {
         DateFormattingService.formatMedium(dueDate)
     }
 
-    /// Color for status indicator
-    var statusColor: Color {
-        isPaid ? Color("AppSuccess") : Color("AppTextSecondary")
+    /// Color token for status indicator
+    var statusColorToken: PaymentColorToken {
+        isPaid ? .appSuccess : .appTextSecondary
     }
 
     /// Icon for payment status
@@ -73,14 +72,14 @@ struct PaymentGroupUI: Identifiable {
         return dueDateStart < today
     }
 
-    /// Display color based on state
-    var displayColor: Color {
+    /// Display color token based on state
+    var displayColorToken: PaymentColorToken {
         if isPaid {
-            return Color("AppSuccess")
+            return .appSuccess
         } else if isOverdue {
-            return Color.red
+            return .overdue
         } else {
-            return Color("AppTextPrimary")
+            return .appTextPrimary
         }
     }
 

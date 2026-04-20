@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import OSLog
 
 /// Use case to coordinate sync operations across different features
 protocol CoordinateSyncUseCaseProtocol {
@@ -17,57 +16,66 @@ protocol CoordinateSyncUseCaseProtocol {
 
 /// Implementation of sync coordination
 final class CoordinateSyncUseCase: CoordinateSyncUseCaseProtocol {
-    
+    private static let logCategory = "CoordinateSyncUseCase"
+
     private let paymentSyncCoordinator: PaymentSyncCoordinator
     private let reminderSyncCoordinator: ReminderSyncCoordinator
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "CoordinateSyncUseCase")
-    
+    private let log: DomainLogWriter
+
     init(
         paymentSyncCoordinator: PaymentSyncCoordinator,
-        reminderSyncCoordinator: ReminderSyncCoordinator
+        reminderSyncCoordinator: ReminderSyncCoordinator,
+        log: DomainLogWriter
     ) {
         self.paymentSyncCoordinator = paymentSyncCoordinator
         self.reminderSyncCoordinator = reminderSyncCoordinator
+        self.log = log
     }
-    
+
     func triggerInitialSync() async {
-        logger.info("🔄 Starting initial sync coordination")
-        
+        log.info("🔄 Starting initial sync coordination", category: Self.logCategory)
+
         await withTaskGroup(of: Void.self) { group in
-            group.addTask { [weak self] in
-                await self?.paymentSyncCoordinator.performInitialSyncIfNeeded(isAuthenticated: true)
+            group.addTask { @MainActor in
+                await self.paymentSyncCoordinator.performInitialSyncIfNeeded(isAuthenticated: true)
             }
-            
-            group.addTask { [weak self] in 
+
+            group.addTask { @MainActor in
                 do {
-                    try await self?.reminderSyncCoordinator.performSync()
+                    try await self.reminderSyncCoordinator.performSync()
                 } catch {
-                    // Log error but don't fail the entire sync
-                    self?.logger.error("⚠️ Initial reminder sync failed: \(error.localizedDescription)")
+                    self.log.error(
+                        "⚠️ Initial reminder sync failed: \(error.localizedDescription)",
+                        category: Self.logCategory
+                    )
                 }
             }
         }
     }
-    
+
     func handlePostLoginSync() async {
-        logger.info("🔄 Starting post-login sync coordination")
-        
+        log.info("🔄 Starting post-login sync coordination", category: Self.logCategory)
+
         await withTaskGroup(of: Void.self) { group in
-            group.addTask { [weak self] in
+            group.addTask { @MainActor in
                 do {
-                    try await self?.paymentSyncCoordinator.performSync()
+                    try await self.paymentSyncCoordinator.performSync()
                 } catch {
-                    // Log error but don't fail the entire sync
-                    self?.logger.error("⚠️ Post-login payment sync failed: \(error.localizedDescription)")
+                    self.log.error(
+                        "⚠️ Post-login payment sync failed: \(error.localizedDescription)",
+                        category: Self.logCategory
+                    )
                 }
             }
-            
-            group.addTask { [weak self] in
+
+            group.addTask { @MainActor in
                 do {
-                    try await self?.reminderSyncCoordinator.performSync()
+                    try await self.reminderSyncCoordinator.performSync()
                 } catch {
-                    // Log error but don't fail the entire sync
-                    self?.logger.error("⚠️ Post-login reminder sync failed: \(error.localizedDescription)")
+                    self.log.error(
+                        "⚠️ Post-login reminder sync failed: \(error.localizedDescription)",
+                        category: Self.logCategory
+                    )
                 }
             }
         }

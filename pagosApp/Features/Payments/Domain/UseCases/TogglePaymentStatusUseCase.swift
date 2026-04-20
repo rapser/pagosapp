@@ -7,22 +7,25 @@
 //
 
 import Foundation
-import OSLog
 
 /// Use case for toggling a payment's paid status
 final class TogglePaymentStatusUseCase {
+    private static let logCategory = "TogglePaymentStatusUseCase"
+
     private let paymentRepository: PaymentRepositoryProtocol
     private let scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase?
     private let eventBus: EventBus
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "TogglePaymentStatusUseCase")
+    private let log: DomainLogWriter
 
     init(
         paymentRepository: PaymentRepositoryProtocol,
         eventBus: EventBus,
+        log: DomainLogWriter,
         scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase? = nil
     ) {
         self.paymentRepository = paymentRepository
         self.eventBus = eventBus
+        self.log = log
         self.scheduleNotificationsUseCase = scheduleNotificationsUseCase
     }
 
@@ -56,7 +59,7 @@ final class TogglePaymentStatusUseCase {
             }
             return .success(updatedPayment)
         } catch {
-            logger.error("Failed to toggle payment status: \(error.localizedDescription)")
+            log.error("Failed to toggle payment status: \(error.localizedDescription)", category: Self.logCategory)
             return .failure(.updateFailed(error.localizedDescription))
         }
     }

@@ -12,11 +12,13 @@ import Foundation
 @MainActor
 final class StatisticsDependencyContainer {
     private let paymentDependencyContainer: PaymentDependencyContainer
+    private let log: DomainLogWriter
 
     // MARK: - Initialization
 
-    init(paymentDependencyContainer: PaymentDependencyContainer) {
+    init(paymentDependencyContainer: PaymentDependencyContainer, log: DomainLogWriter) {
         self.paymentDependencyContainer = paymentDependencyContainer
+        self.log = log
     }
 
     // MARK: - Repository
@@ -31,19 +33,22 @@ final class StatisticsDependencyContainer {
 
     func makeCalculateCategoryStatsUseCase() -> CalculateCategoryStatsUseCase {
         return CalculateCategoryStatsUseCase(
-            statisticsRepository: makeStatisticsRepository()
+            statisticsRepository: makeStatisticsRepository(),
+            log: log
         )
     }
 
     func makeCalculateMonthlyStatsUseCase() -> CalculateMonthlyStatsUseCase {
         return CalculateMonthlyStatsUseCase(
-            statisticsRepository: makeStatisticsRepository()
+            statisticsRepository: makeStatisticsRepository(),
+            log: log
         )
     }
 
     func makeGetTotalSpendingUseCase() -> GetTotalSpendingUseCase {
         return GetTotalSpendingUseCase(
-            statisticsRepository: makeStatisticsRepository()
+            statisticsRepository: makeStatisticsRepository(),
+            log: log
         )
     }
 
