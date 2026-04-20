@@ -51,7 +51,7 @@ struct ForgotPasswordView: View {
                     Task {
                         await viewModel.sendPasswordReset()
                     }
-                }) {
+                }, label: {
                     HStack {
                         if viewModel.isLoading {
                             ProgressView()
@@ -66,7 +66,7 @@ struct ForgotPasswordView: View {
                     .padding()
                     .background(viewModel.isFormValid ? Color("AppPrimary") : Color("AppPrimary").opacity(0.5))
                     .cornerRadius(10)
-                }
+                })
                 .disabled(viewModel.isLoading || !viewModel.isFormValid)
                 
                 Spacer()
@@ -97,7 +97,7 @@ struct ForgotPasswordView: View {
                 }
             }
         }
-        .onChange(of: viewModel.didSendResetLink) { oldValue, newValue in
+        .onChange(of: viewModel.didSendResetLink) { _, newValue in
             if newValue {
                 showSuccessAlert = true
             }

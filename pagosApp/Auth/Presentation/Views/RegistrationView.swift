@@ -68,7 +68,7 @@ struct RegistrationView: View {
                     Task {
                         await viewModel.register()
                     }
-                }) {
+                }, label: {
                     HStack {
                         if viewModel.isLoading {
                             ProgressView()
@@ -83,7 +83,7 @@ struct RegistrationView: View {
                     .padding()
                     .background(viewModel.isFormValid ? Color("AppPrimary") : Color("AppPrimary").opacity(0.5))
                     .cornerRadius(10)
-                }
+                })
                 .disabled(viewModel.isLoading || !viewModel.isFormValid)
 
                 Spacer()
