@@ -26,7 +26,6 @@ final class ReminderSyncCoordinator {
     var syncError: Error?
 
     private let lastSyncKey = "lastReminderSyncDate"
-    private let maxRetryAttempts = 3
     private let minimumSyncTriggerInterval: TimeInterval = 10
     private var lastSyncTriggerDate: Date?
 
@@ -69,17 +68,9 @@ final class ReminderSyncCoordinator {
             }
         }
 
-        func retryDelayNanoseconds(forAttempt attempt: Int) -> UInt64 {
-            // 0.5s, 1s, 2s (+ jitter up to 250ms)
-            let baseDelays: [UInt64] = [500_000_000, 1_000_000_000, 2_000_000_000]
-            let base = baseDelays[min(max(attempt - 1, 0), baseDelays.count - 1)]
-            let jitter = UInt64.random(in: 0...250_000_000)
-            return base + jitter
-        }
-
         logger.info("🔄 Starting reminder synchronization")
 
-        for attempt in 1...maxRetryAttempts {
+        for attempt in 1...SyncRetryPolicy.maxAttempts {
             let result = await syncRemindersUseCase.execute()
 
             switch result {
@@ -96,10 +87,9 @@ final class ReminderSyncCoordinator {
                 logger.error("❌ Reminder synchronization failed: \(error)")
                 syncError = error
 
-                let isLastAttempt = attempt == maxRetryAttempts
+                let isLastAttempt = attempt == SyncRetryPolicy.maxAttempts
                 if !isLastAttempt, shouldRetry(error) {
-                    let delay = retryDelayNanoseconds(forAttempt: attempt)
-                    try? await Task.sleep(nanoseconds: delay)
+                    await SyncRetryPolicy.sleepBeforeRetry(forAttempt: attempt)
                     continue
                 }
                 throw error
