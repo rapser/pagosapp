@@ -90,29 +90,41 @@ final class SessionCoordinator {
         self.isSessionActive = sessionRepository.hasActiveSession
 
         // IMPORTANT: Initialize isAuthenticated synchronously to avoid flash of login screen
-        // More robust session validation - check both existence AND local expiration
         let hasCredentials = hasBiometricCredentialsUseCase.execute()
-        
+
         #if targetEnvironment(simulator)
         self.canUseBiometrics = true
         #endif
-        
-        // Improved logic: verify session is both active AND not locally expired
+
+        self.isAuthenticated = Self.computeInitialIsAuthenticated(
+            settingsStore: settingsStore,
+            sessionRepository: sessionRepository,
+            hasCredentials: hasCredentials,
+            isSessionActive: isSessionActive
+        )
+
+        observeLogoutNotifications()
+        scheduleInitialRemoteVerification()
+    }
+
+    private static func computeInitialIsAuthenticated(
+        settingsStore: SettingsStore,
+        sessionRepository: SessionRepositoryProtocol,
+        hasCredentials: Bool,
+        isSessionActive: Bool
+    ) -> Bool {
         let isLocalSessionValid = isSessionActive && !sessionRepository.isSessionExpiredSync
         let shouldShowBiometric = settingsStore.isBiometricLockEnabled && hasCredentials && isLocalSessionValid
-
         if shouldShowBiometric {
-            // User is logged in but needs Face ID unlock
-            self.isAuthenticated = false
-        } else if isLocalSessionValid {
-            // Has valid local session, no biometric needed - authenticate immediately
-            self.isAuthenticated = true
-        } else {
-            // No session or expired locally - show login
-            self.isAuthenticated = false
+            return false
         }
+        if isLocalSessionValid {
+            return true
+        }
+        return false
+    }
 
-        // Listen for logout notifications
+    private func observeLogoutNotifications() {
         Task { [weak self] in
             guard let self else { return }
             for await _ in NotificationCenter.default.notifications(named: NSNotification.Name("UserDidLogout")) {
@@ -120,8 +132,9 @@ final class SessionCoordinator {
                 self.isSessionActive = false
             }
         }
+    }
 
-        // Background verification and biometric check - with delay to prevent immediate UI changes
+    private func scheduleInitialRemoteVerification() {
         Task {
             guard !hasPerformedInitialCheck else {
                 return
@@ -129,35 +142,26 @@ final class SessionCoordinator {
             hasPerformedInitialCheck = true
 
             await checkBiometricAvailability()
-            
-            // Only proceed with remote verification if user is still supposed to be authenticated
+
             guard self.isAuthenticated else {
                 return
             }
 
-            // Use specialized UseCase for remote session verification
             let verificationResult = await verifyRemoteSessionUseCase.execute(allowNetworkDelay: true)
-            
-            
-            // Handle verification results conservatively
-            switch verificationResult {
-            case .valid:
-                break
-            case .invalid:
-                // Verify locally before forced logout
-                let isLocallyExpired = await sessionRepository.isSessionExpired()
-                
-                if isLocallyExpired {
-                    log.warning("⚠️ Session expired both locally and remotely - logging out", category: Self.logCategory)
-                    self.isAuthenticated = false
-                    self.isSessionActive = false
-                } else {
-                    break
-                }
-            case .networkError:
-                break
-            case .timeout:
-                break
+            await handleInitialVerificationResult(verificationResult)
+        }
+    }
+
+    private func handleInitialVerificationResult(_ verificationResult: SessionVerificationResult) async {
+        switch verificationResult {
+        case .valid, .networkError, .timeout:
+            break
+        case .invalid:
+            let isLocallyExpired = await sessionRepository.isSessionExpired()
+            if isLocallyExpired {
+                log.warning("⚠️ Session expired both locally and remotely - logging out", category: Self.logCategory)
+                isAuthenticated = false
+                isSessionActive = false
             }
         }
     }
