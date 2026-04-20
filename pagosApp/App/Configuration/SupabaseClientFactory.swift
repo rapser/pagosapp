@@ -52,7 +52,12 @@ enum SupabaseClientFactory {
 
     /// Creates a demo client for development/testing (SwiftUI Previews, tests)
     private static func createDemoClient() -> SupabaseClient {
-        let demoURL = URL(string: "https://demo.supabase.co")!
+        let demoURL: URL = {
+            guard let url = URL(string: "https://demo.supabase.co") else {
+                preconditionFailure("SupabaseClientFactory: invalid demo URL literal")
+            }
+            return url
+        }()
         return SupabaseClient(
             supabaseURL: demoURL,
             supabaseKey: "demo_key"

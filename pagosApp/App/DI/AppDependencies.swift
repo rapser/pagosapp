@@ -124,21 +124,27 @@ final class AppDependencies {
 
     // MARK: - Mock for Testing/Previews
 
+    /// In-memory SwiftData + mock Supabase for previews and tests.
+    /// If this fails, fix the SwiftData schema — the schema is under project control.
     static func mock() -> AppDependencies {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container: ModelContainer
         do {
             container = try ModelContainer(for: PaymentLocalDTO.self, UserProfileLocalDTO.self, ReminderLocalDTO.self, configurations: config)
         } catch {
-            fatalError("Failed to create ModelContainer for mock: \(error)")
+            assertionFailure("AppDependencies.mock: ModelContainer failed (\(error))")
+            container = try! ModelContainer(for: PaymentLocalDTO.self, UserProfileLocalDTO.self, ReminderLocalDTO.self, configurations: config)
         }
-        
-        guard let url = URL(string: "https://mock.supabase.co") else {
-            fatalError("Invalid mock Supabase URL")
-        }
-        
+
+        let mockURL: URL = {
+            guard let url = URL(string: "https://mock.supabase.co") else {
+                preconditionFailure("AppDependencies.mock: invalid URL literal")
+            }
+            return url
+        }()
+
         let mockSupabase = SupabaseClient(
-            supabaseURL: url,
+            supabaseURL: mockURL,
             supabaseKey: "mock_key"
         )
         return AppDependencies(
@@ -150,7 +156,11 @@ final class AppDependencies {
 
 // MARK: - Environment Key
 
-/// SwiftUI Environment key for dependency injection
+/// SwiftUI environment key for `AppDependencies`.
+///
+/// **Production:** `AppBootstrapView` injects real dependencies via `.environment(\.dependencies, …)`.
+/// **Default:** `mock()` is only a fallback when no injection is present (e.g. isolated SwiftUI previews).
+/// Prefer injecting explicit dependencies in previews to avoid relying on the mock graph.
 struct AppDependenciesKey: @preconcurrency EnvironmentKey {
     @MainActor
     static let defaultValue: AppDependencies = .mock()
