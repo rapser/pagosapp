@@ -37,6 +37,16 @@ final class AuthDependencyContainer {
         KeychainBiometricCredentialsDataSource()
     }()
 
+    private lazy var sharedSessionRepository: SessionRepositoryProtocol = SessionRepositoryImpl()
+
+    private lazy var sharedRefreshSessionUseCase: RefreshSessionUseCase = {
+        RefreshSessionUseCase(
+            authRepository: makeAuthRepository(),
+            sessionRepository: makeSessionRepository(),
+            log: log
+        )
+    }()
+
     // MARK: - Mappers
 
     private lazy var authDTOMapper: SupabaseAuthDTOMapper = {
@@ -56,7 +66,7 @@ final class AuthDependencyContainer {
     }
 
     func makeSessionRepository() -> SessionRepositoryProtocol {
-        SessionRepositoryImpl()
+        sharedSessionRepository
     }
 
     func makeBiometricRepository() -> BiometricRepositoryProtocol {
@@ -98,11 +108,7 @@ final class AuthDependencyContainer {
     }
 
     func makeRefreshSessionUseCase() -> RefreshSessionUseCase {
-        RefreshSessionUseCase(
-            authRepository: makeAuthRepository(),
-            sessionRepository: makeSessionRepository(),
-            log: log
-        )
+        sharedRefreshSessionUseCase
     }
 
     func makePasswordRecoveryUseCase() -> PasswordRecoveryUseCase {
@@ -174,8 +180,8 @@ final class AuthDependencyContainer {
         reminderSyncCoordinator: ReminderSyncCoordinator
     ) -> SessionCoordinator {
         let coordinateSyncUseCase = CoordinateSyncUseCase(
-            paymentSyncCoordinator: paymentSyncCoordinator,
-            reminderSyncCoordinator: reminderSyncCoordinator,
+            paymentSync: paymentSyncCoordinator,
+            reminderSync: reminderSyncCoordinator,
             log: log
         )
         return SessionCoordinator(
@@ -184,6 +190,7 @@ final class AuthDependencyContainer {
             paymentSyncCoordinator: paymentSyncCoordinator,
             reminderSyncCoordinator: reminderSyncCoordinator,
             coordinateSyncUseCase: coordinateSyncUseCase,
+            log: log,
             authDependencyContainer: self
         )
     }

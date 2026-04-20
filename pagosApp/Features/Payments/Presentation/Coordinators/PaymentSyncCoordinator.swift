@@ -156,3 +156,5 @@ final class PaymentSyncCoordinator {
         }
     }
 }
+
+extension PaymentSyncCoordinator: PaymentSyncCoordinating {}

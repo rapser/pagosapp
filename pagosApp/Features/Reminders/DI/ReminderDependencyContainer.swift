@@ -115,7 +115,8 @@ final class ReminderDependencyContainer {
             getPendingSyncCountUseCase: GetPendingReminderSyncCountUseCase(syncRepository: syncRepository),
             syncRepository: syncRepository,
             localDataSource: localDataSource,
-            rescheduleNotificationsUseCase: makeRescheduleReminderNotificationsUseCase()
+            rescheduleNotificationsUseCase: makeRescheduleReminderNotificationsUseCase(),
+            log: log
         )
     }
 }

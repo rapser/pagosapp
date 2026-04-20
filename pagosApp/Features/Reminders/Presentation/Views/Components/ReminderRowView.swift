@@ -16,7 +16,7 @@ struct ReminderRowView: View {
         HStack {
             Button(action: onToggleStatus) {
                 Image(systemName: reminder.statusIcon)
-                    .foregroundColor(reminder.statusColor)
+                    .foregroundColor(reminder.statusColorToken.swiftUIColor)
                     .font(.title2)
             }
             .buttonStyle(.plain)
@@ -28,7 +28,7 @@ struct ReminderRowView: View {
                     .fontWeight(.bold)
                     .font(.body)
                     .strikethrough(reminder.isCompleted, color: Color("AppTextSecondary"))
-                    .foregroundColor(reminder.displayColor)
+                    .foregroundColor(reminder.displayColorToken.swiftUIColor)
                 Text(L10n.Reminders.typeDisplayName(reminder.reminderType))
                     .font(.caption)
                     .foregroundColor(Color("AppTextSecondary"))
@@ -37,7 +37,7 @@ struct ReminderRowView: View {
             Text(reminder.formattedDate)
                 .font(.caption)
                 .strikethrough(reminder.isCompleted, color: Color("AppTextSecondary"))
-                .foregroundColor(reminder.displayColor)
+                .foregroundColor(reminder.displayColorToken.swiftUIColor)
         }
         .opacity(reminder.displayOpacity)
         .accessibilityElement(children: .combine)
@@ -45,3 +45,19 @@ struct ReminderRowView: View {
         .accessibilityAddTraits(reminder.isCompleted ? .isSelected : [])
     }
 }
+
+extension ReminderColorToken {
+    var swiftUIColor: Color {
+        switch self {
+        case .appSuccess:
+            Color("AppSuccess")
+        case .appTextSecondary:
+            Color("AppTextSecondary")
+        case .appTextPrimary:
+            Color("AppTextPrimary")
+        case .overdue:
+            Color.red
+        }
+    }
+}
+

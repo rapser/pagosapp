@@ -18,17 +18,17 @@ protocol CoordinateSyncUseCaseProtocol {
 final class CoordinateSyncUseCase: CoordinateSyncUseCaseProtocol {
     private static let logCategory = "CoordinateSyncUseCase"
 
-    private let paymentSyncCoordinator: PaymentSyncCoordinator
-    private let reminderSyncCoordinator: ReminderSyncCoordinator
+    private let paymentSync: PaymentSyncCoordinating
+    private let reminderSync: ReminderSyncCoordinating
     private let log: DomainLogWriter
 
     init(
-        paymentSyncCoordinator: PaymentSyncCoordinator,
-        reminderSyncCoordinator: ReminderSyncCoordinator,
+        paymentSync: PaymentSyncCoordinating,
+        reminderSync: ReminderSyncCoordinating,
         log: DomainLogWriter
     ) {
-        self.paymentSyncCoordinator = paymentSyncCoordinator
-        self.reminderSyncCoordinator = reminderSyncCoordinator
+        self.paymentSync = paymentSync
+        self.reminderSync = reminderSync
         self.log = log
     }
 
@@ -37,12 +37,12 @@ final class CoordinateSyncUseCase: CoordinateSyncUseCaseProtocol {
 
         await withTaskGroup(of: Void.self) { group in
             group.addTask { @MainActor in
-                await self.paymentSyncCoordinator.performInitialSyncIfNeeded(isAuthenticated: true)
+                await self.paymentSync.performInitialSyncIfNeeded(isAuthenticated: true)
             }
 
             group.addTask { @MainActor in
                 do {
-                    try await self.reminderSyncCoordinator.performSync()
+                    try await self.reminderSync.performSync()
                 } catch {
                     self.log.error(
                         "⚠️ Initial reminder sync failed: \(error.localizedDescription)",
@@ -59,7 +59,7 @@ final class CoordinateSyncUseCase: CoordinateSyncUseCaseProtocol {
         await withTaskGroup(of: Void.self) { group in
             group.addTask { @MainActor in
                 do {
-                    try await self.paymentSyncCoordinator.performSync()
+                    try await self.paymentSync.performSync()
                 } catch {
                     self.log.error(
                         "⚠️ Post-login payment sync failed: \(error.localizedDescription)",
@@ -70,7 +70,7 @@ final class CoordinateSyncUseCase: CoordinateSyncUseCaseProtocol {
 
             group.addTask { @MainActor in
                 do {
-                    try await self.reminderSyncCoordinator.performSync()
+                    try await self.reminderSync.performSync()
                 } catch {
                     self.log.error(
                         "⚠️ Post-login reminder sync failed: \(error.localizedDescription)",

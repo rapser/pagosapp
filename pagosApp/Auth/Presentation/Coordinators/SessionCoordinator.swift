@@ -8,7 +8,6 @@
 
 import Foundation
 import Observation
-import OSLog
 
 /// Coordinates session lifecycle, inactivity detection, and authentication UI state
 /// This is a lightweight presentation coordinator that delegates business logic to Use Cases
@@ -47,8 +46,9 @@ final class SessionCoordinator {
     private let settingsStore: SettingsStore
     private let paymentSyncCoordinator: PaymentSyncCoordinator
     private let reminderSyncCoordinator: ReminderSyncCoordinator
+    private let log: DomainLogWriter
 
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "SessionCoordinator")
+    private static let logCategory = "SessionCoordinator"
 
     // MARK: - Initialization
 
@@ -58,12 +58,14 @@ final class SessionCoordinator {
         paymentSyncCoordinator: PaymentSyncCoordinator,
         reminderSyncCoordinator: ReminderSyncCoordinator,
         coordinateSyncUseCase: CoordinateSyncUseCaseProtocol,
+        log: DomainLogWriter,
         authDependencyContainer: AuthDependencyContainer
     ) {
         self.errorHandler = errorHandler
         self.settingsStore = settingsStore
         self.paymentSyncCoordinator = paymentSyncCoordinator
         self.reminderSyncCoordinator = reminderSyncCoordinator
+        self.log = log
 
         // Initialize Use Cases from container (Clean Architecture)
         self.loginUseCase = authDependencyContainer.makeLoginUseCase()
@@ -146,7 +148,7 @@ final class SessionCoordinator {
                 let isLocallyExpired = await sessionRepository.isSessionExpired()
                 
                 if isLocallyExpired {
-                    logger.warning("⚠️ Session expired both locally and remotely - logging out")
+                    log.warning("⚠️ Session expired both locally and remotely - logging out", category: Self.logCategory)
                     self.isAuthenticated = false
                     self.isSessionActive = false
                 } else {
@@ -245,7 +247,7 @@ final class SessionCoordinator {
 
         case .failure(let error):
             if error == .sessionExpired {
-                logger.warning("⏰ Session expired - checking if should logout")
+                log.warning("⏰ Session expired - checking if should logout", category: Self.logCategory)
                 await checkAndLogoutIfOnline()
             }
         }
@@ -258,7 +260,7 @@ final class SessionCoordinator {
             try await ensureValidSessionUseCase.execute()
             await sessionRepository.updateLastActiveTimestamp()
         } catch {
-            logger.warning("⚠️ Could not verify session: \(error.localizedDescription)")
+            log.warning("⚠️ Could not verify session: \(error.localizedDescription)", category: Self.logCategory)
 
             // Check if we're online by attempting to get current session
             let isAuthenticated = await getAuthenticationStatusUseCase.execute()
@@ -286,7 +288,7 @@ final class SessionCoordinator {
         _ = await paymentSyncCoordinator.clearLocalDatabase(force: true)
         _ = await reminderSyncCoordinator.clearLocalDatabase(force: true)
 
-        logger.warning("⚠️ UserProfile cleanup not yet migrated to Clean Architecture")
+        log.warning("⚠️ UserProfile cleanup not yet migrated to Clean Architecture", category: Self.logCategory)
 
         _ = clearBiometricCredentialsUseCase.execute()
         await sessionRepository.clearSession()
@@ -315,12 +317,12 @@ final class SessionCoordinator {
         let canUse = await biometricLoginUseCase.canUseBiometricLogin()
 
         guard canUse else {
-            logger.warning("⚠️ Biometrics not available")
+            log.warning("⚠️ Biometrics not available", category: Self.logCategory)
             return
         }
 
         guard hasBiometricCredentialsUseCase.execute() else {
-            logger.warning("⚠️ No credentials stored in Keychain for biometric login")
+            log.warning("⚠️ No credentials stored in Keychain for biometric login", category: Self.logCategory)
             return
         }
 
@@ -332,7 +334,7 @@ final class SessionCoordinator {
             await startSession()
 
         case .failure(let error):
-            logger.error("❌ Biometric login failed: \(error.errorCode)")
+            log.error("❌ Biometric login failed: \(error.errorCode)", category: Self.logCategory)
             errorHandler.handle(error)
         }
     }

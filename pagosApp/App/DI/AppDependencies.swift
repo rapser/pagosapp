@@ -51,8 +51,6 @@ final class AppDependencies {
         modelContext: ModelContext,
         supabaseClient: SupabaseClient
     ) {
-        self.errorHandler = ErrorHandler()
-
         // Platform DataSources (Infrastructure)
         let settingsDataSource = UserDefaultsSettingsDataSource()
         self.settingsStore = SettingsStore(dataSource: settingsDataSource)
@@ -61,6 +59,7 @@ final class AppDependencies {
         self.alertManager = AlertManager()
         self.eventBus = InMemoryEventBus()
         self.domainLog = OSLogDomainLogWriter()
+        self.errorHandler = ErrorHandler(log: domainLog)
 
         // Feature Dependency Containers (Clean Architecture)
         self.authDependencyContainer = AuthDependencyContainer(
