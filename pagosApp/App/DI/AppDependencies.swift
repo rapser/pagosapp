@@ -143,8 +143,7 @@ final class AppDependencies {
         do {
             container = try ModelContainer(for: PaymentLocalDTO.self, UserProfileLocalDTO.self, ReminderLocalDTO.self, configurations: config)
         } catch {
-            assertionFailure("AppDependencies.mock: ModelContainer failed (\(error))")
-            container = try! ModelContainer(for: PaymentLocalDTO.self, UserProfileLocalDTO.self, ReminderLocalDTO.self, configurations: config)
+            fatalError("AppDependencies.mock: ModelContainer failed (\(error)). Fix the SwiftData schema used for previews/tests.")
         }
 
         let mockURL: URL = {
