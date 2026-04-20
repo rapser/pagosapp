@@ -24,7 +24,7 @@ final class PaymentDependencyContainer {
     }()
 
     private lazy var localDataSource: PaymentLocalDataSource = {
-        PaymentSwiftDataDataSource(modelContext: modelContext)
+        PaymentSwiftDataDataSource(modelContext: modelContext, log: log)
     }()
 
     // Mappers

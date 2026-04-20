@@ -25,7 +25,8 @@ final class StatisticsDependencyContainer {
 
     func makeStatisticsRepository() -> StatisticsRepositoryProtocol {
         return StatisticsRepositoryImpl(
-            paymentRepository: paymentDependencyContainer.makePaymentRepository()
+            paymentRepository: paymentDependencyContainer.makePaymentRepository(),
+            log: log
         )
     }
 

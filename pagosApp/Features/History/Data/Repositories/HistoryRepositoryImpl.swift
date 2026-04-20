@@ -7,20 +7,22 @@
 //
 
 import Foundation
-import OSLog
 
 /// Implementation of HistoryRepositoryProtocol
 /// Delegates to PaymentRepository but adds history-specific logic
 final class HistoryRepositoryImpl: HistoryRepositoryProtocol {
-    private let paymentRepository: PaymentRepositoryProtocol
-    private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "HistoryRepository")
+    private static let logCategory = "HistoryRepositoryImpl"
 
-    init(paymentRepository: PaymentRepositoryProtocol) {
+    private let paymentRepository: PaymentRepositoryProtocol
+    private let log: DomainLogWriter
+
+    init(paymentRepository: PaymentRepositoryProtocol, log: DomainLogWriter) {
         self.paymentRepository = paymentRepository
+        self.log = log
     }
 
     func getPaymentHistory(filter: PaymentHistoryFilter) async throws -> [Payment] {
-        logger.info("📚 Fetching payment history with filter: \(filter.logDescription)")
+        log.info("📚 Fetching payment history with filter: \(filter.logDescription)", category: Self.logCategory)
 
         // Get all payments from underlying repository
         let allPayments = try await paymentRepository.getAllLocalPayments()
@@ -31,7 +33,7 @@ final class HistoryRepositoryImpl: HistoryRepositoryProtocol {
         // Sort by most recent due date first (history-specific sorting)
         let sorted = filtered.sorted { $0.dueDate > $1.dueDate }
 
-        logger.info("✅ Retrieved \(sorted.count) payments for history")
+        log.info("✅ Retrieved \(sorted.count) payments for history", category: Self.logCategory)
         return sorted
     }
 

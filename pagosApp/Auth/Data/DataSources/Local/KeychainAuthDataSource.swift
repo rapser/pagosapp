@@ -8,13 +8,17 @@
 
 import Foundation
 import Security
-import OSLog
-
-private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "KeychainAuthDataSource")
 
 /// Keychain implementation of AuthLocalDataSource
 final class KeychainAuthDataSource: AuthLocalDataSource {
+    private static let logCategory = "KeychainAuthDataSource"
+
+    private let log: DomainLogWriter
     private let service = "com.rapser.pagosApp"
+
+    init(log: DomainLogWriter) {
+        self.log = log
+    }
     private let accessTokenKey = "accessToken"
     private let refreshTokenKey = "refreshToken"
     private let userIdKey = "userId"
@@ -22,32 +26,32 @@ final class KeychainAuthDataSource: AuthLocalDataSource {
     // MARK: - Token Management (Public API)
 
     func saveTokens(_ dto: KeychainCredentialsDTO) throws {
-        logger.info("💾 Saving tokens to Keychain")
+        log.info("💾 Saving tokens to Keychain", category: Self.logCategory)
 
         do {
             try saveAccessToken(dto.accessToken)
             try saveRefreshToken(dto.refreshToken)
             try saveUserId(dto.userId)
 
-            logger.info("✅ Tokens saved successfully")
+            log.info("✅ Tokens saved successfully", category: Self.logCategory)
 
         } catch {
-            logger.error("❌ Failed to save tokens: \(error.localizedDescription)")
+            log.error("❌ Failed to save tokens: \(error.localizedDescription)", category: Self.logCategory)
             throw AuthError.unknown("Failed to save tokens to Keychain")
         }
     }
 
     func getTokens() -> KeychainCredentialsDTO? {
-        logger.debug("🔍 Retrieving tokens from Keychain")
+        log.debug("🔍 Retrieving tokens from Keychain", category: Self.logCategory)
 
         guard let accessToken = getAccessToken(),
               let refreshToken = getRefreshToken(),
               let userId = getUserId() else {
-            logger.debug("⚠️ No tokens found in Keychain")
+            log.debug("⚠️ No tokens found in Keychain", category: Self.logCategory)
             return nil
         }
 
-        logger.debug("✅ Tokens retrieved successfully")
+        log.debug("✅ Tokens retrieved successfully", category: Self.logCategory)
 
         return KeychainCredentialsDTO(
             accessToken: accessToken,
@@ -57,9 +61,9 @@ final class KeychainAuthDataSource: AuthLocalDataSource {
     }
 
     func clearTokens() {
-        logger.info("🗑️ Clearing tokens from Keychain")
+        log.info("🗑️ Clearing tokens from Keychain", category: Self.logCategory)
         clearAllTokens()
-        logger.info("✅ Tokens cleared")
+        log.info("✅ Tokens cleared", category: Self.logCategory)
     }
 
     func hasStoredTokens() -> Bool {
@@ -67,7 +71,7 @@ final class KeychainAuthDataSource: AuthLocalDataSource {
                        getRefreshToken() != nil &&
                        getUserId() != nil
 
-        logger.debug("🔍 Has stored tokens: \(hasTokens)")
+        log.debug("🔍 Has stored tokens: \(hasTokens)", category: Self.logCategory)
         return hasTokens
     }
 
@@ -94,13 +98,13 @@ final class KeychainAuthDataSource: AuthLocalDataSource {
             query[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
             let addStatus = SecItemAdd(query as CFDictionary, nil)
             guard addStatus == errSecSuccess else {
-                logger.error("Failed to add keychain item (\(account)): \(addStatus)")
+                log.error("Failed to add keychain item (\(account)): \(addStatus)", category: Self.logCategory)
                 throw NSError(domain: "KeychainAuthDataSource", code: Int(addStatus), userInfo: nil)
             }
             return
         }
 
-        logger.error("Failed to update keychain item (\(account)): \(updateStatus)")
+        log.error("Failed to update keychain item (\(account)): \(updateStatus)", category: Self.logCategory)
         throw NSError(domain: "KeychainAuthDataSource", code: Int(updateStatus), userInfo: nil)
     }
 
@@ -199,6 +203,6 @@ final class KeychainAuthDataSource: AuthLocalDataSource {
             SecItemDelete(query as CFDictionary)
         }
 
-        logger.info("🗑️ All tokens cleared from Keychain")
+        log.info("🗑️ All tokens cleared from Keychain", category: Self.logCategory)
     }
 }

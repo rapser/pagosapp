@@ -8,18 +8,19 @@
 
 import Foundation
 import LocalAuthentication
-import OSLog
-
-private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "BiometricRepositoryImpl")
 
 /// Implementation of BiometricRepositoryProtocol
 /// Manages biometric authentication using LocalAuthentication framework
 @MainActor
 final class BiometricRepositoryImpl: BiometricRepositoryProtocol {
-    private let context: LAContext
+    private static let logCategory = "BiometricRepositoryImpl"
 
-    init(context: LAContext = LAContext()) {
+    private let context: LAContext
+    private let log: DomainLogWriter
+
+    init(context: LAContext = LAContext(), log: DomainLogWriter) {
         self.context = context
+        self.log = log
     }
 
     // MARK: - Biometric Capabilities
@@ -33,7 +34,7 @@ final class BiometricRepositoryImpl: BiometricRepositoryProtocol {
             return true
             #else
             if let error = error {
-                logger.warning("⚠️ Biometrics not available: \(error.localizedDescription)")
+                log.warning("⚠️ Biometrics not available: \(error.localizedDescription)", category: Self.logCategory)
             }
             return canEvaluate
             #endif
@@ -62,7 +63,7 @@ final class BiometricRepositoryImpl: BiometricRepositoryProtocol {
     func authenticateWithBiometric(reason: String) async -> Result<Bool, AuthError> {
         // Check if biometric is available
         guard await isBiometricAvailable else {
-            logger.warning("⚠️ Biometric authentication not available")
+            log.warning("⚠️ Biometric authentication not available", category: Self.logCategory)
             return .failure(.unknown("Biometric authentication not available"))
         }
 
@@ -73,10 +74,10 @@ final class BiometricRepositoryImpl: BiometricRepositoryProtocol {
             authContext.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, error in
                 Task { @MainActor in
                     if success {
-                        logger.info("✅ Biometric authentication successful")
+                        self.log.info("✅ Biometric authentication successful", category: Self.logCategory)
                         continuation.resume(returning: .success(true))
                     } else {
-                        logger.warning("❌ Biometric authentication failed")
+                        self.log.warning("❌ Biometric authentication failed", category: Self.logCategory)
 
                         if let error = error as? LAError {
                             let authError = self.mapBiometricError(error)
@@ -97,7 +98,7 @@ final class BiometricRepositoryImpl: BiometricRepositoryProtocol {
     // MARK: - Error Mapping
 
     private func mapBiometricError(_ error: LAError) -> AuthError {
-        logger.error("Biometric error: \(error.localizedDescription)")
+        log.error("Biometric error: \(error.localizedDescription)", category: Self.logCategory)
 
         switch error.code {
         case .authenticationFailed:

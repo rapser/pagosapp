@@ -8,7 +8,6 @@
 
 import Foundation
 import UserNotifications
-import OSLog
 
 /// Protocol for notification operations
 @MainActor
@@ -35,10 +34,14 @@ protocol NotificationDataSource {
 /// UserNotifications implementation of NotificationDataSource
 @MainActor
 final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUserNotificationCenterDelegate {
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "NotificationDataSource")
-    private let genericScheduler = GenericNotificationScheduler()
+    private static let logCategory = "UserNotificationsDataSource"
 
-    override init() {
+    private let log: DomainLogWriter
+    private let genericScheduler: GenericNotificationScheduler
+
+    init(log: DomainLogWriter) {
+        self.log = log
+        self.genericScheduler = GenericNotificationScheduler(log: log)
         super.init()
         UNUserNotificationCenter.current().delegate = self
     }
@@ -56,10 +59,10 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
     // MARK: - NotificationDataSource
 
     func requestAuthorization() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
-            if let error = error {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { [weak self] _, error in
+            if let error {
                 Task { @MainActor in
-                    self.logger.error("Failed to request notification authorization: \(error.localizedDescription)")
+                    self?.log.error("Failed to request notification authorization: \(error.localizedDescription)", category: Self.logCategory)
                 }
             }
         }
@@ -134,23 +137,23 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
     func cancelReminderNotifications(reminderId: UUID) {
         let identifiers = LocalNotificationIdentifiers.allReminderCancellationIdentifiers(entityId: reminderId)
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
-        logger.info("🗑️ Cancelled reminder notifications for ID: \(reminderId)")
+        log.info("🗑️ Cancelled reminder notifications for ID: \(reminderId)", category: Self.logCategory)
     }
     
     func debugPendingNotifications() async {
         let pendingRequests = await UNUserNotificationCenter.current().pendingNotificationRequests()
-        logger.info("🔍 Total pending notifications: \(pendingRequests.count)")
+        log.info("🔍 Total pending notifications: \(pendingRequests.count)", category: Self.logCategory)
         
         let reminderNotifications = pendingRequests.filter { LocalNotificationIdentifiers.isReminderNotificationIdentifier($0.identifier) }
         let paymentNotifications = pendingRequests.filter { LocalNotificationIdentifiers.isPaymentNotificationIdentifier($0.identifier) }
         
-        logger.info("📋 Reminder notifications: \(reminderNotifications.count)")
-        logger.info("💰 Payment notifications: \(paymentNotifications.count)")
+        log.info("📋 Reminder notifications: \(reminderNotifications.count)", category: Self.logCategory)
+        log.info("💰 Payment notifications: \(paymentNotifications.count)", category: Self.logCategory)
         
         for request in reminderNotifications {
             if let trigger = request.trigger as? UNCalendarNotificationTrigger {
-                logger.info("  - \(request.identifier): \(request.content.title) - \(request.content.subtitle)")
-                logger.info("    Trigger date: \(trigger.dateComponents)")
+                log.info("  - \(request.identifier): \(request.content.title) - \(request.content.subtitle)", category: Self.logCategory)
+                log.info("    Trigger date: \(trigger.dateComponents)", category: Self.logCategory)
             }
         }
     }

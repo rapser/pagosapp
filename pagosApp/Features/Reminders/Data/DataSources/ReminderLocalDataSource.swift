@@ -8,7 +8,6 @@
 
 import Foundation
 import SwiftData
-import OSLog
 
 protocol ReminderLocalDataSource {
     func fetchAll() async throws -> [Reminder]
@@ -22,11 +21,14 @@ protocol ReminderLocalDataSource {
 
 @MainActor
 final class ReminderSwiftDataDataSource: ReminderLocalDataSource {
-    private let modelContext: ModelContext
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ReminderSwiftDataDataSource")
+    private static let logCategory = "ReminderSwiftDataDataSource"
 
-    init(modelContext: ModelContext) {
+    private let modelContext: ModelContext
+    private let log: DomainLogWriter
+
+    init(modelContext: ModelContext, log: DomainLogWriter) {
         self.modelContext = modelContext
+        self.log = log
     }
 
     func fetchAll() async throws -> [Reminder] {
@@ -35,7 +37,7 @@ final class ReminderSwiftDataDataSource: ReminderLocalDataSource {
             let dtos = try modelContext.fetch(descriptor)
             return dtos.map { ReminderDomainMapper.toDomain($0) }
         } catch {
-            logger.error("Failed to fetch reminders from SwiftData: \(error.localizedDescription)")
+            log.error("Failed to fetch reminders from SwiftData: \(error.localizedDescription)", category: Self.logCategory)
             return []
         }
     }
@@ -49,7 +51,7 @@ final class ReminderSwiftDataDataSource: ReminderLocalDataSource {
             let dtos = try modelContext.fetch(descriptor)
             return dtos.map { ReminderDomainMapper.toDomain($0) }
         } catch {
-            logger.error("Failed to fetch paginated reminders: \(error.localizedDescription)")
+            log.error("Failed to fetch paginated reminders: \(error.localizedDescription)", category: Self.logCategory)
             return []
         }
     }

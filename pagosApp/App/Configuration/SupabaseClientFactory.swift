@@ -8,17 +8,16 @@
 
 import Foundation
 import Supabase
-import OSLog
 
 /// Factory responsible for creating and configuring Supabase client instances
 enum SupabaseClientFactory {
-    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "SupabaseFactory")
+    private static let logCategory = "SupabaseClientFactory"
     private static let requestTimeout: TimeInterval = 30
     private static let resourceTimeout: TimeInterval = 60
 
     /// Creates a configured Supabase client instance
     /// Falls back to demo client for development/previews if configuration is missing
-    static func create() -> SupabaseClient {
+    static func create(log: DomainLogWriter) -> SupabaseClient {
         do {
             let url = try AppConfiguration.supabaseURL
             let key = try AppConfiguration.supabaseKey
@@ -27,8 +26,8 @@ enum SupabaseClientFactory {
             let options = SupabaseClientOptions(global: .init(session: session))
             return SupabaseClient(supabaseURL: url, supabaseKey: key, options: options)
         } catch {
-            logger.error("❌ Failed to load Supabase configuration: \(error.localizedDescription)")
-            logger.warning("⚠️ Using demo Supabase client for development")
+            log.error("❌ Failed to load Supabase configuration: \(error.localizedDescription)", category: logCategory)
+            log.warning("⚠️ Using demo Supabase client for development", category: logCategory)
 
             return createDemoClient()
         }

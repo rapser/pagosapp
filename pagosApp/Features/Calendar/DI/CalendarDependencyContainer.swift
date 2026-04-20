@@ -34,7 +34,8 @@ final class CalendarDependencyContainer {
 
     func makeCalendarRepository() -> CalendarRepositoryProtocol {
         return CalendarRepositoryImpl(
-            paymentRepository: paymentDependencyContainer.makePaymentRepository()
+            paymentRepository: paymentDependencyContainer.makePaymentRepository(),
+            log: log
         )
     }
 

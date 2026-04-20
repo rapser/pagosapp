@@ -13,7 +13,8 @@ final class AppBootstrapState {
     func bootstrapIfNeeded() async {
         guard isBootstrapping else { return }
 
-        let modelContainerResult = ModelContainerFactory.create()
+        let bootstrapLog = OSLogDomainLogWriter()
+        let modelContainerResult = ModelContainerFactory.create(log: bootstrapLog)
         self.modelContainer = modelContainerResult.container
         self.startupFailureMessage = modelContainerResult.failureDescription
 
@@ -22,7 +23,7 @@ final class AppBootstrapState {
             return
         }
 
-        let supabaseClient = SupabaseClientFactory.create()
+        let supabaseClient = SupabaseClientFactory.create(log: bootstrapLog)
         let dependencies = AppDependencies(
             modelContext: modelContainer.mainContext,
             supabaseClient: supabaseClient

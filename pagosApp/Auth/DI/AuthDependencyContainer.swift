@@ -26,18 +26,18 @@ final class AuthDependencyContainer {
     // MARK: - Data Sources
 
     private lazy var authRemoteDataSource: AuthRemoteDataSource = {
-        SupabaseAuthDataSource(client: supabaseClient)
+        SupabaseAuthDataSource(client: supabaseClient, log: log)
     }()
 
     private lazy var authLocalDataSource: AuthLocalDataSource = {
-        KeychainAuthDataSource()
+        KeychainAuthDataSource(log: log)
     }()
 
     private lazy var biometricCredentialsDataSource: BiometricCredentialsDataSource = {
-        KeychainBiometricCredentialsDataSource()
+        KeychainBiometricCredentialsDataSource(log: log)
     }()
 
-    private lazy var sharedSessionRepository: SessionRepositoryProtocol = SessionRepositoryImpl()
+    private lazy var sharedSessionRepository: SessionRepositoryProtocol = SessionRepositoryImpl(log: log)
 
     private lazy var sharedRefreshSessionUseCase: RefreshSessionUseCase = {
         RefreshSessionUseCase(
@@ -56,7 +56,8 @@ final class AuthDependencyContainer {
     private lazy var sharedAuthRepository: AuthRepositoryProtocol = AuthRepositoryImpl(
         remoteDataSource: authRemoteDataSource,
         localDataSource: authLocalDataSource,
-        mapper: authDTOMapper
+        mapper: authDTOMapper,
+        log: log
     )
 
     // MARK: - Repositories
@@ -70,7 +71,7 @@ final class AuthDependencyContainer {
     }
 
     func makeBiometricRepository() -> BiometricRepositoryProtocol {
-        BiometricRepositoryImpl()
+        BiometricRepositoryImpl(log: log)
     }
 
     // MARK: - Use Cases
@@ -176,19 +177,19 @@ final class AuthDependencyContainer {
     func makeSessionCoordinator(
         errorHandler: ErrorHandler,
         settingsStore: SettingsStore,
-        paymentSyncCoordinator: PaymentSyncCoordinator,
-        reminderSyncCoordinator: ReminderSyncCoordinator
+        paymentSync: PaymentSyncCoordinating,
+        reminderSync: ReminderSyncCoordinating
     ) -> SessionCoordinator {
         let coordinateSyncUseCase = CoordinateSyncUseCase(
-            paymentSync: paymentSyncCoordinator,
-            reminderSync: reminderSyncCoordinator,
+            paymentSync: paymentSync,
+            reminderSync: reminderSync,
             log: log
         )
         return SessionCoordinator(
             errorHandler: errorHandler,
             settingsStore: settingsStore,
-            paymentSyncCoordinator: paymentSyncCoordinator,
-            reminderSyncCoordinator: reminderSyncCoordinator,
+            paymentSync: paymentSync,
+            reminderSync: reminderSync,
             coordinateSyncUseCase: coordinateSyncUseCase,
             log: log,
             authDependencyContainer: self

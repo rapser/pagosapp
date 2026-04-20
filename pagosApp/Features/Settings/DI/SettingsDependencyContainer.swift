@@ -21,11 +21,13 @@ final class SettingsDependencyContainer {
     private let notificationDataSource: NotificationDataSource
     private let reminderDependencyContainer: ReminderDependencyContainer
     private let paymentDependencyContainer: PaymentDependencyContainer
+    private let log: DomainLogWriter
 
     // Single repository instance shared across all use cases
     private lazy var sharedSettingsSyncRepository: SettingsSyncRepositoryProtocol = SettingsSyncRepositoryImpl(
         paymentSyncCoordinator: paymentSyncCoordinator,
-        reminderSyncCoordinator: reminderSyncCoordinator
+        reminderSyncCoordinator: reminderSyncCoordinator,
+        log: log
     )
 
     init(
@@ -36,7 +38,8 @@ final class SettingsDependencyContainer {
         eventBus: EventBus,
         notificationDataSource: NotificationDataSource,
         reminderDependencyContainer: ReminderDependencyContainer,
-        paymentDependencyContainer: PaymentDependencyContainer
+        paymentDependencyContainer: PaymentDependencyContainer,
+        log: DomainLogWriter
     ) {
         self.paymentSyncCoordinator = paymentSyncCoordinator
         self.reminderSyncCoordinator = reminderSyncCoordinator
@@ -46,6 +49,7 @@ final class SettingsDependencyContainer {
         self.notificationDataSource = notificationDataSource
         self.reminderDependencyContainer = reminderDependencyContainer
         self.paymentDependencyContainer = paymentDependencyContainer
+        self.log = log
     }
 
     // MARK: - Repositories

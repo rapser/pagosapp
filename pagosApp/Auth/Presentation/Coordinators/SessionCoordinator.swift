@@ -44,8 +44,8 @@ final class SessionCoordinator {
     private let coordinateSyncUseCase: CoordinateSyncUseCaseProtocol
     private let errorHandler: ErrorHandler
     private let settingsStore: SettingsStore
-    private let paymentSyncCoordinator: PaymentSyncCoordinator
-    private let reminderSyncCoordinator: ReminderSyncCoordinator
+    private let paymentSync: PaymentSyncCoordinating
+    private let reminderSync: ReminderSyncCoordinating
     private let log: DomainLogWriter
 
     private static let logCategory = "SessionCoordinator"
@@ -55,16 +55,16 @@ final class SessionCoordinator {
     init(
         errorHandler: ErrorHandler,
         settingsStore: SettingsStore,
-        paymentSyncCoordinator: PaymentSyncCoordinator,
-        reminderSyncCoordinator: ReminderSyncCoordinator,
+        paymentSync: PaymentSyncCoordinating,
+        reminderSync: ReminderSyncCoordinating,
         coordinateSyncUseCase: CoordinateSyncUseCaseProtocol,
         log: DomainLogWriter,
         authDependencyContainer: AuthDependencyContainer
     ) {
         self.errorHandler = errorHandler
         self.settingsStore = settingsStore
-        self.paymentSyncCoordinator = paymentSyncCoordinator
-        self.reminderSyncCoordinator = reminderSyncCoordinator
+        self.paymentSync = paymentSync
+        self.reminderSync = reminderSync
         self.log = log
 
         // Initialize Use Cases from container (Clean Architecture)
@@ -285,8 +285,8 @@ final class SessionCoordinator {
         defer { isLoading = false }
 
         _ = await logoutUseCase.execute()
-        _ = await paymentSyncCoordinator.clearLocalDatabase(force: true)
-        _ = await reminderSyncCoordinator.clearLocalDatabase(force: true)
+        _ = await paymentSync.clearLocalDatabase(force: true)
+        _ = await reminderSync.clearLocalDatabase(force: true)
 
         log.warning("⚠️ UserProfile cleanup not yet migrated to Clean Architecture", category: Self.logCategory)
 

@@ -8,7 +8,6 @@
 
 import Foundation
 import UserNotifications
-import OSLog
 
 /// Protocol for notification content configuration
 protocol NotificationContentBuilder {
@@ -47,8 +46,14 @@ enum TimeOfDay: CaseIterable {
 
 /// Generic notification scheduler that eliminates duplication
 final class GenericNotificationScheduler {
-    private let logger = Logger(subsystem: "com.pagosapp.notifications", category: "GenericScheduler")
-    
+    private static let logCategory = "GenericNotificationScheduler"
+
+    private let log: DomainLogWriter
+
+    init(log: DomainLogWriter) {
+        self.log = log
+    }
+
     /// Schedule notifications for any entity type (Payment, Reminder, etc.)
     func scheduleNotifications(
         entityId: UUID,
@@ -60,18 +65,18 @@ final class GenericNotificationScheduler {
         
         let settings = await UNUserNotificationCenter.current().notificationSettings()
         
-        guard settings.authorizationStatus == .authorized else { 
-            self.logger.warning("⚠️ Notification authorization not granted for \(entityId)")
-            return 
+        guard settings.authorizationStatus == .authorized else {
+            log.warning("⚠️ Notification authorization not granted for \(entityId)", category: Self.logCategory)
+            return
         }
 
         let calendar = Calendar.current
         let now = Date()
 
         for daysBefore in notificationDays {
-            guard let notificationDate = calendar.date(byAdding: .day, value: -daysBefore, to: dueDate) else { 
-                self.logger.error("Failed to calculate notification date for \(daysBefore) days before")
-                continue 
+            guard let notificationDate = calendar.date(byAdding: .day, value: -daysBefore, to: dueDate) else {
+                log.error("Failed to calculate notification date for \(daysBefore) days before", category: Self.logCategory)
+                continue
             }
 
             if daysBefore == 0 {
@@ -121,7 +126,7 @@ final class GenericNotificationScheduler {
         comp.second = 0
         
         guard let triggerDate = calendar.date(from: comp) else {
-            self.logger.error("Failed to create trigger date for \(daysBefore) days before (\(timeOfDay.suffix))")
+            log.error("Failed to create trigger date for \(daysBefore) days before (\(timeOfDay.suffix))", category: Self.logCategory)
             return false
         }
         
@@ -148,7 +153,7 @@ final class GenericNotificationScheduler {
             try await UNUserNotificationCenter.current().add(request)
             return true
         } catch {
-            self.logger.error("❌ Failed to schedule \(daysBefore) days before notification (\(timeOfDay.suffix)): \(error.localizedDescription)")
+            log.error("❌ Failed to schedule \(daysBefore) days before notification (\(timeOfDay.suffix)): \(error.localizedDescription)", category: Self.logCategory)
             return false
         }
     }

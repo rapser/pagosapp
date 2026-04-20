@@ -46,7 +46,8 @@ final class UserProfileDependencyContainer {
             remoteDataSource: remoteDataSource,
             localDataSource: localDataSource,
             domainMapper: domainMapper,
-            remoteDTOMapper: remoteDTOMapper
+            remoteDTOMapper: remoteDTOMapper,
+            log: log
         )
     }
 

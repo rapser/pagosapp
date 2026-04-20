@@ -136,8 +136,8 @@ struct SessionDebugView: View {
     let coordinator = SessionCoordinator(
         errorHandler: dependencies.errorHandler,
         settingsStore: dependencies.settingsStore,
-        paymentSyncCoordinator: dependencies.paymentSyncCoordinator,
-        reminderSyncCoordinator: dependencies.reminderSyncCoordinator,
+        paymentSync: dependencies.paymentSyncCoordinator,
+        reminderSync: dependencies.reminderSyncCoordinator,
         coordinateSyncUseCase: coordinateSync,
         log: dependencies.domainLog,
         authDependencyContainer: dependencies.authDependencyContainer

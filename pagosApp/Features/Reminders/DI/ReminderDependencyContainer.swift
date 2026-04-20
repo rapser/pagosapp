@@ -18,7 +18,7 @@ final class ReminderDependencyContainer {
     private let log: DomainLogWriter
 
     private lazy var localDataSource: ReminderLocalDataSource = {
-        ReminderSwiftDataDataSource(modelContext: modelContext)
+        ReminderSwiftDataDataSource(modelContext: modelContext, log: log)
     }()
 
     private lazy var remoteDataSource: ReminderRemoteDataSource = {
@@ -32,7 +32,8 @@ final class ReminderDependencyContainer {
     private lazy var repository: ReminderRepositoryProtocol = {
         ReminderRepositoryImpl(
             localDataSource: localDataSource,
-            notificationDataSource: notificationDataSource
+            notificationDataSource: notificationDataSource,
+            log: log
         )
     }()
 

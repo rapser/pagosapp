@@ -9,13 +9,17 @@
 import Foundation
 import Security
 import LocalAuthentication
-import OSLog
-
-private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "KeychainBiometricCredentialsDataSource")
 
 /// Keychain implementation of BiometricCredentialsDataSource
 final class KeychainBiometricCredentialsDataSource: BiometricCredentialsDataSource {
+    private static let logCategory = "KeychainBiometricCredentialsDataSource"
+
+    private let log: DomainLogWriter
     private let service = "com.rapser.pagosApp"
+
+    init(log: DomainLogWriter) {
+        self.log = log
+    }
     private let emailKey = "userEmail"
     private let passwordKey = "userPassword"
     private let hasLoggedInKey = "hasLoggedInWithCredentials"
@@ -23,10 +27,10 @@ final class KeychainBiometricCredentialsDataSource: BiometricCredentialsDataSour
     // MARK: - Credentials Management
 
     func saveCredentials(email: String, password: String) -> Bool {
-        logger.info("💾 Saving biometric credentials")
+        log.info("💾 Saving biometric credentials", category: Self.logCategory)
 
         guard let passwordData = password.data(using: .utf8) else {
-            logger.error("Failed to encode password")
+            log.error("Failed to encode password", category: Self.logCategory)
             return false
         }
 
@@ -38,12 +42,12 @@ final class KeychainBiometricCredentialsDataSource: BiometricCredentialsDataSour
             .biometryCurrentSet, // Only accessible with current biometry
             &accessControlError
         ) else {
-            logger.error("Failed to create access control")
+            log.error("Failed to create access control", category: Self.logCategory)
             return false
         }
 
         guard let emailData = email.data(using: .utf8) else {
-            logger.error("Failed to encode email")
+            log.error("Failed to encode email", category: Self.logCategory)
             return false
         }
 
@@ -63,41 +67,41 @@ final class KeychainBiometricCredentialsDataSource: BiometricCredentialsDataSour
                     synchronizable: false
                 )
             } catch {
-                logger.error("Failed to save password: \(error.localizedDescription)")
+                log.error("Failed to save password: \(error.localizedDescription)", category: Self.logCategory)
                 // Best-effort rollback to avoid leaving email without password
                 _ = deleteCredentials()
                 return false
             }
         } catch {
-            logger.error("Failed to save email: \(error.localizedDescription)")
+            log.error("Failed to save email: \(error.localizedDescription)", category: Self.logCategory)
             return false
         }
 
-        logger.info("✅ Biometric credentials saved successfully")
+        log.info("✅ Biometric credentials saved successfully", category: Self.logCategory)
         return true
     }
 
     func retrieveCredentials(context: LAContext?) -> (email: String, password: String)? {
-        logger.info("🔍 Retrieving biometric credentials")
+        log.info("🔍 Retrieving biometric credentials", category: Self.logCategory)
 
         // Retrieve email
         guard let email = retrieveEmail(context: context) else {
-            logger.warning("No email found in Keychain")
+            log.warning("No email found in Keychain", category: Self.logCategory)
             return nil
         }
 
         // Retrieve password
         guard let password = retrievePassword(context: context) else {
-            logger.warning("No password found in Keychain")
+            log.warning("No password found in Keychain", category: Self.logCategory)
             return nil
         }
 
-        logger.info("✅ Biometric credentials retrieved successfully")
+        log.info("✅ Biometric credentials retrieved successfully", category: Self.logCategory)
         return (email, password)
     }
 
     func deleteCredentials() -> Bool {
-        logger.info("🗑️ Deleting biometric credentials")
+        log.info("🗑️ Deleting biometric credentials", category: Self.logCategory)
 
         // Delete email
         let emailQuery: [String: Any] = [
@@ -121,10 +125,10 @@ final class KeychainBiometricCredentialsDataSource: BiometricCredentialsDataSour
         let passwordSuccess = passwordStatus == errSecSuccess || passwordStatus == errSecItemNotFound
 
         if emailSuccess && passwordSuccess {
-            logger.info("✅ Biometric credentials deleted successfully")
+            log.info("✅ Biometric credentials deleted successfully", category: Self.logCategory)
             return true
         } else {
-            logger.error("Failed to delete credentials: email=\(emailStatus), password=\(passwordStatus)")
+            log.error("Failed to delete credentials: email=\(emailStatus), password=\(passwordStatus)", category: Self.logCategory)
             return false
         }
     }
@@ -176,13 +180,13 @@ final class KeychainBiometricCredentialsDataSource: BiometricCredentialsDataSour
 
             let addStatus = SecItemAdd(query as CFDictionary, nil)
             guard addStatus == errSecSuccess else {
-                logger.error("Failed to add keychain item (\(account)): \(addStatus)")
+                log.error("Failed to add keychain item (\(account)): \(addStatus)", category: Self.logCategory)
                 throw NSError(domain: "KeychainBiometricCredentialsDataSource", code: Int(addStatus), userInfo: nil)
             }
             return
         }
 
-        logger.error("Failed to update keychain item (\(account)): \(updateStatus)")
+        log.error("Failed to update keychain item (\(account)): \(updateStatus)", category: Self.logCategory)
         throw NSError(domain: "KeychainBiometricCredentialsDataSource", code: Int(updateStatus), userInfo: nil)
     }
 
@@ -241,13 +245,13 @@ final class KeychainBiometricCredentialsDataSource: BiometricCredentialsDataSour
     // MARK: - Login Flag Management
 
     func setHasLoggedIn(_ value: Bool) -> Bool {
-        logger.info("💾 Setting hasLoggedIn flag: \(value)")
+        log.info("💾 Setting hasLoggedIn flag: \(value)", category: Self.logCategory)
         let success = setBool(value, forKey: hasLoggedInKey)
 
         if success {
-            logger.info("✅ HasLoggedIn flag saved successfully")
+            log.info("✅ HasLoggedIn flag saved successfully", category: Self.logCategory)
         } else {
-            logger.error("❌ Failed to save hasLoggedIn flag")
+            log.error("❌ Failed to save hasLoggedIn flag", category: Self.logCategory)
         }
 
         return success
@@ -255,18 +259,18 @@ final class KeychainBiometricCredentialsDataSource: BiometricCredentialsDataSour
 
     func getHasLoggedIn() -> Bool {
         let hasLoggedIn = getBool(forKey: hasLoggedInKey) ?? false
-        logger.debug("🔍 HasLoggedIn: \(hasLoggedIn)")
+        log.debug("🔍 HasLoggedIn: \(hasLoggedIn)", category: Self.logCategory)
         return hasLoggedIn
     }
 
     func deleteHasLoggedIn() -> Bool {
-        logger.info("🗑️ Deleting hasLoggedIn flag")
+        log.info("🗑️ Deleting hasLoggedIn flag", category: Self.logCategory)
         let success = deleteBool(forKey: hasLoggedInKey)
 
         if success {
-            logger.info("✅ HasLoggedIn flag deleted successfully")
+            log.info("✅ HasLoggedIn flag deleted successfully", category: Self.logCategory)
         } else {
-            logger.error("❌ Failed to delete hasLoggedIn flag")
+            log.error("❌ Failed to delete hasLoggedIn flag", category: Self.logCategory)
         }
 
         return success
@@ -287,7 +291,7 @@ final class KeychainBiometricCredentialsDataSource: BiometricCredentialsDataSour
             )
             return true
         } catch {
-            logger.error("Failed to save boolean flag (\(key)): \(error.localizedDescription)")
+            log.error("Failed to save boolean flag (\(key)): \(error.localizedDescription)", category: Self.logCategory)
             return false
         }
     }

@@ -54,12 +54,12 @@ final class AppDependencies {
         // Platform DataSources (Infrastructure)
         let settingsDataSource = UserDefaultsSettingsDataSource()
         self.settingsStore = SettingsStore(dataSource: settingsDataSource)
-        self.notificationDataSource = UserNotificationsDataSource()
         self.calendarEventDataSource = EventKitCalendarDataSource()
         self.alertManager = AlertManager()
         self.eventBus = InMemoryEventBus()
         self.domainLog = OSLogDomainLogWriter()
         self.errorHandler = ErrorHandler(log: domainLog)
+        self.notificationDataSource = UserNotificationsDataSource(log: domainLog)
 
         // Feature Dependency Containers (Clean Architecture)
         self.authDependencyContainer = AuthDependencyContainer(
@@ -100,7 +100,8 @@ final class AppDependencies {
         )
 
         self.historyDependencyContainer = HistoryDependencyContainer(
-            paymentDependencyContainer: paymentDependencyContainer
+            paymentDependencyContainer: paymentDependencyContainer,
+            log: domainLog
         )
 
         // Coordinators (Created by feature containers)
@@ -110,8 +111,8 @@ final class AppDependencies {
         self.sessionCoordinator = authDependencyContainer.makeSessionCoordinator(
             errorHandler: errorHandler,
             settingsStore: settingsStore,
-            paymentSyncCoordinator: paymentSyncCoordinator,
-            reminderSyncCoordinator: reminderSyncCoordinator
+            paymentSync: paymentSyncCoordinator,
+            reminderSync: reminderSyncCoordinator
         )
 
         self.appSyncManager = AppSyncManager(
@@ -127,7 +128,8 @@ final class AppDependencies {
             eventBus: eventBus,
             notificationDataSource: notificationDataSource,
             reminderDependencyContainer: reminderDependencyContainer,
-            paymentDependencyContainer: paymentDependencyContainer
+            paymentDependencyContainer: paymentDependencyContainer,
+            log: domainLog
         )
     }
 
