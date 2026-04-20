@@ -9,12 +9,14 @@
 import Foundation
 
 /// Use case to coordinate sync operations across different features
+@MainActor
 protocol CoordinateSyncUseCaseProtocol {
     func triggerInitialSync() async
     func handlePostLoginSync() async
 }
 
 /// Implementation of sync coordination
+@MainActor
 final class CoordinateSyncUseCase: CoordinateSyncUseCaseProtocol {
     private static let logCategory = "CoordinateSyncUseCase"
 

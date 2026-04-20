@@ -116,13 +116,13 @@ final class AppDependencies {
         )
 
         self.appSyncManager = AppSyncManager(
-            paymentSyncCoordinator: paymentSyncCoordinator,
-            reminderSyncCoordinator: reminderSyncCoordinator
+            paymentSync: paymentSyncCoordinator,
+            reminderSync: reminderSyncCoordinator
         )
 
         self.settingsDependencyContainer = SettingsDependencyContainer(
-            paymentSyncCoordinator: paymentSyncCoordinator,
-            reminderSyncCoordinator: reminderSyncCoordinator,
+            paymentSync: paymentSyncCoordinator,
+            reminderSync: reminderSyncCoordinator,
             authDependencyContainer: authDependencyContainer,
             userProfileDependencyContainer: userProfileDependencyContainer,
             eventBus: eventBus,

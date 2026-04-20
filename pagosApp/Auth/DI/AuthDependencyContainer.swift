@@ -78,7 +78,8 @@ final class AuthDependencyContainer {
 
     func makeLoginUseCase() -> LoginUseCase {
         LoginUseCase(
-            authRepository: makeAuthRepository()
+            authRepository: makeAuthRepository(),
+            loginAttemptTracker: UserDefaultsLoginAttemptTracker.shared
         )
     }
 

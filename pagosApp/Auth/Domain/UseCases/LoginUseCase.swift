@@ -20,7 +20,7 @@ final class LoginUseCase {
         authRepository: AuthSessionRepositoryProtocol,
         emailValidator: EmailValidator.Type = EmailValidator.self,
         passwordValidator: PasswordValidator.Type = PasswordValidator.self,
-        loginAttemptTracker: LoginAttemptTracking = UserDefaultsLoginAttemptTracker.shared
+        loginAttemptTracker: LoginAttemptTracking
     ) {
         self.authRepository = authRepository
         self.emailValidator = emailValidator

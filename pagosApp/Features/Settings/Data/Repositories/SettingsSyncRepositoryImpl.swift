@@ -9,49 +9,49 @@
 import Foundation
 
 /// Implementation of SettingsSyncRepositoryProtocol
-/// Delegates to PaymentSyncCoordinator and ReminderSyncCoordinator
+/// Delegates to payment and reminder sync ports (concrete coordinators conform at the boundary).
 @MainActor
 final class SettingsSyncRepositoryImpl: SettingsSyncRepositoryProtocol {
     private static let logCategory = "SettingsSyncRepositoryImpl"
 
-    private let paymentSyncCoordinator: PaymentSyncCoordinator
-    private let reminderSyncCoordinator: ReminderSyncCoordinator
+    private let paymentSync: PaymentSyncCoordinating
+    private let reminderSync: ReminderSyncCoordinating
     private let log: DomainLogWriter
 
     init(
-        paymentSyncCoordinator: PaymentSyncCoordinator,
-        reminderSyncCoordinator: ReminderSyncCoordinator,
+        paymentSync: PaymentSyncCoordinating,
+        reminderSync: ReminderSyncCoordinating,
         log: DomainLogWriter
     ) {
-        self.paymentSyncCoordinator = paymentSyncCoordinator
-        self.reminderSyncCoordinator = reminderSyncCoordinator
+        self.paymentSync = paymentSync
+        self.reminderSync = reminderSync
         self.log = log
     }
 
     func performSync() async throws {
         log.info("🔄 Performing sync via settings (payments + reminders)", category: Self.logCategory)
-        try await paymentSyncCoordinator.performSync()
-        try await reminderSyncCoordinator.performSync()
+        try await paymentSync.performSync()
+        try await reminderSync.performSync()
     }
 
     func clearLocalDatabase(force: Bool) async -> Bool {
         log.info("🗑️ Clearing local database via settings (force: \(force))", category: Self.logCategory)
-        let paymentsCleared = await paymentSyncCoordinator.clearLocalDatabase(force: force)
-        let remindersCleared = await reminderSyncCoordinator.clearLocalDatabase(force: force)
+        let paymentsCleared = await paymentSync.clearLocalDatabase(force: force)
+        let remindersCleared = await reminderSync.clearLocalDatabase(force: force)
         return paymentsCleared && remindersCleared
     }
 
     func updatePendingSyncCount() async {
         log.debug("📊 Updating pending sync count", category: Self.logCategory)
-        await paymentSyncCoordinator.updatePendingSyncCount()
-        await reminderSyncCoordinator.updatePendingSyncCount()
+        await paymentSync.updatePendingSyncCount()
+        await reminderSync.updatePendingSyncCount()
     }
 
     var pendingSyncCount: Int {
-        paymentSyncCoordinator.pendingSyncCount + reminderSyncCoordinator.pendingSyncCount
+        paymentSync.pendingSyncCount + reminderSync.pendingSyncCount
     }
 
     var syncError: Error? {
-        paymentSyncCoordinator.syncError ?? reminderSyncCoordinator.syncError
+        paymentSync.syncError ?? reminderSync.syncError
     }
 }
