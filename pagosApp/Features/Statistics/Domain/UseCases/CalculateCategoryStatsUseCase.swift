@@ -24,7 +24,7 @@ final class CalculateCategoryStatsUseCase {
     ///   - currency: Currency filter
     /// - Returns: Result with array of CategoryStats or PaymentError
     func execute(filter: StatsFilter, currency: Currency) async -> Result<[CategoryStats], PaymentError> {
-        logger.debug("📊 Calculating category stats for filter: \(filter.rawValue), currency: \(currency.rawValue)")
+        logger.debug("📊 Calculating category stats for filter: \(filter.logDescription), currency: \(currency.rawValue)")
 
         // Get filtered payments
         let result = await statisticsRepository.getFilteredPayments(filter: filter, currency: currency)

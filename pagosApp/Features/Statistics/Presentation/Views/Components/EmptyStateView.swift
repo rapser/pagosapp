@@ -18,7 +18,7 @@ struct EmptyStateView: View {
     }
 
     private var description: String {
-        L10n.Statistics.emptyForFilter(filter.rawValue)
+        L10n.Statistics.emptyForFilter(L10n.Statistics.periodDisplayName(filter))
     }
 
     var body: some View {

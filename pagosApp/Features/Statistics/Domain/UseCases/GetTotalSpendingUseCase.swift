@@ -24,7 +24,7 @@ final class GetTotalSpendingUseCase {
     ///   - currency: Currency filter
     /// - Returns: Result with total amount or PaymentError
     func execute(filter: StatsFilter, currency: Currency) async -> Result<Double, PaymentError> {
-        logger.debug("📊 Calculating total spending for filter: \(filter.rawValue), currency: \(currency.rawValue)")
+        logger.debug("📊 Calculating total spending for filter: \(filter.logDescription), currency: \(currency.rawValue)")
 
         let result = await statisticsRepository.getFilteredPayments(filter: filter, currency: currency)
 
