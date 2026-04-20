@@ -2,16 +2,24 @@
 //  PaymentHistoryFilter.swift
 //  pagosApp
 //
-//  Created by miguel tomairo on 26/12/25.
+//  History list filter (stable cases; UI copy via L10n.History).
 //
-
 
 import Foundation
 
-enum PaymentHistoryFilter: String, CaseIterable, Identifiable {
-    case completed = "Completados"
-    case overdue = "Vencidos"
-    case all = "Todos"
+enum PaymentHistoryFilter: CaseIterable, Identifiable, Sendable {
+    case completed
+    case overdue
+    case all
 
-    var id: String { self.rawValue }
+    var id: String { logDescription }
+
+    /// Stable, non-localized label for logs and analytics.
+    var logDescription: String {
+        switch self {
+        case .completed: return "completed"
+        case .overdue: return "overdue"
+        case .all: return "all"
+        }
+    }
 }

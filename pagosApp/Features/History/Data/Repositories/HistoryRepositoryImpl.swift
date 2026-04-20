@@ -20,7 +20,7 @@ final class HistoryRepositoryImpl: HistoryRepositoryProtocol {
     }
 
     func getPaymentHistory(filter: PaymentHistoryFilter) async throws -> [Payment] {
-        logger.info("📚 Fetching payment history with filter: \(filter.rawValue)")
+        logger.info("📚 Fetching payment history with filter: \(filter.logDescription)")
 
         // Get all payments from underlying repository
         let allPayments = try await paymentRepository.getAllLocalPayments()
