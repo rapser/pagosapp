@@ -10,10 +10,15 @@ on:
 jobs:
   build:
     name: Build (iOS Simulator)
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      - name: Xcode (misma línea que TestFlight / App Store)
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
 
       - name: Build
         run: |
@@ -25,7 +30,7 @@ jobs:
 
   swiftlint:
     name: SwiftLint
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - name: Checkout
         uses: actions/checkout@v5
