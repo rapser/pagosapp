@@ -1,4 +1,3 @@
-
 import SwiftUI
 
 struct AddPaymentView: View {
@@ -91,7 +90,7 @@ private struct AddPaymentForm: View {
     }
 }
 
-//#Preview {
-//    AddPaymentView()
-//        .modelContainer(for: [Payment.self], inMemory: true)
-//}
+// #Preview {
+//     AddPaymentView()
+//         .modelContainer(for: [Payment.self], inMemory: true)
+// }

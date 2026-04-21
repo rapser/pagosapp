@@ -102,92 +102,34 @@ struct PaymentDTO: Codable, Identifiable {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = TimeZone(secondsFromGMT: 0)
 
-        // ISO8601 with milliseconds (3 digits) and timezone with colon
-        // Format: "2026-01-02T20:59:38.015+00:00"
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"
-        if let date = formatter.date(from: cleanString) {
-            return date
+        // Order matters: try more specific patterns before generic ones
+        let dateFormats = [
+            "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ", // ISO8601 + ms + Z with colon
+            "yyyy-MM-dd'T'HH:mm:ss.SSSxx", // ISO8601 + ms + Z without colon
+            "yyyy-MM-dd'T'HH:mm:ssZZZZZ", // ISO8601 + Z with colon
+            "yyyy-MM-dd HH:mm:ss.SSSxx", // PostgreSQL + fractional + Z
+            "yyyy-MM-dd HH:mm:ssxx", // PostgreSQL + Z compact
+            "yyyy-MM-dd HH:mm:ssZZZ", // PostgreSQL + Z with colon
+            "yyyy-MM-dd HH:mm:ss.SSSZZZ", // PostgreSQL + fractional + Z colon
+            "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZZZZZ", // ISO8601 + microseconds
+            "yyyy-MM-dd'T'HH:mm:ss", // No timezone (T)
+            "yyyy-MM-dd HH:mm:ss", // No timezone (space)
+            "yyyy-MM-dd" // Date only
+        ]
+
+        for format in dateFormats {
+            formatter.dateFormat = format
+            if let date = formatter.date(from: cleanString) {
+                return date
+            }
         }
 
-        // ISO8601 with milliseconds and timezone without colon
-        // Format: "2026-01-02T20:59:38.015+00"
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSxx"
-        if let date = formatter.date(from: cleanString) {
-            return date
-        }
-
-        // ISO8601 without fractional seconds with timezone colon
-        // Format: "2025-11-30T17:05:00+00:00"
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
-        if let date = formatter.date(from: cleanString) {
-            return date
-        }
-
-        // PostgreSQL timestamp with fractional seconds and timezone (no T separator)
-        // Format: "2026-01-02 20:59:38.015+00"
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSxx"
-        if let date = formatter.date(from: cleanString) {
-            return date
-        }
-
-        // PostgreSQL timestamp with timezone (no fractional seconds)
-        // Format: "2026-01-30 21:01:00+00"
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ssxx"
-        if let date = formatter.date(from: cleanString) {
-            return date
-        }
-
-        // PostgreSQL timestamp with timezone colon format
-        // Format: "2025-12-12 20:27:00+00:00"
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ssZZZ"
-        if let date = formatter.date(from: cleanString) {
-            return date
-        }
-
-        // PostgreSQL timestamp with fractional seconds and timezone colon format
-        // Format: "2025-12-03 20:30:48.731+00:00"
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSZZZ"
-        if let date = formatter.date(from: cleanString) {
-            return date
-        }
-
-        // Try ISO8601 with microseconds (6 digits)
-        // Format: "2025-11-15T17:15:12.926568+00:00"
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZZZZZ"
-        if let date = formatter.date(from: cleanString) {
-            return date
-        }
-
-        // Try ISO8601 formatter (handles various ISO formats)
         if let date = ISO8601DateFormatter().date(from: cleanString) {
             return date
         }
 
-        // Try ISO8601 without fractional seconds
         let isoFormatter = ISO8601DateFormatter()
         isoFormatter.formatOptions = [.withInternetDateTime]
-        if let date = isoFormatter.date(from: cleanString) {
-            return date
-        }
-
-        // Try without timezone
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-        if let date = formatter.date(from: cleanString) {
-            return date
-        }
-
-        // Try without timezone (PostgreSQL style)
-        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        if let date = formatter.date(from: cleanString) {
-            return date
-        }
-
-        // Try date only format
-        formatter.dateFormat = "yyyy-MM-dd"
-        if let date = formatter.date(from: cleanString) {
-            return date
-        }
-
-        return nil
+        return isoFormatter.date(from: cleanString)
     }
 }

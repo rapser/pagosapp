@@ -1,4 +1,3 @@
-
 import SwiftUI
 
 struct PaymentRowView: View {
@@ -58,4 +57,3 @@ extension PaymentColorToken {
         }
     }
 }
-
