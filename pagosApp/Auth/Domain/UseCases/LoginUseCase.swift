@@ -13,18 +13,15 @@ import Foundation
 final class LoginUseCase {
     private let authRepository: AuthSessionRepositoryProtocol
     private let emailValidator: EmailValidator.Type
-    private let passwordValidator: PasswordValidator.Type
     private let loginAttemptTracker: LoginAttemptTracking
 
     init(
         authRepository: AuthSessionRepositoryProtocol,
         emailValidator: EmailValidator.Type = EmailValidator.self,
-        passwordValidator: PasswordValidator.Type = PasswordValidator.self,
         loginAttemptTracker: LoginAttemptTracking
     ) {
         self.authRepository = authRepository
         self.emailValidator = emailValidator
-        self.passwordValidator = passwordValidator
         self.loginAttemptTracker = loginAttemptTracker
     }
 
@@ -43,12 +40,8 @@ final class LoginUseCase {
             return .failure(error as? AuthError ?? .invalidEmail)
         }
 
-        // Validate password strength
-        do {
-            try passwordValidator.validate(password)
-        } catch {
-            return .failure(error as? AuthError ?? .weakPassword)
-        }
+        // Login does not enforce signup-style password rules (length/symbol/etc.); Supabase validates
+        // credentials. Register/reset flows still use PasswordValidator.
 
         if let lockoutUntil = loginAttemptTracker.lockoutUntilIfActive(forNormalizedEmail: normalizedEmail),
            lockoutUntil > Date() {
