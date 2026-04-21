@@ -33,7 +33,6 @@ final class PaymentSyncCoordinator {
     var syncError: Error?
 
     private let lastSyncKey = "lastPaymentSyncDate"
-    private let syncTriggerThrottle = SyncTriggerThrottle(minimumInterval: 10)
 
     // MARK: - Initialization
 
@@ -73,7 +72,6 @@ final class PaymentSyncCoordinator {
     /// Perform full synchronization (upload + download)
     func performSync() async throws {
         guard !isSyncing else { return }
-        guard syncTriggerThrottle.consumeTriggerIfAllowed() else { return }
 
         isSyncing = true
         syncError = nil
