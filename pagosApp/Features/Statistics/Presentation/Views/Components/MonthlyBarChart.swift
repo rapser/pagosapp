@@ -5,7 +5,6 @@
 //  Created by miguel tomairo on 1/01/26.
 //
 
-
 import SwiftUI
 import Charts
 
@@ -29,7 +28,7 @@ struct MonthlyBarChart: View {
                 .accessibilityLabel("\(data.month.formatted(.dateTime.month(.wide))): \(String(format: "%.2f", data.totalAmount))")
             }
             .chartXAxis {
-                AxisMarks(values: .automatic(desiredCount: monthlyData.count)) { value in
+                AxisMarks(values: .automatic(desiredCount: monthlyData.count)) { _ in
                     AxisGridLine()
                     AxisTick()
                     AxisValueLabel(format: .dateTime.month(.abbreviated), centered: true)

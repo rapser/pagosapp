@@ -86,7 +86,7 @@ final class PaymentHistoryViewModel: BaseViewModel {
                     
                     self.paginationState.update(with: paginatedResult)
                     self.allPayments = uiPayments
-                    self.logDebug("Fetched \(uiPayments.count) payments for history (filter: \(self.selectedFilter.rawValue))")
+                    self.logDebug("Fetched \(uiPayments.count) payments for history (filter: \(self.selectedFilter.logDescription))")
                     return uiPayments
                 case .failure(let error):
                     self.logError(error)

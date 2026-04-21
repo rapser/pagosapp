@@ -8,7 +8,6 @@
 
 import Foundation
 import SwiftData
-import OSLog
 
 struct ModelContainerCreationResult: Sendable {
     let container: ModelContainer?
@@ -18,10 +17,10 @@ struct ModelContainerCreationResult: Sendable {
 
 /// Factory responsible for creating and configuring SwiftData ModelContainer
 enum ModelContainerFactory {
-    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ModelContainerFactory")
+    private static let logCategory = "ModelContainerFactory"
 
     /// Creates a configured ModelContainer for the app's data models (pagos, perfil, recordatorios).
-    static func create() -> ModelContainerCreationResult {
+    static func create(log: DomainLogWriter) -> ModelContainerCreationResult {
         let schema = Schema([PaymentLocalDTO.self, UserProfileLocalDTO.self, ReminderLocalDTO.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -33,12 +32,12 @@ enum ModelContainerFactory {
                 failureDescription: nil
             )
         } catch {
-            logger.error("\(L10n.Log.Db.modelContainerFailed(error.localizedDescription))")
-            return fallbackToInMemoryContainer(schema: schema, underlyingError: error)
+            log.error(L10n.Log.Db.modelContainerFailed(error.localizedDescription), category: logCategory)
+            return fallbackToInMemoryContainer(log: log, schema: schema, underlyingError: error)
         }
     }
 
-    private static func fallbackToInMemoryContainer(schema: Schema, underlyingError: Error) -> ModelContainerCreationResult {
+    private static func fallbackToInMemoryContainer(log: DomainLogWriter, schema: Schema, underlyingError: Error) -> ModelContainerCreationResult {
         do {
             let inMemoryConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
             let container = try ModelContainer(for: schema, configurations: [inMemoryConfiguration])
@@ -48,7 +47,7 @@ enum ModelContainerFactory {
                 failureDescription: underlyingError.localizedDescription
             )
         } catch {
-            logger.error("\(L10n.Log.Db.recoveryFailed(error.localizedDescription))")
+            log.error(L10n.Log.Db.recoveryFailed(error.localizedDescription), category: logCategory)
             return ModelContainerCreationResult(
                 container: nil,
                 didFallbackToInMemory: true,

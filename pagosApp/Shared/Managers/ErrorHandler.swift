@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import OSLog
 import Observation
 
 /// Simple error handler for presentation layer
@@ -15,23 +14,27 @@ import Observation
 @MainActor
 @Observable
 final class ErrorHandler {
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ErrorHandler")
+    private static let logCategory = "ErrorHandler"
+
+    private let log: DomainLogWriter
 
     var currentError: Error?
     var showError: Bool = false
 
-    init() {}
+    init(log: DomainLogWriter) {
+        self.log = log
+    }
 
     /// Handle an error by logging it
     func handle(_ error: Error) {
-        logger.error("❌ Error: \(error.localizedDescription)")
+        log.error("❌ Error: \(error.localizedDescription)", category: Self.logCategory)
         currentError = error
         showError = true
     }
 
     /// Handle an error with custom message
     func handle(_ error: Error, message: String) {
-        logger.error("❌ \(message): \(error.localizedDescription)")
+        log.error("❌ \(message): \(error.localizedDescription)", category: Self.logCategory)
         currentError = error
         showError = true
     }

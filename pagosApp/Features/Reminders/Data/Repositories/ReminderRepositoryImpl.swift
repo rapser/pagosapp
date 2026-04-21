@@ -7,34 +7,40 @@
 //
 
 import Foundation
-import OSLog
 
 @MainActor
 final class ReminderRepositoryImpl: ReminderRepositoryProtocol {
+    private static let logCategory = "ReminderRepositoryImpl"
+
     private let localDataSource: ReminderLocalDataSource
     private let notificationDataSource: NotificationDataSource
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ReminderRepositoryImpl")
+    private let log: DomainLogWriter
 
-    init(localDataSource: ReminderLocalDataSource, notificationDataSource: NotificationDataSource) {
+    init(
+        localDataSource: ReminderLocalDataSource,
+        notificationDataSource: NotificationDataSource,
+        log: DomainLogWriter
+    ) {
         self.localDataSource = localDataSource
         self.notificationDataSource = notificationDataSource
+        self.log = log
     }
 
     func create(reminder: Reminder) async -> Result<Reminder, ReminderError> {
-        logger.info("📝 Creating reminder: \(reminder.title)")
+        log.info("📝 Creating reminder: \(reminder.title)", category: Self.logCategory)
         do {
             try await localDataSource.save(reminder)
-            logger.info("✅ Reminder saved successfully, scheduling notifications...")
+            log.info("✅ Reminder saved successfully, scheduling notifications...", category: Self.logCategory)
             notificationDataSource.scheduleReminderNotifications(
-                reminderId: reminder.id, 
-                title: reminder.title, 
-                dueDate: reminder.dueDate, 
+                reminderId: reminder.id,
+                title: reminder.title,
+                dueDate: reminder.dueDate,
                 notificationSettings: reminder.notificationSettings
             )
-            logger.info("✅ Reminder created successfully with notifications")
+            log.info("✅ Reminder created successfully with notifications", category: Self.logCategory)
             return .success(reminder)
         } catch {
-            logger.error("❌ Failed to create reminder: \(error.localizedDescription)")
+            log.error("❌ Failed to create reminder: \(error.localizedDescription)", category: Self.logCategory)
             return .failure(.saveFailed(error.localizedDescription))
         }
     }
@@ -44,7 +50,7 @@ final class ReminderRepositoryImpl: ReminderRepositoryProtocol {
             let reminders = try await localDataSource.fetchAll()
             return .success(reminders)
         } catch {
-            logger.error("❌ Failed to fetch reminders: \(error.localizedDescription)")
+            log.error("❌ Failed to fetch reminders: \(error.localizedDescription)", category: Self.logCategory)
             return .failure(.unknown(error.localizedDescription))
         }
     }
@@ -54,30 +60,30 @@ final class ReminderRepositoryImpl: ReminderRepositoryProtocol {
             let reminder = try await localDataSource.fetch(id: id)
             return .success(reminder)
         } catch {
-            logger.error("❌ Failed to fetch reminder: \(error.localizedDescription)")
+            log.error("❌ Failed to fetch reminder: \(error.localizedDescription)", category: Self.logCategory)
             return .failure(.unknown(error.localizedDescription))
         }
     }
 
     func update(reminder: Reminder) async -> Result<Reminder, ReminderError> {
-        logger.info("📝 Updating reminder: \(reminder.title)")
+        log.info("📝 Updating reminder: \(reminder.title)", category: Self.logCategory)
         do {
             notificationDataSource.cancelReminderNotifications(reminderId: reminder.id)
             try await localDataSource.save(reminder)
             if !reminder.isCompleted {
-                logger.info("🔔 Reminder not completed, scheduling notifications...")
+                log.info("🔔 Reminder not completed, scheduling notifications...", category: Self.logCategory)
                 notificationDataSource.scheduleReminderNotifications(
-                    reminderId: reminder.id, 
-                    title: reminder.title, 
-                    dueDate: reminder.dueDate, 
+                    reminderId: reminder.id,
+                    title: reminder.title,
+                    dueDate: reminder.dueDate,
                     notificationSettings: reminder.notificationSettings
                 )
             } else {
-                logger.info("✅ Reminder completed, notifications cancelled")
+                log.info("✅ Reminder completed, notifications cancelled", category: Self.logCategory)
             }
             return .success(reminder)
         } catch {
-            logger.error("❌ Failed to update reminder: \(error.localizedDescription)")
+            log.error("❌ Failed to update reminder: \(error.localizedDescription)", category: Self.logCategory)
             return .failure(.saveFailed(error.localizedDescription))
         }
     }
@@ -88,7 +94,7 @@ final class ReminderRepositoryImpl: ReminderRepositoryProtocol {
             try await localDataSource.delete(id: id)
             return .success(())
         } catch {
-            logger.error("❌ Failed to delete reminder: \(error.localizedDescription)")
+            log.error("❌ Failed to delete reminder: \(error.localizedDescription)", category: Self.logCategory)
             return .failure(.deleteFailed(error.localizedDescription))
         }
     }

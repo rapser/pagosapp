@@ -12,11 +12,11 @@ import Foundation
 @MainActor
 final class BiometricLoginUseCase {
     private let biometricRepository: BiometricRepositoryProtocol
-    private let authRepository: AuthRepositoryProtocol
+    private let authRepository: AuthSessionRepositoryProtocol
 
     init(
         biometricRepository: BiometricRepositoryProtocol,
-        authRepository: AuthRepositoryProtocol
+        authRepository: AuthSessionRepositoryProtocol
     ) {
         self.biometricRepository = biometricRepository
         self.authRepository = authRepository

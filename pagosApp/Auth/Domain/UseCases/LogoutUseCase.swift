@@ -11,11 +11,11 @@ import Foundation
 /// Use case for logging out user while preserving local data
 @MainActor
 final class LogoutUseCase {
-    private let authRepository: AuthRepositoryProtocol
+    private let authRepository: AuthSessionRepositoryProtocol
     private let sessionRepository: SessionRepositoryProtocol
 
     init(
-        authRepository: AuthRepositoryProtocol,
+        authRepository: AuthSessionRepositoryProtocol,
         sessionRepository: SessionRepositoryProtocol
     ) {
         self.authRepository = authRepository

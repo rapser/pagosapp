@@ -128,11 +128,18 @@ struct SessionDebugView: View {
 
 #Preview {
     let dependencies = AppDependencies.mock()
+    let coordinateSync = CoordinateSyncUseCase(
+        paymentSync: dependencies.paymentSyncCoordinator,
+        reminderSync: dependencies.reminderSyncCoordinator,
+        log: dependencies.domainLog
+    )
     let coordinator = SessionCoordinator(
         errorHandler: dependencies.errorHandler,
         settingsStore: dependencies.settingsStore,
-        paymentSyncCoordinator: dependencies.paymentSyncCoordinator,
-        reminderSyncCoordinator: dependencies.reminderSyncCoordinator,
+        paymentSync: dependencies.paymentSyncCoordinator,
+        reminderSync: dependencies.reminderSyncCoordinator,
+        coordinateSyncUseCase: coordinateSync,
+        log: dependencies.domainLog,
         authDependencyContainer: dependencies.authDependencyContainer
     )
 

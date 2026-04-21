@@ -25,6 +25,7 @@ final class AppDependencies {
     let calendarEventDataSource: CalendarEventDataSource
     let alertManager: AlertManager
     let eventBus: EventBus
+    let domainLog: DomainLogWriter
 
     // MARK: - Feature Containers (Clean Architecture)
 
@@ -50,48 +51,57 @@ final class AppDependencies {
         modelContext: ModelContext,
         supabaseClient: SupabaseClient
     ) {
-        self.errorHandler = ErrorHandler()
-
         // Platform DataSources (Infrastructure)
         let settingsDataSource = UserDefaultsSettingsDataSource()
         self.settingsStore = SettingsStore(dataSource: settingsDataSource)
-        self.notificationDataSource = UserNotificationsDataSource()
         self.calendarEventDataSource = EventKitCalendarDataSource()
         self.alertManager = AlertManager()
         self.eventBus = InMemoryEventBus()
+        self.domainLog = OSLogDomainLogWriter()
+        self.errorHandler = ErrorHandler(log: domainLog)
+        self.notificationDataSource = UserNotificationsDataSource(log: domainLog)
 
         // Feature Dependency Containers (Clean Architecture)
-        self.authDependencyContainer = AuthDependencyContainer(supabaseClient: supabaseClient)
+        self.authDependencyContainer = AuthDependencyContainer(
+            supabaseClient: supabaseClient,
+            log: domainLog
+        )
 
         self.paymentDependencyContainer = PaymentDependencyContainer(
             supabaseClient: supabaseClient,
             modelContext: modelContext,
-            eventBus: eventBus
+            eventBus: eventBus,
+            log: domainLog
         )
 
         self.userProfileDependencyContainer = UserProfileDependencyContainer(
             supabaseClient: supabaseClient,
-            modelContext: modelContext
+            modelContext: modelContext,
+            log: domainLog
         )
 
         self.reminderDependencyContainer = ReminderDependencyContainer(
             modelContext: modelContext,
             notificationDataSource: notificationDataSource,
-            supabaseClient: supabaseClient
+            supabaseClient: supabaseClient,
+            log: domainLog
         )
 
         self.calendarDependencyContainer = CalendarDependencyContainer(
             paymentDependencyContainer: paymentDependencyContainer,
             reminderDependencyContainer: reminderDependencyContainer,
-            calendarEventDataSource: calendarEventDataSource
+            calendarEventDataSource: calendarEventDataSource,
+            log: domainLog
         )
 
         self.statisticsDependencyContainer = StatisticsDependencyContainer(
-            paymentDependencyContainer: paymentDependencyContainer
+            paymentDependencyContainer: paymentDependencyContainer,
+            log: domainLog
         )
 
         self.historyDependencyContainer = HistoryDependencyContainer(
-            paymentDependencyContainer: paymentDependencyContainer
+            paymentDependencyContainer: paymentDependencyContainer,
+            log: domainLog
         )
 
         // Coordinators (Created by feature containers)
@@ -101,44 +111,50 @@ final class AppDependencies {
         self.sessionCoordinator = authDependencyContainer.makeSessionCoordinator(
             errorHandler: errorHandler,
             settingsStore: settingsStore,
-            paymentSyncCoordinator: paymentSyncCoordinator,
-            reminderSyncCoordinator: reminderSyncCoordinator
+            paymentSync: paymentSyncCoordinator,
+            reminderSync: reminderSyncCoordinator
         )
 
         self.appSyncManager = AppSyncManager(
-            paymentSyncCoordinator: paymentSyncCoordinator,
-            reminderSyncCoordinator: reminderSyncCoordinator
+            paymentSync: paymentSyncCoordinator,
+            reminderSync: reminderSyncCoordinator
         )
 
         self.settingsDependencyContainer = SettingsDependencyContainer(
-            paymentSyncCoordinator: paymentSyncCoordinator,
-            reminderSyncCoordinator: reminderSyncCoordinator,
+            paymentSync: paymentSyncCoordinator,
+            reminderSync: reminderSyncCoordinator,
             authDependencyContainer: authDependencyContainer,
             userProfileDependencyContainer: userProfileDependencyContainer,
             eventBus: eventBus,
             notificationDataSource: notificationDataSource,
             reminderDependencyContainer: reminderDependencyContainer,
-            paymentDependencyContainer: paymentDependencyContainer
+            paymentDependencyContainer: paymentDependencyContainer,
+            log: domainLog
         )
     }
 
     // MARK: - Mock for Testing/Previews
 
+    /// In-memory SwiftData + mock Supabase for previews and tests.
+    /// If this fails, fix the SwiftData schema — the schema is under project control.
     static func mock() -> AppDependencies {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container: ModelContainer
         do {
             container = try ModelContainer(for: PaymentLocalDTO.self, UserProfileLocalDTO.self, ReminderLocalDTO.self, configurations: config)
         } catch {
-            fatalError("Failed to create ModelContainer for mock: \(error)")
+            fatalError("AppDependencies.mock: ModelContainer failed (\(error)). Fix the SwiftData schema used for previews/tests.")
         }
-        
-        guard let url = URL(string: "https://mock.supabase.co") else {
-            fatalError("Invalid mock Supabase URL")
-        }
-        
+
+        let mockURL: URL = {
+            guard let url = URL(string: "https://mock.supabase.co") else {
+                preconditionFailure("AppDependencies.mock: invalid URL literal")
+            }
+            return url
+        }()
+
         let mockSupabase = SupabaseClient(
-            supabaseURL: url,
+            supabaseURL: mockURL,
             supabaseKey: "mock_key"
         )
         return AppDependencies(
@@ -150,7 +166,11 @@ final class AppDependencies {
 
 // MARK: - Environment Key
 
-/// SwiftUI Environment key for dependency injection
+/// SwiftUI environment key for `AppDependencies`.
+///
+/// **Production:** `AppBootstrapView` injects real dependencies via `.environment(\.dependencies, …)`.
+/// **Default:** `mock()` is only a fallback when no injection is present (e.g. isolated SwiftUI previews).
+/// Prefer injecting explicit dependencies in previews to avoid relying on the mock graph.
 struct AppDependenciesKey: @preconcurrency EnvironmentKey {
     @MainActor
     static let defaultValue: AppDependencies = .mock()

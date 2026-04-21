@@ -11,9 +11,9 @@ import Foundation
 /// Use case to check current authentication status
 @MainActor
 final class GetAuthenticationStatusUseCase {
-    private let authRepository: AuthRepositoryProtocol
+    private let authRepository: AuthSessionRepositoryProtocol
 
-    init(authRepository: AuthRepositoryProtocol) {
+    init(authRepository: AuthSessionRepositoryProtocol) {
         self.authRepository = authRepository
     }
 

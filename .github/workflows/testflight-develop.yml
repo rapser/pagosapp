@@ -34,12 +34,18 @@ permissions:
 jobs:
   testflight:
     name: Archive + subir a TestFlight
-    runs-on: macos-15
+    # iOS 26+ SDK (Xcode 26+): requisito App Store Connect desde 28 abr 2026 (90725 con SDK 18.x en macos-15).
+    runs-on: macos-26
     timeout-minutes: 120
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
+      - name: Xcode (iOS 26 SDK para upload)
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
 
       - name: Ruby + Bundler
         uses: ruby/setup-ruby@v1

@@ -7,15 +7,17 @@
 //
 
 import Foundation
-import OSLog
 
 /// Use case for uploading pending local payment changes
 final class UploadLocalChangesUseCase {
-    private let syncRepository: PaymentSyncRepositoryProtocol
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "UploadLocalChangesUseCase")
+    private static let logCategory = "UploadLocalChangesUseCase"
 
-    init(syncRepository: PaymentSyncRepositoryProtocol) {
+    private let syncRepository: PaymentSyncRepositoryProtocol
+    private let log: DomainLogWriter
+
+    init(syncRepository: PaymentSyncRepositoryProtocol, log: DomainLogWriter) {
         self.syncRepository = syncRepository
+        self.log = log
     }
 
     /// Execute upload of local changes
@@ -30,7 +32,7 @@ final class UploadLocalChangesUseCase {
         } catch let error as PaymentSyncError {
             return .failure(error)
         } catch {
-            logger.error("Upload failed: \(error.localizedDescription)")
+            log.error("Upload failed: \(error.localizedDescription)", category: Self.logCategory)
             return .failure(.uploadFailed(error.localizedDescription))
         }
     }

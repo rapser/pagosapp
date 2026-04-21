@@ -8,19 +8,20 @@
 
 import Foundation
 import Supabase
-import OSLog
-
-private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "SupabaseAuthDataSource")
 
 /// Supabase implementation of AuthRemoteDataSource
 @MainActor
 final class SupabaseAuthDataSource: AuthRemoteDataSource {
+    private static let logCategory = "SupabaseAuthDataSource"
+
     private let client: SupabaseClient
     private let mapper: SupabaseAuthDTOMapper
+    private let log: DomainLogWriter
 
-    init(client: SupabaseClient, mapper: SupabaseAuthDTOMapper = SupabaseAuthDTOMapper()) {
+    init(client: SupabaseClient, mapper: SupabaseAuthDTOMapper = SupabaseAuthDTOMapper(), log: DomainLogWriter) {
         self.client = client
         self.mapper = mapper
+        self.log = log
     }
 
     // MARK: - Authentication
@@ -39,7 +40,7 @@ final class SupabaseAuthDataSource: AuthRemoteDataSource {
             )
 
             guard let session = response.session else {
-                logger.error("❌ No session received after sign up")
+                log.error("❌ No session received after sign up", category: Self.logCategory)
                 throw AuthError.unknown("Failed to create session")
             }
 
@@ -48,7 +49,7 @@ final class SupabaseAuthDataSource: AuthRemoteDataSource {
         } catch let error as AuthError {
             throw error
         } catch {
-            logger.error("❌ Sign up error: \(error.localizedDescription)")
+            log.error("❌ Sign up error: \(error.localizedDescription)", category: Self.logCategory)
             throw mapper.mapError(error)
         }
     }
@@ -63,7 +64,7 @@ final class SupabaseAuthDataSource: AuthRemoteDataSource {
             return mapper.toDTO(session)
 
         } catch {
-            logger.error("❌ Sign in error: \(error.localizedDescription)")
+            log.error("❌ Sign in error: \(error.localizedDescription)", category: Self.logCategory)
             throw mapper.mapError(error)
         }
     }
@@ -73,7 +74,7 @@ final class SupabaseAuthDataSource: AuthRemoteDataSource {
             try await client.auth.signOut()
 
         } catch {
-            logger.error("❌ Sign out error: \(error.localizedDescription)")
+            log.error("❌ Sign out error: \(error.localizedDescription)", category: Self.logCategory)
             throw AuthError.networkError(error.localizedDescription)
         }
     }
@@ -94,7 +95,7 @@ final class SupabaseAuthDataSource: AuthRemoteDataSource {
             return mapper.toDTO(session)
 
         } catch {
-            logger.error("❌ Session refresh error: \(error.localizedDescription)")
+            log.error("❌ Session refresh error: \(error.localizedDescription)", category: Self.logCategory)
             throw mapper.mapError(error)
         }
     }
@@ -106,7 +107,7 @@ final class SupabaseAuthDataSource: AuthRemoteDataSource {
             try await client.auth.resetPasswordForEmail(email)
 
         } catch {
-            logger.error("❌ Password reset email error: \(error.localizedDescription)")
+            log.error("❌ Password reset email error: \(error.localizedDescription)", category: Self.logCategory)
             throw mapper.mapError(error)
         }
     }
@@ -119,7 +120,7 @@ final class SupabaseAuthDataSource: AuthRemoteDataSource {
             try await client.auth.update(user: UserAttributes(password: newPassword))
 
         } catch {
-            logger.error("❌ Password reset error: \(error.localizedDescription)")
+            log.error("❌ Password reset error: \(error.localizedDescription)", category: Self.logCategory)
             throw mapper.mapError(error)
         }
     }
@@ -129,7 +130,7 @@ final class SupabaseAuthDataSource: AuthRemoteDataSource {
             try await client.auth.update(user: UserAttributes(email: newEmail))
 
         } catch {
-            logger.error("❌ Email update error: \(error.localizedDescription)")
+            log.error("❌ Email update error: \(error.localizedDescription)", category: Self.logCategory)
             throw mapper.mapError(error)
         }
     }
@@ -139,7 +140,7 @@ final class SupabaseAuthDataSource: AuthRemoteDataSource {
             try await client.auth.update(user: UserAttributes(password: newPassword))
 
         } catch {
-            logger.error("❌ Password update error: \(error.localizedDescription)")
+            log.error("❌ Password update error: \(error.localizedDescription)", category: Self.logCategory)
             throw mapper.mapError(error)
         }
     }
@@ -154,7 +155,7 @@ final class SupabaseAuthDataSource: AuthRemoteDataSource {
             throw AuthError.unknown("Account deletion not implemented - requires server-side function")
 
         } catch {
-            logger.error("❌ Account deletion error: \(error.localizedDescription)")
+            log.error("❌ Account deletion error: \(error.localizedDescription)", category: Self.logCategory)
             throw error as? AuthError ?? AuthError.unknown(error.localizedDescription)
         }
     }

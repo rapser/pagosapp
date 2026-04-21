@@ -10,9 +10,9 @@ import Foundation
 
 @MainActor
 final class PasswordRecoveryUseCase {
-    private let authRepository: AuthRepositoryProtocol
+    private let authRepository: AuthCredentialRepositoryProtocol
 
-    init(authRepository: AuthRepositoryProtocol) {
+    init(authRepository: AuthCredentialRepositoryProtocol) {
         self.authRepository = authRepository
     }
 

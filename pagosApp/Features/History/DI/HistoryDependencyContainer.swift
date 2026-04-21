@@ -14,16 +14,19 @@ final class HistoryDependencyContainer {
     // MARK: - External Dependencies
 
     private let paymentDependencyContainer: PaymentDependencyContainer
+    private let log: DomainLogWriter
 
-    init(paymentDependencyContainer: PaymentDependencyContainer) {
+    init(paymentDependencyContainer: PaymentDependencyContainer, log: DomainLogWriter) {
         self.paymentDependencyContainer = paymentDependencyContainer
+        self.log = log
     }
 
     // MARK: - Repositories
 
     func makeHistoryRepository() -> HistoryRepositoryProtocol {
         HistoryRepositoryImpl(
-            paymentRepository: paymentDependencyContainer.makePaymentRepository()
+            paymentRepository: paymentDependencyContainer.makePaymentRepository(),
+            log: log
         )
     }
 

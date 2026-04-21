@@ -7,15 +7,17 @@
 //
 
 import Foundation
-import OSLog
 
 /// Calculate spending statistics grouped by category
 final class CalculateCategoryStatsUseCase {
-    private let statisticsRepository: StatisticsRepositoryProtocol
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "CalculateCategoryStatsUseCase")
+    private static let logCategory = "CalculateCategoryStatsUseCase"
 
-    init(statisticsRepository: StatisticsRepositoryProtocol) {
+    private let statisticsRepository: StatisticsRepositoryProtocol
+    private let log: DomainLogWriter
+
+    init(statisticsRepository: StatisticsRepositoryProtocol, log: DomainLogWriter) {
         self.statisticsRepository = statisticsRepository
+        self.log = log
     }
 
     /// Execute: Calculate category statistics for filtered payments
@@ -24,14 +26,17 @@ final class CalculateCategoryStatsUseCase {
     ///   - currency: Currency filter
     /// - Returns: Result with array of CategoryStats or PaymentError
     func execute(filter: StatsFilter, currency: Currency) async -> Result<[CategoryStats], PaymentError> {
-        logger.debug("📊 Calculating category stats for filter: \(filter.rawValue), currency: \(currency.rawValue)")
+        log.debug(
+            "📊 Calculating category stats for filter: \(filter.logDescription), currency: \(currency.rawValue)",
+            category: Self.logCategory
+        )
 
         // Get filtered payments
         let result = await statisticsRepository.getFilteredPayments(filter: filter, currency: currency)
 
         guard case .success(let payments) = result else {
             if case .failure(let error) = result {
-                logger.error("❌ Failed to get payments: \(error.errorCode)")
+                log.error("❌ Failed to get payments: \(error.errorCode)", category: Self.logCategory)
             }
             return result.map { _ in [] }
         }
@@ -51,7 +56,10 @@ final class CalculateCategoryStatsUseCase {
         // Sort by total amount descending
         .sorted { $0.totalAmount > $1.totalAmount }
 
-        logger.info("✅ Calculated stats for \(categoryStats.count) categories from \(payments.count) payments")
+        log.info(
+            "✅ Calculated stats for \(categoryStats.count) categories from \(payments.count) payments",
+            category: Self.logCategory
+        )
         return .success(categoryStats)
     }
 }

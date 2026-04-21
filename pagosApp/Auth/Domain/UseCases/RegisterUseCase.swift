@@ -11,12 +11,12 @@ import Foundation
 /// Use case for registering a new user
 @MainActor
 final class RegisterUseCase {
-    private let authRepository: AuthRepositoryProtocol
+    private let authRepository: AuthSessionRepositoryProtocol
     private let emailValidator: EmailValidator.Type
     private let passwordValidator: PasswordValidator.Type
 
     init(
-        authRepository: AuthRepositoryProtocol,
+        authRepository: AuthSessionRepositoryProtocol,
         emailValidator: EmailValidator.Type = EmailValidator.self,
         passwordValidator: PasswordValidator.Type = PasswordValidator.self
     ) {

@@ -229,8 +229,8 @@ struct NotificationDebugView: View {
 }
 
 #Preview {
-    let mockNotificationDataSource = UserNotificationsDataSource()
     let mockContainer = AppDependencies.mock()
+    let mockNotificationDataSource = UserNotificationsDataSource(log: mockContainer.domainLog)
     let mockViewModel = NotificationDebugViewModel(
         notificationDataSource: mockNotificationDataSource,
         getAllRemindersUseCase: mockContainer.reminderDependencyContainer.makeGetAllRemindersUseCase(),

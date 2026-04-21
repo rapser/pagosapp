@@ -7,22 +7,23 @@
 //
 
 import Foundation
-import OSLog
-
-private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "SessionRepositoryImpl")
 
 /// Implementation of SessionRepositoryProtocol
 /// Manages session state and timeout using UserDefaults
 @MainActor
 final class SessionRepositoryImpl: SessionRepositoryProtocol {
+    private static let logCategory = "SessionRepositoryImpl"
+
     private let lastActiveTimestampKey = "lastActiveTimestamp"
     private let sessionActiveKey = "sessionActive"
     private let sessionTimeoutInSeconds: TimeInterval = 604800 // 1 week
 
     private let userDefaults: UserDefaults
+    private let log: DomainLogWriter
 
-    init(userDefaults: UserDefaults = .standard) {
+    init(userDefaults: UserDefaults = .standard, log: DomainLogWriter) {
         self.userDefaults = userDefaults
+        self.log = log
     }
 
     // MARK: - Session State
@@ -34,7 +35,7 @@ final class SessionRepositoryImpl: SessionRepositoryProtocol {
     var lastActiveTimestamp: Date? {
         userDefaults.object(forKey: lastActiveTimestampKey) as? Date
     }
-    
+
     /// Check if session is expired synchronously (for UI initialization)
     var isSessionExpiredSync: Bool {
         #if DEBUG
@@ -42,7 +43,7 @@ final class SessionRepositoryImpl: SessionRepositoryProtocol {
         return false
         #else
         guard let lastActive = lastActiveTimestamp else {
-            logger.debug("⚠️ No last active timestamp found")
+            log.debug("⚠️ No last active timestamp found", category: Self.logCategory)
             return true
         }
 
@@ -50,7 +51,10 @@ final class SessionRepositoryImpl: SessionRepositoryProtocol {
         let isExpired = elapsedTime > self.sessionTimeoutInSeconds
 
         if isExpired {
-            logger.debug("⏰ Session expired (sync check) - elapsed: \(elapsedTime)s, timeout: \(self.sessionTimeoutInSeconds)s")
+            log.debug(
+                "⏰ Session expired (sync check) - elapsed: \(elapsedTime)s, timeout: \(self.sessionTimeoutInSeconds)s",
+                category: Self.logCategory
+            )
         }
 
         return isExpired
@@ -60,25 +64,25 @@ final class SessionRepositoryImpl: SessionRepositoryProtocol {
     // MARK: - Session Operations
 
     func startSession() async {
-        logger.info("✅ Starting session")
+        log.info("✅ Starting session", category: Self.logCategory)
         userDefaults.set(true, forKey: sessionActiveKey)
         await updateLastActiveTimestamp()
     }
 
     func endSession() async {
-        logger.info("🛑 Ending session")
+        log.info("🛑 Ending session", category: Self.logCategory)
         userDefaults.set(false, forKey: sessionActiveKey)
         userDefaults.removeObject(forKey: lastActiveTimestampKey)
     }
 
     func clearSession() async {
-        logger.info("🗑️ Clearing session")
+        log.info("🗑️ Clearing session", category: Self.logCategory)
         await endSession()
     }
 
     func updateLastActiveTimestamp() async {
         userDefaults.set(Date(), forKey: lastActiveTimestampKey)
-        logger.debug("⏱️ Updated last active timestamp")
+        log.debug("⏱️ Updated last active timestamp", category: Self.logCategory)
     }
 
     func isSessionExpired() async -> Bool {
@@ -87,7 +91,7 @@ final class SessionRepositoryImpl: SessionRepositoryProtocol {
         return false
         #else
         guard let lastActive = lastActiveTimestamp else {
-            logger.debug("⚠️ No last active timestamp found")
+            log.debug("⚠️ No last active timestamp found", category: Self.logCategory)
             return true
         }
 
@@ -95,7 +99,10 @@ final class SessionRepositoryImpl: SessionRepositoryProtocol {
         let isExpired = elapsedTime > self.sessionTimeoutInSeconds
 
         if isExpired {
-            logger.warning("⏰ Session expired - elapsed: \(elapsedTime)s, timeout: \(self.sessionTimeoutInSeconds)s")
+            log.warning(
+                "⏰ Session expired - elapsed: \(elapsedTime)s, timeout: \(self.sessionTimeoutInSeconds)s",
+                category: Self.logCategory
+            )
         }
 
         return isExpired
@@ -110,7 +117,7 @@ final class SessionRepositoryImpl: SessionRepositoryProtocol {
         let elapsedTime = Date().timeIntervalSince(lastActive)
         let remaining = max(0, sessionTimeoutInSeconds - elapsedTime)
 
-        logger.debug("⏳ Session time remaining: \(remaining)s")
+        log.debug("⏳ Session time remaining: \(remaining)s", category: Self.logCategory)
 
         return remaining
     }
@@ -118,7 +125,7 @@ final class SessionRepositoryImpl: SessionRepositoryProtocol {
     func validateSession() async -> Result<Bool, AuthError> {
         // Check if session is active
         guard hasActiveSession else {
-            logger.debug("❌ No active session")
+            log.debug("❌ No active session", category: Self.logCategory)
             return .success(false)
         }
 
@@ -126,11 +133,11 @@ final class SessionRepositoryImpl: SessionRepositoryProtocol {
         let expired = await isSessionExpired()
 
         if expired {
-            logger.warning("❌ Session is expired")
+            log.warning("❌ Session is expired", category: Self.logCategory)
             return .failure(.sessionExpired)
         }
 
-        logger.debug("✅ Session is valid")
+        log.debug("✅ Session is valid", category: Self.logCategory)
         return .success(true)
     }
 }

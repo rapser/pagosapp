@@ -16,6 +16,7 @@ final class PaymentDependencyContainer {
     private let supabaseClient: SupabaseClient
     private let modelContext: ModelContext
     let eventBus: EventBus
+    private let log: DomainLogWriter
 
     // Lazy-loaded data sources
     private lazy var remoteDataSource: PaymentRemoteDataSource = {
@@ -23,7 +24,7 @@ final class PaymentDependencyContainer {
     }()
 
     private lazy var localDataSource: PaymentLocalDataSource = {
-        PaymentSwiftDataDataSource(modelContext: modelContext)
+        PaymentSwiftDataDataSource(modelContext: modelContext, log: log)
     }()
 
     // Mappers
@@ -45,10 +46,11 @@ final class PaymentDependencyContainer {
 
     // MARK: - Initialization
 
-    init(supabaseClient: SupabaseClient, modelContext: ModelContext, eventBus: EventBus) {
+    init(supabaseClient: SupabaseClient, modelContext: ModelContext, eventBus: EventBus, log: DomainLogWriter) {
         self.supabaseClient = supabaseClient
         self.modelContext = modelContext
         self.eventBus = eventBus
+        self.log = log
     }
 
     // MARK: - Mappers (Helper methods)
@@ -92,6 +94,7 @@ final class PaymentDependencyContainer {
         return CreatePaymentUseCase(
             paymentRepository: makePaymentRepository(),
             eventBus: eventBus,
+            log: log,
             syncCalendarUseCase: syncCalendarUseCase,
             scheduleNotificationsUseCase: scheduleNotificationsUseCase
         )
@@ -110,6 +113,7 @@ final class PaymentDependencyContainer {
         return UpdatePaymentUseCase(
             paymentRepository: makePaymentRepository(),
             eventBus: eventBus,
+            log: log,
             syncCalendarUseCase: syncCalendarUseCase,
             scheduleNotificationsUseCase: scheduleNotificationsUseCase
         )
@@ -143,26 +147,30 @@ final class PaymentDependencyContainer {
         return TogglePaymentStatusUseCase(
             paymentRepository: makePaymentRepository(),
             eventBus: eventBus,
+            log: log,
             scheduleNotificationsUseCase: scheduleNotificationsUseCase
         )
     }
 
     func makeGetAllPaymentsUseCase() -> GetAllPaymentsUseCase {
         return GetAllPaymentsUseCase(
-            paymentRepository: makePaymentRepository()
+            paymentRepository: makePaymentRepository(),
+            log: log
         )
     }
 
     func makeGetPaymentUseCase() -> GetPaymentUseCase {
         return GetPaymentUseCase(
-            paymentRepository: makePaymentRepository()
+            paymentRepository: makePaymentRepository(),
+            log: log
         )
     }
 
     func makeSyncPaymentWithCalendarUseCase(calendarEventDataSource: CalendarEventDataSource) -> SyncPaymentWithCalendarUseCase {
         return SyncPaymentWithCalendarUseCase(
             calendarEventDataSource: calendarEventDataSource,
-            paymentRepository: makePaymentRepository()
+            paymentRepository: makePaymentRepository(),
+            log: log
         )
     }
 
@@ -174,14 +182,16 @@ final class PaymentDependencyContainer {
 
     func makeUploadLocalChangesUseCase() -> UploadLocalChangesUseCase {
         return UploadLocalChangesUseCase(
-            syncRepository: makePaymentSyncRepository()
+            syncRepository: makePaymentSyncRepository(),
+            log: log
         )
     }
 
     func makeDownloadRemoteChangesUseCase() -> DownloadRemoteChangesUseCase {
         return DownloadRemoteChangesUseCase(
             syncRepository: makePaymentSyncRepository(),
-            paymentRepository: makePaymentRepository()
+            paymentRepository: makePaymentRepository(),
+            log: log
         )
     }
 

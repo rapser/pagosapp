@@ -8,7 +8,6 @@
 
 import Foundation
 import Observation
-import OSLog
 
 @MainActor
 @Observable
@@ -18,7 +17,9 @@ final class ReminderSyncCoordinator {
     private let syncRepository: ReminderSyncRepositoryProtocol
     private let localDataSource: ReminderLocalDataSource
     private let rescheduleNotificationsUseCase: RescheduleReminderNotificationsUseCase
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "ReminderSyncCoordinator")
+    private let log: DomainLogWriter
+
+    private static let logCategory = "ReminderSyncCoordinator"
 
     var isSyncing = false
     var lastSyncDate: Date?
@@ -26,37 +27,30 @@ final class ReminderSyncCoordinator {
     var syncError: Error?
 
     private let lastSyncKey = "lastReminderSyncDate"
-    private let maxRetryAttempts = 3
-    private let minimumSyncTriggerInterval: TimeInterval = 10
-    private var lastSyncTriggerDate: Date?
 
     init(
         syncRemindersUseCase: SyncRemindersUseCase,
         getPendingSyncCountUseCase: GetPendingReminderSyncCountUseCase,
         syncRepository: ReminderSyncRepositoryProtocol,
         localDataSource: ReminderLocalDataSource,
-        rescheduleNotificationsUseCase: RescheduleReminderNotificationsUseCase
+        rescheduleNotificationsUseCase: RescheduleReminderNotificationsUseCase,
+        log: DomainLogWriter
     ) {
         self.syncRemindersUseCase = syncRemindersUseCase
         self.getPendingSyncCountUseCase = getPendingSyncCountUseCase
         self.syncRepository = syncRepository
         self.localDataSource = localDataSource
         self.rescheduleNotificationsUseCase = rescheduleNotificationsUseCase
+        self.log = log
         self.lastSyncDate = UserDefaults.standard.object(forKey: lastSyncKey) as? Date
     }
 
     func performSync() async throws {
         guard !isSyncing else {
-            logger.warning("⚠️ Reminder sync already in progress")
-            return
-        }
-        if let lastSyncTriggerDate,
-           Date().timeIntervalSince(lastSyncTriggerDate) < minimumSyncTriggerInterval {
-            logger.info("⏭️ Reminder sync skipped due to cooldown")
+            log.warning("⚠️ Reminder sync already in progress", category: Self.logCategory)
             return
         }
         isSyncing = true
-        lastSyncTriggerDate = Date()
         syncError = nil
         defer { isSyncing = false }
 
@@ -69,17 +63,9 @@ final class ReminderSyncCoordinator {
             }
         }
 
-        func retryDelayNanoseconds(forAttempt attempt: Int) -> UInt64 {
-            // 0.5s, 1s, 2s (+ jitter up to 250ms)
-            let baseDelays: [UInt64] = [500_000_000, 1_000_000_000, 2_000_000_000]
-            let base = baseDelays[min(max(attempt - 1, 0), baseDelays.count - 1)]
-            let jitter = UInt64.random(in: 0...250_000_000)
-            return base + jitter
-        }
+        log.info("🔄 Starting reminder synchronization", category: Self.logCategory)
 
-        logger.info("🔄 Starting reminder synchronization")
-
-        for attempt in 1...maxRetryAttempts {
+        for attempt in 1...SyncRetryPolicy.maxAttempts {
             let result = await syncRemindersUseCase.execute()
 
             switch result {
@@ -89,17 +75,16 @@ final class ReminderSyncCoordinator {
                 syncError = nil
                 await updatePendingSyncCount()
                 await rescheduleAllReminderNotifications()
-                logger.info("✅ Reminder synchronization completed successfully")
+                log.info("✅ Reminder synchronization completed successfully", category: Self.logCategory)
                 return
 
             case .failure(let error):
-                logger.error("❌ Reminder synchronization failed: \(error)")
+                log.error("❌ Reminder synchronization failed: \(String(describing: error))", category: Self.logCategory)
                 syncError = error
 
-                let isLastAttempt = attempt == maxRetryAttempts
+                let isLastAttempt = attempt == SyncRetryPolicy.maxAttempts
                 if !isLastAttempt, shouldRetry(error) {
-                    let delay = retryDelayNanoseconds(forAttempt: attempt)
-                    try? await Task.sleep(nanoseconds: delay)
+                    await SyncRetryPolicy.sleepBeforeRetry(forAttempt: attempt)
                     continue
                 }
                 throw error
@@ -111,22 +96,25 @@ final class ReminderSyncCoordinator {
         do {
             let reminders = try await localDataSource.fetchAll()
             rescheduleNotificationsUseCase.rescheduleAll(reminders)
-            logger.info("🔔 Rescheduled notifications for \(reminders.count) reminders after sync")
+            log.info("🔔 Rescheduled notifications for \(reminders.count) reminders after sync", category: Self.logCategory)
         } catch {
-            logger.error("⚠️ Failed to reschedule reminder notifications after sync: \(error.localizedDescription)")
+            log.error(
+                "⚠️ Failed to reschedule reminder notifications after sync: \(error.localizedDescription)",
+                category: Self.logCategory
+            )
         }
     }
 
     func updatePendingSyncCount() async {
         let count = await getPendingSyncCountUseCase.execute()
         pendingSyncCount = count
-        logger.info("📊 Pending reminder sync count updated: \(count)")
+        log.info("📊 Pending reminder sync count updated: \(count)", category: Self.logCategory)
     }
 
     func clearLocalDatabase(force: Bool = false) async -> Bool {
-        logger.info("Clearing local reminders (force: \(force))")
+        log.info("Clearing local reminders (force: \(force))", category: Self.logCategory)
         guard force || pendingSyncCount == 0 else {
-            logger.warning("⚠️ Cannot clear reminders: there are unsynchronized reminders")
+            log.warning("⚠️ Cannot clear reminders: there are unsynchronized reminders", category: Self.logCategory)
             return false
         }
         do {
@@ -137,11 +125,13 @@ final class ReminderSyncCoordinator {
             pendingSyncCount = 0
             lastSyncDate = nil
             UserDefaults.standard.removeObject(forKey: lastSyncKey)
-            logger.info("✅ Local reminders cleared successfully")
+            log.info("✅ Local reminders cleared successfully", category: Self.logCategory)
             return true
         } catch {
-            logger.error("❌ Failed to clear reminders: \(error.localizedDescription)")
+            log.error("❌ Failed to clear reminders: \(error.localizedDescription)", category: Self.logCategory)
             return false
         }
     }
 }
+
+extension ReminderSyncCoordinator: ReminderSyncCoordinating {}

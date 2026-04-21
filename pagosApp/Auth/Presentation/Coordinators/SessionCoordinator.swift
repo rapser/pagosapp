@@ -8,7 +8,6 @@
 
 import Foundation
 import Observation
-import OSLog
 
 /// Coordinates session lifecycle, inactivity detection, and authentication UI state
 /// This is a lightweight presentation coordinator that delegates business logic to Use Cases
@@ -45,24 +44,28 @@ final class SessionCoordinator {
     private let coordinateSyncUseCase: CoordinateSyncUseCaseProtocol
     private let errorHandler: ErrorHandler
     private let settingsStore: SettingsStore
-    private let paymentSyncCoordinator: PaymentSyncCoordinator
-    private let reminderSyncCoordinator: ReminderSyncCoordinator
+    private let paymentSync: PaymentSyncCoordinating
+    private let reminderSync: ReminderSyncCoordinating
+    private let log: DomainLogWriter
 
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "SessionCoordinator")
+    private static let logCategory = "SessionCoordinator"
 
     // MARK: - Initialization
 
     init(
         errorHandler: ErrorHandler,
         settingsStore: SettingsStore,
-        paymentSyncCoordinator: PaymentSyncCoordinator,
-        reminderSyncCoordinator: ReminderSyncCoordinator,
+        paymentSync: PaymentSyncCoordinating,
+        reminderSync: ReminderSyncCoordinating,
+        coordinateSyncUseCase: CoordinateSyncUseCaseProtocol,
+        log: DomainLogWriter,
         authDependencyContainer: AuthDependencyContainer
     ) {
         self.errorHandler = errorHandler
         self.settingsStore = settingsStore
-        self.paymentSyncCoordinator = paymentSyncCoordinator
-        self.reminderSyncCoordinator = reminderSyncCoordinator
+        self.paymentSync = paymentSync
+        self.reminderSync = reminderSync
+        self.log = log
 
         // Initialize Use Cases from container (Clean Architecture)
         self.loginUseCase = authDependencyContainer.makeLoginUseCase()
@@ -82,37 +85,46 @@ final class SessionCoordinator {
         self.verifyRemoteSessionUseCase = VerifyRemoteSessionUseCase(
             getAuthenticationStatusUseCase: authDependencyContainer.makeGetAuthenticationStatusUseCase()
         )
-        self.coordinateSyncUseCase = CoordinateSyncUseCase(
-            paymentSyncCoordinator: paymentSyncCoordinator,
-            reminderSyncCoordinator: reminderSyncCoordinator
-        )
+        self.coordinateSyncUseCase = coordinateSyncUseCase
 
         self.isSessionActive = sessionRepository.hasActiveSession
 
         // IMPORTANT: Initialize isAuthenticated synchronously to avoid flash of login screen
-        // More robust session validation - check both existence AND local expiration
         let hasCredentials = hasBiometricCredentialsUseCase.execute()
-        
+
         #if targetEnvironment(simulator)
         self.canUseBiometrics = true
         #endif
-        
-        // Improved logic: verify session is both active AND not locally expired
+
+        self.isAuthenticated = Self.computeInitialIsAuthenticated(
+            settingsStore: settingsStore,
+            sessionRepository: sessionRepository,
+            hasCredentials: hasCredentials,
+            isSessionActive: isSessionActive
+        )
+
+        observeLogoutNotifications()
+        scheduleInitialRemoteVerification()
+    }
+
+    private static func computeInitialIsAuthenticated(
+        settingsStore: SettingsStore,
+        sessionRepository: SessionRepositoryProtocol,
+        hasCredentials: Bool,
+        isSessionActive: Bool
+    ) -> Bool {
         let isLocalSessionValid = isSessionActive && !sessionRepository.isSessionExpiredSync
         let shouldShowBiometric = settingsStore.isBiometricLockEnabled && hasCredentials && isLocalSessionValid
-
         if shouldShowBiometric {
-            // User is logged in but needs Face ID unlock
-            self.isAuthenticated = false
-        } else if isLocalSessionValid {
-            // Has valid local session, no biometric needed - authenticate immediately
-            self.isAuthenticated = true
-        } else {
-            // No session or expired locally - show login
-            self.isAuthenticated = false
+            return false
         }
+        if isLocalSessionValid {
+            return true
+        }
+        return false
+    }
 
-        // Listen for logout notifications
+    private func observeLogoutNotifications() {
         Task { [weak self] in
             guard let self else { return }
             for await _ in NotificationCenter.default.notifications(named: NSNotification.Name("UserDidLogout")) {
@@ -120,8 +132,9 @@ final class SessionCoordinator {
                 self.isSessionActive = false
             }
         }
+    }
 
-        // Background verification and biometric check - with delay to prevent immediate UI changes
+    private func scheduleInitialRemoteVerification() {
         Task {
             guard !hasPerformedInitialCheck else {
                 return
@@ -129,35 +142,26 @@ final class SessionCoordinator {
             hasPerformedInitialCheck = true
 
             await checkBiometricAvailability()
-            
-            // Only proceed with remote verification if user is still supposed to be authenticated
+
             guard self.isAuthenticated else {
                 return
             }
 
-            // Use specialized UseCase for remote session verification
             let verificationResult = await verifyRemoteSessionUseCase.execute(allowNetworkDelay: true)
-            
-            
-            // Handle verification results conservatively
-            switch verificationResult {
-            case .valid:
-                break
-            case .invalid:
-                // Verify locally before forced logout
-                let isLocallyExpired = await sessionRepository.isSessionExpired()
-                
-                if isLocallyExpired {
-                    logger.warning("⚠️ Session expired both locally and remotely - logging out")
-                    self.isAuthenticated = false
-                    self.isSessionActive = false
-                } else {
-                    break
-                }
-            case .networkError:
-                break
-            case .timeout:
-                break
+            await handleInitialVerificationResult(verificationResult)
+        }
+    }
+
+    private func handleInitialVerificationResult(_ verificationResult: SessionVerificationResult) async {
+        switch verificationResult {
+        case .valid, .networkError, .timeout:
+            break
+        case .invalid:
+            let isLocallyExpired = await sessionRepository.isSessionExpired()
+            if isLocallyExpired {
+                log.warning("⚠️ Session expired both locally and remotely - logging out", category: Self.logCategory)
+                isAuthenticated = false
+                isSessionActive = false
             }
         }
     }
@@ -247,7 +251,7 @@ final class SessionCoordinator {
 
         case .failure(let error):
             if error == .sessionExpired {
-                logger.warning("⏰ Session expired - checking if should logout")
+                log.warning("⏰ Session expired - checking if should logout", category: Self.logCategory)
                 await checkAndLogoutIfOnline()
             }
         }
@@ -260,7 +264,7 @@ final class SessionCoordinator {
             try await ensureValidSessionUseCase.execute()
             await sessionRepository.updateLastActiveTimestamp()
         } catch {
-            logger.warning("⚠️ Could not verify session: \(error.localizedDescription)")
+            log.warning("⚠️ Could not verify session: \(error.localizedDescription)", category: Self.logCategory)
 
             // Check if we're online by attempting to get current session
             let isAuthenticated = await getAuthenticationStatusUseCase.execute()
@@ -285,10 +289,10 @@ final class SessionCoordinator {
         defer { isLoading = false }
 
         _ = await logoutUseCase.execute()
-        _ = await paymentSyncCoordinator.clearLocalDatabase(force: true)
-        _ = await reminderSyncCoordinator.clearLocalDatabase(force: true)
+        _ = await paymentSync.clearLocalDatabase(force: true)
+        _ = await reminderSync.clearLocalDatabase(force: true)
 
-        logger.warning("⚠️ UserProfile cleanup not yet migrated to Clean Architecture")
+        log.warning("⚠️ UserProfile cleanup not yet migrated to Clean Architecture", category: Self.logCategory)
 
         _ = clearBiometricCredentialsUseCase.execute()
         await sessionRepository.clearSession()
@@ -317,12 +321,12 @@ final class SessionCoordinator {
         let canUse = await biometricLoginUseCase.canUseBiometricLogin()
 
         guard canUse else {
-            logger.warning("⚠️ Biometrics not available")
+            log.warning("⚠️ Biometrics not available", category: Self.logCategory)
             return
         }
 
         guard hasBiometricCredentialsUseCase.execute() else {
-            logger.warning("⚠️ No credentials stored in Keychain for biometric login")
+            log.warning("⚠️ No credentials stored in Keychain for biometric login", category: Self.logCategory)
             return
         }
 
@@ -334,7 +338,7 @@ final class SessionCoordinator {
             await startSession()
 
         case .failure(let error):
-            logger.error("❌ Biometric login failed: \(error.errorCode)")
+            log.error("❌ Biometric login failed: \(error.errorCode)", category: Self.logCategory)
             errorHandler.handle(error)
         }
     }

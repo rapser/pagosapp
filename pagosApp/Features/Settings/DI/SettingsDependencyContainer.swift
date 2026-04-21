@@ -13,39 +13,43 @@ import Foundation
 final class SettingsDependencyContainer {
     // MARK: - External Dependencies
 
-    private let paymentSyncCoordinator: PaymentSyncCoordinator
-    private let reminderSyncCoordinator: ReminderSyncCoordinator
+    private let paymentSync: PaymentSyncCoordinating
+    private let reminderSync: ReminderSyncCoordinating
     private let authDependencyContainer: AuthDependencyContainer
     private let userProfileDependencyContainer: UserProfileDependencyContainer
     private let eventBus: EventBus
     private let notificationDataSource: NotificationDataSource
     private let reminderDependencyContainer: ReminderDependencyContainer
     private let paymentDependencyContainer: PaymentDependencyContainer
+    private let log: DomainLogWriter
 
     // Single repository instance shared across all use cases
     private lazy var sharedSettingsSyncRepository: SettingsSyncRepositoryProtocol = SettingsSyncRepositoryImpl(
-        paymentSyncCoordinator: paymentSyncCoordinator,
-        reminderSyncCoordinator: reminderSyncCoordinator
+        paymentSync: paymentSync,
+        reminderSync: reminderSync,
+        log: log
     )
 
     init(
-        paymentSyncCoordinator: PaymentSyncCoordinator,
-        reminderSyncCoordinator: ReminderSyncCoordinator,
+        paymentSync: PaymentSyncCoordinating,
+        reminderSync: ReminderSyncCoordinating,
         authDependencyContainer: AuthDependencyContainer,
         userProfileDependencyContainer: UserProfileDependencyContainer,
         eventBus: EventBus,
         notificationDataSource: NotificationDataSource,
         reminderDependencyContainer: ReminderDependencyContainer,
-        paymentDependencyContainer: PaymentDependencyContainer
+        paymentDependencyContainer: PaymentDependencyContainer,
+        log: DomainLogWriter
     ) {
-        self.paymentSyncCoordinator = paymentSyncCoordinator
-        self.reminderSyncCoordinator = reminderSyncCoordinator
+        self.paymentSync = paymentSync
+        self.reminderSync = reminderSync
         self.authDependencyContainer = authDependencyContainer
         self.userProfileDependencyContainer = userProfileDependencyContainer
         self.eventBus = eventBus
         self.notificationDataSource = notificationDataSource
         self.reminderDependencyContainer = reminderDependencyContainer
         self.paymentDependencyContainer = paymentDependencyContainer
+        self.log = log
     }
 
     // MARK: - Repositories

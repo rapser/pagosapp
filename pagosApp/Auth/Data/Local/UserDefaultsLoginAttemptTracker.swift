@@ -7,7 +7,8 @@
 
 import Foundation
 
-final class UserDefaultsLoginAttemptTracker: LoginAttemptTracking, @unchecked Sendable {
+@MainActor
+final class UserDefaultsLoginAttemptTracker: LoginAttemptTracking {
     static let shared = UserDefaultsLoginAttemptTracker()
 
     private let defaults: UserDefaults

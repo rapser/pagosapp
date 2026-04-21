@@ -15,6 +15,7 @@ import Supabase
 final class UserProfileDependencyContainer {
     private let supabaseClient: SupabaseClient
     private let modelContext: ModelContext
+    private let log: DomainLogWriter
 
     // Lazy-loaded data sources
     private lazy var remoteDataSource: UserProfileRemoteDataSource = {
@@ -32,9 +33,10 @@ final class UserProfileDependencyContainer {
 
     // MARK: - Initialization
 
-    init(supabaseClient: SupabaseClient, modelContext: ModelContext) {
+    init(supabaseClient: SupabaseClient, modelContext: ModelContext, log: DomainLogWriter) {
         self.supabaseClient = supabaseClient
         self.modelContext = modelContext
+        self.log = log
     }
 
     // MARK: - Repository
@@ -44,7 +46,8 @@ final class UserProfileDependencyContainer {
             remoteDataSource: remoteDataSource,
             localDataSource: localDataSource,
             domainMapper: domainMapper,
-            remoteDTOMapper: remoteDTOMapper
+            remoteDTOMapper: remoteDTOMapper,
+            log: log
         )
     }
 
@@ -52,25 +55,29 @@ final class UserProfileDependencyContainer {
 
     func makeFetchUserProfileUseCase() -> FetchUserProfileUseCase {
         return FetchUserProfileUseCase(
-            userProfileRepository: makeUserProfileRepository()
+            userProfileRepository: makeUserProfileRepository(),
+            log: log
         )
     }
 
     func makeGetLocalProfileUseCase() -> GetLocalProfileUseCase {
         return GetLocalProfileUseCase(
-            userProfileRepository: makeUserProfileRepository()
+            userProfileRepository: makeUserProfileRepository(),
+            log: log
         )
     }
 
     func makeUpdateUserProfileUseCase() -> UpdateUserProfileUseCase {
         return UpdateUserProfileUseCase(
-            userProfileRepository: makeUserProfileRepository()
+            userProfileRepository: makeUserProfileRepository(),
+            log: log
         )
     }
 
     func makeDeleteLocalProfileUseCase() -> DeleteLocalProfileUseCase {
         return DeleteLocalProfileUseCase(
-            userProfileRepository: makeUserProfileRepository()
+            userProfileRepository: makeUserProfileRepository(),
+            log: log
         )
     }
 

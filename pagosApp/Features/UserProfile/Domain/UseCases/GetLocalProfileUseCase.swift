@@ -7,32 +7,34 @@
 //
 
 import Foundation
-import OSLog
 
 /// Get user profile from local storage (offline-first)
 final class GetLocalProfileUseCase {
-    private let userProfileRepository: UserProfileRepositoryProtocol
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "GetLocalProfileUseCase")
+    private static let logCategory = "GetLocalProfileUseCase"
 
-    init(userProfileRepository: UserProfileRepositoryProtocol) {
+    private let userProfileRepository: UserProfileRepositoryProtocol
+    private let log: DomainLogWriter
+
+    init(userProfileRepository: UserProfileRepositoryProtocol, log: DomainLogWriter) {
         self.userProfileRepository = userProfileRepository
+        self.log = log
     }
 
     /// Execute: Get profile from local storage
     /// - Returns: Result with optional UserProfile or UserProfileError
     func execute() async -> Result<UserProfile?, UserProfileError> {
-        logger.debug("📱 Fetching profile from local storage")
+        log.debug("📱 Fetching profile from local storage", category: Self.logCategory)
 
         let result = await userProfileRepository.getLocalProfile()
 
         if case .success(let profile) = result {
             if profile != nil {
-                logger.info("✅ Profile loaded from local storage")
+                log.info("✅ Profile loaded from local storage", category: Self.logCategory)
             } else {
-                logger.info("ℹ️ No local profile found")
+                log.info("ℹ️ No local profile found", category: Self.logCategory)
             }
         } else if case .failure(let error) = result {
-            logger.error("❌ Failed to load local profile: \(error.errorCode)")
+            log.error("❌ Failed to load local profile: \(error.errorCode)", category: Self.logCategory)
         }
 
         return result

@@ -7,41 +7,43 @@
 //
 
 import Foundation
-import OSLog
-
-private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "RefreshSessionUseCase")
 
 /// Use case for refreshing an expired session
 @MainActor
 final class RefreshSessionUseCase {
-    private let authRepository: AuthRepositoryProtocol
+    private static let logCategory = "RefreshSessionUseCase"
+
+    private let authRepository: AuthSessionRepositoryProtocol
     private let sessionRepository: SessionRepositoryProtocol
+    private let log: DomainLogWriter
 
     init(
-        authRepository: AuthRepositoryProtocol,
-        sessionRepository: SessionRepositoryProtocol
+        authRepository: AuthSessionRepositoryProtocol,
+        sessionRepository: SessionRepositoryProtocol,
+        log: DomainLogWriter
     ) {
         self.authRepository = authRepository
         self.sessionRepository = sessionRepository
+        self.log = log
     }
 
     /// Execute session refresh
     /// - Parameter refreshToken: Refresh token
     /// - Returns: Result with new AuthSession or AuthError
     func execute(refreshToken: String) async -> Result<AuthSession, AuthError> {
-        logger.info("🔄 Refreshing session")
+        log.info("🔄 Refreshing session", category: Self.logCategory)
 
         // Refresh session with auth repository
         let result = await authRepository.refreshSession(refreshToken: refreshToken)
 
         guard case .success(let newSession) = result else {
-            logger.error("❌ Session refresh failed")
+            log.error("❌ Session refresh failed", category: Self.logCategory)
             // Clear session on failure
             await sessionRepository.clearSession()
             return result
         }
 
-        logger.info("✅ Session refreshed successfully")
+        log.info("✅ Session refreshed successfully", category: Self.logCategory)
 
         // Update last active timestamp
         await sessionRepository.updateLastActiveTimestamp()
@@ -56,11 +58,11 @@ final class RefreshSessionUseCase {
         let isExpired = await sessionRepository.isSessionExpired()
 
         guard isExpired else {
-            logger.debug("Session still valid, no refresh needed")
+            log.debug("Session still valid, no refresh needed", category: Self.logCategory)
             return .success(nil)
         }
 
-        logger.info("Session expired, attempting refresh")
+        log.info("Session expired, attempting refresh", category: Self.logCategory)
 
         // Get current session to extract refresh token
         guard let currentSession = await authRepository.getCurrentSession() else {
