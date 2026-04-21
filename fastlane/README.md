@@ -1,30 +1,88 @@
-# Fastlane — PagosApp
+fastlane documentation
+----
 
-Guía operativa y trucos para que **no falle** la configuración: **[SETUP.md](SETUP.md)** (léela antes de otro proyecto o si ves errores de API Key / JSON / Ruby).
+# Installation
 
-## Comandos rápidos
+Make sure you have the latest version of the Xcode command line tools installed:
 
-```bash
-cd /ruta/raíz-del-repo   # donde están Gemfile y pagosApp.xcodeproj
-bundle install
-bundle exec fastlane menu       # menú numerado
-bundle exec fastlane reference  # lista de lanes (CI / copiar)
+```sh
+xcode-select --install
 ```
 
-Plantilla de variables (sin secretos): **[.env.example](.env.example)**  
-CI / GitHub Actions + TestFlight: **[`../.github/GITHUB_ACTIONS_TESTFLIGHT.md`](../.github/GITHUB_ACTIONS_TESTFLIGHT.md)**
+For _fastlane_ installation instructions, see [Installing _fastlane_](https://docs.fastlane.tools/#installing-fastlane)
 
-## Lanes (referencia)
+# Available Actions
 
-| Lane | Descripción |
-|------|-------------|
-| `menu` | Menú interactivo |
-| `reference` | Ayuda de comandos |
-| `stamp_build` | Solo actualiza CFBundleVersion (formato `YYYYMM.DD.HHmm`) |
-| `ipa_pruebas` | IPA Ad Hoc |
-| `ipa_app_store` | IPA App Store (sin subir) |
-| `release_app_store_connect` | Archive + subida TestFlight / ASC |
-| `release_testflight_internal` | Archive + subida (enfoque internos) |
-| `upload_testflight` | Sube el último IPA en `build/` |
+## iOS
 
-Documentación generada por Fastlane (lista detallada de acciones): [docs.fastlane.tools](https://docs.fastlane.tools).
+### ios stamp_build
+
+```sh
+[bundle exec] fastlane ios stamp_build
+```
+
+Solo pone el número de build por marca de tiempo (sin archive)
+
+### ios reference
+
+```sh
+[bundle exec] fastlane ios reference
+```
+
+Lista comandos útiles (referencia / CI; no abre menú)
+
+### ios menu
+
+```sh
+[bundle exec] fastlane ios menu
+```
+
+Menú: IPA local o pipelines de subida a TestFlight
+
+### ios ipa_pruebas
+
+```sh
+[bundle exec] fastlane ios ipa_pruebas
+```
+
+Archive + IPA Ad Hoc
+
+### ios ipa_app_store
+
+```sh
+[bundle exec] fastlane ios ipa_app_store
+```
+
+Archive + IPA App Store (sin subir)
+
+### ios release_app_store_connect
+
+```sh
+[bundle exec] fastlane ios release_app_store_connect
+```
+
+Archive + subida a ASC/TestFlight (equivalente a App Store Connect en Organizer)
+
+### ios release_testflight_internal
+
+```sh
+[bundle exec] fastlane ios release_testflight_internal
+```
+
+Archive + subida con enfoque solo testers internos (equivalente a TestFlight internal en Organizer)
+
+### ios upload_testflight
+
+```sh
+[bundle exec] fastlane ios upload_testflight
+```
+
+Sube el último IPA app-store ya generado (requiere API Key en .env)
+
+----
+
+This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
+
+More information about _fastlane_ can be found on [fastlane.tools](https://fastlane.tools).
+
+The documentation of _fastlane_ can be found on [docs.fastlane.tools](https://docs.fastlane.tools).
