@@ -27,7 +27,6 @@ final class ReminderSyncCoordinator {
     var syncError: Error?
 
     private let lastSyncKey = "lastReminderSyncDate"
-    private let syncTriggerThrottle = SyncTriggerThrottle(minimumInterval: 10)
 
     init(
         syncRemindersUseCase: SyncRemindersUseCase,
@@ -49,10 +48,6 @@ final class ReminderSyncCoordinator {
     func performSync() async throws {
         guard !isSyncing else {
             log.warning("⚠️ Reminder sync already in progress", category: Self.logCategory)
-            return
-        }
-        guard syncTriggerThrottle.consumeTriggerIfAllowed() else {
-            log.info("⏭️ Reminder sync skipped due to cooldown", category: Self.logCategory)
             return
         }
         isSyncing = true
