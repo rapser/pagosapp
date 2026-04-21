@@ -6,7 +6,7 @@ struct ProfileSectionView: View {
 
     var body: some View {
         Section(header: Text(L10n.Settings.sectionProfile).foregroundColor(Color("AppTextPrimary"))) {
-            if (sessionCoordinator.isAuthenticated || sessionCoordinator.isSessionActive) {
+            if sessionCoordinator.isAuthenticated || sessionCoordinator.isSessionActive {
                 NavigationLink(destination: UserProfileView(
                     viewModel: dependencies.userProfileDependencyContainer.makeUserProfileViewModel()
                 )) {

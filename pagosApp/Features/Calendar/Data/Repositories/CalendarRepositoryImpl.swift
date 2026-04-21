@@ -7,24 +7,26 @@
 //
 
 import Foundation
-import OSLog
 
 /// Repository implementation for Calendar feature
 /// Wraps PaymentRepository and provides calendar-specific queries
 final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
+    private static let logCategory = "CalendarRepositoryImpl"
+
     private let paymentRepository: PaymentRepositoryProtocol
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "CalendarRepositoryImpl")
+    private let log: DomainLogWriter
     private let calendar = Calendar.current
 
-    init(paymentRepository: PaymentRepositoryProtocol) {
+    init(paymentRepository: PaymentRepositoryProtocol, log: DomainLogWriter) {
         self.paymentRepository = paymentRepository
-        logger.info("\(L10n.Log.Calendar.initRepo)")
+        self.log = log
+        log.info(L10n.Log.Calendar.initRepo, category: Self.logCategory)
     }
 
     // MARK: - Calendar Queries
 
     func getPayments(forDate date: Date) async -> Result<[Payment], PaymentError> {
-        logger.debug("\(L10n.Log.Calendar.gettingForDate)")
+        log.debug(L10n.Log.Calendar.gettingForDate, category: Self.logCategory)
 
         // Get all payments first
         do {
@@ -35,16 +37,16 @@ final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
                 calendar.isDate(payment.dueDate, inSameDayAs: date)
             }
 
-            logger.info("\(L10n.Log.Calendar.filteredForDate(filtered.count, allPayments.count))")
+            log.info(L10n.Log.Calendar.filteredForDate(filtered.count, allPayments.count), category: Self.logCategory)
             return .success(filtered)
         } catch {
-            logger.error("\(L10n.Log.Payments.failedToGet(error.localizedDescription))")
+            log.error(L10n.Log.Payments.failedToGet(error.localizedDescription), category: Self.logCategory)
             return .failure(.unknown(error.localizedDescription))
         }
     }
 
     func getPayments(forMonth month: Date) async -> Result<[Payment], PaymentError> {
-        logger.debug("\(L10n.Log.Calendar.gettingForMonth)")
+        log.debug(L10n.Log.Calendar.gettingForMonth, category: Self.logCategory)
 
         // Get all payments first
         do {
@@ -55,22 +57,22 @@ final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
                 calendar.isDate(payment.dueDate, equalTo: month, toGranularity: .month)
             }
 
-            logger.info("\(L10n.Log.Calendar.filteredForMonth(filtered.count, allPayments.count))")
+            log.info(L10n.Log.Calendar.filteredForMonth(filtered.count, allPayments.count), category: Self.logCategory)
             return .success(filtered)
         } catch {
-            logger.error("\(L10n.Log.Payments.failedToGet(error.localizedDescription))")
+            log.error(L10n.Log.Payments.failedToGet(error.localizedDescription), category: Self.logCategory)
             return .failure(.unknown(error.localizedDescription))
         }
     }
 
     func getAllPayments() async -> Result<[Payment], PaymentError> {
-        logger.debug("\(L10n.Log.Calendar.gettingAll)")
+        log.debug(L10n.Log.Calendar.gettingAll, category: Self.logCategory)
 
         do {
             let payments = try await paymentRepository.getAllLocalPayments()
             return .success(payments)
         } catch {
-            logger.error("\(L10n.Log.Payments.failedToGet(error.localizedDescription))")
+            log.error(L10n.Log.Payments.failedToGet(error.localizedDescription), category: Self.logCategory)
             return .failure(.unknown(error.localizedDescription))
         }
     }

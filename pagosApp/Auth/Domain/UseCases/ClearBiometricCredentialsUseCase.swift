@@ -7,31 +7,32 @@
 //
 
 import Foundation
-import OSLog
-
-private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "ClearBiometricCredentialsUseCase")
 
 /// Use Case to clear stored biometric credentials
 final class ClearBiometricCredentialsUseCase {
-    private let biometricCredentialsDataSource: BiometricCredentialsDataSource
+    private static let logCategory = "ClearBiometricCredentialsUseCase"
 
-    init(biometricCredentialsDataSource: BiometricCredentialsDataSource) {
+    private let biometricCredentialsDataSource: BiometricCredentialsDataSource
+    private let log: DomainLogWriter
+
+    init(biometricCredentialsDataSource: BiometricCredentialsDataSource, log: DomainLogWriter) {
         self.biometricCredentialsDataSource = biometricCredentialsDataSource
+        self.log = log
     }
 
     /// Execute: Clear all biometric credentials and flags
     /// - Returns: Result indicating success or failure
     func execute() -> Result<Void, AuthError> {
-        logger.info("\(L10n.Log.Auth.biometricClearing)")
+        log.info("\(L10n.Log.Auth.biometricClearing)", category: Self.logCategory)
 
         _ = biometricCredentialsDataSource.deleteHasLoggedIn()
         let success = biometricCredentialsDataSource.deleteCredentials()
 
         if success {
-            logger.info("\(L10n.Log.Auth.biometricCleared)")
+            log.info("\(L10n.Log.Auth.biometricCleared)", category: Self.logCategory)
             return .success(())
         } else {
-            logger.error("\(L10n.Log.Auth.biometricClearFailed)")
+            log.error("\(L10n.Log.Auth.biometricClearFailed)", category: Self.logCategory)
             return .failure(.unknown("Failed to clear biometric credentials"))
         }
     }

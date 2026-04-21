@@ -7,26 +7,29 @@
 //
 
 import Foundation
-import OSLog
 
 /// Use case for creating a new payment with validation and side effects
 final class CreatePaymentUseCase {
+    private static let logCategory = "CreatePaymentUseCase"
+
     private let paymentRepository: PaymentRepositoryProtocol
     private let validator: PaymentValidator
     private let syncCalendarUseCase: SyncPaymentWithCalendarUseCase?
     private let scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase?
     private let eventBus: EventBus
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "CreatePaymentUseCase")
+    private let log: DomainLogWriter
 
     init(
         paymentRepository: PaymentRepositoryProtocol,
         eventBus: EventBus,
+        log: DomainLogWriter,
         validator: PaymentValidator = PaymentValidator(),
         syncCalendarUseCase: SyncPaymentWithCalendarUseCase? = nil,
         scheduleNotificationsUseCase: SchedulePaymentNotificationsUseCase? = nil
     ) {
         self.paymentRepository = paymentRepository
         self.eventBus = eventBus
+        self.log = log
         self.validator = validator
         self.syncCalendarUseCase = syncCalendarUseCase
         self.scheduleNotificationsUseCase = scheduleNotificationsUseCase
@@ -72,7 +75,7 @@ final class CreatePaymentUseCase {
 
             return .success(newPayment)
         } catch {
-            logger.error("Failed to create payment: \(error.localizedDescription)")
+            log.error("Failed to create payment: \(error.localizedDescription)", category: Self.logCategory)
             return .failure(.saveFailed(error.localizedDescription))
         }
     }

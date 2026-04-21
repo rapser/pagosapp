@@ -7,28 +7,30 @@
 //
 
 import Foundation
-import OSLog
 
 /// Delete user profile from local storage (called on logout)
 final class DeleteLocalProfileUseCase {
-    private let userProfileRepository: UserProfileRepositoryProtocol
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "DeleteLocalProfileUseCase")
+    private static let logCategory = "DeleteLocalProfileUseCase"
 
-    init(userProfileRepository: UserProfileRepositoryProtocol) {
+    private let userProfileRepository: UserProfileRepositoryProtocol
+    private let log: DomainLogWriter
+
+    init(userProfileRepository: UserProfileRepositoryProtocol, log: DomainLogWriter) {
         self.userProfileRepository = userProfileRepository
+        self.log = log
     }
 
     /// Execute: Delete profile from local storage
     /// - Returns: Result with Void or UserProfileError
     func execute() async -> Result<Void, UserProfileError> {
-        logger.info("🗑️ Deleting local profile")
+        log.info("🗑️ Deleting local profile", category: Self.logCategory)
 
         let result = await userProfileRepository.deleteLocalProfile()
 
         if case .success = result {
-            logger.info("✅ Local profile deleted successfully")
+            log.info("✅ Local profile deleted successfully", category: Self.logCategory)
         } else if case .failure(let error) = result {
-            logger.error("❌ Failed to delete local profile: \(error.errorCode)")
+            log.error("❌ Failed to delete local profile: \(error.errorCode)", category: Self.logCategory)
         }
 
         return result

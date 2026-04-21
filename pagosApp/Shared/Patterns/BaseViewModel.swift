@@ -8,7 +8,6 @@
 
 import Foundation
 import SwiftUI
-import OSLog
 
 /// Base ViewModel class providing common functionality to eliminate code duplication
 @MainActor
@@ -18,34 +17,34 @@ class BaseViewModel: LoadingStateViewModel {
     var isLoading = false
     var errorMessage: String?
     var showError = false
-    
+
     // MARK: - Common Properties
-    let logger: Logger
-    
+
+    private let log: DomainLogWriter
+    private let logCategory: String
+
     // MARK: - Initialization
-    
-    init(category: String) {
-        self.logger = Logger(
-            subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", 
-            category: category
-        )
+
+    init(category: String, log: DomainLogWriter = OSLogDomainLogWriter()) {
+        self.log = log
+        self.logCategory = category
     }
-    
+
     convenience init() {
         let className = String(describing: type(of: self))
         self.init(category: className)
     }
-    
+
     // MARK: - Common Methods
-    
+
     /// Debug hook for ViewModels; logging disabled to keep Xcode console quiet.
     func logDebug(_ message: String, function: String = #function, line: Int = #line) {}
-    
+
     /// Log error messages with automatic class context
     func logError(_ error: Error, function: String = #function, line: Int = #line) {
-        logger.error("\(function):\(line) - \(error.localizedDescription)")
+        log.error("\(function):\(line) - \(error.localizedDescription)", category: logCategory)
     }
-    
+
     /// Handle common async operations with loading state and error handling
     @discardableResult
     func withLoadingAndErrorHandling<T>(
@@ -65,7 +64,7 @@ class BaseViewModel: LoadingStateViewModel {
             }
         }
     }
-    
+
     /// Reset ViewModel to initial state
     func reset() {
         isLoading = false
@@ -81,7 +80,7 @@ extension BaseViewModel {
         logDebug("Validation error: \(message)")
         setError(message)
     }
-    
+
     /// Convenience method for handling network errors
     func handleNetworkError(_ error: Error) {
         logError(error)

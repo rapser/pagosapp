@@ -7,15 +7,17 @@
 //
 
 import Foundation
-import OSLog
 
 /// Use case for fetching all local payments
 final class GetAllPaymentsUseCase {
-    private let paymentRepository: PaymentRepositoryProtocol
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "GetAllPaymentsUseCase")
+    private static let logCategory = "GetAllPaymentsUseCase"
 
-    init(paymentRepository: PaymentRepositoryProtocol) {
+    private let paymentRepository: PaymentRepositoryProtocol
+    private let log: DomainLogWriter
+
+    init(paymentRepository: PaymentRepositoryProtocol, log: DomainLogWriter) {
         self.paymentRepository = paymentRepository
+        self.log = log
     }
 
     /// Execute get all payments
@@ -25,7 +27,7 @@ final class GetAllPaymentsUseCase {
             let payments = try await paymentRepository.getAllLocalPayments()
             return .success(payments)
         } catch {
-            logger.error("Failed to fetch payments: \(error.localizedDescription)")
+            log.error("Failed to fetch payments: \(error.localizedDescription)", category: Self.logCategory)
             return .failure(.unknown(error.localizedDescription))
         }
     }

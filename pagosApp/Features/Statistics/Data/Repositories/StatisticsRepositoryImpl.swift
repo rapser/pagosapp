@@ -7,14 +7,15 @@
 //
 
 import Foundation
-import OSLog
 
 /// Repository implementation for Statistics feature
 /// Wraps PaymentRepository and provides statistics-specific queries
 @MainActor
 final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
+    private static let logCategory = "StatisticsRepositoryImpl"
+
     private let paymentRepository: PaymentRepositoryProtocol
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "StatisticsRepositoryImpl")
+    private let log: DomainLogWriter
     private let calendar = Calendar.current
 
     // Short-lived cache: all calls within loadStatistics() (~100ms) share one DB read.
@@ -22,8 +23,9 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
     private var cacheTimestamp: Date = .distantPast
     private let cacheLifetime: TimeInterval = 1.0
 
-    init(paymentRepository: PaymentRepositoryProtocol) {
+    init(paymentRepository: PaymentRepositoryProtocol, log: DomainLogWriter) {
         self.paymentRepository = paymentRepository
+        self.log = log
     }
 
     private func fetchPaymentsCached() async throws -> [Payment] {
@@ -40,7 +42,7 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
         do {
             return .success(try await fetchPaymentsCached())
         } catch {
-            logger.error("\(L10n.Log.Payments.failedToGet(error.localizedDescription))")
+            log.error(L10n.Log.Payments.failedToGet(error.localizedDescription), category: Self.logCategory)
             return .failure(.unknown(error.localizedDescription))
         }
     }
@@ -53,7 +55,7 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
         do {
             allPayments = try await fetchPaymentsCached()
         } catch {
-            logger.error("\(L10n.Log.Payments.failedToGet(error.localizedDescription))")
+            log.error(L10n.Log.Payments.failedToGet(error.localizedDescription), category: Self.logCategory)
             return .failure(.unknown(error.localizedDescription))
         }
 
@@ -82,7 +84,7 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
         do {
             allPayments = try await fetchPaymentsCached()
         } catch {
-            logger.error("\(L10n.Log.Payments.failedToGet(error.localizedDescription))")
+            log.error(L10n.Log.Payments.failedToGet(error.localizedDescription), category: Self.logCategory)
             return .failure(.unknown(error.localizedDescription))
         }
 
@@ -90,20 +92,20 @@ final class StatisticsRepositoryImpl: StatisticsRepositoryProtocol {
 
         // Calculate the start of the current month
         guard let startOfCurrentMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now)) else {
-            logger.error("\(L10n.Log.Statistics.failedStartMonth)")
+            log.error(L10n.Log.Statistics.failedStartMonth, category: Self.logCategory)
             return .success([])
         }
 
         // Calculate the end of the previous month
         guard let endOfPreviousMonth = calendar.date(byAdding: .day, value: -1, to: startOfCurrentMonth) else {
-            logger.error("\(L10n.Log.Statistics.failedEndPrevMonth)")
+            log.error(L10n.Log.Statistics.failedEndPrevMonth, category: Self.logCategory)
             return .success([])
         }
 
         // Calculate the start of the period (N months before the end of the previous month)
         guard let startOfPeriod = calendar.date(byAdding: .month, value: -(count - 1), to: endOfPreviousMonth),
               let periodStart = calendar.date(from: calendar.dateComponents([.year, .month], from: startOfPeriod)) else {
-            logger.error("\(L10n.Log.Statistics.failedStartPeriod)")
+            log.error(L10n.Log.Statistics.failedStartPeriod, category: Self.logCategory)
             return .success([])
         }
 

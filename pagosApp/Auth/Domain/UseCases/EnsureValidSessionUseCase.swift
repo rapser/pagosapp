@@ -7,51 +7,53 @@
 //
 
 import Foundation
-import OSLog
-
-private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "EnsureValidSessionUseCase")
 
 /// Use case to ensure the current remote session is valid
 /// Validates session with backend and refreshes if expired
 @MainActor
 final class EnsureValidSessionUseCase {
-    private let authRepository: AuthRepositoryProtocol
+    private static let logCategory = "EnsureValidSessionUseCase"
+
+    private let authRepository: AuthSessionRepositoryProtocol
     private let refreshSessionUseCase: RefreshSessionUseCase
+    private let log: DomainLogWriter
 
     init(
-        authRepository: AuthRepositoryProtocol,
-        refreshSessionUseCase: RefreshSessionUseCase
+        authRepository: AuthSessionRepositoryProtocol,
+        refreshSessionUseCase: RefreshSessionUseCase,
+        log: DomainLogWriter
     ) {
         self.authRepository = authRepository
         self.refreshSessionUseCase = refreshSessionUseCase
+        self.log = log
     }
 
     /// Execute: Ensure current session is valid (fetches from backend)
     /// - Throws: AuthError if session is invalid or refresh fails
     func execute() async throws {
-        logger.debug("🔍 Ensuring valid session with backend")
+        log.debug("🔍 Ensuring valid session with backend", category: Self.logCategory)
 
         // Get current session from backend
         guard let session = await authRepository.getCurrentSession() else {
-            logger.error("❌ No session found in backend")
+            log.error("❌ No session found in backend", category: Self.logCategory)
             throw AuthError.sessionExpired
         }
 
         // Check if session is expired
         if session.isExpired {
-            logger.info("⏰ Session expired, attempting refresh")
+            log.info("⏰ Session expired, attempting refresh", category: Self.logCategory)
 
             // Attempt to refresh
             let refreshResult = await refreshSessionUseCase.execute(refreshToken: session.refreshToken)
 
             guard case .success = refreshResult else {
-                logger.error("❌ Session refresh failed")
+                log.error("❌ Session refresh failed", category: Self.logCategory)
                 throw AuthError.sessionExpired
             }
 
-            logger.info("✅ Session refreshed successfully")
+            log.info("✅ Session refreshed successfully", category: Self.logCategory)
         } else {
-            logger.debug("✅ Session is valid")
+            log.debug("✅ Session is valid", category: Self.logCategory)
         }
     }
 }

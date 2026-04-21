@@ -7,26 +7,27 @@
 //
 
 import Foundation
-import OSLog
 
-private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "AuthRepositoryImpl")
-
-/// Implementation of AuthRepositoryProtocol
-/// Coordinates between remote and local data sources
+/// Implementation of `AuthRepositoryProtocol` (session + credentials + account).
 @MainActor
 final class AuthRepositoryImpl: AuthRepositoryProtocol {
+    private static let logCategory = "AuthRepositoryImpl"
+
     private let remoteDataSource: AuthRemoteDataSource
     private let localDataSource: AuthLocalDataSource
     private let mapper: SupabaseAuthDTOMapper
+    private let log: DomainLogWriter
 
     init(
         remoteDataSource: AuthRemoteDataSource,
         localDataSource: AuthLocalDataSource,
-        mapper: SupabaseAuthDTOMapper = SupabaseAuthDTOMapper()
+        mapper: SupabaseAuthDTOMapper = SupabaseAuthDTOMapper(),
+        log: DomainLogWriter
     ) {
         self.remoteDataSource = remoteDataSource
         self.localDataSource = localDataSource
         self.mapper = mapper
+        self.log = log
     }
 
     // MARK: - Authentication Operations
@@ -50,10 +51,10 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             return .success(session)
 
         } catch let error as AuthError {
-            logger.error("\(L10n.Log.Auth.signUpFailed(error.errorCode))")
+            log.error("\(L10n.Log.Auth.signUpFailed(error.errorCode))", category: Self.logCategory)
             return .failure(error)
         } catch {
-            logger.error("\(L10n.Log.Auth.signUpFailed(error.localizedDescription))")
+            log.error("\(L10n.Log.Auth.signUpFailed(error.localizedDescription))", category: Self.logCategory)
             return .failure(.unknown(error.localizedDescription))
         }
     }
@@ -76,10 +77,10 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             return .success(session)
 
         } catch let error as AuthError {
-            logger.error("\(L10n.Log.Auth.signInFailed(error.errorCode))")
+            log.error("\(L10n.Log.Auth.signInFailed(error.errorCode))", category: Self.logCategory)
             return .failure(error)
         } catch {
-            logger.error("\(L10n.Log.Auth.signInFailed(error.localizedDescription))")
+            log.error("\(L10n.Log.Auth.signInFailed(error.localizedDescription))", category: Self.logCategory)
             return .failure(.unknown(error.localizedDescription))
         }
     }
@@ -92,7 +93,7 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
         } catch {
             // Offline-first: local logout should still succeed, but remote signOut failure must be observable.
             let detail = L10n.Log.Generic.withContext("auth.signOut", error.localizedDescription)
-            logger.error("\(detail)")
+            log.error("\(detail)", category: Self.logCategory)
             localDataSource.clearTokens()
             return .failure(.networkError(error.localizedDescription))
         }
@@ -128,10 +129,10 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             return .success(session)
 
         } catch let error as AuthError {
-            logger.error("\(L10n.Log.Auth.sessionRefreshFailed(error.errorCode))")
+            log.error("\(L10n.Log.Auth.sessionRefreshFailed(error.errorCode))", category: Self.logCategory)
             return .failure(error)
         } catch {
-            logger.error("\(L10n.Log.Auth.sessionRefreshFailed(error.localizedDescription))")
+            log.error("\(L10n.Log.Auth.sessionRefreshFailed(error.localizedDescription))", category: Self.logCategory)
             return .failure(.sessionExpired)
         }
     }
@@ -145,10 +146,10 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             return .success(())
 
         } catch let error as AuthError {
-            logger.error("\(L10n.Log.Auth.passwordResetEmailFailed(error.errorCode))")
+            log.error("\(L10n.Log.Auth.passwordResetEmailFailed(error.errorCode))", category: Self.logCategory)
             return .failure(error)
         } catch {
-            logger.error("\(L10n.Log.Auth.passwordResetEmailFailed(error.localizedDescription))")
+            log.error("\(L10n.Log.Auth.passwordResetEmailFailed(error.localizedDescription))", category: Self.logCategory)
             return .failure(.unknown(error.localizedDescription))
         }
     }
@@ -160,10 +161,10 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             return .success(())
 
         } catch let error as AuthError {
-            logger.error("\(L10n.Log.Auth.passwordResetFailed(error.errorCode))")
+            log.error("\(L10n.Log.Auth.passwordResetFailed(error.errorCode))", category: Self.logCategory)
             return .failure(error)
         } catch {
-            logger.error("\(L10n.Log.Auth.passwordResetFailed(error.localizedDescription))")
+            log.error("\(L10n.Log.Auth.passwordResetFailed(error.localizedDescription))", category: Self.logCategory)
             return .failure(.unknown(error.localizedDescription))
         }
     }
@@ -175,10 +176,10 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             return .success(())
 
         } catch let error as AuthError {
-            logger.error("\(L10n.Log.Auth.emailUpdateFailed(error.errorCode))")
+            log.error("\(L10n.Log.Auth.emailUpdateFailed(error.errorCode))", category: Self.logCategory)
             return .failure(error)
         } catch {
-            logger.error("\(L10n.Log.Auth.emailUpdateFailed(error.localizedDescription))")
+            log.error("\(L10n.Log.Auth.emailUpdateFailed(error.localizedDescription))", category: Self.logCategory)
             return .failure(.unknown(error.localizedDescription))
         }
     }
@@ -190,10 +191,10 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             return .success(())
 
         } catch let error as AuthError {
-            logger.error("\(L10n.Log.Auth.passwordUpdateFailed(error.errorCode))")
+            log.error("\(L10n.Log.Auth.passwordUpdateFailed(error.errorCode))", category: Self.logCategory)
             return .failure(error)
         } catch {
-            logger.error("\(L10n.Log.Auth.passwordUpdateFailed(error.localizedDescription))")
+            log.error("\(L10n.Log.Auth.passwordUpdateFailed(error.localizedDescription))", category: Self.logCategory)
             return .failure(.unknown(error.localizedDescription))
         }
     }
@@ -210,10 +211,10 @@ final class AuthRepositoryImpl: AuthRepositoryProtocol {
             return .success(())
 
         } catch let error as AuthError {
-            logger.error("\(L10n.Log.Auth.accountDeletionFailed(error.errorCode))")
+            log.error("\(L10n.Log.Auth.accountDeletionFailed(error.errorCode))", category: Self.logCategory)
             return .failure(error)
         } catch {
-            logger.error("\(L10n.Log.Auth.accountDeletionFailed(error.localizedDescription))")
+            log.error("\(L10n.Log.Auth.accountDeletionFailed(error.localizedDescription))", category: Self.logCategory)
             return .failure(.unknown(error.localizedDescription))
         }
     }

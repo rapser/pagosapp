@@ -7,27 +7,30 @@
 //
 
 import Foundation
-import OSLog
 
 /// Use case for syncing a payment with the device calendar
 final class SyncPaymentWithCalendarUseCase {
+    private static let logCategory = "SyncPaymentWithCalendarUseCase"
+
     private let calendarEventDataSource: CalendarEventDataSource
     private let paymentRepository: PaymentRepositoryProtocol
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "SyncPaymentWithCalendarUseCase")
+    private let log: DomainLogWriter
 
     init(
         calendarEventDataSource: CalendarEventDataSource,
-        paymentRepository: PaymentRepositoryProtocol
+        paymentRepository: PaymentRepositoryProtocol,
+        log: DomainLogWriter
     ) {
         self.calendarEventDataSource = calendarEventDataSource
         self.paymentRepository = paymentRepository
+        self.log = log
     }
 
     /// Request calendar access (async/await - preferred)
     func requestAccess() async -> Bool {
         await calendarEventDataSource.requestAccess()
     }
-    
+
     /// Request calendar access (callback-based - for compatibility)
     func requestAccess(completion: @escaping (Bool) -> Void) {
         Task {
@@ -133,7 +136,7 @@ final class SyncPaymentWithCalendarUseCase {
                 return await createCalendarEventForGroup(payment: payment, groupPayments: groupPayments, title: title)
             }
         } catch {
-            logger.error("❌ Failed to sync grouped payment: \(error.localizedDescription)")
+            log.error("❌ Failed to sync grouped payment: \(error.localizedDescription)", category: Self.logCategory)
             return .failure(.unknown(error.localizedDescription))
         }
     }
@@ -143,7 +146,7 @@ final class SyncPaymentWithCalendarUseCase {
         let eventIdentifier = await calendarEventDataSource.addEvent(title: title, dueDate: payment.dueDate)
 
         guard let eventIdentifier = eventIdentifier else {
-            logger.error("❌ Failed to create calendar event")
+            log.error("❌ Failed to create calendar event", category: Self.logCategory)
             return .failure(.calendarSyncFailed("No se pudo crear el evento en el calendario"))
         }
 
@@ -166,7 +169,7 @@ final class SyncPaymentWithCalendarUseCase {
             try await paymentRepository.savePayment(updatedPayment)
             return .success(updatedPayment)
         } catch {
-            logger.error("❌ Failed to save payment with eventIdentifier: \(error.localizedDescription)")
+            log.error("❌ Failed to save payment with eventIdentifier: \(error.localizedDescription)", category: Self.logCategory)
             return .failure(.updateFailed(error.localizedDescription))
         }
     }
@@ -180,7 +183,7 @@ final class SyncPaymentWithCalendarUseCase {
         let eventIdentifier = await calendarEventDataSource.addEvent(title: title, dueDate: payment.dueDate)
 
         guard let eventIdentifier = eventIdentifier else {
-            logger.error("❌ Failed to create calendar event for group")
+            log.error("❌ Failed to create calendar event for group", category: Self.logCategory)
             return .failure(.calendarSyncFailed("No se pudo crear el evento en el calendario"))
         }
 
@@ -222,7 +225,7 @@ final class SyncPaymentWithCalendarUseCase {
 
             return .success(updatedPayment)
         } catch {
-            logger.error("❌ Failed to save grouped payments with eventIdentifier: \(error.localizedDescription)")
+            log.error("❌ Failed to save grouped payments with eventIdentifier: \(error.localizedDescription)", category: Self.logCategory)
             return .failure(.updateFailed(error.localizedDescription))
         }
     }
@@ -243,7 +246,7 @@ final class SyncPaymentWithCalendarUseCase {
                     calendarEventDataSource.removeEvent(eventIdentifier: eventId)
                 }
             } catch {
-                logger.error("❌ Failed to check grouped payments: \(error.localizedDescription)")
+                log.error("❌ Failed to check grouped payments: \(error.localizedDescription)", category: Self.logCategory)
                 // Remove event anyway if we can't check
                 calendarEventDataSource.removeEvent(eventIdentifier: eventId)
             }

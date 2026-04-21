@@ -1,14 +1,16 @@
 import Foundation
 import SwiftData
-import OSLog
 
 @MainActor
 final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
-    private let modelContext: ModelContext
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "PaymentSwiftDataDataSource")
+    private static let logCategory = "PaymentSwiftDataDataSource"
 
-    init(modelContext: ModelContext) {
+    private let modelContext: ModelContext
+    private let log: DomainLogWriter
+
+    init(modelContext: ModelContext, log: DomainLogWriter) {
         self.modelContext = modelContext
+        self.log = log
     }
 
     func fetchAll() async throws -> [Payment] {
@@ -19,7 +21,7 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
             let payments = try modelContext.fetch(descriptor).map { PaymentMapper.toDomain(from: $0) }
             return payments
         } catch {
-            logger.error("Failed to fetch payments from SwiftData: \(error.localizedDescription)")
+            log.error("Failed to fetch payments from SwiftData: \(error.localizedDescription)", category: Self.logCategory)
             return []
         }
     }

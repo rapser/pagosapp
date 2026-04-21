@@ -7,16 +7,17 @@
 //
 
 import Foundation
-import OSLog
-
-private let logger = Logger(subsystem: "com.rapser.pagosApp", category: "SaveBiometricCredentialsUseCase")
 
 /// Use Case to save user credentials for biometric authentication
 final class SaveBiometricCredentialsUseCase {
-    private let biometricCredentialsDataSource: BiometricCredentialsDataSource
+    private static let logCategory = "SaveBiometricCredentialsUseCase"
 
-    init(biometricCredentialsDataSource: BiometricCredentialsDataSource) {
+    private let biometricCredentialsDataSource: BiometricCredentialsDataSource
+    private let log: DomainLogWriter
+
+    init(biometricCredentialsDataSource: BiometricCredentialsDataSource, log: DomainLogWriter) {
         self.biometricCredentialsDataSource = biometricCredentialsDataSource
+        self.log = log
     }
 
     /// Execute: Save credentials for biometric login
@@ -25,17 +26,17 @@ final class SaveBiometricCredentialsUseCase {
     ///   - password: User password
     /// - Returns: Result indicating success or failure
     func execute(email: String, password: String) -> Result<Void, AuthError> {
-        logger.info("💾 Saving credentials for biometric login")
+        log.info("💾 Saving credentials for biometric login", category: Self.logCategory)
 
         let success = biometricCredentialsDataSource.saveCredentials(email: email, password: password)
 
         if success {
             // Mark that user has logged in with credentials
             _ = biometricCredentialsDataSource.setHasLoggedIn(true)
-            logger.info("✅ Credentials saved successfully for biometric login")
+            log.info("✅ Credentials saved successfully for biometric login", category: Self.logCategory)
             return .success(())
         } else {
-            logger.error("❌ Failed to save credentials for biometric login")
+            log.error("❌ Failed to save credentials for biometric login", category: Self.logCategory)
             return .failure(.unknown("Failed to save biometric credentials"))
         }
     }

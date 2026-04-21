@@ -2,7 +2,7 @@
 //  AppSyncManager.swift
 //  pagosApp
 //
-//  Facade that aggregates sync state from PaymentSyncCoordinator and ReminderSyncCoordinator.
+//  Facade that aggregates sync state from payment and reminder sync ports (coordinators conform).
 //  Single @Observable/@Environment injection point for sync state in Views.
 //  Clean Architecture - Shared Infrastructure
 //
@@ -15,30 +15,30 @@ import Observation
 @MainActor
 @Observable
 final class AppSyncManager {
-    private let paymentSyncCoordinator: PaymentSyncCoordinator
-    private let reminderSyncCoordinator: ReminderSyncCoordinator
+    private let paymentSync: PaymentSyncCoordinating
+    private let reminderSync: ReminderSyncCoordinating
 
     init(
-        paymentSyncCoordinator: PaymentSyncCoordinator,
-        reminderSyncCoordinator: ReminderSyncCoordinator
+        paymentSync: PaymentSyncCoordinating,
+        reminderSync: ReminderSyncCoordinating
     ) {
-        self.paymentSyncCoordinator = paymentSyncCoordinator
-        self.reminderSyncCoordinator = reminderSyncCoordinator
+        self.paymentSync = paymentSync
+        self.reminderSync = reminderSync
     }
 
     // MARK: - Aggregated State
 
     var isSyncing: Bool {
-        paymentSyncCoordinator.isSyncing || reminderSyncCoordinator.isSyncing
+        paymentSync.isSyncing || reminderSync.isSyncing
     }
 
     var pendingSyncCount: Int {
-        paymentSyncCoordinator.pendingSyncCount + reminderSyncCoordinator.pendingSyncCount
+        paymentSync.pendingSyncCount + reminderSync.pendingSyncCount
     }
 
     var lastSyncDate: Date? {
-        let payment = paymentSyncCoordinator.lastSyncDate
-        let reminder = reminderSyncCoordinator.lastSyncDate
+        let payment = paymentSync.lastSyncDate
+        let reminder = reminderSync.lastSyncDate
         switch (payment, reminder) {
         case let (p?, r?): return max(p, r)
         case (let p?, nil): return p
@@ -48,6 +48,6 @@ final class AppSyncManager {
     }
 
     var syncError: Error? {
-        paymentSyncCoordinator.syncError ?? reminderSyncCoordinator.syncError
+        paymentSync.syncError ?? reminderSync.syncError
     }
 }

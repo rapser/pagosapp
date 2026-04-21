@@ -16,23 +16,35 @@ final class AuthDependencyContainer {
     // MARK: - External Dependencies
 
     private let supabaseClient: SupabaseClient
+    private let log: DomainLogWriter
 
-    init(supabaseClient: SupabaseClient) {
+    init(supabaseClient: SupabaseClient, log: DomainLogWriter) {
         self.supabaseClient = supabaseClient
+        self.log = log
     }
 
     // MARK: - Data Sources
 
     private lazy var authRemoteDataSource: AuthRemoteDataSource = {
-        SupabaseAuthDataSource(client: supabaseClient)
+        SupabaseAuthDataSource(client: supabaseClient, log: log)
     }()
 
     private lazy var authLocalDataSource: AuthLocalDataSource = {
-        KeychainAuthDataSource()
+        KeychainAuthDataSource(log: log)
     }()
 
     private lazy var biometricCredentialsDataSource: BiometricCredentialsDataSource = {
-        KeychainBiometricCredentialsDataSource()
+        KeychainBiometricCredentialsDataSource(log: log)
+    }()
+
+    private lazy var sharedSessionRepository: SessionRepositoryProtocol = SessionRepositoryImpl(log: log)
+
+    private lazy var sharedRefreshSessionUseCase: RefreshSessionUseCase = {
+        RefreshSessionUseCase(
+            authRepository: makeAuthRepository(),
+            sessionRepository: makeSessionRepository(),
+            log: log
+        )
     }()
 
     // MARK: - Mappers
@@ -41,29 +53,33 @@ final class AuthDependencyContainer {
         SupabaseAuthDTOMapper()
     }()
 
+    private lazy var sharedAuthRepository: AuthRepositoryProtocol = AuthRepositoryImpl(
+        remoteDataSource: authRemoteDataSource,
+        localDataSource: authLocalDataSource,
+        mapper: authDTOMapper,
+        log: log
+    )
+
     // MARK: - Repositories
 
     func makeAuthRepository() -> AuthRepositoryProtocol {
-        AuthRepositoryImpl(
-            remoteDataSource: authRemoteDataSource,
-            localDataSource: authLocalDataSource,
-            mapper: authDTOMapper
-        )
+        sharedAuthRepository
     }
 
     func makeSessionRepository() -> SessionRepositoryProtocol {
-        SessionRepositoryImpl()
+        sharedSessionRepository
     }
 
     func makeBiometricRepository() -> BiometricRepositoryProtocol {
-        BiometricRepositoryImpl()
+        BiometricRepositoryImpl(log: log)
     }
 
     // MARK: - Use Cases
 
     func makeLoginUseCase() -> LoginUseCase {
         LoginUseCase(
-            authRepository: makeAuthRepository()
+            authRepository: makeAuthRepository(),
+            loginAttemptTracker: UserDefaultsLoginAttemptTracker.shared
         )
     }
 
@@ -94,10 +110,7 @@ final class AuthDependencyContainer {
     }
 
     func makeRefreshSessionUseCase() -> RefreshSessionUseCase {
-        RefreshSessionUseCase(
-            authRepository: makeAuthRepository(),
-            sessionRepository: makeSessionRepository()
-        )
+        sharedRefreshSessionUseCase
     }
 
     func makePasswordRecoveryUseCase() -> PasswordRecoveryUseCase {
@@ -115,7 +128,8 @@ final class AuthDependencyContainer {
     func makeEnsureValidSessionUseCase() -> EnsureValidSessionUseCase {
         EnsureValidSessionUseCase(
             authRepository: makeAuthRepository(),
-            refreshSessionUseCase: makeRefreshSessionUseCase()
+            refreshSessionUseCase: makeRefreshSessionUseCase(),
+            log: log
         )
     }
 
@@ -127,13 +141,15 @@ final class AuthDependencyContainer {
 
     func makeSaveBiometricCredentialsUseCase() -> SaveBiometricCredentialsUseCase {
         SaveBiometricCredentialsUseCase(
-            biometricCredentialsDataSource: biometricCredentialsDataSource
+            biometricCredentialsDataSource: biometricCredentialsDataSource,
+            log: log
         )
     }
 
     func makeClearBiometricCredentialsUseCase() -> ClearBiometricCredentialsUseCase {
         ClearBiometricCredentialsUseCase(
-            biometricCredentialsDataSource: biometricCredentialsDataSource
+            biometricCredentialsDataSource: biometricCredentialsDataSource,
+            log: log
         )
     }
 
@@ -152,7 +168,8 @@ final class AuthDependencyContainer {
             clearLocalDatabaseUseCase: clearLocalDatabaseUseCase,
             deleteLocalProfileUseCase: deleteLocalProfileUseCase,
             clearBiometricCredentialsUseCase: makeClearBiometricCredentialsUseCase(),
-            sessionRepository: makeSessionRepository()
+            sessionRepository: makeSessionRepository(),
+            log: log
         )
     }
 
@@ -161,14 +178,21 @@ final class AuthDependencyContainer {
     func makeSessionCoordinator(
         errorHandler: ErrorHandler,
         settingsStore: SettingsStore,
-        paymentSyncCoordinator: PaymentSyncCoordinator,
-        reminderSyncCoordinator: ReminderSyncCoordinator
+        paymentSync: PaymentSyncCoordinating,
+        reminderSync: ReminderSyncCoordinating
     ) -> SessionCoordinator {
+        let coordinateSyncUseCase = CoordinateSyncUseCase(
+            paymentSync: paymentSync,
+            reminderSync: reminderSync,
+            log: log
+        )
         return SessionCoordinator(
             errorHandler: errorHandler,
             settingsStore: settingsStore,
-            paymentSyncCoordinator: paymentSyncCoordinator,
-            reminderSyncCoordinator: reminderSyncCoordinator,
+            paymentSync: paymentSync,
+            reminderSync: reminderSync,
+            coordinateSyncUseCase: coordinateSyncUseCase,
+            log: log,
             authDependencyContainer: self
         )
     }

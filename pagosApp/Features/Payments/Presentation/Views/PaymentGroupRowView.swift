@@ -17,7 +17,7 @@ struct PaymentGroupRowView: View {
             // Checkbox para marcar como pagado
             Button(action: onToggleStatus) {
                 Image(systemName: group.statusIcon)
-                    .foregroundColor(group.statusColor)
+                    .foregroundColor(group.statusColorToken.swiftUIColor)
                     .font(.title2)
             }
             .buttonStyle(.plain)
@@ -26,7 +26,7 @@ struct PaymentGroupRowView: View {
                 Text(group.name)
                     .fontWeight(.bold)
                     .strikethrough(group.isPaid, color: Color("AppTextSecondary"))
-                    .foregroundColor(group.displayColor)
+                    .foregroundColor(group.displayColorToken.swiftUIColor)
                 Text(L10n.Payments.categoryDisplayName(group.category))
                     .font(.caption)
                     .foregroundColor(Color("AppTextSecondary"))
@@ -39,14 +39,14 @@ struct PaymentGroupRowView: View {
                         .font(.callout)
                         .fontWeight(.semibold)
                         .strikethrough(group.isPaid, color: Color("AppTextSecondary"))
-                        .foregroundColor(group.displayColor)
+                        .foregroundColor(group.displayColorToken.swiftUIColor)
                 }
                 if let usd = group.usdPayment {
                     Text("$ \(String(format: "%.2f", usd.amount))")
                         .font(.callout)
                         .fontWeight(.semibold)
                         .strikethrough(group.isPaid, color: Color("AppTextSecondary"))
-                        .foregroundColor(group.displayColor)
+                        .foregroundColor(group.displayColorToken.swiftUIColor)
                 }
                 Text(group.formattedDate)
                     .font(.caption)

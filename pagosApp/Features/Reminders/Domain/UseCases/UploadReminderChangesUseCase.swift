@@ -7,34 +7,36 @@
 //
 
 import Foundation
-import OSLog
 
 final class UploadReminderChangesUseCase {
-    private let syncRepository: ReminderSyncRepositoryProtocol
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "UploadReminderChangesUseCase")
+    private static let logCategory = "UploadReminderChangesUseCase"
 
-    init(syncRepository: ReminderSyncRepositoryProtocol) {
+    private let syncRepository: ReminderSyncRepositoryProtocol
+    private let log: DomainLogWriter
+
+    init(syncRepository: ReminderSyncRepositoryProtocol, log: DomainLogWriter) {
         self.syncRepository = syncRepository
+        self.log = log
     }
 
     func execute() async -> Result<Void, ReminderSyncError> {
-        logger.info("📤 Uploading local reminder changes")
+        log.info("📤 Uploading local reminder changes", category: Self.logCategory)
         do {
             let userId = try await syncRepository.getCurrentUserId()
             let pending = try await syncRepository.getPendingReminders()
-            logger.info("Found \(pending.count) reminders to upload")
+            log.info("Found \(pending.count) reminders to upload", category: Self.logCategory)
             guard !pending.isEmpty else {
-                logger.info("✅ No local reminder changes to upload")
+                log.info("✅ No local reminder changes to upload", category: Self.logCategory)
                 return .success(())
             }
             try await syncRepository.uploadReminders(pending, userId: userId)
-            logger.info("✅ Uploaded \(pending.count) reminders successfully")
+            log.info("✅ Uploaded \(pending.count) reminders successfully", category: Self.logCategory)
             return .success(())
         } catch let error as ReminderSyncError {
-            logger.error("❌ Upload failed: \(error.errorCode)")
+            log.error("❌ Upload failed: \(error.errorCode)", category: Self.logCategory)
             return .failure(error)
         } catch {
-            logger.error("❌ Upload failed: \(error.localizedDescription)")
+            log.error("❌ Upload failed: \(error.localizedDescription)", category: Self.logCategory)
             return .failure(.uploadFailed(error.localizedDescription))
         }
     }

@@ -8,27 +8,30 @@
 
 import Foundation
 import SwiftData
-import OSLog
 
 /// Repository implementation for UserProfile
 @MainActor
 final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
+    private static let logCategory = "UserProfileRepositoryImpl"
+
     private let remoteDataSource: UserProfileRemoteDataSource
     private let localDataSource: UserProfileLocalDataSource
     private let domainMapper: UserProfileDomainMapping
     private let remoteDTOMapper: UserProfileRemoteDTOMapping
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "UserProfileRepositoryImpl")
+    private let log: DomainLogWriter
 
     init(
         remoteDataSource: UserProfileRemoteDataSource,
         localDataSource: UserProfileLocalDataSource,
         domainMapper: UserProfileDomainMapping,
-        remoteDTOMapper: UserProfileRemoteDTOMapping
+        remoteDTOMapper: UserProfileRemoteDTOMapping,
+        log: DomainLogWriter
     ) {
         self.remoteDataSource = remoteDataSource
         self.localDataSource = localDataSource
         self.domainMapper = domainMapper
         self.remoteDTOMapper = remoteDTOMapper
+        self.log = log
     }
 
     func fetchProfile(userId: UUID) async -> Result<UserProfile, UserProfileError> {
@@ -39,7 +42,7 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
             let profileDomain = remoteDTOMapper.toDomain(profileDTO)
             return .success(profileDomain)
         } catch {
-            logger.error("\(L10n.Log.Profile.fetchFailed(error.localizedDescription))")
+            log.error(L10n.Log.Profile.fetchFailed(error.localizedDescription), category: Self.logCategory)
             return .failure(.fetchFailed(error.localizedDescription))
         }
     }
@@ -50,7 +53,7 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
             try await remoteDataSource.updateProfile(profileDTO)
             return .success(profile)
         } catch {
-            logger.error("\(L10n.Log.Profile.updateFailed(error.localizedDescription))")
+            log.error(L10n.Log.Profile.updateFailed(error.localizedDescription), category: Self.logCategory)
             return .failure(.updateFailed(error.localizedDescription))
         }
     }
@@ -82,7 +85,7 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
             return .success(profileDomain)
 
         } catch {
-            logger.error("\(L10n.Log.Profile.fetchLocalFailed(error.localizedDescription))")
+            log.error(L10n.Log.Profile.fetchLocalFailed(error.localizedDescription), category: Self.logCategory)
             return .failure(.fetchFailed(error.localizedDescription))
         }
     }
@@ -101,7 +104,7 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
             return .success(())
 
         } catch {
-            logger.error("\(L10n.Log.Profile.saveLocalFailed(error.localizedDescription))")
+            log.error(L10n.Log.Profile.saveLocalFailed(error.localizedDescription), category: Self.logCategory)
             return .failure(.saveFailed(error.localizedDescription))
         }
     }
@@ -112,7 +115,7 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
             return .success(())
 
         } catch {
-            logger.error("\(L10n.Log.Profile.deleteLocalFailed(error.localizedDescription))")
+            log.error(L10n.Log.Profile.deleteLocalFailed(error.localizedDescription), category: Self.logCategory)
             return .failure(.deleteFailed(error.localizedDescription))
         }
     }

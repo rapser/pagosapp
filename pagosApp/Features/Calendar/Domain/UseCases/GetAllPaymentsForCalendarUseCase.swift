@@ -7,28 +7,30 @@
 //
 
 import Foundation
-import OSLog
 
 /// Get all payments (used to show payment indicators in calendar)
 final class GetAllPaymentsForCalendarUseCase {
-    private let calendarRepository: CalendarRepositoryProtocol
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "GetAllPaymentsForCalendarUseCase")
+    private static let logCategory = "GetAllPaymentsForCalendarUseCase"
 
-    init(calendarRepository: CalendarRepositoryProtocol) {
+    private let calendarRepository: CalendarRepositoryProtocol
+    private let log: DomainLogWriter
+
+    init(calendarRepository: CalendarRepositoryProtocol, log: DomainLogWriter) {
         self.calendarRepository = calendarRepository
+        self.log = log
     }
 
     /// Execute: Get all payments
     /// - Returns: Result with array of Payment or PaymentError
     func execute() async -> Result<[Payment], PaymentError> {
-        logger.debug("📅 Getting all payments for calendar")
+        log.debug("📅 Getting all payments for calendar", category: Self.logCategory)
 
         let result = await calendarRepository.getAllPayments()
 
         if case .success(let payments) = result {
-            logger.info("✅ Found \(payments.count) total payments")
+            log.info("✅ Found \(payments.count) total payments", category: Self.logCategory)
         } else if case .failure(let error) = result {
-            logger.error("❌ Failed to get payments: \(error.errorCode)")
+            log.error("❌ Failed to get payments: \(error.errorCode)", category: Self.logCategory)
         }
 
         return result

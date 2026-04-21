@@ -7,7 +7,14 @@
 //
 
 import Foundation
-import SwiftUI
+
+/// Presentation-agnostic color token; map to `SwiftUI.Color` in views.
+enum PaymentColorToken: Equatable, Sendable {
+    case appSuccess
+    case appTextSecondary
+    case appTextPrimary
+    case overdue
+}
 
 /// UI representation of a Payment
 /// Contains display-specific logic and computed properties for the view layer
@@ -36,9 +43,9 @@ struct PaymentUI: Identifiable, Equatable, Sendable {
         DateFormattingService.formatMedium(dueDate)
     }
 
-    /// Color for status indicator
-    var statusColor: Color {
-        isPaid ? Color("AppSuccess") : Color("AppTextSecondary")
+    /// Color token for status indicator
+    var statusColorToken: PaymentColorToken {
+        isPaid ? .appSuccess : .appTextSecondary
     }
 
     /// Icon for payment status
@@ -63,14 +70,14 @@ struct PaymentUI: Identifiable, Equatable, Sendable {
         return dueDateStart < today
     }
 
-    /// Display color based on payment state
-    var displayColor: Color {
+    /// Display color token based on payment state
+    var displayColorToken: PaymentColorToken {
         if isPaid {
-            return Color("AppSuccess")
+            return .appSuccess
         } else if isOverdue {
-            return Color.red
+            return .overdue
         } else {
-            return Color("AppTextPrimary")
+            return .appTextPrimary
         }
     }
 }

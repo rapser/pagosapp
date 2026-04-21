@@ -66,7 +66,7 @@ struct ResetPasswordView: View {
                     Task {
                         await viewModel.resetPassword(token: token)
                     }
-                }) {
+                }, label: {
                     Text(L10n.Auth.ResetPassword.button)
                         .font(.headline)
                         .foregroundColor(.white)
@@ -75,7 +75,7 @@ struct ResetPasswordView: View {
                         .background(Color("AppPrimary"))
                         .cornerRadius(10)
                         .shadow(color: Color("AppPrimary").opacity(0.5), radius: 10, x: 0, y: 5)
-                }
+                })
                 .disabled(viewModel.isLoading || !viewModel.passwordsMatch)
 
                 Spacer()
@@ -86,7 +86,7 @@ struct ResetPasswordView: View {
                 LoadingView()
             }
         }
-        .onChange(of: viewModel.didResetPassword) { oldValue, newValue in
+        .onChange(of: viewModel.didResetPassword) { _, newValue in
             if newValue {
                 showSuccessAlert = true
             }

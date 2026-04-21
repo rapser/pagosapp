@@ -7,21 +7,24 @@
 //
 
 import Foundation
-import OSLog
 
 /// Use case for downloading remote payment changes and merging with local
 final class DownloadRemoteChangesUseCase {
+    private static let logCategory = "DownloadRemoteChangesUseCase"
+
     private let syncRepository: PaymentSyncRepositoryProtocol
     private let paymentRepository: PaymentRepositoryProtocol
-    private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "pagosApp", category: "DownloadRemoteChangesUseCase")
+    private let log: DomainLogWriter
     private let keepLocalWhenPendingSyncStatuses: Set<SyncStatus> = [.local, .modified, .error]
 
     init(
         syncRepository: PaymentSyncRepositoryProtocol,
-        paymentRepository: PaymentRepositoryProtocol
+        paymentRepository: PaymentRepositoryProtocol,
+        log: DomainLogWriter
     ) {
         self.syncRepository = syncRepository
         self.paymentRepository = paymentRepository
+        self.log = log
     }
 
     /// Execute download of remote changes
@@ -47,7 +50,7 @@ final class DownloadRemoteChangesUseCase {
         } catch let error as PaymentSyncError {
             return .failure(error)
         } catch {
-            logger.error("Download failed: \(error.localizedDescription)")
+            log.error("Download failed: \(error.localizedDescription)", category: Self.logCategory)
             return .failure(.downloadFailed(error.localizedDescription))
         }
     }

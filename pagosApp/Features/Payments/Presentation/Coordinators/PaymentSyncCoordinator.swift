@@ -33,9 +33,7 @@ final class PaymentSyncCoordinator {
     var syncError: Error?
 
     private let lastSyncKey = "lastPaymentSyncDate"
-    private let maxRetryAttempts = 3
-    private let minimumSyncTriggerInterval: TimeInterval = 10
-    private var lastSyncTriggerDate: Date?
+    private let syncTriggerThrottle = SyncTriggerThrottle(minimumInterval: 10)
 
     // MARK: - Initialization
 
@@ -72,30 +70,16 @@ final class PaymentSyncCoordinator {
         }
     }
 
-    private func retryDelayNanoseconds(forAttempt attempt: Int) -> UInt64 {
-        // 0.5s, 1s, 2s (+ jitter up to 250ms)
-        let baseDelays: [UInt64] = [500_000_000, 1_000_000_000, 2_000_000_000]
-        let base = baseDelays[min(max(attempt - 1, 0), baseDelays.count - 1)]
-        let jitter = UInt64.random(in: 0...250_000_000)
-        return base + jitter
-    }
-
-    private func shouldThrottleSyncTrigger() -> Bool {
-        guard let lastSyncTriggerDate else { return false }
-        return Date().timeIntervalSince(lastSyncTriggerDate) < minimumSyncTriggerInterval
-    }
-
     /// Perform full synchronization (upload + download)
     func performSync() async throws {
         guard !isSyncing else { return }
-        guard !shouldThrottleSyncTrigger() else { return }
+        guard syncTriggerThrottle.consumeTriggerIfAllowed() else { return }
 
         isSyncing = true
-        lastSyncTriggerDate = Date()
         syncError = nil
         defer { isSyncing = false }
 
-        for attempt in 1...maxRetryAttempts {
+        for attempt in 1...SyncRetryPolicy.maxAttempts {
             let result = await syncPaymentsUseCase.execute()
 
             switch result {
@@ -110,10 +94,9 @@ final class PaymentSyncCoordinator {
             case .failure(let syncError):
                 self.syncError = syncError
 
-                let isLastAttempt = attempt == maxRetryAttempts
+                let isLastAttempt = attempt == SyncRetryPolicy.maxAttempts
                 if !isLastAttempt, shouldRetry(syncError) {
-                    let delay = retryDelayNanoseconds(forAttempt: attempt)
-                    try? await Task.sleep(nanoseconds: delay)
+                    await SyncRetryPolicy.sleepBeforeRetry(forAttempt: attempt)
                     continue
                 }
 
@@ -173,3 +156,5 @@ final class PaymentSyncCoordinator {
         }
     }
 }
+
+extension PaymentSyncCoordinator: PaymentSyncCoordinating {}

@@ -207,7 +207,6 @@ enum L10n {
         static let filter = tr("reminders.filter")
         static let emptyTitle = tr("reminders.emptyTitle")
         static let emptyDescription = tr("reminders.emptyDescription")
-        static let placeholderComingSoon = tr("reminders.placeholder.comingSoon")
         enum Add {
             static let title = tr("reminders.add.title")
         }
