@@ -40,7 +40,8 @@ enum AppGlobalAppearance {
         let button = UIBarButtonItemAppearance()
         button.normal.titleTextAttributes = [.foregroundColor: primary]
         appearance.buttonAppearance = button
-        appearance.doneButtonAppearance = button
+        // iOS 26+: `doneButtonAppearance` is deprecated; Done style maps to `prominent`.
+        appearance.prominentButtonAppearance = button
 
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().scrollEdgeAppearance = appearance
