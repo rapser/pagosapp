@@ -114,7 +114,8 @@ private struct RemindersList: View {
         List {
             ForEach(viewModel.reminders, id: \.id) { reminder in
                 NavigationLink(destination: EditReminderView(
-                    viewModel: dependencies.reminderDependencyContainer.makeEditReminderViewModel(reminder: reminder)
+                    viewModel: dependencies.reminderDependencyContainer.makeEditReminderViewModel(reminder: reminder),
+                    onSaveSuccess: { Task { await viewModel.loadReminders() } }
                 )) {
                     ReminderRowView(reminder: reminder) {
                         Task { await viewModel.toggleCompletion(reminder) }
