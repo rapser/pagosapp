@@ -9,6 +9,7 @@
 import Foundation
 
 /// Use Case for updating pending sync count
+@MainActor
 final class UpdatePendingSyncCountUseCase {
     private let syncRepository: SettingsSyncRepositoryProtocol
 
