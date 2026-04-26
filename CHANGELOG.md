@@ -4,7 +4,7 @@ El contenido de este fichero describe la **versión publicada** y el **alcance**
 
 ---
 
-## [1.0.0] – Build 20 – 2026-04-26
+## [1.0.0] – Build 20
 
 ### Producto
 
@@ -19,10 +19,17 @@ El contenido de este fichero describe la **versión publicada** y el **alcance**
 
 ### Plataforma y stack
 
-- **iOS 18.0+**, **Swift 6.0** (comprobaciones estrictas de concurrencia en el target de la app), **SwiftUI** y **@Observable** en presentación.
+- **iOS 26.0+** (deployment mínimo alineado entre app y target de tests), **Swift 6.0** con comprobación estricta de concurrencia, **SwiftUI** y **@Observable** en presentación.
 - **SwiftData** (persistencia local), **Supabase** (auth + PostgreSQL + RLS) con **Supabase Swift** (versión fijada en `Package.resolved`).
 - **Clean Architecture** por features (Domain / Data / Presentation), casos de uso, repositorios, inyección por contenedores, mapeos y DTOs.
 - **EventBus** con eventos de dominio tipados y `AsyncStream`; **EventKit**, **UserNotifications**, **LocalAuthentication**, **Keychain**, **OSLog**.
-- **CI** (GitHub Actions: build, SwiftLint), **Fastlane** y opción **SwiftLint** local; documentación bajo `docs/`.
+- **Apariencia global UIKit** (`AppGlobalAppearance`): barra de navegación con fondo al estilo del sistema; títulos y tinte de barra con color **AppPrimary**; en iOS 26 se usa `prominentButtonAppearance` (sustituye el API deprecado de “Done” en `UINavigationBarAppearance`).
+
+### Calidad, CI y documentación
+
+- **Tests unitarios** (Swift Testing): validadores (email, contraseña), mappers de pagos y recordatorios, cobertura de mensajes de error de dominio (pagos y auth); ajuste de deployment del target de tests al mismo mínimo iOS que la app.
+- **CI** (GitHub Actions en PRs a `develop`): **build** en simulador, **`xcodebuild test`**, **SwiftLint** (límites de línea/archivo reforzados de forma progresiva).
+- **TestFlight** (otro workflow): subida con Fastlane y secretos de App Store Connect; no forma parte del job de CI de calidad.
+- **Documentación de pruebas**: [`docs/testing.md`](docs/testing.md) (cómo ejecutar tests, CI, Definition of Done en PRs) y [`docs/test-priority-inventory.md`](docs/test-priority-inventory.md) (prioridad sugerida por capas).
 
 Autor: [@rapser](https://github.com/rapser). Licencia: MIT (ver `LICENSE` si está presente en el repositorio).
