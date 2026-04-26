@@ -1,5 +1,4 @@
-// Base del target. Incluye credenciales y, en Release, el build con marca de hora
-// generado en Derived (BuildStamp.xcconfig) — sin modificar el .pbxproj al archivar.
+// Base del target. "Current version" 20: puede verse en la pestaña General; el .ipa / Archive
+// usa YYYYMM.DD.HHmm puesto al final en Info.plist (fase "Set CFBundleVersion in .app").
 #include "Secrets.xcconfig"
 CURRENT_PROJECT_VERSION = 20
-#include? "$(DERIVED_FILE_DIR)/BuildStamp.xcconfig"
