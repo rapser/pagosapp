@@ -92,9 +92,9 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
         
         // Standard payment notification days: [3, 2, 1, 0]
         let notificationDays = [3, 2, 1, 0]
-        
-        Task {
-            await genericScheduler.scheduleNotifications(
+        let scheduler = genericScheduler
+        Task { @MainActor in
+            await scheduler.scheduleNotifications(
                 entityId: paymentId,
                 title: name,
                 dueDate: dueDate,
@@ -122,9 +122,9 @@ final class UserNotificationsDataSource: NSObject, NotificationDataSource, UNUse
         
         // Use customizable notification days from settings
         let notificationDays = notificationSettings.allNotificationDays
-        
-        Task {
-            await genericScheduler.scheduleNotifications(
+        let scheduler = genericScheduler
+        Task { @MainActor in
+            await scheduler.scheduleNotifications(
                 entityId: reminderId,
                 title: title,
                 dueDate: dueDate,
