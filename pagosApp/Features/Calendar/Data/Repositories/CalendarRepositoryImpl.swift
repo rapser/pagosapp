@@ -10,7 +10,8 @@ import Foundation
 
 /// Repository implementation for Calendar feature
 /// Wraps PaymentRepository and provides calendar-specific queries
-final class CalendarRepositoryImpl: CalendarRepositoryProtocol {
+@MainActor
+final class CalendarRepositoryImpl: CalendarRepositoryProtocol, @unchecked Sendable {
     private static let logCategory = "CalendarRepositoryImpl"
 
     private let paymentRepository: PaymentRepositoryProtocol
