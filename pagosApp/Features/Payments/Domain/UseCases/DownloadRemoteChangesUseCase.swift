@@ -9,6 +9,7 @@
 import Foundation
 
 /// Use case for downloading remote payment changes and merging with local
+@MainActor
 final class DownloadRemoteChangesUseCase {
     private static let logCategory = "DownloadRemoteChangesUseCase"
 

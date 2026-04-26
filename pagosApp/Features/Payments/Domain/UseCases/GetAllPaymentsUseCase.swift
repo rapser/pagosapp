@@ -9,6 +9,7 @@
 import Foundation
 
 /// Use case for fetching all local payments
+@MainActor
 final class GetAllPaymentsUseCase {
     private static let logCategory = "GetAllPaymentsUseCase"
 

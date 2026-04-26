@@ -9,11 +9,12 @@
 import Foundation
 
 /// Repository protocol for payment synchronization operations
-protocol PaymentSyncRepositoryProtocol {
+protocol PaymentSyncRepositoryProtocol: Sendable {
     /// Get current user ID from auth system
     func getCurrentUserId() async throws -> UUID
 
-    /// Upload local payments to remote
+    /// Upload local payments to remote and refresh local state (SwiftData on main actor)
+    @MainActor
     func uploadPayments(_ payments: [Payment], userId: UUID) async throws
 
     /// Download payments from remote
@@ -22,12 +23,12 @@ protocol PaymentSyncRepositoryProtocol {
     /// Sync single payment deletion to remote
     func syncDeletion(paymentId: UUID) async throws
 
-    /// Get payments pending synchronization
+    @MainActor
     func getPendingPayments() async throws -> [Payment]
 
-    /// Get pending sync count
+    @MainActor
     func getPendingSyncCount() async throws -> Int
 
-    /// Update sync status for payment
+    @MainActor
     func updateSyncStatus(paymentId: UUID, status: SyncStatus) async throws
 }

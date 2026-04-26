@@ -9,6 +9,7 @@
 import Foundation
 
 /// Use case for scheduling local notifications for payments
+@MainActor
 final class SchedulePaymentNotificationsUseCase {
     private let notificationDataSource: NotificationDataSource
 
@@ -16,7 +17,6 @@ final class SchedulePaymentNotificationsUseCase {
         self.notificationDataSource = notificationDataSource
     }
 
-    @MainActor
     func execute(_ payment: Payment) {
         let currencySymbol = payment.currency.symbol
         notificationDataSource.scheduleNotifications(
@@ -29,12 +29,10 @@ final class SchedulePaymentNotificationsUseCase {
         )
     }
 
-    @MainActor
     func cancel(for paymentId: UUID) {
         notificationDataSource.cancelNotifications(paymentId: paymentId)
     }
 
-    @MainActor
     func rescheduleAll(_ payments: [Payment]) {
         for payment in payments {
             execute(payment)

@@ -9,6 +9,7 @@
 import Foundation
 
 /// Use case for creating a new payment with validation and side effects
+@MainActor
 final class CreatePaymentUseCase {
     private static let logCategory = "CreatePaymentUseCase"
 
@@ -64,14 +65,10 @@ final class CreatePaymentUseCase {
             }
 
             if let notificationsUseCase = scheduleNotificationsUseCase {
-                await MainActor.run {
-                    notificationsUseCase.execute(newPayment)
-                }
+                notificationsUseCase.execute(newPayment)
             }
 
-            await MainActor.run {
-                eventBus.publish(PaymentCreatedEvent(paymentId: newPayment.id))
-            }
+            eventBus.publish(PaymentCreatedEvent(paymentId: newPayment.id))
 
             return .success(newPayment)
         } catch {

@@ -9,6 +9,7 @@
 import Foundation
 
 /// Use case for getting count of payments pending sync
+@MainActor
 final class GetPendingSyncCountUseCase {
     private let syncRepository: PaymentSyncRepositoryProtocol
 

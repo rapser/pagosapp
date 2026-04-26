@@ -28,14 +28,12 @@ final class PaymentDependencyContainer {
     }()
 
     // Mappers
-    private let remoteDTOMapper: PaymentRemoteDTOMapping = PaymentRemoteDTOMapper()
     private let uiMapper: PaymentUIMapping = PaymentUIMapper()
 
     // Single repository instance per container (avoids creating new instances on every make call)
     private lazy var sharedPaymentRepository: PaymentRepositoryProtocol = PaymentRepositoryImpl(
         remoteDataSource: remoteDataSource,
-        localDataSource: localDataSource,
-        remoteDTOMapper: remoteDTOMapper
+        localDataSource: localDataSource
     )
 
     private lazy var sharedPaymentSyncRepository: PaymentSyncRepositoryProtocol = PaymentSyncRepositoryImpl(
