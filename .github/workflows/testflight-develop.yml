@@ -86,8 +86,8 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${BUILD_CERTIFICATE_BASE64:-}" ] || [ -z "${P12_PASSWORD:-}" ] || [ -z "${KEYCHAIN_PASSWORD:-}" ] || [ -z "${PROVISIONING_PROFILE_BASE64:-}" ]; then
-            echo "::warning::Secretos de firma incompletos. gym suele fallar sin certificado .p12 y perfil App Store en el runner. Configura los secretos listados en .github/GITHUB_ACTIONS_TESTFLIGHT.md"
-            exit 0
+            echo "::error::Faltan secretos de firma (BUILD_CERTIFICATE_BASE64, P12_PASSWORD, KEYCHAIN_PASSWORD, PROVISIONING_PROFILE_BASE64). Sin .p12 + perfil App Store el archive falla. Configuración: .github/GITHUB_ACTIONS_TESTFLIGHT.md"
+            exit 1
           fi
           KEYCHAIN="$RUNNER_TEMP/ios_signing.keychain-db"
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
@@ -125,8 +125,30 @@ jobs:
       - name: Fastlane — release a TestFlight
         run: bundle exec fastlane release_app_store_connect
 
-      - name: Últimas líneas del log de gym (si falló)
+      - name: Diagnóstico de gym / xcodebuild (si falló)
         if: failure()
+        shell: bash
         run: |
+          set -uo pipefail
+          echo "== xcodebuild -version =="
+          xcodebuild -version
+          echo "== Búsqueda de logs de gym (puede variar el nombre) =="
+          if [ -d "$HOME/Library/Logs/gym" ]; then
+            find "$HOME/Library/Logs/gym" -name "*.log" -print
+            for f in "$HOME/Library/Logs/gym"/*.log; do
+              [ -f "$f" ] || continue
+              echo "---- tail: $f ----"
+              tail -n 250 "$f"
+            done
+          else
+            echo "No hay carpeta $HOME/Library/Logs/gym"
+          fi
           LOG="$HOME/Library/Logs/gym/pagosApp-pagosApp.log"
-          if [ -f "$LOG" ]; then echo "---- tail $LOG ----"; tail -n 150 "$LOG"; else echo "No existe $LOG"; fi
+          if [ -f "$LOG" ]; then echo "---- (legacy) tail $LOG ----"; tail -n 150 "$LOG"; fi
+          echo "== grep error / codesign (logs gym) =="
+          shopt -s nullglob
+          for f in "$HOME/Library/Logs/gym"/*.log; do
+            echo "--- matches in $f ---"
+            grep -E "error: |xcodebuild: error|Code Sign|failed" -i "$f" 2>/dev/null | tail -40 || true
+          done
+          shopt -u nullglob
