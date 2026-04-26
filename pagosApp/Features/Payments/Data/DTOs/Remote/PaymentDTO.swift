@@ -38,7 +38,20 @@ struct PaymentDTO: Codable, Identifiable {
     }
 
     /// Memberwise initializer for creating DTOs
-    init(id: UUID, userId: UUID, name: String, amount: Double, currency: String, dueDate: Date, isPaid: Bool, category: String, eventIdentifier: String?, groupId: UUID?, createdAt: Date?, updatedAt: Date?) {
+    init(
+        id: UUID,
+        userId: UUID,
+        name: String,
+        amount: Double,
+        currency: String,
+        dueDate: Date,
+        isPaid: Bool,
+        category: String,
+        eventIdentifier: String?,
+        groupId: UUID?,
+        createdAt: Date?,
+        updatedAt: Date?
+    ) {
         self.id = id
         self.userId = userId
         self.name = name
