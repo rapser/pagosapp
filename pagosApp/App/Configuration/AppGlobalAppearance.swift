@@ -24,26 +24,29 @@ enum AppGlobalAppearance {
     }
 
     private static func applyNavigationBar() {
+        let primary = UIColor(named: "AppPrimary") ?? .systemBlue
+
         let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor(named: "AppPrimary")
+        // System-style bar: light (or dark) material, not a solid brand background.
+        appearance.configureWithDefaultBackground()
         appearance.titleTextAttributes = [
-            .foregroundColor: UIColor.white,
+            .foregroundColor: primary,
             .font: UIFont.systemFont(ofSize: 17, weight: .semibold)
         ]
         appearance.largeTitleTextAttributes = [
-            .foregroundColor: UIColor.white,
+            .foregroundColor: primary,
             .font: UIFont.systemFont(ofSize: 34, weight: .bold)
         ]
         let button = UIBarButtonItemAppearance()
-        button.normal.titleTextAttributes = [.foregroundColor: UIColor.white]
+        button.normal.titleTextAttributes = [.foregroundColor: primary]
         appearance.buttonAppearance = button
         appearance.doneButtonAppearance = button
 
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().scrollEdgeAppearance = appearance
         UINavigationBar.appearance().compactAppearance = appearance
-        UINavigationBar.appearance().tintColor = .white
+        // Back chevron, bar button symbols, and SF Symbol items use app primary.
+        UINavigationBar.appearance().tintColor = primary
     }
 
     private static func applyTabBar() {
