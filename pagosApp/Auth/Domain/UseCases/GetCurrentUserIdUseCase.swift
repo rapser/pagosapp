@@ -9,6 +9,7 @@
 import Foundation
 
 /// Use Case to retrieve the current authenticated user's ID
+@MainActor
 final class GetCurrentUserIdUseCase {
     private let authRepository: AuthSessionRepositoryProtocol
 
