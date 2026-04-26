@@ -1,6 +1,6 @@
 # Arquitectura
 
-> **Versión de toolchain:** el target de la app usa **Swift 5** en Xcode. Donde el texto menciona compatibilidad con *Swift 6* o *strict concurrency*, se refiere al **diseño** (p. ej. `Sendable`, `@MainActor`) o a notas históricas, no a que el proyecto esté fijado a Swift 6 en `SWIFT_VERSION`.
+> **Versión de toolchain:** el target de la app usa **Swift 6.0** (`SWIFT_VERSION` en Xcode) con comprobación estricta de concurrencia. Los protocolos y tipos de dominio usan `Sendable`, `@MainActor` y aislamiento explícito donde el compilador y los SDK lo requieren.
 
 ## 🏗 Arquitectura
 

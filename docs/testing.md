@@ -11,6 +11,6 @@ xcodebuild test -scheme pagosApp -project pagosApp.xcodeproj \
   -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
 
-**Estado actual**: suite **mínima** centrada en **validadores** (email, contraseña) y test de arranque del target. Ampliar use cases, mappers, sync y UI entra en el roadmap de calidad (issues/PRs y [CHANGELOG.md](../CHANGELOG.md)).
+**Estado actual**: suite **mínima** centrada en **validadores** (email, contraseña) y test de arranque del target. Ampliar use cases, mappers, sync y UI entra en el roadmap de calidad (issues/PRs).
 
 ---

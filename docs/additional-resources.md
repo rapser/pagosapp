@@ -4,7 +4,7 @@ Enlaces útiles fuera de la guía principal. Algunas carpetas (`docs/adr/`, `doc
 
 ## 📚 Documentación adicional
 
-- **[CHANGELOG.md](../CHANGELOG.md)**: Historial de versiones (marketing **1.0.0**, build actual en Xcode)
+- **[CHANGELOG.md](../CHANGELOG.md)**: versión publicada, alcance funcional y técnico de PagosApp (ver también [`docs/product-overview.md`](product-overview.md))
 - **[ADR](adr/)**: Decisiones de arquitectura (capas, sync, notificaciones, DI)
 - **[Ingeniería](engineering/)**: Contratos de coordinadores de sync, checklist de concurrencia
 - **[Runbooks](runbooks/)**: Operación de SSL pinning / certificados

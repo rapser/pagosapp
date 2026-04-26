@@ -3,11 +3,11 @@
 ## 📋 Stack Tecnológico
 
 ### Core Technologies
-- **Swift 5.0**: Versión del compilador en el target de la app (Xcode); async/await y patrones actuales de concurrencia
+- **Swift 6.0**: `SWIFT_VERSION` en el target de la app (Xcode); comprobación estricta de concurrencia; async/await
 - **iOS 18.0+**: Deployment mínimo del target `pagosApp` (ajustar en Build Settings si cambia)
-- **SwiftUI**: 100% declarative UI con @Observable
-- **SwiftData**: Local persistence (reemplaza CoreData)
-- **Async/Await**: Modern concurrency (sin Combine)
+- **SwiftUI**: UI declarativa con @Observable
+- **SwiftData**: persistencia local (sustituye a Core Data para los modelos de la app)
+- **Async/Await**: concurrencia moderna (sin Combine en la lógica de negocio principal)
 
 ### Frameworks iOS
 - **EventKit**: Sincronización con Calendar.app
