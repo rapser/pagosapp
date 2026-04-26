@@ -8,6 +8,7 @@
 
 import Foundation
 
+@MainActor
 final class DownloadReminderChangesUseCase {
     private static let logCategory = "DownloadReminderChangesUseCase"
 

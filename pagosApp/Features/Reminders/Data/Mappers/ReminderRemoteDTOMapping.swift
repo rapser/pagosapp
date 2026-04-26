@@ -10,7 +10,7 @@ import Foundation
 
 /// Protocol for mapping between Reminder domain objects and ReminderDTO (remote)
 /// Follows the same pattern as PaymentUIMapping for consistency
-protocol ReminderRemoteDTOMapping {
+protocol ReminderRemoteDTOMapping: Sendable {
     /// Convert remote DTO to domain entity
     func toDomain(_ dto: ReminderDTO) -> Reminder
     
@@ -22,7 +22,7 @@ protocol ReminderRemoteDTOMapping {
 }
 
 /// Default implementation of ReminderRemoteDTOMapping
-struct ReminderRemoteDTOMapper: ReminderRemoteDTOMapping {
+struct ReminderRemoteDTOMapper: ReminderRemoteDTOMapping, Sendable {
     
     func toDomain(_ dto: ReminderDTO) -> Reminder {
         Reminder(

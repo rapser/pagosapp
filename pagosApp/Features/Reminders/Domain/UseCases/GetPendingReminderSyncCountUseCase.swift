@@ -8,6 +8,7 @@
 
 import Foundation
 
+@MainActor
 final class GetPendingReminderSyncCountUseCase {
     private let syncRepository: ReminderSyncRepositoryProtocol
 

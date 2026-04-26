@@ -9,7 +9,7 @@
 import Foundation
 import Supabase
 
-final class ReminderSupabaseDataSource: ReminderRemoteDataSource {
+final class ReminderSupabaseDataSource: ReminderRemoteDataSource, @unchecked Sendable {
     private let client: SupabaseClient
     private let tableName = "reminders"
     private let defaultPageSize = 200

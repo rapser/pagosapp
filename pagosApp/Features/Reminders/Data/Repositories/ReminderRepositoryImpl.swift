@@ -8,8 +8,7 @@
 
 import Foundation
 
-@MainActor
-final class ReminderRepositoryImpl: ReminderRepositoryProtocol {
+final class ReminderRepositoryImpl: ReminderRepositoryProtocol, @unchecked Sendable {
     private static let logCategory = "ReminderRepositoryImpl"
 
     private let localDataSource: ReminderLocalDataSource
@@ -26,6 +25,7 @@ final class ReminderRepositoryImpl: ReminderRepositoryProtocol {
         self.log = log
     }
 
+    @MainActor
     func create(reminder: Reminder) async -> Result<Reminder, ReminderError> {
         log.info("📝 Creating reminder: \(reminder.title)", category: Self.logCategory)
         do {
@@ -45,6 +45,7 @@ final class ReminderRepositoryImpl: ReminderRepositoryProtocol {
         }
     }
 
+    @MainActor
     func getAll() async -> Result<[Reminder], ReminderError> {
         do {
             let reminders = try await localDataSource.fetchAll()
@@ -55,6 +56,7 @@ final class ReminderRepositoryImpl: ReminderRepositoryProtocol {
         }
     }
 
+    @MainActor
     func getById(id: UUID) async -> Result<Reminder?, ReminderError> {
         do {
             let reminder = try await localDataSource.fetch(id: id)
@@ -65,6 +67,7 @@ final class ReminderRepositoryImpl: ReminderRepositoryProtocol {
         }
     }
 
+    @MainActor
     func update(reminder: Reminder) async -> Result<Reminder, ReminderError> {
         log.info("📝 Updating reminder: \(reminder.title)", category: Self.logCategory)
         do {
@@ -88,6 +91,7 @@ final class ReminderRepositoryImpl: ReminderRepositoryProtocol {
         }
     }
 
+    @MainActor
     func delete(id: UUID) async -> Result<Void, ReminderError> {
         do {
             notificationDataSource.cancelReminderNotifications(reminderId: id)
