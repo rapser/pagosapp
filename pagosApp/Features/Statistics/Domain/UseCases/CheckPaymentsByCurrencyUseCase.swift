@@ -9,6 +9,7 @@
 import Foundation
 
 /// Use Case to check if payments exist for specific currencies
+@MainActor
 final class CheckPaymentsByCurrencyUseCase {
     private let paymentRepository: PaymentRepositoryProtocol
 

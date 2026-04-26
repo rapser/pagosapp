@@ -9,7 +9,8 @@
 import Foundation
 
 /// Protocol defining statistics-specific queries and calculations
-protocol StatisticsRepositoryProtocol {
+@MainActor
+protocol StatisticsRepositoryProtocol: AnyObject {
     /// Get all payments (for calculations)
     func getAllPayments() async -> Result<[Payment], PaymentError>
 
