@@ -1,0 +1,2 @@
+$(DERIVED_FILE_DIR)/BuildStamp.xcconfig
+$(DERIVED_FILE_DIR)/StampBuildNumber.stamp

@@ -1,0 +1,5 @@
+// Base del target. Incluye credenciales y, en Release, el build con marca de hora
+// generado en Derived (BuildStamp.xcconfig) — sin modificar el .pbxproj al archivar.
+#include "Secrets.xcconfig"
+CURRENT_PROJECT_VERSION = 20
+#include? "$(DERIVED_FILE_DIR)/BuildStamp.xcconfig"

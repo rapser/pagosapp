@@ -138,7 +138,12 @@ platform :ios do
       destination: "generic/platform=iOS"
     }
     gym_args[:export_options] = export_opts if export_opts
-    gym(**gym_args)
+    ENV["SKIP_XCODE_STAMP"] = "1"
+    begin
+      gym(**gym_args)
+    ensure
+      ENV.delete("SKIP_XCODE_STAMP")
+    end
   end
 
   private_lane :upload_ipa_testflight do |options|
@@ -259,17 +264,22 @@ platform :ios do
   lane :ipa_pruebas do
     stamp_build_timestamp
     FileUtils.mkdir_p(OUTPUT_DIR)
-    gym(
-      project: PROJECT,
-      scheme: SCHEME,
-      configuration: "Release",
-      export_method: "ad-hoc",
-      output_directory: OUTPUT_DIR,
-      output_name: "PagosApp-pruebas",
-      clean: true,
-      silent: false,
-      skip_package_ipa: false
-    )
+    ENV["SKIP_XCODE_STAMP"] = "1"
+    begin
+      gym(
+        project: PROJECT,
+        scheme: SCHEME,
+        configuration: "Release",
+        export_method: "ad-hoc",
+        output_directory: OUTPUT_DIR,
+        output_name: "PagosApp-pruebas",
+        clean: true,
+        silent: false,
+        skip_package_ipa: false
+      )
+    ensure
+      ENV.delete("SKIP_XCODE_STAMP")
+    end
     UI.success("✅ IPA Ad Hoc en #{File.expand_path(OUTPUT_DIR)}")
     print_app_version_summary
   end

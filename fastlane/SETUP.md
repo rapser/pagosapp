@@ -96,10 +96,12 @@ En **CI**, si no quieres fichero en disco, puedes usar **`APP_STORE_CONNECT_API_
 | `bundle exec fastlane release_testflight_internal` | Igual con mensaje orientado a testers internos |
 
 - El **build** (`CFBundleVersion`) se estampa con formato **`YYYYMM.DD.HHmm`** (ej. `202604.17.2112`).
+- Un **Archive en Xcode** (Release) también aplica ese formato: fase **Stamp build number (Release)** que ejecuta `scripts/stamp-xcode-build.sh` (mismo criterio que las lanes). **Debug** no modifica el número de build.
+- En **Fastlane**, `gym` se invoca con `SKIP_XCODE_STAMP=1` para no volver a estampar tras `stamp_build_timestamp`.
 - Al terminar lanes relevantes se muestra **`Versión generada: marketing(build)`**.
 - Tras elegir opción en el **menú**, se imprime el **tiempo total** (segundos si &lt; 60 s; si no, **minutos enteros hacia arriba**).
 
-`SKIP_AUTO_INCREMENT_BUILD=1` evita cambiar el build (útil al depurar).
+`SKIP_AUTO_INCREMENT_BUILD=1` evita cambiar el build (útil al depurar; afecta Fastlane y la fase de Xcode).
 
 ---
 

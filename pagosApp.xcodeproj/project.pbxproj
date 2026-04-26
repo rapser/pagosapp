@@ -31,6 +31,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Config/Secrets.xcconfig,
+				Config/SharedApp.xcconfig,
 				Resources/Info.plist,
 			);
 			target = 464D59302E6B336D00DE10FF /* pagosApp */;
@@ -93,11 +94,35 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		4A0E5B9D2E6B336D00DE10FF /* Stamp build number (Release) */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Stamp build number (Release)";
+			outputFileListPaths = (
+				"$(SRCROOT)/scripts/StampBuildPhase-output.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# YYYYMM.DD.HHmm (mismo criterio que fastlane). Genera BuildStamp.xcconfig en Derived; no modifica .pbxproj (evita cancelar Archive).\nSTAMPFILE=\"${DERIVED_FILE_DIR}/StampBuildNumber.stamp\"\nBUILDBASE=\"${DERIVED_FILE_DIR}/BuildStamp.xcconfig\"\nmkdir -p \"${DERIVED_FILE_DIR}\" 2>/dev/null || true\n# Debug: quitar posible estampado Release anterior\n[ \"${CONFIGURATION}\" = \"Release\" ] || { rm -f \"${BUILDBASE}\"; touch \"${STAMPFILE}\"; exit 0; }\n# Fastlane ya estampo el pbx: no sobreescribir con Derived; gym usa SKIP\n[ -z \"${SKIP_XCODE_STAMP:-}\" ] || { rm -f \"${BUILDBASE}\"; touch \"${STAMPFILE}\"; exit 0; }\n[ \"${SKIP_AUTO_INCREMENT_BUILD:-}\" != \"1\" ] || { rm -f \"${BUILDBASE}\"; touch \"${STAMPFILE}\"; exit 0; }\nset -e\nSTAMP=$(date +%Y%m).$(date +%d).$(date +%H%M)\nprintf \"CURRENT_PROJECT_VERSION = %s\\n\" \"${STAMP}\" > \"${BUILDBASE}\"\necho \"Build number = ${STAMP} (BuildStamp.xcconfig)\"\ntouch \"${STAMPFILE}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXNativeTarget section */
 		464D59302E6B336D00DE10FF /* pagosApp */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 464D593E2E6B337000DE10FF /* Build configuration list for PBXNativeTarget "pagosApp" */;
 			buildPhases = (
+				4A0E5B9D2E6B336D00DE10FF /* Stamp build number (Release) */,
 				464D592D2E6B336D00DE10FF /* Sources */,
 				464D592E2E6B336D00DE10FF /* Frameworks */,
 				464D592F2E6B336D00DE10FF /* Resources */,
@@ -360,14 +385,14 @@
 		464D593F2E6B337000DE10FF /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReferenceAnchor = 464D59332E6B336D00DE10FF /* pagosApp */;
-			baseConfigurationReferenceRelativePath = Config/Secrets.xcconfig;
+			baseConfigurationReferenceRelativePath = Config/SharedApp.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 20;
 				DEVELOPMENT_TEAM = 8AJBS923B3;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = pagosApp/Resources/Info.plist;
@@ -398,14 +423,14 @@
 		464D59402E6B337000DE10FF /* Release */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReferenceAnchor = 464D59332E6B336D00DE10FF /* pagosApp */;
-			baseConfigurationReferenceRelativePath = Config/Secrets.xcconfig;
+			baseConfigurationReferenceRelativePath = Config/SharedApp.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 20;
 				DEVELOPMENT_TEAM = 8AJBS923B3;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = pagosApp/Resources/Info.plist;
