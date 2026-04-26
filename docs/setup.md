@@ -72,6 +72,8 @@ swiftlint lint
 
 **Guía completa (recomendada para otro proyecto o si algo falla):** [fastlane/SETUP.md](../fastlane/SETUP.md) — Ruby, API Key, variables **`APP_STORE_CONNECT_P8_PATH`** vs **`APP_STORE_CONNECT_API_KEY_PATH`**, errores típicos (`JSON::ParserError`, Ruby 4), CI y checklist.
 
+**Número de build (`CFBundleVersion`) y Archive:** [Build autogenerado (Xcode + Fastlane)](build-number-xcode-fastlane.md) — fase al final, Plist, `SKIP_XCODE_STAMP`, replicar en otro proyecto.
+
 **Resumen:** menú local `bundle exec fastlane menu`; en CI, lane explícita `bundle exec fastlane release_app_store_connect` (u otra). Lista de lanes: `bundle exec fastlane reference`. Plantilla de variables: **`fastlane/.env.example`**. [App Store Connect API — crear claves](https://developer.apple.com/documentation/appstoreconnectapi/creating_api_keys_for_app_store_connect_api).
 
 - El **`.p8`** va en **`APP_STORE_CONNECT_P8_PATH`**. No uses **`APP_STORE_CONNECT_API_KEY_PATH`** para el `.p8` (en Fastlane/Pilot eso es ruta a **JSON**, no al PEM de Apple).
