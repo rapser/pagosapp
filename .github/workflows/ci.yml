@@ -28,6 +28,15 @@ jobs:
             -configuration Debug \
             build
 
+      - name: Unit tests
+        run: |
+          xcodebuild -scheme pagosApp \
+            -project pagosApp.xcodeproj \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug \
+            -parallel-testing-enabled NO \
+            test
+
   swiftlint:
     name: SwiftLint
     runs-on: macos-26

@@ -9,7 +9,8 @@
 import Foundation
 import SwiftData
 
-protocol ReminderLocalDataSource {
+@MainActor
+protocol ReminderLocalDataSource: AnyObject {
     func fetchAll() async throws -> [Reminder]
     func fetchPaginated(page: Int, pageSize: Int) async throws -> [Reminder]
     func fetchCount() async throws -> Int

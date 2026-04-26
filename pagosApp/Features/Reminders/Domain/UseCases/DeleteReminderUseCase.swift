@@ -8,6 +8,7 @@
 
 import Foundation
 
+@MainActor
 final class DeleteReminderUseCase {
     private let repository: ReminderRepositoryProtocol
 

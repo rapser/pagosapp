@@ -9,6 +9,7 @@
 import Foundation
 
 /// Use case for updating an existing payment
+@MainActor
 final class UpdatePaymentUseCase {
     private static let logCategory = "UpdatePaymentUseCase"
 
@@ -109,16 +110,12 @@ final class UpdatePaymentUseCase {
 
         // 6. Reschedule notifications (if use case is available)
         if let notificationsUseCase = scheduleNotificationsUseCase {
-            await MainActor.run {
-                notificationsUseCase.execute(updatedPayment)
-            }
+            notificationsUseCase.execute(updatedPayment)
         }
 
         // 7. Publish domain event (type-safe, reactive)
-        await MainActor.run {
-            eventBus.publish(PaymentUpdatedEvent(paymentId: updatedPayment.id))
-            log.debug("📢 Published PaymentUpdatedEvent", category: Self.logCategory)
-        }
+        eventBus.publish(PaymentUpdatedEvent(paymentId: updatedPayment.id))
+        log.debug("📢 Published PaymentUpdatedEvent", category: Self.logCategory)
 
         return .success(updatedPayment)
     }

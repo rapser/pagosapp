@@ -9,6 +9,7 @@
 import Foundation
 
 /// Fetch user profile from Supabase and save to local storage
+@MainActor
 final class FetchUserProfileUseCase {
     private static let logCategory = "FetchUserProfileUseCase"
 

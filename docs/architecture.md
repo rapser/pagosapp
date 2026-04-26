@@ -1,5 +1,7 @@
 # Arquitectura
 
+> **Versión de toolchain:** el target de la app usa **Swift 6.0** (`SWIFT_VERSION` en Xcode) con comprobación estricta de concurrencia. Los protocolos y tipos de dominio usan `Sendable`, `@MainActor` y aislamiento explícito donde el compilador y los SDK lo requieren.
+
 ## 🏗 Arquitectura
 
 ### Clean Architecture al 100%

@@ -2,9 +2,9 @@
 
 ## 📋 Requisitos
 
-- **iOS**: 18.5 o superior
+- **iOS**: 18.0 o superior (deployment mínimo del target de la app)
 - **Xcode**: 16.4 o superior
-- **Swift**: 6.0
+- **Swift**: 5.0 (como en `SWIFT_VERSION` del target en Xcode)
 - **macOS**: Sequoia 15.0+ (desarrollo)
 - **Cuenta Supabase**: [Crear gratis](https://supabase.com)
 - **SwiftLint** (opcional, local): `brew install swiftlint` — mismo chequeo que en CI
@@ -45,8 +45,8 @@ open pagosApp.xcodeproj
 ```
 
 **Xcode instalará automáticamente**:
-- ✅ Supabase Swift SDK (v2.5.1+)
-- ✅ Todas las dependencias necesarias
+- ✅ Supabase Swift SDK (versión fijada en `Package.resolved`, p. ej. 2.31.x)
+- ✅ Todas las dependencias transitivas
 
 ### 4️⃣ Configurar Build Settings
 
@@ -71,6 +71,8 @@ swiftlint lint
 ### 7️⃣ Fastlane (IPA y subida a TestFlight)
 
 **Guía completa (recomendada para otro proyecto o si algo falla):** [fastlane/SETUP.md](../fastlane/SETUP.md) — Ruby, API Key, variables **`APP_STORE_CONNECT_P8_PATH`** vs **`APP_STORE_CONNECT_API_KEY_PATH`**, errores típicos (`JSON::ParserError`, Ruby 4), CI y checklist.
+
+**Número de build (`CFBundleVersion`) y Archive:** [Build autogenerado (Xcode + Fastlane)](build-number-xcode-fastlane.md) — fase al final, Plist, `SKIP_XCODE_STAMP`, replicar en otro proyecto.
 
 **Resumen:** menú local `bundle exec fastlane menu`; en CI, lane explícita `bundle exec fastlane release_app_store_connect` (u otra). Lista de lanes: `bundle exec fastlane reference`. Plantilla de variables: **`fastlane/.env.example`**. [App Store Connect API — crear claves](https://developer.apple.com/documentation/appstoreconnectapi/creating_api_keys_for_app_store_connect_api).
 

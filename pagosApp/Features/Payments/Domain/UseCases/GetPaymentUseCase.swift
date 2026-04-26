@@ -9,6 +9,7 @@
 import Foundation
 
 /// Use case for fetching a single payment by ID
+@MainActor
 final class GetPaymentUseCase {
     private static let logCategory = "GetPaymentUseCase"
 

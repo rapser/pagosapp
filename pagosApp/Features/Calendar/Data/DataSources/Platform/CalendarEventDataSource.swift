@@ -10,8 +10,10 @@ import Foundation
 import EventKit
 
 /// Protocol for calendar event operations
+/// EventKit is main-thread; all conformers are isolated to the main actor.
 /// Supports both async/await (preferred) and callback-based APIs for compatibility
-protocol CalendarEventDataSource {
+@MainActor
+protocol CalendarEventDataSource: AnyObject {
     /// Request calendar access permission (async/await - preferred)
     func requestAccess() async -> Bool
     
@@ -31,7 +33,8 @@ protocol CalendarEventDataSource {
     func removeEvent(eventIdentifier: String)
 }
 
-/// EventKit implementation of CalendarEventDataSource
+/// EventKit implementation of `CalendarEventDataSource`.
+@MainActor
 final class EventKitCalendarDataSource: CalendarEventDataSource {
     private let eventStore = EKEventStore()
 
@@ -72,20 +75,16 @@ final class EventKitCalendarDataSource: CalendarEventDataSource {
     // MARK: - Callback-based Methods (For Compatibility)
     
     func requestAccess(completion: @escaping (Bool) -> Void) {
-        Task {
+        Task { @MainActor in
             let granted = await requestAccess()
-            await MainActor.run {
-                completion(granted)
-            }
+            completion(granted)
         }
     }
 
     func addEvent(title: String, dueDate: Date, completion: @escaping (String?) -> Void) {
-        Task {
+        Task { @MainActor in
             let identifier = await addEvent(title: title, dueDate: dueDate)
-            await MainActor.run {
-                completion(identifier)
-            }
+            completion(identifier)
         }
     }
 

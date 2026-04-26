@@ -9,6 +9,7 @@
 import Foundation
 
 /// Get all payments (used to show payment indicators in calendar)
+@MainActor
 final class GetAllPaymentsForCalendarUseCase {
     private static let logCategory = "GetAllPaymentsForCalendarUseCase"
 

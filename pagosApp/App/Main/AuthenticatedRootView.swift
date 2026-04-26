@@ -5,13 +5,6 @@ struct AuthenticatedRootView: View {
     @Environment(AppDependencies.self) private var dependencies
     @Environment(AlertManager.self) private var alertManager
 
-    init() {
-        // Configure UITabBar appearance once (global configuration)
-        UITabBar.appearance().backgroundColor = UIColor(named: "AppBackground")
-        UITabBar.appearance().unselectedItemTintColor = UIColor(named: "AppTextSecondary")
-        UITabBar.appearance().tintColor = UIColor(named: "AppPrimary")
-    }
-
     var body: some View {
         TabView {
             PaymentsListView()

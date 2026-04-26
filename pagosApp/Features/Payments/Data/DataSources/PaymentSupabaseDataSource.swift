@@ -10,7 +10,8 @@ import Foundation
 import Supabase
 
 /// Supabase implementation for payment remote operations
-final class PaymentSupabaseDataSource: PaymentRemoteDataSource {
+/// `SupabaseClient` is thread-safe for async calls; unchecked mirrors SDK patterns.
+final class PaymentSupabaseDataSource: PaymentRemoteDataSource, @unchecked Sendable {
     private let client: SupabaseClient
     private let tableName = "payments"
     private let defaultPageSize = 200

@@ -1,22 +1,20 @@
 //
 //  UserProfileRepositoryProtocol.swift
-//  pagosApp
 //
 //  Domain repository protocol for UserProfile
-//  Clean Architecture: Domain defines contracts, Data implements them
 //
 
 import Foundation
 
 /// Protocol defining UserProfile repository operations
-@MainActor
-protocol UserProfileRepositoryProtocol {
-    // Remote operations
-    func fetchProfile(userId: UUID) async -> Result<UserProfile, UserProfileError>
-    func updateProfile(_ profile: UserProfile) async -> Result<UserProfile, UserProfileError>
+protocol UserProfileRepositoryProtocol: Sendable {
+    nonisolated func fetchProfile(userId: UUID) async -> Result<UserProfile, UserProfileError>
+    nonisolated func updateProfile(_ profile: UserProfile) async -> Result<UserProfile, UserProfileError>
 
-    // Local operations
+    @MainActor
     func getLocalProfile() async -> Result<UserProfile?, UserProfileError>
+    @MainActor
     func saveLocalProfile(_ profile: UserProfile) async -> Result<Void, UserProfileError>
+    @MainActor
     func deleteLocalProfile() async -> Result<Void, UserProfileError>
 }

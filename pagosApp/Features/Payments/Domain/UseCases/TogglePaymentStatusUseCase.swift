@@ -9,6 +9,7 @@
 import Foundation
 
 /// Use case for toggling a payment's paid status
+@MainActor
 final class TogglePaymentStatusUseCase {
     private static let logCategory = "TogglePaymentStatusUseCase"
 
@@ -50,13 +51,9 @@ final class TogglePaymentStatusUseCase {
         do {
             try await paymentRepository.savePayment(updatedPayment)
             if let notificationsUseCase = scheduleNotificationsUseCase {
-                await MainActor.run {
-                    notificationsUseCase.execute(updatedPayment)
-                }
+                notificationsUseCase.execute(updatedPayment)
             }
-            await MainActor.run {
-                eventBus.publish(PaymentStatusToggledEvent(paymentId: updatedPayment.id, isPaid: updatedPayment.isPaid))
-            }
+            eventBus.publish(PaymentStatusToggledEvent(paymentId: updatedPayment.id, isPaid: updatedPayment.isPaid))
             return .success(updatedPayment)
         } catch {
             log.error("Failed to toggle payment status: \(error.localizedDescription)", category: Self.logCategory)

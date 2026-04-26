@@ -10,6 +10,13 @@ import SwiftUI
 struct EditReminderView: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var viewModel: EditReminderViewModel
+    /// Refresca el listado (p. ej. `allReminders`) al guardar; el `NavigationLink` no vuelve a disparar `onAppear`.
+    var onSaveSuccess: (() -> Void)?
+
+    init(viewModel: EditReminderViewModel, onSaveSuccess: (() -> Void)? = nil) {
+        self.viewModel = viewModel
+        self.onSaveSuccess = onSaveSuccess
+    }
 
     var body: some View {
         NavigationStack {
@@ -54,7 +61,10 @@ struct EditReminderView: View {
                     Button(L10n.General.save) {
                         Task {
                             await viewModel.save()
-                            if viewModel.didSave { dismiss() }
+                            if viewModel.didSave {
+                                onSaveSuccess?()
+                                dismiss()
+                            }
                         }
                     }
                     .disabled(viewModel.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isSaving)

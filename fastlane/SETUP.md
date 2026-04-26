@@ -95,11 +95,13 @@ En **CI**, si no quieres fichero en disco, puedes usar **`APP_STORE_CONNECT_API_
 | `bundle exec fastlane release_app_store_connect` | Archive + subida TestFlight / ASC |
 | `bundle exec fastlane release_testflight_internal` | Igual con mensaje orientado a testers internos |
 
-- El **build** (`CFBundleVersion`) se estampa con formato **`YYYYMM.DD.HHmm`** (ej. `202604.17.2112`).
+- El **build** (`CFBundleVersion`) se estampa con formato **`YYYYMM.DD.HHmm`** (ej. `202604.17.2112`). Detalle técnicos y flujo *desde cero* en [**`docs/build-number-xcode-fastlane.md`**](../docs/build-number-xcode-fastlane.md).
+- Un **Archive en Xcode** (Release) aplica el formato: fase al final del target **Set CFBundleVersion in .app (Release)**, que escribe el `Info.plist` del `.app` con **PlistBuddy** (el script está **inline** en el proyecto, no hace falta un `.sh` separado; **Debug** no modifica el build).
+- En **Fastlane**, `stamp_build_timestamp` escribe `CURRENT_PROJECT_VERSION` en el **target de la app** vía `xcodeproj` (no `agvtool` / `increment_build_number`, para alinear el IPA con el resumen; ver documentación enlace arriba). Luego `gym` con `SKIP_XCODE_STAMP=1` no vuelve a parchear el plist.
 - Al terminar lanes relevantes se muestra **`Versión generada: marketing(build)`**.
 - Tras elegir opción en el **menú**, se imprime el **tiempo total** (segundos si &lt; 60 s; si no, **minutos enteros hacia arriba**).
 
-`SKIP_AUTO_INCREMENT_BUILD=1` evita cambiar el build (útil al depurar).
+`SKIP_AUTO_INCREMENT_BUILD=1` evita cambiar el build (útil al depurar; afecta Fastlane y la fase de Xcode).
 
 ---
 

@@ -9,16 +9,16 @@
 import Foundation
 import Supabase
 
-/// Implementation of payment sync repository
-final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
-    private let remoteDataSource: PaymentRemoteDataSource
-    private let localDataSource: PaymentLocalDataSource
-    private let supabaseClient: SupabaseClient
-    private let mapper: PaymentMapper.Type
+/// Remote operations are `nonisolated`; SwiftData paths are `@MainActor`.
+final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol, @unchecked Sendable {
+    private nonisolated let remoteDataSource: any PaymentRemoteDataSource
+    private nonisolated let supabaseClient: SupabaseClient
+    private nonisolated let mapper: PaymentMapper.Type
+    private let localDataSource: any PaymentLocalDataSource
 
     init(
-        remoteDataSource: PaymentRemoteDataSource,
-        localDataSource: PaymentLocalDataSource,
+        remoteDataSource: any PaymentRemoteDataSource,
+        localDataSource: any PaymentLocalDataSource,
         supabaseClient: SupabaseClient,
         mapper: PaymentMapper.Type = PaymentMapper.self
     ) {
@@ -30,20 +30,20 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
 
     // MARK: - Auth
 
-    func getCurrentUserId() async throws -> UUID {
+    nonisolated func getCurrentUserId() async throws -> UUID {
         guard let userId = supabaseClient.auth.currentUser?.id else {
             throw PaymentSyncError.notAuthenticated
         }
         return userId
     }
 
+    // MARK: - Upload (remote + local)
+
+    @MainActor
     func uploadPayments(_ payments: [Payment], userId: UUID) async throws {
         let dtos = mapper.toRemoteDTO(from: payments, userId: userId)
-
-        // Upload to remote
         try await remoteDataSource.upsertAll(dtos, userId: userId)
 
-        // Update local sync status
         var updatedPayments: [Payment] = []
         for payment in payments {
             let updated = Payment(
@@ -61,23 +61,25 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
             )
             updatedPayments.append(updated)
         }
-
-        try await _savePaymentsLocally(updatedPayments)
+        try await localDataSource.saveAll(updatedPayments)
     }
 
     // MARK: - Download
 
-    func downloadPayments(userId: UUID) async throws -> [Payment] {
+    nonisolated func downloadPayments(userId: UUID) async throws -> [Payment] {
         let dtos = try await remoteDataSource.fetchAll(userId: userId)
         return mapper.toDomain(from: dtos)
     }
 
-    func syncDeletion(paymentId: UUID) async throws {
+    nonisolated func syncDeletion(paymentId: UUID) async throws {
         try await remoteDataSource.delete(id: paymentId)
     }
 
+    // MARK: - Local queries
+
+    @MainActor
     func getPendingPayments() async throws -> [Payment] {
-        let entities = try await _getAllLocalPayments()
+        let entities = try await localDataSource.fetchAll()
         return entities.filter { payment in
             payment.syncStatus == .local ||
             payment.syncStatus == .modified ||
@@ -85,16 +87,15 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
         }
     }
 
+    @MainActor
     func getPendingSyncCount() async throws -> Int {
         let pending = try await getPendingPayments()
         return pending.count
     }
 
-    // MARK: - Update Sync Status
-
+    @MainActor
     func updateSyncStatus(paymentId: UUID, status: SyncStatus) async throws {
-        guard let payment = try await _getLocalPayment(id: paymentId) else { return }
-
+        guard let payment = try await localDataSource.fetch(id: paymentId) else { return }
         let updated = Payment(
             id: payment.id,
             name: payment.name,
@@ -108,29 +109,6 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol {
             lastSyncedAt: status == .synced ? Date() : payment.lastSyncedAt,
             groupId: payment.groupId
         )
-
-        try await _savePaymentLocally(updated)
-    }
-
-    // MARK: - Private @MainActor helpers
-
-    @MainActor
-    private func _getAllLocalPayments() async throws -> [Payment] {
-        return try await localDataSource.fetchAll()
-    }
-
-    @MainActor
-    private func _getLocalPayment(id: UUID) async throws -> Payment? {
-        return try await localDataSource.fetch(id: id)
-    }
-
-    @MainActor
-    private func _savePaymentLocally(_ payment: Payment) async throws {
-        try await localDataSource.save(payment)
-    }
-
-    @MainActor
-    private func _savePaymentsLocally(_ payments: [Payment]) async throws {
-        try await localDataSource.saveAll(payments)
+        try await localDataSource.save(updated)
     }
 }

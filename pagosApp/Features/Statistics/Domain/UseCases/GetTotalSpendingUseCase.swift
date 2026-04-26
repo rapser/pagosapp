@@ -9,6 +9,7 @@
 import Foundation
 
 /// Calculate total spending for filtered payments
+@MainActor
 final class GetTotalSpendingUseCase {
     private static let logCategory = "GetTotalSpendingUseCase"
 

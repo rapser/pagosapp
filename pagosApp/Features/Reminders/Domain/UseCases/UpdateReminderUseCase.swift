@@ -8,6 +8,7 @@
 
 import Foundation
 
+@MainActor
 final class UpdateReminderUseCase {
     private let repository: ReminderRepositoryProtocol
 

@@ -9,6 +9,7 @@
 import Foundation
 
 /// Delete user profile from local storage (called on logout)
+@MainActor
 final class DeleteLocalProfileUseCase {
     private static let logCategory = "DeleteLocalProfileUseCase"
 

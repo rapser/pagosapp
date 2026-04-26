@@ -9,7 +9,8 @@
 import Foundation
 
 /// Protocol for accessing payment history data
-protocol HistoryRepositoryProtocol {
+protocol HistoryRepositoryProtocol: Sendable {
     /// Get payment history with optional filter
+    @MainActor
     func getPaymentHistory(filter: PaymentHistoryFilter) async throws -> [Payment]
 }

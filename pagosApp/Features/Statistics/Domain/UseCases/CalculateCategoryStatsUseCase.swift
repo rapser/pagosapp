@@ -9,6 +9,7 @@
 import Foundation
 
 /// Calculate spending statistics grouped by category
+@MainActor
 final class CalculateCategoryStatsUseCase {
     private static let logCategory = "CalculateCategoryStatsUseCase"
 

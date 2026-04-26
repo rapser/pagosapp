@@ -9,6 +9,7 @@
 import Foundation
 
 /// Use Case for clearing local database
+@MainActor
 final class ClearLocalDatabaseUseCase {
     private let syncRepository: SettingsSyncRepositoryProtocol
 

@@ -10,7 +10,8 @@ import Foundation
 
 /// Implementation of HistoryRepositoryProtocol
 /// Delegates to PaymentRepository but adds history-specific logic
-final class HistoryRepositoryImpl: HistoryRepositoryProtocol {
+@MainActor
+final class HistoryRepositoryImpl: HistoryRepositoryProtocol, @unchecked Sendable {
     private static let logCategory = "HistoryRepositoryImpl"
 
     private let paymentRepository: PaymentRepositoryProtocol
