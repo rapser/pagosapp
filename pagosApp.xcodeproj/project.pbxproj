@@ -49,6 +49,8 @@
 		};
 		464D597E2E6B405A00DE10FF /* pagosAppTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = pagosAppTests;
 			sourceTree = "<group>";
 		};
@@ -137,8 +139,6 @@
 				464D597E2E6B405A00DE10FF /* pagosAppTests */,
 			);
 			name = pagosAppTests;
-			packageProductDependencies = (
-			);
 			productName = pagosAppTests;
 			productReference = 464D597D2E6B405A00DE10FF /* pagosAppTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -391,6 +391,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 202604.26.1833;
 				DEVELOPMENT_TEAM = 8AJBS923B3;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -429,6 +430,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 202604.26.1833;
 				DEVELOPMENT_TEAM = 8AJBS923B3;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -463,7 +465,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202604.26.1607;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 8AJBS923B3;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
@@ -482,7 +484,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 202604.26.1607;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 8AJBS923B3;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;

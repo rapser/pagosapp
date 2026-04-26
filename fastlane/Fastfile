@@ -2,6 +2,13 @@
 
 require "fileutils"
 require "dotenv"
+require "xcodeproj" # stamp sin agvtool: increment_build_number usa agvtool y puede reescribir / normalizar y no actualiza el target de la app si el CF vive en xcconfig.
+
+# Sin UTF-8, Xcodeproj puede fallar al abrir pbx: "invalid byte sequence in US-ASCII" (CI o shell sin LANG).
+if defined?(Encoding)
+  Encoding.default_external = Encoding::UTF_8
+  Encoding.default_internal = Encoding::UTF_8
+end
 
 # Raíz del repo (padre de fastlane/)
 repo_root = File.expand_path("..", __dir__)
@@ -69,22 +76,38 @@ platform :ios do
   end
 
   private_lane :print_app_version_summary do
-    ver = get_version_number(xcodeproj: PROJECT, target: SCHEME)
-    build = get_build_number(xcodeproj: PROJECT)
+    project_path = File.join(repo_root, PROJECT)
+    project = Xcodeproj::Project.open(project_path)
+    target = project.targets.find { |t| t.name == SCHEME }
+    unless target
+      UI.important("No se encontró target #{SCHEME} para el resumen de versión.")
+      return
+    end
+    rel = target.build_configurations.find { |c| c.name == "Release" } || target.build_configurations.first
+    ver = rel.build_settings["MARKETING_VERSION"] || "?"
+    build = rel.build_settings["CURRENT_PROJECT_VERSION"] || "?"
     UI.success("Versión generada: #{ver}(#{build})")
   end
 
+  # Escribe el stamp solo en el target de la app (p. ej. pagosApp). No usar increment_build_number:
+  # usa `agvtool` y (a) no pisa CURRENT_PROJECT_VERSION que viene del xcconfig del target de la app,
+  # (b) puede tocar / normalizar otras cosas; (c) get_build_number lee agvtool y el terminal mostraba
+  # 202604.xx… mientras el IPA llevaba otro CFBundleVersion (p. ej. 14 dígitos YYYYMMDDHHmmss).
   private_lane :stamp_build_timestamp do
     if ENV["SKIP_AUTO_INCREMENT_BUILD"] == "1"
       UI.message("Saltando auto-incremento de build (SKIP_AUTO_INCREMENT_BUILD=1)")
     else
       # YYYYMM.DD.HHmm (ej. 202604.16.1019): año-mes, día, hora y minuto.
       stamp = Time.now.strftime("%Y%m.%d.%H%M")
-      increment_build_number(
-        build_number: stamp,
-        xcodeproj: PROJECT
-      )
-      UI.important("CFBundleVersion (build) = #{stamp} — se actualizó #{PROJECT}")
+      project_path = File.join(repo_root, PROJECT)
+      project = Xcodeproj::Project.open(project_path)
+      app_target = project.targets.find { |t| t.name == SCHEME }
+      UI.user_error!("No se encontro el target #{SCHEME} en #{PROJECT}. Revisa SCHEME en el Fastfile.") unless app_target
+      app_target.build_configurations.each do |config|
+        config.build_settings["CURRENT_PROJECT_VERSION"] = stamp
+      end
+      project.save
+      UI.important("CFBundleVersion (build) = #{stamp} — CURRENT_PROJECT_VERSION en target #{SCHEME} (pbx, todas las configs)")
     end
   end
 

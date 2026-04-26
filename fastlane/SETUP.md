@@ -97,7 +97,7 @@ En **CI**, si no quieres fichero en disco, puedes usar **`APP_STORE_CONNECT_API_
 
 - El **build** (`CFBundleVersion`) se estampa con formato **`YYYYMM.DD.HHmm`** (ej. `202604.17.2112`). Detalle técnicos y flujo *desde cero* en [**`docs/build-number-xcode-fastlane.md`**](../docs/build-number-xcode-fastlane.md).
 - Un **Archive en Xcode** (Release) aplica el formato: fase al final del target **Set CFBundleVersion in .app (Release)**, que escribe el `Info.plist` del `.app` con **PlistBuddy** (el script está **inline** en el proyecto, no hace falta un `.sh` separado; **Debug** no modifica el build).
-- En **Fastlane**, `gym` se invoca con `SKIP_XCODE_STAMP=1` para no volver a parchear el plist después de `stamp_build_timestamp` / `increment_build_number`.
+- En **Fastlane**, `stamp_build_timestamp` escribe `CURRENT_PROJECT_VERSION` en el **target de la app** vía `xcodeproj` (no `agvtool` / `increment_build_number`, para alinear el IPA con el resumen; ver documentación enlace arriba). Luego `gym` con `SKIP_XCODE_STAMP=1` no vuelve a parchear el plist.
 - Al terminar lanes relevantes se muestra **`Versión generada: marketing(build)`**.
 - Tras elegir opción en el **menú**, se imprime el **tiempo total** (segundos si &lt; 60 s; si no, **minutos enteros hacia arriba**).
 

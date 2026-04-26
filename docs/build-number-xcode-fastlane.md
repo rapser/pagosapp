@@ -14,7 +14,7 @@ Esta guía documenta el enfoque usado en **PagosApp** para que el **build** (`CF
 | Origen | Cómo se fija el build |
 |--------|------------------------|
 | **Solo Xcode** (Archive/Release) | Fase de script al final: `PlistBuddy` en `.../TúApp.app/Info.plist` |
-| **Fastlane** (antes de `gym`) | `increment_build_number` pone el mismo stamp en el **.xcodeproj**; `gym` pasa `SKIP_XCODE_STAMP=1` y la fase de Xcode **no** vuelve a parchar el plist (evita doble criterio) |
+| **Fastlane** (antes de `gym`) | `stamp_build_timestamp` pone `CURRENT_PROJECT_VERSION` en el target de la app (p. ej. vía `xcodeproj`); `gym` pasa `SKIP_XCODE_STAMP=1` y la fase de Xcode **no** vuelve a parchar el plist (evita doble criterio) |
 
 Formato: **`%Y%m.%d.%H%M` → `YYYYMM.DD.HHmm`**.
 
@@ -96,7 +96,8 @@ $(DERIVED_FILE_DIR)/cfbundleversion.stamp
 
 - `stamp_build_timestamp` (privada) hace:
   - `Time.now.strftime("%Y%m.%d.%H%M")` (mismo patrón que arriba)
-  - `increment_build_number(build_number: stamp, xcodeproj: PROJECT)` — esto **sí** modifica el **.xcodeproj** en disco **antes** de compilar, lo cual en Fastlane es el flujo soportado.
+  - Escribe **`CURRENT_PROJECT_VERSION`** en el **target de la app** (p. ej. `pagosApp`) con la gema **`xcodeproj`**, y guarda el `.pbxproj`.
+- **No** se usa `increment_build_number` de Fastlane: por debajo invoca **`agvtool`**, que puede reescribir versiones de forma distinta (p. ej. otro formato en el IPA) y, si el build del target vive en **xcconfig** sin override en el pbx, el **número impreso** al final (`agvtool` / `get_build_number`) no coincidía con el **CFBundleVersion** de la app en TestFlight.
 
 ### 2.2 Envolver `gym` con `SKIP_XCODE_STAMP`
 
@@ -123,6 +124,10 @@ $(DERIVED_FILE_DIR)/cfbundleversion.stamp
 
 - `SKIP_AUTO_INCREMENT_BUILD=1` (entorno) evita el incremento en `stamp_build_timestamp` y, en Xcode, la fase de `Plist` también hace *early exit*.
 
+### 2.5 Locale (UTF-8) al abrir el proyecto con `xcodeproj`
+
+- Si al ejecutar Fastlane falla con `invalid byte sequence in US-ASCII` al abrir el `.pbxproj`, fija `LANG` / `LC_ALL` a `en_US.UTF-8` (o el equivalente UTF-8) en el entorno, como recomienda la documentación de Fastlane. En el `Fastfile` de este repo se fuerza `Encoding.default_*` a UTF-8 para reducir el fallo en CI o terminales sin locale.
+
 ---
 
 ## 3) Añadir esto a un **proyecto iOS vacío** (checklist mínima)
@@ -133,7 +138,7 @@ $(DERIVED_FILE_DIR)/cfbundleversion.stamp
 4. Añadir `outputFileListPaths` apuntando a ese **.xcfilelist**.
 5. Poner `ENABLE_USER_SCRIPT_SANDBOXING` = `NO` en el target (app) si el sandbox impide tocar el `.app` o `DERIVED` en build.
 6. (Opcional) `xcconfig` con fallback `CURRENT_PROJECT_VERSION` para *General* / debug.
-7. **Fastlane:** `stamp` con `increment_build_number` y `gym` con `SKIP_XCODE_STAMP=1` como en el `Fastfile` de este repo.
+7. **Fastlane:** `stamp` poniendo `CURRENT_PROJECT_VERSION` en el **target** de la app (p. ej. vía `xcodeproj` como en este repo) y `gym` con `SKIP_XCODE_STAMP=1`.
 8. Probar: **Xcode** solo → Archive; **Fastlane** → `ipa_app_store` o `release_app_store_connect`.
 
 ---
