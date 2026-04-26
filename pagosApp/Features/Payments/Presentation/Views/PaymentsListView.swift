@@ -4,30 +4,6 @@ struct PaymentsListView: View {
     @Environment(AppDependencies.self) private var dependencies
     @State private var showingAddPaymentSheet = false
 
-    init() {
-        UISegmentedControl.appearance().backgroundColor = UIColor(named: "SegmentedBackground")
-
-        UISegmentedControl.appearance().selectedSegmentTintColor = UIColor { traitCollection in
-            if traitCollection.userInterfaceStyle == .dark {
-                return UIColor(named: "AppPrimary") ?? .systemBlue
-            } else {
-                return .white
-            }
-        }
-
-        UISegmentedControl.appearance().setTitleTextAttributes([.foregroundColor: UIColor.white], for: .normal)
-
-        UISegmentedControl.appearance().setTitleTextAttributes([
-            .foregroundColor: UIColor { traitCollection in
-                if traitCollection.userInterfaceStyle == .dark {
-                    return .white
-                } else {
-                    return UIColor(named: "AppPrimary") ?? .systemBlue
-                }
-            }
-        ], for: .selected)
-    }
-
     var body: some View {
         PaymentsListContentWrapper(showingAddPaymentSheet: $showingAddPaymentSheet)
             .environment(dependencies)
