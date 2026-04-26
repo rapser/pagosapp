@@ -2,8 +2,8 @@
 
 > Aplicación iOS para **pagos recurrentes** y **recordatorios**, con Clean Architecture, Supabase, SwiftData y sincronización offline-first.
 
-[![iOS](https://img.shields.io/badge/iOS-18.5%2B-blue.svg)](https://www.apple.com/ios/)
-[![Swift](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
+[![iOS](https://img.shields.io/badge/iOS-18.0%2B-blue.svg)](https://www.apple.com/ios/)
+[![Swift](https://img.shields.io/badge/Swift-5.0-orange.svg)](https://swift.org)
 [![Xcode](https://img.shields.io/badge/Xcode-16.4%2B-blue.svg)](https://developer.apple.com/xcode/)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean-green.svg)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 [![Version](https://img.shields.io/badge/Version-1.0.0(20)-blue.svg)](CHANGELOG.md)
@@ -20,7 +20,7 @@
 
 ## Documentación
 
-La guía larga (producto, arquitectura, stack, instalación, estructura, tests, seguridad y contribución) está en **[`docs/README.md`](docs/README.md)** con enlaces a cada sección.
+La guía larga (producto, arquitectura, stack, instalación, estructura, tests, seguridad y contribución) está en **[`docs/README.md`](docs/README.md)** con enlaces a cada sección. Los requisitos de **Swift** y **iOS** de los badges coinciden con el target de Xcode (`SWIFT_VERSION`, `IPHONEOS_DEPLOYMENT_TARGET`); **Supabase Swift** se fija vía Swift Package Manager (ver `Package.resolved`).
 
 ## CI, Fastlane y secretos
 

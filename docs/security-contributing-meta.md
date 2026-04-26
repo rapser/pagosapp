@@ -26,7 +26,7 @@
 
 ### Estándares de Código
 
-- ✅ Swift 6 strict concurrency
+- ✅ Swift 5 con async/await; aislamiento con `@MainActor` donde aplica; Sendable en piezas compartidas cuando el compilador lo exige
 - ✅ Clean Architecture (Domain/Data/Presentation)
 - ✅ @Observable para state management
 - ✅ async/await (no Combine)
@@ -42,12 +42,12 @@ Ver [CHANGELOG.md](../CHANGELOG.md) para historial completo de cambios.
 
 ### Highlights
 
-- **2026-04 (v1.0.0 build 20+)**: GitHub Actions (build + SwiftLint), ajustes de calidad de código, pinning SSL con API moderna (`SecTrustCopyCertificateChain`), consola más silenciosa en rutas calientes
+- **2026-04 (v1.0.0 build 20)**: GitHub Actions (build + SwiftLint), pinning SSL con API moderna (`SecTrustCopyCertificateChain`), consola más silenciosa en rutas calientes; README y documentación bajo `docs/` alineados con Swift 5, iOS 18.0+ y dependencias; retirada la referencia a `TECHNICAL_AUDIT.md`
 - **2026-03 (v1.0.0 build 15)**: Recordatorios (módulo completo, sync Supabase, notificaciones configurables), i18n (ES/EN/PT) ampliado, Calendario con pagos + recordatorios, Historial/Estadísticas desde Ajustes
 - **2026-01 (v1.0.0 build 14)**: EventBus type-safe + Migración completa de NotificationCenter + Clean Architecture 100%
 - **2026-01 (v1.0.0 build 11)**: Edición de pagos agrupados + Sincronización con calendario + Notificaciones locales restauradas
-- **2026-01 (v1.0.0 build 10)**: Clean Architecture completa + Entity renaming + Swift 6 concurrency
-- **2025-01**: Modernización completa iOS 18.5 + Swift 6
+- **2026-01 (v1.0.0 build 10)**: Clean Architecture completa + Entity naming + refuerzo de concurrencia
+- **2025-01**: Modernización de UI (iOS 18+) y stack actual
 - **2024-11**: Módulo de autenticación con patrones de diseño
 - **2024-10**: Release inicial v1.0
 

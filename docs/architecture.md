@@ -1,5 +1,7 @@
 # Arquitectura
 
+> **Versión de toolchain:** el target de la app usa **Swift 5** en Xcode. Donde el texto menciona compatibilidad con *Swift 6* o *strict concurrency*, se refiere al **diseño** (p. ej. `Sendable`, `@MainActor`) o a notas históricas, no a que el proyecto esté fijado a Swift 6 en `SWIFT_VERSION`.
+
 ## 🏗 Arquitectura
 
 ### Clean Architecture al 100%

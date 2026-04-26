@@ -2,9 +2,9 @@
 
 ## 📋 Requisitos
 
-- **iOS**: 18.5 o superior
+- **iOS**: 18.0 o superior (deployment mínimo del target de la app)
 - **Xcode**: 16.4 o superior
-- **Swift**: 6.0
+- **Swift**: 5.0 (como en `SWIFT_VERSION` del target en Xcode)
 - **macOS**: Sequoia 15.0+ (desarrollo)
 - **Cuenta Supabase**: [Crear gratis](https://supabase.com)
 - **SwiftLint** (opcional, local): `brew install swiftlint` — mismo chequeo que en CI
@@ -45,8 +45,8 @@ open pagosApp.xcodeproj
 ```
 
 **Xcode instalará automáticamente**:
-- ✅ Supabase Swift SDK (v2.5.1+)
-- ✅ Todas las dependencias necesarias
+- ✅ Supabase Swift SDK (versión fijada en `Package.resolved`, p. ej. 2.31.x)
+- ✅ Todas las dependencias transitivas
 
 ### 4️⃣ Configurar Build Settings
 

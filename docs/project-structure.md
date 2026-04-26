@@ -10,28 +10,15 @@ pagosApp/
 │   ├── Configuration/                       # SupabaseClientFactory, SSL pinning, ModelContainer, AppConfiguration
 │   └── DI/                                  # AppDependencies y contenedores por feature
 │
-├── Features/                                # ✅ Organización por feature
-│   ├── Auth/
-│   │   ├── Domain/
-│   │   │   ├── Entities/                    # User, AuthSession
-│   │   │   ├── Repositories/               # AuthRepositoryProtocol
-│   │   │   ├── UseCases/                   # LoginUseCase, RegisterUseCase, etc.
-│   │   │   └── Errors/                     # AuthError
-│   │   ├── Data/
-│   │   │   ├── DTOs/
-│   │   │   │   ├── Remote/                 # SupabaseAuthDTO
-│   │   │   │   └── Local/                  # KeychainAuthDTO
-│   │   │   ├── Mappers/                    # AuthMapper
-│   │   │   ├── Repositories/               # AuthRepositoryImpl
-│   │   │   └── DataSources/
-│   │   │       ├── Remote/                 # SupabaseAuthDataSource
-│   │   │       └── Local/                  # KeychainAuthDataSource
-│   │   └── Presentation/
-│   │       ├── ViewModels/                 # LoginViewModel, RegisterViewModel
-│   │       ├── Views/                      # LoginView, RegisterView
-│   │       ├── Coordinators/               # SessionCoordinator
-│   │       └── DI/                         # AuthDependencyContainer
-│   │
+├── Auth/                                    # Autenticación (Clean Architecture; no está bajo `Features/`)
+│   ├── Domain/                              # Entidades, UseCases, repositorio protocolo, errores
+│   ├── Data/                                # DTOs, mappers, repositorio impl, data sources (Keychain, Supabase)
+│   ├── Presentation/                        # Views, ViewModels, SessionCoordinator
+│   └── DI/                                  # AuthDependencyContainer
+│
+├── Core/                                    # EventBus, dominio compartido (eventos, logging, sync ports)
+│
+├── Features/                                # Resto de features
 │   ├── Payments/
 │   │   ├── Domain/
 │   │   │   ├── Entities/                   # Payment, Currency, Category

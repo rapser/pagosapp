@@ -5,12 +5,12 @@
 | Documento | Contenido |
 |-----------|-----------|
 | [Visión y funcionalidades](product-overview.md) | Descripción del producto y listado de features |
-| [Arquitectura](architecture.md) | Clean Architecture, capas, DI, offline-first, EventBus, Swift 6 |
+| [Arquitectura](architecture.md) | Clean Architecture, capas, DI, offline-first, EventBus, concurrencia |
 | [Stack tecnológico](tech-stack.md) | Swift, SwiftUI, Supabase, CI, Fastlane, herramientas |
 | [Requisitos e instalación](setup.md) | Requisitos, Supabase, Xcode, SwiftLint, Fastlane |
 | [Estructura del repositorio](project-structure.md) | Árbol de carpetas `pagosApp/` y raíz |
 | [Testing](testing.md) | Cómo ejecutar tests y estado de la suite |
-| [Recursos adicionales](additional-resources.md) | Changelog, auditoría, ADRs, SQL, Config |
+| [Recursos adicionales](additional-resources.md) | Changelog, ADRs, SQL, Config |
 | [Seguridad, contribución y metadatos](security-contributing-meta.md) | Seguridad, flujo de contribución, changelog resumido, licencia, autor |
 
 Las carpetas `docs/adr/`, `docs/engineering/` y `docs/runbooks/` son enlaces lógicos para material de arquitectura y operación; créalas o restáuralas en el repo si aplica.

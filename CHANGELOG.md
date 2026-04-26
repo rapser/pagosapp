@@ -6,6 +6,17 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ---
 
+## [1.0.0] - Build 20 - 2026-04-26
+
+### Documentación
+
+- Eliminadas todas las referencias a `TECHNICAL_AUDIT.md` (no existía en el repositorio).
+- **README** y **docs** alineados con el estado del proyecto: **Swift 5.0** y **iOS 18.0+** según el target de Xcode; **Supabase Swift** descrito con referencia a `Package.resolved` (p. ej. 2.31.x).
+- **docs/project-structure.md**: árbol actualizado con `Auth/` y `Core/`; Auth ya no se lista bajo `Features/`.
+- **docs/tech-stack.md**, **docs/setup.md**, **docs/security-contributing-meta.md**, **docs/testing.md**, **docs/additional-resources.md** y **docs/README.md** (índice) revisados en la misma línea.
+
+---
+
 ## [1.0.0] - Build 15 - 2026-03-08
 
 ### Resumen
