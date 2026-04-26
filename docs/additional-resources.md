@@ -5,6 +5,7 @@ Enlaces útiles fuera de la guía principal. Algunas carpetas (`docs/adr/`, `doc
 ## 📚 Documentación adicional
 
 - **[CHANGELOG.md](../CHANGELOG.md)**: versión publicada, alcance funcional y técnico de PagosApp (ver también [`docs/product-overview.md`](product-overview.md))
+- **[test-priority-inventory.md](test-priority-inventory.md)**: prioridad de tests por capa
 - **[ADR](adr/)**: Decisiones de arquitectura (capas, sync, notificaciones, DI)
 - **[Ingeniería](engineering/)**: Contratos de coordinadores de sync, checklist de concurrencia
 - **[Runbooks](runbooks/)**: Operación de SSL pinning / certificados
