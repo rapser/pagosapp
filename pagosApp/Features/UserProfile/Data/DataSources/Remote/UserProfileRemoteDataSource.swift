@@ -9,7 +9,7 @@
 import Foundation
 
 /// Protocol for remote UserProfile operations
-protocol UserProfileRemoteDataSource {
+protocol UserProfileRemoteDataSource: Sendable {
     /// Fetch user profile from remote
     func fetchProfile(userId: UUID) async throws -> UserProfileDTO?
 

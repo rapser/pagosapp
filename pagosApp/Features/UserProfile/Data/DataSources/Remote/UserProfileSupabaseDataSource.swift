@@ -10,7 +10,7 @@ import Foundation
 import Supabase
 
 /// Supabase implementation for UserProfile remote operations
-final class UserProfileSupabaseDataSource: UserProfileRemoteDataSource {
+final class UserProfileSupabaseDataSource: UserProfileRemoteDataSource, @unchecked Sendable {
     private let client: SupabaseClient
     private let tableName = "user_profiles"
 
