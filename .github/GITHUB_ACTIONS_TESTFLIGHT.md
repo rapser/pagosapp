@@ -31,6 +31,7 @@ Opcional:
 | Secret | Descripción |
 |--------|-------------|
 | `FASTLANE_TEAM_ID` | Mismo **Team ID** que en `fastlane/Appfile` si hace falta forzarlo en CI. |
+En el workflow de TestFlight, **`Config/Secrets.template.xcconfig` se copia a `pagosApp/Config/Secrets.xcconfig`** (el fichero real no se commitea). Eso evita el error de *include* en `xcodebuild`/`gym`. No se inyecta Supabase vía `printf` desde secretos: un **JWT** en `.xcconfig` puede romper el build; si necesitas credenciales reales en el IPA, valora un secret con el **fichero completo** en Base64 o otra vía, fuera de este flujo básico.
 
 ---
 

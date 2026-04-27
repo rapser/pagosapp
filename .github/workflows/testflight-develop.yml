@@ -16,9 +16,11 @@ on:
       - "pagosAppTests/**"
       - "fastlane/**"
       - "pagosApp.xcodeproj/**"
+      - "Config/**"
       - "Gemfile"
       - "Gemfile.lock"
       - ".ruby-version"
+      - ".github/workflows/testflight-develop.yml"
   workflow_dispatch:
 
 concurrency:
@@ -46,6 +48,15 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
+
+      # SharedApp.xcconfig hace #include a este fichero; no se commitea (ver .gitignore).
+      # No reescribir con printf desde secretos: un JWT u caracteres raros pueden romper el .xcconfig
+      # y dejar de compilar. Los placeholders del template bastan para archive; Supabase en runtime se
+      # puede inyectar con otra estrategia si hace falta.
+      - name: Crear pagosApp/Config/Secrets.xcconfig desde template
+        run: |
+          set -euo pipefail
+          cp Config/Secrets.template.xcconfig pagosApp/Config/Secrets.xcconfig
 
       - name: Ruby + Bundler
         uses: ruby/setup-ruby@v1
@@ -123,6 +134,9 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Fastlane — release a TestFlight
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
         run: bundle exec fastlane release_app_store_connect
 
       - name: Diagnóstico de gym / xcodebuild (si falló)
@@ -152,3 +166,10 @@ jobs:
             grep -E "error: |xcodebuild: error|Code Sign|failed" -i "$f" 2>/dev/null | tail -40 || true
           done
           shopt -u nullglob
+      - name: Subir logs de gym (artefacto, si falló)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gym-logs
+          path: /Users/runner/Library/Logs/gym
+        continue-on-error: true
