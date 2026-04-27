@@ -160,6 +160,8 @@ platform :ios do
       skip_package_ipa: false,
       destination: "generic/platform=iOS"
     }
+    # En GitHub Actions el log se trunca: verbose ayuda a ver el fallo de xcodebuild en el job.
+    gym_args[:verbose] = true if ENV["GITHUB_ACTIONS"] == "true"
     gym_args[:export_options] = export_opts if export_opts
     ENV["SKIP_XCODE_STAMP"] = "1"
     begin
