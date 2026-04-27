@@ -9,18 +9,18 @@
 import Foundation
 import Supabase
 
-@MainActor
-final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol {
-    private let remoteDataSource: ReminderRemoteDataSource
-    private let localDataSource: ReminderLocalDataSource
-    private let supabaseClient: SupabaseClient
-    private let remoteMapper: ReminderRemoteDTOMapping
+/// Remote paths are `nonisolated`; SwiftData paths are `@MainActor` (Swift 6).
+final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol, @unchecked Sendable {
+    private nonisolated let remoteDataSource: any ReminderRemoteDataSource
+    private nonisolated let supabaseClient: SupabaseClient
+    private nonisolated let remoteMapper: any ReminderRemoteDTOMapping
+    private let localDataSource: any ReminderLocalDataSource
 
     init(
-        remoteDataSource: ReminderRemoteDataSource,
-        localDataSource: ReminderLocalDataSource,
+        remoteDataSource: any ReminderRemoteDataSource,
+        localDataSource: any ReminderLocalDataSource,
         supabaseClient: SupabaseClient,
-        remoteMapper: ReminderRemoteDTOMapping
+        remoteMapper: any ReminderRemoteDTOMapping
     ) {
         self.remoteDataSource = remoteDataSource
         self.localDataSource = localDataSource
@@ -28,13 +28,14 @@ final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol {
         self.remoteMapper = remoteMapper
     }
 
-    func getCurrentUserId() async throws -> UUID {
+    nonisolated func getCurrentUserId() async throws -> UUID {
         guard let userId = supabaseClient.auth.currentUser?.id else {
             throw ReminderSyncError.notAuthenticated
         }
         return userId
     }
 
+    @MainActor
     func uploadReminders(_ reminders: [Reminder], userId: UUID) async throws {
         let dtos = reminders.map { remoteMapper.toRemoteDTO($0, userId: userId) }
         try await remoteDataSource.upsertAll(dtos, userId: userId)
@@ -56,15 +57,16 @@ final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol {
         }
     }
 
-    func downloadReminders(userId: UUID) async throws -> [Reminder] {
+    nonisolated func downloadReminders(userId: UUID) async throws -> [Reminder] {
         let dtos = try await remoteDataSource.fetchAll(userId: userId)
         return remoteMapper.toDomain(dtos)
     }
 
-    func syncDeletion(reminderId: UUID) async throws {
+    nonisolated func syncDeletion(reminderId: UUID) async throws {
         try await remoteDataSource.delete(id: reminderId)
     }
 
+    @MainActor
     func getPendingReminders() async throws -> [Reminder] {
         let all = try await localDataSource.fetchAll()
         return all.filter { r in
@@ -72,11 +74,13 @@ final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol {
         }
     }
 
+    @MainActor
     func getPendingSyncCount() async throws -> Int {
         let pending = try await getPendingReminders()
         return pending.count
     }
 
+    @MainActor
     func updateSyncStatus(reminderId: UUID, status: ReminderSyncStatus) async throws {
         guard let reminder = try await localDataSource.fetch(id: reminderId) else { return }
         let updated = Reminder(

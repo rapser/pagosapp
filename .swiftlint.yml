@@ -1,12 +1,12 @@
-# SwiftLint — reglas permisivas iniciales; endurecer con el tiempo.
+# SwiftLint — reglas permisivas iniciales; endurecer con el tiempo (phased).
 included:
   - pagosApp
 excluded:
   - pagosApp.xcodeproj
   - pagosApp/Shared/L10n/L10n.swift
-line_length: 220
+line_length: 200
 file_length:
-  warning: 600
+  warning: 550
   error: 900
 function_body_length:
   warning: 80

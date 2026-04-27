@@ -9,6 +9,7 @@
 import Foundation
 
 /// Use case for full payment synchronization
+@MainActor
 final class SyncPaymentsUseCase {
     private let uploadUseCase: UploadLocalChangesUseCase
     private let downloadUseCase: DownloadRemoteChangesUseCase

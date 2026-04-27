@@ -8,6 +8,7 @@
 
 import Foundation
 
+@MainActor
 final class SyncRemindersUseCase {
     private let uploadUseCase: UploadReminderChangesUseCase
     private let downloadUseCase: DownloadReminderChangesUseCase

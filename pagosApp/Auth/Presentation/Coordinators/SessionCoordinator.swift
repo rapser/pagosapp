@@ -135,7 +135,7 @@ final class SessionCoordinator {
     }
 
     private func scheduleInitialRemoteVerification() {
-        Task {
+        Task { @MainActor in
             guard !hasPerformedInitialCheck else {
                 return
             }
@@ -203,8 +203,8 @@ final class SessionCoordinator {
         )
 
         // Use specialized UseCase for sync coordination (non-blocking)
-        Task.detached { @MainActor in
-            await self.coordinateSyncUseCase.handlePostLoginSync()
+        Task { @MainActor in
+            await coordinateSyncUseCase.handlePostLoginSync()
         }
     }
 

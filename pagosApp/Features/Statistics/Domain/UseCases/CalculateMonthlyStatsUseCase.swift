@@ -9,6 +9,7 @@
 import Foundation
 
 /// Calculate spending statistics grouped by month (last 6 months)
+@MainActor
 final class CalculateMonthlyStatsUseCase {
     private static let logCategory = "CalculateMonthlyStatsUseCase"
 

@@ -43,7 +43,7 @@ extension BidirectionalMapper {
 
 /// Centralized registry providing access to all app mappers
 /// Use this to avoid creating mappers in multiple places
-final class MapperRegistry {
+final class MapperRegistry: @unchecked Sendable {
     static let shared = MapperRegistry()
     private init() {}
     

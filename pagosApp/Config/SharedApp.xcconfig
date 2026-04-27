@@ -1,0 +1,4 @@
+// Base del target. "Current version" 20: puede verse en la pestaña General; el .ipa / Archive
+// usa YYYYMM.DD.HHmm puesto al final en Info.plist (fase "Set CFBundleVersion in .app").
+#include "Secrets.xcconfig"
+CURRENT_PROJECT_VERSION = 20

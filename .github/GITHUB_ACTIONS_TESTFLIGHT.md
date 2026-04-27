@@ -31,6 +31,7 @@ Opcional:
 | Secret | Descripción |
 |--------|-------------|
 | `FASTLANE_TEAM_ID` | Mismo **Team ID** que en `fastlane/Appfile` si hace falta forzarlo en CI. |
+En el workflow de TestFlight, **`Config/Secrets.template.xcconfig` se copia a `pagosApp/Config/Secrets.xcconfig`** (el fichero real no se commitea). Eso evita el error de *include* en `xcodebuild`/`gym`. No se inyecta Supabase vía `printf` desde secretos: un **JWT** en `.xcconfig` puede romper el build; si necesitas credenciales reales en el IPA, valora un secret con el **fichero completo** en Base64 o otra vía, fuera de este flujo básico.
 
 ---
 
@@ -45,7 +46,7 @@ En GitHub Actions el llavero está vacío: hace falta **certificado Apple Distri
 | `KEYCHAIN_PASSWORD` | Cualquier cadena fuerte (solo la usa el job para crear un llavero temporal en el runner). |
 | `PROVISIONING_PROFILE_BASE64` | El fichero **`.mobileprovision`** del perfil **App Store** (descargado del portal o de Xcode), en Base64 una línea: `base64 < MyApp_AppStore.mobileprovision \| tr -d '\n'`. |
 
-Si **falta alguno** de estos cuatro, el paso de importación se **omite** y el job intentará Fastlane igualmente; **`gym` suele fallar** por firma hasta que los configures.
+Si **falta alguno** de estos cuatro, el job **falla de inmediato** con un mensaje claro (antes se omitía la importación y `gym` fallaba con un error poco obvio).
 
 Alternativa profesional: usar [**fastlane match**](https://docs.fastlane.tools/actions/match/) con un repo cifrado y secretos `MATCH_PASSWORD` / `MATCH_GIT_BASIC_AUTHORIZATION` (requiere cambiar el `Fastfile` para llamar a `match` antes de `gym`).
 

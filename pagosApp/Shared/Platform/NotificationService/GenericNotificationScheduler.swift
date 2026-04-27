@@ -45,7 +45,8 @@ enum TimeOfDay: CaseIterable {
 }
 
 /// Generic notification scheduler that eliminates duplication
-final class GenericNotificationScheduler {
+@MainActor
+final class GenericNotificationScheduler: @unchecked Sendable {
     private static let logCategory = "GenericNotificationScheduler"
 
     private let log: DomainLogWriter

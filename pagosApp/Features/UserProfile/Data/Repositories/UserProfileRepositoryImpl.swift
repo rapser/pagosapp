@@ -1,31 +1,28 @@
 //
 //  UserProfileRepositoryImpl.swift
-//  pagosApp
 //
 //  Repository implementation using DataSources and Mappers
-//  Clean Architecture: Data layer - Repository implementation
 //
 
 import Foundation
 import SwiftData
 
-/// Repository implementation for UserProfile
-@MainActor
-final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
-    private static let logCategory = "UserProfileRepositoryImpl"
+/// Remote operations are `nonisolated`; SwiftData paths are `@MainActor` (Swift 6).
+final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol, @unchecked Sendable {
+    private nonisolated static let logCategory = "UserProfileRepositoryImpl"
 
-    private let remoteDataSource: UserProfileRemoteDataSource
-    private let localDataSource: UserProfileLocalDataSource
-    private let domainMapper: UserProfileDomainMapping
-    private let remoteDTOMapper: UserProfileRemoteDTOMapping
-    private let log: DomainLogWriter
+    private nonisolated let remoteDataSource: any UserProfileRemoteDataSource
+    private nonisolated let remoteDTOMapper: any UserProfileRemoteDTOMapping
+    private nonisolated let log: any DomainLogWriter
+    private let localDataSource: any UserProfileLocalDataSource
+    private let domainMapper: any UserProfileDomainMapping
 
     init(
-        remoteDataSource: UserProfileRemoteDataSource,
-        localDataSource: UserProfileLocalDataSource,
-        domainMapper: UserProfileDomainMapping,
-        remoteDTOMapper: UserProfileRemoteDTOMapping,
-        log: DomainLogWriter
+        remoteDataSource: any UserProfileRemoteDataSource,
+        localDataSource: any UserProfileLocalDataSource,
+        domainMapper: any UserProfileDomainMapping,
+        remoteDTOMapper: any UserProfileRemoteDTOMapping,
+        log: any DomainLogWriter
     ) {
         self.remoteDataSource = remoteDataSource
         self.localDataSource = localDataSource
@@ -34,7 +31,7 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
         self.log = log
     }
 
-    func fetchProfile(userId: UUID) async -> Result<UserProfile, UserProfileError> {
+    nonisolated func fetchProfile(userId: UUID) async -> Result<UserProfile, UserProfileError> {
         do {
             guard let profileDTO = try await remoteDataSource.fetchProfile(userId: userId) else {
                 return .failure(.profileNotFound)
@@ -47,7 +44,7 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
         }
     }
 
-    func updateProfile(_ profile: UserProfile) async -> Result<UserProfile, UserProfileError> {
+    nonisolated func updateProfile(_ profile: UserProfile) async -> Result<UserProfile, UserProfileError> {
         do {
             let profileDTO = remoteDTOMapper.toRemoteDTO(profile)
             try await remoteDataSource.updateProfile(profileDTO)
@@ -58,62 +55,42 @@ final class UserProfileRepositoryImpl: UserProfileRepositoryProtocol {
         }
     }
 
-    // MARK: - Local Operations
+    // MARK: - Local (SwiftData on main actor)
 
+    @MainActor
     func getLocalProfile() async -> Result<UserProfile?, UserProfileError> {
-        return await _getLocalProfile()
-    }
-
-    func saveLocalProfile(_ profile: UserProfile) async -> Result<Void, UserProfileError> {
-        let result = await _saveLocalProfile(profile)
-        if case .success = result {
-            NotificationCenter.default.post(name: NSNotification.Name("UserProfileDidUpdate"), object: nil)
-        }
-        return result
-    }
-
-    func deleteLocalProfile() async -> Result<Void, UserProfileError> {
-        return await _deleteLocalProfile()
-    }
-
-    // MARK: - Private @MainActor methods for SwiftData operations
-
-    private func _getLocalProfile() async -> Result<UserProfile?, UserProfileError> {
         do {
             let profileDTOs = try await localDataSource.fetchAll()
             let profileDomain = profileDTOs.first.map { domainMapper.toDomain($0) }
             return .success(profileDomain)
-
         } catch {
             log.error(L10n.Log.Profile.fetchLocalFailed(error.localizedDescription), category: Self.logCategory)
             return .failure(.fetchFailed(error.localizedDescription))
         }
     }
 
-    private func _saveLocalProfile(_ profile: UserProfile) async -> Result<Void, UserProfileError> {
+    @MainActor
+    func saveLocalProfile(_ profile: UserProfile) async -> Result<Void, UserProfileError> {
         do {
-            // Delete existing profiles (single profile per user)
             let existingProfiles = try await localDataSource.fetchAll()
             if !existingProfiles.isEmpty {
                 try await localDataSource.deleteAll(existingProfiles)
             }
-
-            // Convert Domain -> LocalDTO and save
             let profileDTO = domainMapper.toLocalDTO(profile)
             try await localDataSource.save(profileDTO)
+            NotificationCenter.default.post(name: NSNotification.Name("UserProfileDidUpdate"), object: nil)
             return .success(())
-
         } catch {
             log.error(L10n.Log.Profile.saveLocalFailed(error.localizedDescription), category: Self.logCategory)
             return .failure(.saveFailed(error.localizedDescription))
         }
     }
 
-    private func _deleteLocalProfile() async -> Result<Void, UserProfileError> {
+    @MainActor
+    func deleteLocalProfile() async -> Result<Void, UserProfileError> {
         do {
             try await localDataSource.clear()
             return .success(())
-
         } catch {
             log.error(L10n.Log.Profile.deleteLocalFailed(error.localizedDescription), category: Self.logCategory)
             return .failure(.deleteFailed(error.localizedDescription))

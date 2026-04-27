@@ -8,6 +8,7 @@
 
 import Foundation
 
+@MainActor
 final class UploadReminderChangesUseCase {
     private static let logCategory = "UploadReminderChangesUseCase"
 

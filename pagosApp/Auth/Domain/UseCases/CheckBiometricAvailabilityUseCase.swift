@@ -10,11 +10,13 @@ import Foundation
 import LocalAuthentication
 
 /// Use case to check biometric availability and settings
+@MainActor
 protocol CheckBiometricAvailabilityUseCaseProtocol {
     func execute() async -> Bool
 }
 
 /// Implementation of biometric availability check
+@MainActor
 final class CheckBiometricAvailabilityUseCase: CheckBiometricAvailabilityUseCaseProtocol {
     
     func execute() async -> Bool {

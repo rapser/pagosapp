@@ -2,119 +2,86 @@
 //  PaymentRepositoryImpl.swift
 //  pagosApp
 //
-//  Clean implementation of PaymentRepositoryProtocol
+//  Clean implementation of PaymentRepository using DataSources and Mappers
 //  Clean Architecture - Data Layer
 //
 
 import Foundation
 
-/// Clean implementation of PaymentRepository using DataSources and Mappers
-final class PaymentRepositoryImpl: PaymentRepositoryProtocol {
-    private let remoteDataSource: PaymentRemoteDataSource
-    private let localDataSource: PaymentLocalDataSource
-    private let remoteDTOMapper: PaymentRemoteDTOMapping
+/// Supabase (remote) and SwiftData (local) share one façade; remote paths are `nonisolated` for Swift 6, local paths `@MainActor`.
+final class PaymentRepositoryImpl: PaymentRepositoryProtocol, @unchecked Sendable {
+    private nonisolated let remoteDataSource: any PaymentRemoteDataSource
+    private let localDataSource: any PaymentLocalDataSource
 
     init(
-        remoteDataSource: PaymentRemoteDataSource,
-        localDataSource: PaymentLocalDataSource,
-        remoteDTOMapper: PaymentRemoteDTOMapping
+        remoteDataSource: any PaymentRemoteDataSource,
+        localDataSource: any PaymentLocalDataSource
     ) {
         self.remoteDataSource = remoteDataSource
         self.localDataSource = localDataSource
-        self.remoteDTOMapper = remoteDTOMapper
     }
 
-    // MARK: - Remote Operations
+    // MARK: - Remote Operations (nonisolated — Supabase client is used asynchronously)
 
-    func fetchAllPayments(userId: UUID) async throws -> [PaymentDTO] {
-        return try await remoteDataSource.fetchAll(userId: userId)
+    nonisolated func fetchAllPayments(userId: UUID) async throws -> [PaymentDTO] {
+        try await remoteDataSource.fetchAll(userId: userId)
     }
 
-    func upsertPayment(userId: UUID, payment: PaymentDTO) async throws {
+    nonisolated func upsertPayment(userId: UUID, payment: PaymentDTO) async throws {
         try await remoteDataSource.upsert(payment, userId: userId)
     }
 
-    func upsertPayments(userId: UUID, payments: [PaymentDTO]) async throws {
+    nonisolated func upsertPayments(userId: UUID, payments: [PaymentDTO]) async throws {
         guard !payments.isEmpty else { return }
         try await remoteDataSource.upsertAll(payments, userId: userId)
     }
 
-    func deletePayment(paymentId: UUID) async throws {
+    nonisolated func deletePayment(paymentId: UUID) async throws {
         try await remoteDataSource.delete(id: paymentId)
     }
 
-    func deletePayments(paymentIds: [UUID]) async throws {
+    nonisolated func deletePayments(paymentIds: [UUID]) async throws {
         guard !paymentIds.isEmpty else { return }
         try await remoteDataSource.deleteAll(ids: paymentIds)
     }
 
-    // MARK: - Local Operations (returns Sendable entities)
+    // MARK: - Local (SwiftData on main actor)
 
+    @MainActor
     func getAllLocalPayments() async throws -> [Payment] {
-        return try await _getAllLocalPayments()
+        try await localDataSource.fetchAll()
     }
 
+    @MainActor
     func getLocalPayment(id: UUID) async throws -> Payment? {
-        return try await _getLocalPayment(id: id)
+        try await localDataSource.fetch(id: id)
     }
 
+    @MainActor
     func savePayment(_ payment: Payment) async throws {
-        try await _savePayment(payment)
-    }
-
-    func savePayments(_ payments: [Payment]) async throws {
-        try await _savePayments(payments)
-    }
-
-    func deleteLocalPayment(id: UUID) async throws {
-        try await _deleteLocalPayment(id: id)
-    }
-
-    func deleteLocalPayments(ids: [UUID]) async throws {
-        try await _deleteLocalPayments(ids: ids)
-    }
-
-    func clearAllLocalPayments() async throws {
-        try await _clearAllLocalPayments()
-    }
-
-    // MARK: - Private @MainActor methods for SwiftData operations
-
-    @MainActor
-    private func _getAllLocalPayments() async throws -> [Payment] {
-        return try await localDataSource.fetchAll()
-    }
-
-    @MainActor
-    private func _getLocalPayment(id: UUID) async throws -> Payment? {
-        return try await localDataSource.fetch(id: id)
-    }
-
-    @MainActor
-    private func _savePayment(_ payment: Payment) async throws {
         try await localDataSource.save(payment)
     }
 
     @MainActor
-    private func _savePayments(_ payments: [Payment]) async throws {
+    func savePayments(_ payments: [Payment]) async throws {
         try await localDataSource.saveAll(payments)
     }
 
     @MainActor
-    private func _deleteLocalPayment(id: UUID) async throws {
+    func deleteLocalPayment(id: UUID) async throws {
         guard let entity = try await localDataSource.fetch(id: id) else { return }
         try await localDataSource.delete(entity)
     }
 
     @MainActor
-    private func _deleteLocalPayments(ids: [UUID]) async throws {
+    func deleteLocalPayments(ids: [UUID]) async throws {
         let allModels = try await localDataSource.fetchAll()
         let modelsToDelete = allModels.filter { ids.contains($0.id) }
         try await localDataSource.deleteAll(modelsToDelete)
     }
 
     @MainActor
-    private func _clearAllLocalPayments() async throws {
+    func clearAllLocalPayments() async throws {
         try await localDataSource.clear()
     }
 }

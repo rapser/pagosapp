@@ -21,7 +21,7 @@ final class InMemoryEventBus: EventBus {
     }
 
     // Concrete continuation wrapper
-    private final class TypedContinuation<T: DomainEvent>: Continuation {
+    private final class TypedContinuation<T: DomainEvent>: Continuation, @unchecked Sendable {
         let continuation: AsyncStream<T>.Continuation
 
         init(continuation: AsyncStream<T>.Continuation) {

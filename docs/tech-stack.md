@@ -3,11 +3,11 @@
 ## 📋 Stack Tecnológico
 
 ### Core Technologies
-- **Swift 6.0**: Strict concurrency, modern syntax
-- **iOS 18.5+**: Latest features
-- **SwiftUI**: 100% declarative UI con @Observable
-- **SwiftData**: Local persistence (reemplaza CoreData)
-- **Async/Await**: Modern concurrency (sin Combine)
+- **Swift 6.0**: `SWIFT_VERSION` en el target de la app (Xcode); comprobación estricta de concurrencia; async/await
+- **iOS 18.0+**: Deployment mínimo del target `pagosApp` (ajustar en Build Settings si cambia)
+- **SwiftUI**: UI declarativa con @Observable
+- **SwiftData**: persistencia local (sustituye a Core Data para los modelos de la app)
+- **Async/Await**: concurrencia moderna (sin Combine en la lógica de negocio principal)
 
 ### Frameworks iOS
 - **EventKit**: Sincronización con Calendar.app
@@ -21,10 +21,10 @@
   - PostgreSQL database
   - Row Level Security (RLS)
   - Authentication & User Management
-- **Supabase Swift SDK** (v2.5.1+): Cliente oficial
+- **Supabase Swift SDK**: Cliente oficial (versión fijada en `Package.resolved`; p. ej. 2.31.x)
 
 ### Arquitectura & Patrones
-- **Clean Architecture**: Domain/Data/Presentation (100%)
+- **Clean Architecture**: Domain / Data / Presentation
 - **MVVM**: ViewModels con @Observable
 - **Repository Pattern**: Abstracción de datos
 - **Use Cases Pattern**: Business logic encapsulation
@@ -42,6 +42,6 @@
 - **TestFlight en CI** ([`.github/workflows/testflight-develop.yml`](../.github/workflows/testflight-develop.yml)): solo en **`push` a `develop`** (tras merge del PR); no en `main`. Secretos y firma: [`.github/GITHUB_ACTIONS_TESTFLIGHT.md`](../.github/GITHUB_ACTIONS_TESTFLIGHT.md).
 - **Fastlane**: menú `bundle exec fastlane menu`; guía replicable en [fastlane/SETUP.md](../fastlane/SETUP.md); resumen en [fastlane/README.md](../fastlane/README.md).
 - **SwiftLint**: configuración en [`.swiftlint.yml`](../.swiftlint.yml) en la raíz del repo.
-- **Documentación técnica**: [TECHNICAL_AUDIT.md](../TECHNICAL_AUDIT.md) *(si existe)*, [ADR](adr/), [ingeniería](engineering/), [runbooks](runbooks/) bajo `docs/`.
+- **Documentación adicional bajo `docs/`**: [ADR](adr/), [ingeniería](engineering/), [runbooks](runbooks/) *(carpetas opcionales; créalas si las necesitas)*.
 
 ---

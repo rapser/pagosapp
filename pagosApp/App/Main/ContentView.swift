@@ -28,6 +28,9 @@ struct ContentView: View {
                 LoadingView(message: nil)
             }
         }
+        .onAppear {
+            AppGlobalAppearance.applyIfNeeded()
+        }
         // Apply modular handlers via ViewModifiers
         .handleAppLifecycle()
         .loadUserProfileOnLogin()

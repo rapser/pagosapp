@@ -9,6 +9,7 @@
 import Foundation
 
 /// Use case for deleting a payment
+@MainActor
 final class DeletePaymentUseCase {
     private let paymentRepository: PaymentRepositoryProtocol
     private let syncCalendarUseCase: SyncPaymentWithCalendarUseCase?
@@ -43,13 +44,9 @@ final class DeletePaymentUseCase {
                 await syncUseCase.removeEvent(for: payment)
             }
             if let payment = paymentToDelete, let notificationsUseCase = scheduleNotificationsUseCase {
-                await MainActor.run {
-                    notificationsUseCase.cancel(for: payment.id)
-                }
+                notificationsUseCase.cancel(for: payment.id)
             }
-            await MainActor.run {
-                eventBus.publish(PaymentDeletedEvent(paymentId: paymentId))
-            }
+            eventBus.publish(PaymentDeletedEvent(paymentId: paymentId))
 
             return .success(())
         } catch {

@@ -16,9 +16,11 @@ on:
       - "pagosAppTests/**"
       - "fastlane/**"
       - "pagosApp.xcodeproj/**"
+      - "Config/**"
       - "Gemfile"
       - "Gemfile.lock"
       - ".ruby-version"
+      - ".github/workflows/testflight-develop.yml"
   workflow_dispatch:
 
 concurrency:
@@ -46,6 +48,15 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
+
+      # SharedApp.xcconfig hace #include a este fichero; no se commitea (ver .gitignore).
+      # No reescribir con printf desde secretos: un JWT u caracteres raros pueden romper el .xcconfig
+      # y dejar de compilar. Los placeholders del template bastan para archive; Supabase en runtime se
+      # puede inyectar con otra estrategia si hace falta.
+      - name: Crear pagosApp/Config/Secrets.xcconfig desde template
+        run: |
+          set -euo pipefail
+          cp Config/Secrets.template.xcconfig pagosApp/Config/Secrets.xcconfig
 
       - name: Ruby + Bundler
         uses: ruby/setup-ruby@v1
@@ -86,8 +97,8 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "${BUILD_CERTIFICATE_BASE64:-}" ] || [ -z "${P12_PASSWORD:-}" ] || [ -z "${KEYCHAIN_PASSWORD:-}" ] || [ -z "${PROVISIONING_PROFILE_BASE64:-}" ]; then
-            echo "::warning::Secretos de firma incompletos. gym suele fallar sin certificado .p12 y perfil App Store en el runner. Configura los secretos listados en .github/GITHUB_ACTIONS_TESTFLIGHT.md"
-            exit 0
+            echo "::error::Faltan secretos de firma (BUILD_CERTIFICATE_BASE64, P12_PASSWORD, KEYCHAIN_PASSWORD, PROVISIONING_PROFILE_BASE64). Sin .p12 + perfil App Store el archive falla. Configuración: .github/GITHUB_ACTIONS_TESTFLIGHT.md"
+            exit 1
           fi
           KEYCHAIN="$RUNNER_TEMP/ios_signing.keychain-db"
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
@@ -123,10 +134,42 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Fastlane — release a TestFlight
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
         run: bundle exec fastlane release_app_store_connect
 
-      - name: Últimas líneas del log de gym (si falló)
+      - name: Diagnóstico de gym / xcodebuild (si falló)
         if: failure()
+        shell: bash
         run: |
+          set -uo pipefail
+          echo "== xcodebuild -version =="
+          xcodebuild -version
+          echo "== Búsqueda de logs de gym (puede variar el nombre) =="
+          if [ -d "$HOME/Library/Logs/gym" ]; then
+            find "$HOME/Library/Logs/gym" -name "*.log" -print
+            for f in "$HOME/Library/Logs/gym"/*.log; do
+              [ -f "$f" ] || continue
+              echo "---- tail: $f ----"
+              tail -n 250 "$f"
+            done
+          else
+            echo "No hay carpeta $HOME/Library/Logs/gym"
+          fi
           LOG="$HOME/Library/Logs/gym/pagosApp-pagosApp.log"
-          if [ -f "$LOG" ]; then echo "---- tail $LOG ----"; tail -n 150 "$LOG"; else echo "No existe $LOG"; fi
+          if [ -f "$LOG" ]; then echo "---- (legacy) tail $LOG ----"; tail -n 150 "$LOG"; fi
+          echo "== grep error / codesign (logs gym) =="
+          shopt -s nullglob
+          for f in "$HOME/Library/Logs/gym"/*.log; do
+            echo "--- matches in $f ---"
+            grep -E "error: |xcodebuild: error|Code Sign|failed" -i "$f" 2>/dev/null | tail -40 || true
+          done
+          shopt -u nullglob
+      - name: Subir logs de gym (artefacto, si falló)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gym-logs
+          path: /Users/runner/Library/Logs/gym
+        continue-on-error: true

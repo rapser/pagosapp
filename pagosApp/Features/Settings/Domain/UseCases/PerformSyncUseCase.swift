@@ -9,6 +9,7 @@
 import Foundation
 
 /// Use Case for performing payment synchronization
+@MainActor
 final class PerformSyncUseCase {
     private let syncRepository: SettingsSyncRepositoryProtocol
 

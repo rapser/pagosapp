@@ -9,16 +9,17 @@
 import Foundation
 
 /// Use case for syncing a payment with the device calendar
-final class SyncPaymentWithCalendarUseCase {
+@MainActor
+final class SyncPaymentWithCalendarUseCase: @unchecked Sendable {
     private static let logCategory = "SyncPaymentWithCalendarUseCase"
 
-    private let calendarEventDataSource: CalendarEventDataSource
-    private let paymentRepository: PaymentRepositoryProtocol
+    private let calendarEventDataSource: any CalendarEventDataSource
+    private let paymentRepository: any PaymentRepositoryProtocol
     private let log: DomainLogWriter
 
     init(
-        calendarEventDataSource: CalendarEventDataSource,
-        paymentRepository: PaymentRepositoryProtocol,
+        calendarEventDataSource: any CalendarEventDataSource,
+        paymentRepository: any PaymentRepositoryProtocol,
         log: DomainLogWriter
     ) {
         self.calendarEventDataSource = calendarEventDataSource
@@ -33,11 +34,9 @@ final class SyncPaymentWithCalendarUseCase {
 
     /// Request calendar access (callback-based - for compatibility)
     func requestAccess(completion: @escaping (Bool) -> Void) {
-        Task {
+        Task { @MainActor in
             let granted = await requestAccess()
-            await MainActor.run {
-                completion(granted)
-            }
+            completion(granted)
         }
     }
 

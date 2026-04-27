@@ -9,6 +9,7 @@
 import Foundation
 
 /// Use case for uploading pending local payment changes
+@MainActor
 final class UploadLocalChangesUseCase {
     private static let logCategory = "UploadLocalChangesUseCase"
 

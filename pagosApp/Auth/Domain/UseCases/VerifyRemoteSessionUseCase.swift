@@ -9,6 +9,7 @@
 import Foundation
 
 /// Use case to verify session status remotely with proper error handling
+@MainActor
 protocol VerifyRemoteSessionUseCaseProtocol {
     func execute(allowNetworkDelay: Bool) async -> SessionVerificationResult
 }
@@ -22,6 +23,7 @@ enum SessionVerificationResult {
 }
 
 /// Implementation of remote session verification
+@MainActor
 final class VerifyRemoteSessionUseCase: VerifyRemoteSessionUseCaseProtocol {
     
     private let getAuthenticationStatusUseCase: GetAuthenticationStatusUseCase

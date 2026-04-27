@@ -9,6 +9,7 @@
 import Foundation
 
 /// Get user profile from local storage (offline-first)
+@MainActor
 final class GetLocalProfileUseCase {
     private static let logCategory = "GetLocalProfileUseCase"
 

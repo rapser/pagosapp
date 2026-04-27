@@ -9,6 +9,7 @@
 import Foundation
 
 /// Update user profile in Supabase and local storage
+@MainActor
 final class UpdateUserProfileUseCase {
     private static let logCategory = "UpdateUserProfileUseCase"
 

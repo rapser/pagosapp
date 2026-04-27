@@ -9,6 +9,7 @@
 import Foundation
 
 /// Use Case for retrieving payment history with filters
+@MainActor
 final class GetPaymentHistoryUseCase {
     private let historyRepository: HistoryRepositoryProtocol
 

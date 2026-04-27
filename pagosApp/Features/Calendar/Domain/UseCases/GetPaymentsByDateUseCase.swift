@@ -9,6 +9,7 @@
 import Foundation
 
 /// Get all payments due on a specific date
+@MainActor
 final class GetPaymentsByDateUseCase {
     private static let logCategory = "GetPaymentsByDateUseCase"
 
