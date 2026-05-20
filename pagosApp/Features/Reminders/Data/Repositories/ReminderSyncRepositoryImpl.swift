@@ -41,8 +41,8 @@ final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol, @uncheck
         try await remoteDataSource.upsertAll(dtos, userId: userId)
 
         let now = Date()
-        for reminder in reminders {
-            let updated = Reminder(
+        let synced = reminders.map { reminder in
+            Reminder(
                 id: reminder.id,
                 reminderType: reminder.reminderType,
                 title: reminder.title,
@@ -53,8 +53,8 @@ final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol, @uncheck
                 syncStatus: .synced,
                 lastSyncedAt: now
             )
-            try await localDataSource.save(updated)
         }
+        try await localDataSource.saveAll(synced)
     }
 
     nonisolated func downloadReminders(userId: UUID) async throws -> [Reminder] {

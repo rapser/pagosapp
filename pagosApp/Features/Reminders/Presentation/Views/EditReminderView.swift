@@ -41,8 +41,7 @@ struct EditReminderView: View {
                 }
                 
                 NotificationSettingsView(
-                    notificationSettings: $viewModel.notificationSettings,
-                    reminderType: viewModel.reminderType
+                    notificationSettings: $viewModel.notificationSettings
                 )
                 
                 Section {

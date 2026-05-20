@@ -23,21 +23,14 @@ jobs:
       - name: Crear pagosApp/Config/Secrets.xcconfig desde template
         run: cp Config/Secrets.template.xcconfig pagosApp/Config/Secrets.xcconfig
 
-      - name: Build
+      - name: Build + Unit Tests
         run: |
           xcodebuild -scheme pagosApp \
             -project pagosApp.xcodeproj \
-            -destination 'generic/platform=iOS Simulator' \
-            -configuration Debug \
-            build
-
-      - name: Unit tests
-        run: |
-          xcodebuild -scheme pagosApp \
-            -project pagosApp.xcodeproj \
-            -destination 'generic/platform=iOS Simulator' \
+            -destination 'platform=iOS Simulator,name=iPhone Air' \
             -configuration Debug \
             -parallel-testing-enabled NO \
+            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO \
             test
 
   swiftlint:

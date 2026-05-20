@@ -4,7 +4,7 @@ struct LoginView: View {
     @State private var viewModel: LoginViewModel
     @State private var showEmailPasswordLogin: Bool = false
     @Environment(\.dismiss) var dismiss
-    @Environment(\.dependencies) private var dependencies
+    @Environment(AppDependencies.self) private var dependencies
 
     var onLoginSuccess: ((AuthSession) -> Void)?
 
@@ -116,4 +116,5 @@ struct LoginView: View {
 #Preview {
     let dependencies = AppDependencies.mock()
     LoginView(loginViewModel: dependencies.authDependencyContainer.makeLoginViewModel())
+        .environment(dependencies)
 }

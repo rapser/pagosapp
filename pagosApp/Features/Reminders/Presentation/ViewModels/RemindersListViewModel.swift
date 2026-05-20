@@ -11,6 +11,7 @@ import Foundation
 @Observable
 final class RemindersListViewModel: BaseViewModel {
     private var allReminders: [Reminder] = []
+    private let searchService = ReminderSearchService()
 
     private var filterSelection: ReminderFilterUI = .currentMonth
     var selectedFilter: ReminderFilterUI {
@@ -20,9 +21,7 @@ final class RemindersListViewModel: BaseViewModel {
 
     /// Reminders filtered by the selected segment
     var reminders: [Reminder] {
-        let searchService = ReminderSearchService()
-        let filter = ReminderSearchService.ReminderFilter.from(selectedFilter)
-        return searchService.filter(allReminders, by: filter)
+        searchService.filter(allReminders, by: ReminderSearchService.ReminderFilter.from(selectedFilter))
     }
 
     private let getAllRemindersUseCase: GetAllRemindersUseCase

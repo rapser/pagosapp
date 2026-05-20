@@ -27,15 +27,6 @@ enum ReminderType: String, Sendable, CaseIterable, Codable {
     case certification  // Certificación
     case other
     
-    /// Types that require advanced notification settings (longer lead times)
-    var requiresAdvancedNotifications: Bool {
-        switch self {
-        case .cardRenewal, .documents, .taxes, .membership, .subscription, .pension:
-            return true
-        case .savings, .deposit, .maintenance, .insurance, .health, .rent, .warranty, .certification, .other:
-            return false
-        }
-    }
 }
 
 extension ReminderType {
