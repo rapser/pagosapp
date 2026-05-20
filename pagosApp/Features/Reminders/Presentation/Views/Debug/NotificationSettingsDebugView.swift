@@ -17,24 +17,15 @@ struct NotificationSettingsDebugView: View {
         NavigationView {
             Form {
                 Section(L10n.Debug.NotificationSettings.sectionPension) {
-                    NotificationSettingsView(
-                        notificationSettings: $pensionSettings,
-                        reminderType: .pension
-                    )
+                    NotificationSettingsView(notificationSettings: $pensionSettings)
                 }
 
                 Section(L10n.Debug.NotificationSettings.sectionSavings) {
-                    NotificationSettingsView(
-                        notificationSettings: $savingsSettings,
-                        reminderType: .savings
-                    )
+                    NotificationSettingsView(notificationSettings: $savingsSettings)
                 }
 
                 Section(L10n.Debug.NotificationSettings.sectionOther) {
-                    NotificationSettingsView(
-                        notificationSettings: $otherSettings,
-                        reminderType: .other
-                    )
+                    NotificationSettingsView(notificationSettings: $otherSettings)
                 }
 
                 Section(L10n.Debug.NotificationSettings.sectionDebugInfo) {

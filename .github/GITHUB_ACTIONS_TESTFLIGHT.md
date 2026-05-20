@@ -25,13 +25,16 @@ En GitHub: **Settings → Secrets and variables → Actions → New repository s
 | `APP_STORE_CONNECT_API_KEY_CONTENT_BASE64` | Contenido del fichero **AuthKey_XXX.p8** codificado en **Base64 en una sola línea** (sin saltos de línea). En tu Mac: `base64 < AuthKey_XXX.p8 \| tr -d '\n'` y pega el resultado. |
 | `APP_STORE_CONNECT_API_KEY_ID` | **Key ID** de la clave API (10 caracteres, coincide con el sufijo del nombre del `.p8`). |
 | `APP_STORE_CONNECT_ISSUER_ID` | **Issuer ID** (UUID) de App Store Connect → *Users and Access* → *Integrations* → *App Store Connect API*. |
+| `SUPABASE_URL` | URL del proyecto Supabase en forma normal (p. ej. `https://xxxx.supabase.co`). No hace falta el truco `https:/$()/…` del `.xcconfig` local: el workflow lo escapa para el fichero generado en CI. |
+| `SUPABASE_ANON_KEY` | Clave anónima (**anon** / **public**) del mismo proyecto. |
 
 Opcional:
 
 | Secret | Descripción |
 |--------|-------------|
 | `FASTLANE_TEAM_ID` | Mismo **Team ID** que en `fastlane/Appfile` si hace falta forzarlo en CI. |
-En el workflow de TestFlight, **`Config/Secrets.template.xcconfig` se copia a `pagosApp/Config/Secrets.xcconfig`** (el fichero real no se commitea). Eso evita el error de *include* en `xcodebuild`/`gym`. No se inyecta Supabase vía `printf` desde secretos: un **JWT** en `.xcconfig` puede romper el build; si necesitas credenciales reales en el IPA, valora un secret con el **fichero completo** en Base64 o otra vía, fuera de este flujo básico.
+
+El job genera **`pagosApp/Config/Secrets.xcconfig`** en el runner a partir de `SUPABASE_URL` y `SUPABASE_ANON_KEY`. Las URLs se reescriben para evitar que `//` (comentario en `.xcconfig`) truncen el valor. La clave anon suele ser un JWT sin espacios; si en el futuro rompiera el parser de xcconfig, usa un secret en Base64 y un paso de decodificación (o `Secrets` por environment de GitHub).
 
 ---
 

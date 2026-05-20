@@ -37,13 +37,43 @@ enum AppConfiguration {
             guard let url = URL(string: cleanedURLString) else {
                 throw ConfigurationError.invalidValue("SUPABASE_URL")
             }
+            // `URL(string:)` acepta cualquier cadena sin esquema como URL "relativa" (host nil).
+            // Los placeholders del template de CI pasaban esta comprobación y el SDK de Supabase podía crashear.
+            guard isConfiguredSupabaseURL(url) else {
+                throw ConfigurationError.invalidValue("SUPABASE_URL")
+            }
             return url
         }
     }
 
     static var supabaseKey: String {
         get throws {
-            try value(for: "SUPABASE_KEY")
+            let key: String = try value(for: "SUPABASE_KEY")
+            let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard isConfiguredSupabaseKey(trimmed) else {
+                throw ConfigurationError.invalidValue("SUPABASE_KEY")
+            }
+            return trimmed
         }
+    }
+
+    private static func isConfiguredSupabaseURL(_ url: URL) -> Bool {
+        guard url.scheme?.lowercased() == "https", let host = url.host, !host.isEmpty else {
+            return false
+        }
+        let lower = url.absoluteString.lowercased()
+        if lower.contains("your_supabase") {
+            return false
+        }
+        return true
+    }
+
+    private static func isConfiguredSupabaseKey(_ key: String) -> Bool {
+        guard !key.isEmpty else { return false }
+        let lower = key.lowercased()
+        if lower == "your_supabase_anon_key_here" || lower.contains("your_supabase") {
+            return false
+        }
+        return true
     }
 }

@@ -15,11 +15,17 @@ final class StatisticsViewModel: BaseViewModel {
 
     var categoryStats: [CategoryStats] = []
     var monthlyStats: [MonthlyStats] = []
-    var totalSpending: Double = 0
+    /// Total para Soles (independiente de la moneda seleccionada)
+    var penTotalSpending: Double = 0
+    /// Total para Dólares (independiente de la moneda seleccionada)
+    var usdTotalSpending: Double = 0
     var selectedFilter: StatsFilter = .all
     var selectedCurrency: Currency = .pen
     var hasPENPayments: Bool = false
     var hasUSDPayments: Bool = false
+
+    /// Se calcula una sola vez al cargar; las monedas disponibles no cambian con el filtro.
+    private var hasCheckedCurrencies = false
 
     // MARK: - Dependencies (Use Cases)
 
@@ -41,106 +47,102 @@ final class StatisticsViewModel: BaseViewModel {
         super.init(category: "StatisticsViewModel")
     }
 
-    // MARK: - Data Operations
+    // MARK: - Computed Properties
 
-    /// Load all statistics (reads from local SwiftData - fast, no loading indicator needed)
+    /// Total para la moneda actualmente seleccionada
+    var totalSpending: Double {
+        selectedCurrency == .pen ? penTotalSpending : usdTotalSpending
+    }
+
+    // MARK: - Load Operations
+
+    /// Carga completa: categorías, mensual, totales de ambas monedas y disponibilidad de monedas.
     func loadStatistics() async {
         await loadCategoryStats()
         await loadMonthlyStats()
-        await loadTotalSpending()
-        await loadAvailableCurrencies()
+        await loadBothTotals()
+        if !hasCheckedCurrencies {
+            await loadAvailableCurrencies()
+            hasCheckedCurrencies = true
+        }
     }
 
-    /// Load available currencies
+    /// Carga los totales de PEN y USD para el filtro activo (aprovecha el cache del repositorio).
+    func loadBothTotals() async {
+        async let penResult = getTotalSpendingUseCase.execute(filter: selectedFilter, currency: .pen)
+        async let usdResult = getTotalSpendingUseCase.execute(filter: selectedFilter, currency: .usd)
+        if case .success(let t) = await penResult { penTotalSpending = t }
+        if case .success(let t) = await usdResult { usdTotalSpending = t }
+    }
+
+    /// Verifica qué monedas tienen pagos. Solo se llama una vez por ciclo de vida del ViewModel.
     func loadAvailableCurrencies() async {
         hasPENPayments = await checkPaymentsByCurrencyUseCase.execute(currency: .pen)
         hasUSDPayments = await checkPaymentsByCurrencyUseCase.execute(currency: .usd)
     }
 
-    /// Load category statistics
     func loadCategoryStats() async {
         let result = await calculateCategoryStatsUseCase.execute(
             filter: selectedFilter,
             currency: selectedCurrency
         )
-
         switch result {
         case .success(let stats):
             categoryStats = stats
-
         case .failure(let error):
             logError(error)
             setError(L10n.Statistics.errorCategory)
         }
     }
 
-    /// Load monthly statistics (last 6 months)
     func loadMonthlyStats() async {
         let result = await calculateMonthlyStatsUseCase.execute(
             monthCount: 6,
             currency: selectedCurrency
         )
-
         switch result {
         case .success(let stats):
             monthlyStats = stats
-
         case .failure(let error):
             logError(error)
             setError(L10n.Statistics.errorMonthly)
         }
     }
 
-    /// Load total spending
-    func loadTotalSpending() async {
-        let result = await getTotalSpendingUseCase.execute(
-            filter: selectedFilter,
-            currency: selectedCurrency
-        )
+    // MARK: - User Actions
 
-        switch result {
-        case .success(let total):
-            totalSpending = total
-
-        case .failure(let error):
-            logError(error)
-        }
-    }
-
-    /// Update filter and reload statistics
+    /// Cambia el filtro de período y recarga stats + ambos totales. Las monedas disponibles no cambian.
     func updateFilter(_ newFilter: StatsFilter) async {
         selectedFilter = newFilter
-        await loadStatistics()
+        await loadCategoryStats()
+        await loadMonthlyStats()
+        await loadBothTotals()
     }
 
-    /// Update currency and reload statistics
+    /// Cambia la moneda activa. Los totales ya están cargados para ambas monedas, solo recarga las charts.
     func updateCurrency(_ newCurrency: Currency) async {
         selectedCurrency = newCurrency
-        // Clear stats before reload to avoid showing stale data (PEN) with new currency (USD) during load
         categoryStats = []
         monthlyStats = []
-        totalSpending = 0
-        await loadStatistics()
+        await loadCategoryStats()
+        await loadMonthlyStats()
     }
 
-    /// Refresh all data
     func refresh() async {
+        hasCheckedCurrencies = false
         await loadStatistics()
     }
 
-    // MARK: - Computed Properties for Presentation
+    // MARK: - Presentation Helpers
 
-    /// Single source of truth: charts are safe to show only when we have data and a valid total (avoids Swift Charts crash)
     var hasValidChartData: Bool {
         !categoryStats.isEmpty && totalSpending > 0 && totalSpending.isFinite
     }
 
-    /// Convert domain entities to presentation models for Charts
     var categorySpendingData: [CategorySpendingUI] {
         categoryStats.map { CategorySpendingUI(from: $0) }
     }
 
-    /// Convert domain entities to presentation models for Charts
     var monthlySpendingData: [MonthlySpendingUI] {
         monthlyStats.map { MonthlySpendingUI(from: $0) }
     }

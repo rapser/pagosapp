@@ -22,9 +22,9 @@ Detalle de funcionalidades: [`docs/product-overview.md`](docs/product-overview.m
 ## Inicio rápido
 
 1. Clona el repositorio y entra en la raíz (debes ver `pagosApp/`, `Config/`, `pagosApp.xcodeproj`).
-2. Copia credenciales: `cp Config/Secrets.template.xcconfig Config/Secrets.xcconfig` y edita con tu URL y anon key de Supabase.
+2. Copia credenciales: `cp Config/Secrets.template.xcconfig pagosApp/Config/Secrets.xcconfig` y edítalo con tu URL y anon key de Supabase. En `.xcconfig`, `//` inicia comentario: para la URL usa el truco `https:/$()/tu-proyecto.supabase.co` (expansión vacía de `$()`) en lugar de escribir `https://` a puro.
 3. Abre el proyecto: `open pagosApp.xcodeproj`.
-4. En Xcode, asigna `Secrets.xcconfig` a las configuraciones **Debug** y **Release** (proyecto → Info → Configurations).
+4. Comprueba en el target **pagosApp** que **Debug** / **Release** heredan `SharedApp.xcconfig` (que incluye `Secrets.xcconfig`); si partes del template del repo, suele estar ya enlazado.
 5. **⌘R** para compilar y ejecutar.
 
 **Opcional:** `brew install swiftlint` y `swiftlint lint` (misma lógica que en CI; umbral de línea/archivo en [`.swiftlint.yml`](.swiftlint.yml)).
@@ -45,6 +45,8 @@ La guía larga (producto, arquitectura, stack, instalación, estructura, **tests
 | Configuración de credenciales locales | [`Config/README.md`](Config/README.md) |
 
 > El workflow de **CI** no sube a TestFlight. La subida a **TestFlight** la gestiona el workflow dedicado o Fastlane en local, con los secretos de App Store Connect configurados en el repositorio.
+
+**TestFlight desde Actions:** además de la API Key de App Store Connect y la firma (`.p12` + perfil), hace falta configurar en GitHub **`SUPABASE_URL`** y **`SUPABASE_ANON_KEY`**. El job genera `pagosApp/Config/Secrets.xcconfig` en el runner (escapando la URL para `.xcconfig`). Sin esos secretos el job falla a propósito para no publicar un IPA que abriría con cliente Supabase inválido. Detalle: [`.github/GITHUB_ACTIONS_TESTFLIGHT.md`](.github/GITHUB_ACTIONS_TESTFLIGHT.md).
 
 ## Changelog y versión
 
