@@ -12,7 +12,6 @@ struct StatisticsView: View {
     @State private var viewModel: StatisticsViewModel
 
     init(viewModel: StatisticsViewModel) {
-        // Initialize ViewModel immediately (no loader needed - reads from local SwiftData)
         _viewModel = State(initialValue: viewModel)
     }
 
@@ -22,7 +21,7 @@ struct StatisticsView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 0) {
-                    if vm.categoryStats.isEmpty && vm.monthlyStats.isEmpty {
+                    if vm.categoryStats.isEmpty && vm.monthlyStats.isEmpty && !vm.isLoading {
                         ContentUnavailableView(
                             L10n.Statistics.noDataTitle,
                             systemImage: "chart.pie",
@@ -31,8 +30,8 @@ struct StatisticsView: View {
                         .foregroundColor(Color("AppTextSecondary"))
                         .padding(.top, 100)
                     } else {
-                        // Header con filtro de tiempo
                         VStack(spacing: 16) {
+                            // Filtro de período
                             Picker(L10n.Statistics.periodPicker, selection: $vm.selectedFilter) {
                                 ForEach(StatsFilter.allCases) { filter in
                                     Text(L10n.Statistics.periodDisplayName(filter)).tag(filter)
@@ -42,22 +41,21 @@ struct StatisticsView: View {
                             .padding(.horizontal)
                             .padding(.top)
                             .onChange(of: vm.selectedFilter) { _, newValue in
-                                Task {
-                                    await vm.updateFilter(newValue)
-                                }
+                                Task { await vm.updateFilter(newValue) }
                             }
 
-                            // Selector de moneda con diseño de tabs
+                            // Selector de moneda — muestra ambos totales simultáneamente
                             CurrencyTabSelector(
                                 selectedCurrency: $vm.selectedCurrency,
-                                totalSpending: vm.totalSpending,
+                                penTotal: vm.penTotalSpending,
+                                usdTotal: vm.usdTotalSpending,
                                 hasPENPayments: vm.hasPENPayments,
                                 hasUSDPayments: vm.hasUSDPayments
                             )
+                            .animation(.default, value: vm.penTotalSpending)
+                            .animation(.default, value: vm.usdTotalSpending)
                             .onChange(of: vm.selectedCurrency) { _, newValue in
-                                Task {
-                                    await vm.updateCurrency(newValue)
-                                }
+                                Task { await vm.updateCurrency(newValue) }
                             }
                         }
                         .padding(.bottom)
@@ -68,7 +66,7 @@ struct StatisticsView: View {
                                 filter: vm.selectedFilter
                             )
                         } else {
-                            // Gráfico de torta - Gastos por Categoría
+                            // Gráfico de torta — Gastos por Categoría
                             CategoryPieChart(
                                 categoryData: vm.categorySpendingData,
                                 totalSpending: vm.totalSpending,
@@ -77,9 +75,10 @@ struct StatisticsView: View {
                             )
                             .padding(.vertical)
 
-                            // Gráfico de barras - Últimos 6 Meses
+                            // Gráfico de barras — Últimos 6 Meses
                             MonthlyBarChart(
-                                monthlyData: vm.monthlySpendingData
+                                monthlyData: vm.monthlySpendingData,
+                                currency: vm.selectedCurrency
                             )
                             .padding(.vertical)
                         }
@@ -89,7 +88,6 @@ struct StatisticsView: View {
             .navigationTitle(L10n.Statistics.title)
         }
         .task {
-            // Load statistics from SwiftData (fast, no loader needed)
             await viewModel.loadStatistics()
         }
     }

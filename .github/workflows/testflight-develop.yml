@@ -49,14 +49,24 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      # SharedApp.xcconfig hace #include a este fichero; no se commitea (ver .gitignore).
-      # No reescribir con printf desde secretos: un JWT u caracteres raros pueden romper el .xcconfig
-      # y dejar de compilar. Los placeholders del template bastan para archive; Supabase en runtime se
-      # puede inyectar con otra estrategia si hace falta.
-      - name: Crear pagosApp/Config/Secrets.xcconfig desde template
+      # SharedApp.xcconfig incluye este fichero. En .xcconfig `//` inicia comentario: conviertemos
+      # https:// → https:/$()/ (expansión vacía de $() igual que en local) para que compile y el plist reciba URL https válida.
+      - name: Crear pagosApp/Config/Secrets.xcconfig (Supabase desde secrets)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           set -euo pipefail
-          cp Config/Secrets.template.xcconfig pagosApp/Config/Secrets.xcconfig
+          if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+            echo "::error::Faltan los repository secrets SUPABASE_URL y SUPABASE_ANON_KEY. Sin credenciales reales el IPA arranca con fallback de desarrollo o puede fallar; ver .github/GITHUB_ACTIONS_TESTFLIGHT.md"
+            exit 1
+          fi
+          url_xcc=$(printf '%s' "$SUPABASE_URL" | sed 's|://|:/$()/|g')
+          {
+            echo "// CI generated — do not commit"
+            echo "SUPABASE_URL = $url_xcc"
+            echo "SUPABASE_KEY = $SUPABASE_ANON_KEY"
+          } > pagosApp/Config/Secrets.xcconfig
 
       - name: Ruby + Bundler
         uses: ruby/setup-ruby@v1

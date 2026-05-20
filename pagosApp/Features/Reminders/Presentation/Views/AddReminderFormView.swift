@@ -34,8 +34,7 @@ struct AddReminderFormView: View {
             }
             
             NotificationSettingsView(
-                notificationSettings: $viewModel.notificationSettings,
-                reminderType: viewModel.reminderType
+                notificationSettings: $viewModel.notificationSettings
             )
         }
         .navigationTitle(L10n.Reminders.Add.title)

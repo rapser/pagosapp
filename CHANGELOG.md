@@ -4,6 +4,13 @@ El contenido de este fichero describe la **versión publicada** y el **alcance**
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **TestFlight / GitHub Actions**: el workflow ya no empaqueta placeholders de Supabase como si fueran una URL válida; `AppConfiguration` exige `https`, host y clave configurables, y el cliente demo solo se usa cuando la configuración real no es válida. El workflow `testflight-develop.yml` genera `pagosApp/Config/Secrets.xcconfig` desde los secretos del repositorio `SUPABASE_URL` y `SUPABASE_ANON_KEY` (con escape `://` → `:/$()/` para `.xcconfig`).
+- **Login**: `LoginView` usa `@Environment(AppDependencies.self)` como el resto de la app, alineado con la inyección del bootstrap.
+
 ## [1.0.0] – Build 20
 
 ### Producto

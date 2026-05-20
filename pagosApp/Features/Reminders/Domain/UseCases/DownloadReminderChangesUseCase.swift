@@ -34,21 +34,38 @@ final class DownloadReminderChangesUseCase {
             let remote = try await syncRepository.downloadReminders(userId: userId)
             log.info("Downloaded \(remote.count) reminders from remote", category: Self.logCategory)
             let local = try await localDataSource.fetchAll()
+
+            // O(1) lookup instead of O(n) linear search per item
+            let localById = Dictionary(uniqueKeysWithValues: local.map { ($0.id, $0) })
+            let remoteIds = Set(remote.map { $0.id })
+
+            // Merge policy: server-wins unless local has pending changes
+            var toSave: [Reminder] = []
             for reminder in remote {
-                if let existing = local.first(where: { $0.id == reminder.id }) {
-                    // Merge policy: server-wins by default, but preserve any local pending changes.
-                    if !keepLocalWhenPendingSyncStatuses.contains(existing.syncStatus) {
-                        try await localDataSource.save(reminder)
-                        log.info("Updated local reminder from remote: \(reminder.title)", category: Self.logCategory)
-                    } else {
+                if let existing = localById[reminder.id] {
+                    if keepLocalWhenPendingSyncStatuses.contains(existing.syncStatus) {
                         log.info("Skipped updating \(reminder.title) - has local modifications", category: Self.logCategory)
+                    } else {
+                        toSave.append(reminder)
                     }
                 } else {
-                    try await localDataSource.save(reminder)
-                    log.info("Inserted new reminder from remote: \(reminder.title)", category: Self.logCategory)
+                    toSave.append(reminder)
                 }
             }
-            log.info("✅ Downloaded and merged \(remote.count) reminders successfully", category: Self.logCategory)
+
+            if !toSave.isEmpty {
+                try await localDataSource.saveAll(toSave)
+                log.info("Saved \(toSave.count) reminders from remote", category: Self.logCategory)
+            }
+
+            // Propagate server-side deletions: remove synced local items absent from the server
+            let deletedOnServer = local.filter { $0.syncStatus == .synced && !remoteIds.contains($0.id) }
+            for reminder in deletedOnServer {
+                try await localDataSource.delete(id: reminder.id)
+                log.info("Deleted locally (removed on server): \(reminder.title)", category: Self.logCategory)
+            }
+
+            log.info("✅ Sync complete — saved: \(toSave.count), deleted: \(deletedOnServer.count)", category: Self.logCategory)
             return .success(())
         } catch let error as ReminderSyncError {
             log.error("❌ Download failed: \(error.errorCode)", category: Self.logCategory)
