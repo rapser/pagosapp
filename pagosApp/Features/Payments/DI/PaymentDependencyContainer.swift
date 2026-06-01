@@ -244,6 +244,10 @@ final class PaymentDependencyContainer {
         return EditPaymentViewModel(
             payment: payment,
             otherPayment: otherPayment,
+            createPaymentUseCase: makeCreatePaymentUseCase(
+                calendarEventDataSource: calendarEventDataSource,
+                notificationDataSource: notificationDataSource
+            ),
             updatePaymentUseCase: makeUpdatePaymentUseCase(
                 calendarEventDataSource: calendarEventDataSource,
                 notificationDataSource: notificationDataSource
