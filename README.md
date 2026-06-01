@@ -10,7 +10,7 @@
 
 ## Qué incluye el proyecto
 
-- **Pagos**: gestión de pagos recurrentes, categorías, PEN/USD, filtros, pagos agrupados (tarjeta bimoneda), notificaciones locales y sincronización con el **calendario del sistema**.
+- **Pagos**: gestión de pagos recurrentes, categorías, PEN/USD, filtros, pagos agrupados (tarjeta bimoneda), notificaciones locales y sincronización con el **calendario del sistema**. Al editar un pago de TC con una sola moneda es posible agregar la segunda moneda directamente desde la pantalla de edición.
 - **Recordatorios**: eventos no monetarios (renovaciones, impuestos, etc.) con notificaciones y sync **Supabase**, en paralelo al flujo de pagos.
 - **Calendario, historial y estadísticas**: calendario unificado, historial de pagos y gráficos de gastos; parte del contenido vive bajo **Ajustes** según el diseño de navegación.
 - **Cuenta**: autenticación con Supabase, biometría opcional, perfil, sincronización manual desde **Ajustes**.
