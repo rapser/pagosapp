@@ -97,11 +97,12 @@ private struct EditPaymentFormView: View {
                 isPaid: $viewModel.isPaid
             )
 
-            // Show dual-currency section for grouped credit card payments
+            // Show dual-currency section for all credit card payments
             if viewModel.isDualCurrencyPayment {
                 DualCurrencyAmountSection(
                     amountPEN: $viewModel.amount,
-                    amountUSD: $viewModel.amountUSD
+                    amountUSD: $viewModel.amountUSD,
+                    showAddCurrencyHint: !viewModel.isGroupedDualCurrency
                 )
             } else {
                 SingleCurrencyAmountSection(

@@ -3,6 +3,19 @@ import SwiftUI
 struct DualCurrencyAmountSection: View {
     @Binding var amountPEN: String
     @Binding var amountUSD: String
+    /// When true, shows a contextual hint guiding the user to fill the missing currency
+    var showAddCurrencyHint: Bool = false
+
+    private var hasPEN: Bool { (Double(amountPEN) ?? 0) > 0 }
+    private var hasUSD: Bool { (Double(amountUSD) ?? 0) > 0 }
+
+    private var hint: String {
+        if showAddCurrencyHint {
+            if hasPEN && !hasUSD { return L10n.Payments.Amounts.hintAddUSD }
+            if hasUSD && !hasPEN { return L10n.Payments.Amounts.hintAddPEN }
+        }
+        return L10n.Payments.Amounts.hintOneAmount
+    }
 
     var body: some View {
         Section(header: Text(L10n.Payments.Amounts.section)) {
@@ -37,9 +50,10 @@ struct DualCurrencyAmountSection: View {
                         .cornerRadius(8)
                 }
 
-                Text(L10n.Payments.Amounts.hintOneAmount)
+                Text(hint)
                     .font(.caption)
                     .foregroundColor(.secondary)
+                    .animation(.default, value: hint)
             }
         }
     }
