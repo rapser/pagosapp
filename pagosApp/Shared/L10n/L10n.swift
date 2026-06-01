@@ -105,6 +105,8 @@ enum L10n {
             static let dollars = tr("payments.amounts.dollars")
             static let dualCurrency = tr("payments.amounts.dualCurrency")
             static let hintOneAmount = tr("payments.amounts.hintOneAmount")
+            static let hintAddUSD = tr("payments.amounts.hintAddUSD")
+            static let hintAddPEN = tr("payments.amounts.hintAddPEN")
         }
         enum Details {
             static let section = tr("payments.details.section")

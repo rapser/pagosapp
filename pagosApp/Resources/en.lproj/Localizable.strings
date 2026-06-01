@@ -69,6 +69,8 @@
 "payments.amounts.dollars" = "Dollars";
 "payments.amounts.dualCurrency" = "Dual Currency Card";
 "payments.amounts.hintOneAmount" = "💡 Enter at least one amount";
+"payments.amounts.hintAddUSD" = "💡 You can also add a dollar amount";
+"payments.amounts.hintAddPEN" = "💡 You can also add a soles amount";
 "payments.details.section" = "Payment Details";
 "payments.details.paid" = "Paid";
 "payments.details.namePlaceholder" = "Payment name";

@@ -69,6 +69,8 @@
 "payments.amounts.dollars" = "Dólares";
 "payments.amounts.dualCurrency" = "Tarjeta Bimoneda";
 "payments.amounts.hintOneAmount" = "💡 Ingresa al menos un monto";
+"payments.amounts.hintAddUSD" = "💡 Puedes agregar un monto en dólares";
+"payments.amounts.hintAddPEN" = "💡 Puedes agregar un monto en soles";
 "payments.details.section" = "Detalles del Pago";
 "payments.details.paid" = "Pagado";
 "payments.details.namePlaceholder" = "Nombre del pago";
