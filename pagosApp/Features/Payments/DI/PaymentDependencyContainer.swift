@@ -130,6 +130,7 @@ final class PaymentDependencyContainer {
         return DeletePaymentUseCase(
             paymentRepository: makePaymentRepository(),
             eventBus: eventBus,
+            log: log,
             syncCalendarUseCase: syncCalendarUseCase,
             scheduleNotificationsUseCase: scheduleNotificationsUseCase
         )
