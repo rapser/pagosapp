@@ -91,7 +91,7 @@ private struct _CurrencyInput: UIViewRepresentable {
         ) -> Bool {
             if string.isEmpty {
                 // Backspace: drop the last cent digit
-                cents = cents / 10
+                cents /= 10
             } else if string.count == 1, let digit = Int(string), string.allSatisfy(\.isNumber) {
                 // New digit: shift left and append
                 let newCents = cents * 10 + digit
