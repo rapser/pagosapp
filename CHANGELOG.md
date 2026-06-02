@@ -6,10 +6,23 @@ El contenido de este fichero describe la **versión publicada** y el **alcance**
 
 ## [Unreleased]
 
+### Added
+
+- **Edición de TC bimoneda**: al editar un pago de tarjeta de crédito registrado con una sola moneda (solo soles o solo dólares), ahora se muestra la sección `DualCurrencyAmountSection` con ambos campos. Si el usuario ingresa un monto en la moneda faltante y guarda, el sistema crea automáticamente el registro hermano y vincula ambos pagos con un `groupId` compartido — sin necesidad de crear un segundo pago manualmente.
+- **Hint contextual en edición TC**: el texto de ayuda bajo los campos de monto cambia dinámicamente según la moneda que está vacía ("Puedes agregar un monto en dólares" / "...en soles") cuando se edita un pago TC con una sola moneda registrada.
+- **Entrada de montos estilo banca** (`CurrencyTextField`): los campos de monto en pagos de TC (soles y dólares) y en pagos de moneda única usan una entrada shift-derecha similar a apps bancarias — se escribe solo dígitos y el punto decimal se posiciona automáticamente: `5` → `0.05`, `50` → `0.50`, `500` → `5.00`. El campo muestra `0.00` en gris mientras está vacío y cambia al color normal al escribir el primer dígito.
+- **Confirmación antes de eliminar**: el swipe-to-delete muestra un alert de confirmación antes de borrar ("¿Eliminar este pago?" / "Se borrarán los montos en S/ y $."), evitando eliminaciones accidentales. Localizado en español, inglés y portugués.
+
 ### Fixed
 
+- **Eliminación sincronizada con Supabase**: `DeletePaymentUseCase` ahora comprueba el `syncStatus` antes de borrar. Si el pago es `.synced` o `.modified` elimina primero de Supabase y luego de SwiftData; si es `.local` solo limpia el almacenamiento local. Si Supabase no está disponible el borrado local procede igualmente (offline-first).
+- **groupId no se persistía al actualizar un pago**: `PaymentSwiftDataDataSource.save()` y `saveAll()` no incluían `groupId` en los campos actualizables. Al agregar la segunda moneda a un pago TC single-currency, el pago original nunca recibía el nuevo `groupId` en disco, lo que hacía que ambos aparecieran como entradas separadas en la lista.
 - **TestFlight / GitHub Actions**: el workflow ya no empaqueta placeholders de Supabase como si fueran una URL válida; `AppConfiguration` exige `https`, host y clave configurables, y el cliente demo solo se usa cuando la configuración real no es válida. El workflow `testflight-develop.yml` genera `pagosApp/Config/Secrets.xcconfig` desde los secretos del repositorio `SUPABASE_URL` y `SUPABASE_ANON_KEY` (con escape `://` → `:/$()/` para `.xcconfig`).
 - **Login**: `LoginView` usa `@Environment(AppDependencies.self)` como el resto de la app, alineado con la inyección del bootstrap.
+
+### Tests
+
+- Nuevos casos en `DeletePaymentUseCaseTests`: `syncedPayment_deletesFromSupabaseAndLocal`, `modifiedPayment_deletesFromSupabaseAndLocal`, `localPayment_deletesOnlyFromLocal`, `supabaseFailure_stillDeletesLocally`. `MockPaymentRepository` expone `remoteDeletedIds` y `shouldThrowOnRemoteDelete`.
 
 ## [1.0.0] – Build 20
 

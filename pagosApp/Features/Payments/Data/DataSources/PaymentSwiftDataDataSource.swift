@@ -57,6 +57,7 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
             existing.eventIdentifier = payment.eventIdentifier
             existing.syncStatus = payment.syncStatus
             existing.lastSyncedAt = payment.lastSyncedAt
+            existing.groupId = payment.groupId
         } else {
             let newPayment = PaymentMapper.toLocalDTO(from: payment)
             modelContext.insert(newPayment)
@@ -88,6 +89,7 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
                 existing.eventIdentifier = payment.eventIdentifier
                 existing.syncStatus = payment.syncStatus
                 existing.lastSyncedAt = payment.lastSyncedAt
+                existing.groupId = payment.groupId
             } else {
                 let newDTO = PaymentMapper.toLocalDTO(from: payment)
                 modelContext.insert(newDTO)

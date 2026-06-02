@@ -59,6 +59,9 @@
 "payments.list.title" = "My Payments";
 "payments.list.filter" = "Filter";
 "payments.list.syncing" = "Syncing...";
+"payments.list.deleteConfirmTitle" = "Delete this payment?";
+"payments.list.deleteConfirmMessage" = "This action cannot be undone.";
+"payments.list.deleteGroupConfirmMessage" = "The S/ and $ amounts will both be removed.";
 "payments.add.title" = "New Payment";
 "payments.add.cancel" = "Cancel";
 "payments.edit.title" = "Edit Payment";
@@ -69,6 +72,8 @@
 "payments.amounts.dollars" = "Dollars";
 "payments.amounts.dualCurrency" = "Dual Currency Card";
 "payments.amounts.hintOneAmount" = "💡 Enter at least one amount";
+"payments.amounts.hintAddUSD" = "💡 You can also add a dollar amount";
+"payments.amounts.hintAddPEN" = "💡 You can also add a soles amount";
 "payments.details.section" = "Payment Details";
 "payments.details.paid" = "Paid";
 "payments.details.namePlaceholder" = "Payment name";

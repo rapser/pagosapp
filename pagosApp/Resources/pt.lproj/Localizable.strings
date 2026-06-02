@@ -59,6 +59,9 @@
 "payments.list.title" = "Meus Pagamentos";
 "payments.list.filter" = "Filtrar";
 "payments.list.syncing" = "Sincronizando...";
+"payments.list.deleteConfirmTitle" = "¿Excluir este pagamento?";
+"payments.list.deleteConfirmMessage" = "Esta ação não pode ser desfeita.";
+"payments.list.deleteGroupConfirmMessage" = "Os valores em S/ e $ serão removidos.";
 "payments.add.title" = "Novo Pagamento";
 "payments.add.cancel" = "Cancelar";
 "payments.edit.title" = "Editar Pagamento";
@@ -69,6 +72,8 @@
 "payments.amounts.dollars" = "Dólares";
 "payments.amounts.dualCurrency" = "Cartão Bimonetário";
 "payments.amounts.hintOneAmount" = "💡 Digite pelo menos um valor";
+"payments.amounts.hintAddUSD" = "💡 Você também pode adicionar um valor em dólares";
+"payments.amounts.hintAddPEN" = "💡 Você também pode adicionar um valor em soles";
 "payments.details.section" = "Detalhes do Pagamento";
 "payments.details.paid" = "Pago";
 "payments.details.namePlaceholder" = "Nome do pagamento";

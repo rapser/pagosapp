@@ -98,6 +98,8 @@ private struct FilterPicker: View {
 // MARK: - Payments List (TableView)
 private struct PaymentsList: View {
     @Bindable var viewModel: PaymentsListViewModel
+    @State private var paymentToDelete: PaymentUI?
+    @State private var groupToDelete: PaymentGroupUI?
 
     var body: some View {
         List {
@@ -113,9 +115,7 @@ private struct PaymentsList: View {
                     }
                     .swipeActions {
                         Button(role: .destructive) {
-                            Task {
-                                await viewModel.deleteGroup(group)
-                            }
+                            groupToDelete = group
                         } label: {
                             Label(L10n.General.delete, systemImage: "trash.fill")
                         }
@@ -131,9 +131,7 @@ private struct PaymentsList: View {
                     }
                     .swipeActions {
                         Button(role: .destructive) {
-                            Task {
-                                await viewModel.deletePayment(payment)
-                            }
+                            paymentToDelete = payment
                         } label: {
                             Label(L10n.General.delete, systemImage: "trash.fill")
                         }
@@ -144,6 +142,44 @@ private struct PaymentsList: View {
         .listStyle(.plain)
         .refreshable {
             await viewModel.refresh()
+        }
+        .alert(
+            L10n.Payments.List.deleteConfirmTitle,
+            isPresented: Binding(
+                get: { paymentToDelete != nil },
+                set: { if !$0 { paymentToDelete = nil } }
+            )
+        ) {
+            Button(L10n.General.delete, role: .destructive) {
+                if let payment = paymentToDelete {
+                    Task { await viewModel.deletePayment(payment) }
+                }
+                paymentToDelete = nil
+            }
+            Button(L10n.General.cancel, role: .cancel) {
+                paymentToDelete = nil
+            }
+        } message: {
+            Text(L10n.Payments.List.deleteConfirmMessage)
+        }
+        .alert(
+            L10n.Payments.List.deleteConfirmTitle,
+            isPresented: Binding(
+                get: { groupToDelete != nil },
+                set: { if !$0 { groupToDelete = nil } }
+            )
+        ) {
+            Button(L10n.General.delete, role: .destructive) {
+                if let group = groupToDelete {
+                    Task { await viewModel.deleteGroup(group) }
+                }
+                groupToDelete = nil
+            }
+            Button(L10n.General.cancel, role: .cancel) {
+                groupToDelete = nil
+            }
+        } message: {
+            Text(L10n.Payments.List.deleteGroupConfirmMessage)
         }
     }
 
