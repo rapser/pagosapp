@@ -44,14 +44,21 @@ final class MockPaymentRepository: PaymentRepositoryProtocol, @unchecked Sendabl
     var payments: [Payment] = []
     var shouldThrowOnSave = false
     var shouldThrowOnDelete = false
+    var shouldThrowOnRemoteDelete = false
     private(set) var savedPayments: [Payment] = []
     private(set) var deletedIds: [UUID] = []
+    private(set) var remoteDeletedIds: [UUID] = []
 
     nonisolated func fetchAllPayments(userId: UUID) async throws -> [PaymentDTO] { [] }
     nonisolated func upsertPayment(userId: UUID, payment: PaymentDTO) async throws {}
     nonisolated func upsertPayments(userId: UUID, payments: [PaymentDTO]) async throws {}
-    nonisolated func deletePayment(paymentId: UUID) async throws {}
-    nonisolated func deletePayments(paymentIds: [UUID]) async throws {}
+    nonisolated func deletePayment(paymentId: UUID) async throws {
+        if shouldThrowOnRemoteDelete { throw PaymentError.deleteFailed("remote mock") }
+        remoteDeletedIds.append(paymentId)
+    }
+    nonisolated func deletePayments(paymentIds: [UUID]) async throws {
+        for id in paymentIds { try await deletePayment(paymentId: id) }
+    }
 
     @MainActor func getAllLocalPayments() async throws -> [Payment] { payments }
     @MainActor func getLocalPayment(id: UUID) async throws -> Payment? { payments.first { $0.id == id } }

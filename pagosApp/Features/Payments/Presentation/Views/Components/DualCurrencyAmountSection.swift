@@ -3,6 +3,19 @@ import SwiftUI
 struct DualCurrencyAmountSection: View {
     @Binding var amountPEN: String
     @Binding var amountUSD: String
+    /// When true, shows a contextual hint guiding the user to fill the missing currency
+    var showAddCurrencyHint: Bool = false
+
+    private var hasPEN: Bool { (Double(amountPEN) ?? 0) > 0 }
+    private var hasUSD: Bool { (Double(amountUSD) ?? 0) > 0 }
+
+    private var hint: String {
+        if showAddCurrencyHint {
+            if hasPEN && !hasUSD { return L10n.Payments.Amounts.hintAddUSD }
+            if hasUSD && !hasPEN { return L10n.Payments.Amounts.hintAddPEN }
+        }
+        return L10n.Payments.Amounts.hintOneAmount
+    }
 
     var body: some View {
         Section(header: Text(L10n.Payments.Amounts.section)) {
@@ -16,10 +29,8 @@ struct DualCurrencyAmountSection: View {
                     Label("Soles (S/)", systemImage: "banknote")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
-                    TextField("0.00", text: $amountPEN)
-                        .keyboardType(.decimalPad)
-                        .font(.title3)
-                        .padding()
+                    CurrencyTextField(amount: $amountPEN)
+                        .padding(.horizontal, 12)
                         .background(Color(.systemGray6))
                         .cornerRadius(8)
                 }
@@ -29,17 +40,16 @@ struct DualCurrencyAmountSection: View {
                     Label("Dólares ($)", systemImage: "dollarsign.circle")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
-                    TextField("0.00", text: $amountUSD)
-                        .keyboardType(.decimalPad)
-                        .font(.title3)
-                        .padding()
+                    CurrencyTextField(amount: $amountUSD)
+                        .padding(.horizontal, 12)
                         .background(Color(.systemGray6))
                         .cornerRadius(8)
                 }
 
-                Text(L10n.Payments.Amounts.hintOneAmount)
+                Text(hint)
                     .font(.caption)
                     .foregroundColor(.secondary)
+                    .animation(.default, value: hint)
             }
         }
     }

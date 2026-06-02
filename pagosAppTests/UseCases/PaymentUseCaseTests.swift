@@ -316,7 +316,7 @@ struct DeletePaymentUseCaseTests {
     let sut: DeletePaymentUseCase
 
     init() {
-        sut = DeletePaymentUseCase(paymentRepository: repo, eventBus: bus)
+        sut = DeletePaymentUseCase(paymentRepository: repo, eventBus: bus, log: NullLog())
     }
 
     @Test func existingPayment_deletedAndEventPublished() async {
@@ -343,6 +343,55 @@ struct DeletePaymentUseCaseTests {
         }
         #expect(error == .deleteFailed(""))
         #expect(bus.totalEventCount == 0)
+    }
+
+    // MARK: Supabase deletion
+
+    @Test func syncedPayment_deletesFromSupabaseAndLocal() async {
+        let payment = Payment.make(syncStatus: .synced)
+        repo.payments = [payment]
+
+        let result = await sut.execute(paymentId: payment.id)
+
+        if case .failure(let error) = result { Issue.record("Expected success, got \(error)") }
+        #expect(repo.remoteDeletedIds.contains(payment.id), "Should have deleted from Supabase")
+        #expect(!repo.payments.contains { $0.id == payment.id }, "Should have deleted locally")
+        #expect(bus.lastEvent(ofType: PaymentDeletedEvent.self)?.paymentId == payment.id)
+    }
+
+    @Test func modifiedPayment_deletesFromSupabaseAndLocal() async {
+        let payment = Payment.make(syncStatus: .modified)
+        repo.payments = [payment]
+
+        let result = await sut.execute(paymentId: payment.id)
+
+        if case .failure(let error) = result { Issue.record("Expected success, got \(error)") }
+        #expect(repo.remoteDeletedIds.contains(payment.id), "Should have deleted from Supabase")
+        #expect(!repo.payments.contains { $0.id == payment.id }, "Should have deleted locally")
+    }
+
+    @Test func localPayment_deletesOnlyFromLocal() async {
+        let payment = Payment.make(syncStatus: .local)
+        repo.payments = [payment]
+
+        let result = await sut.execute(paymentId: payment.id)
+
+        if case .failure(let error) = result { Issue.record("Expected success, got \(error)") }
+        #expect(repo.remoteDeletedIds.isEmpty, "Should NOT have called Supabase for a local-only payment")
+        #expect(!repo.payments.contains { $0.id == payment.id }, "Should have deleted locally")
+    }
+
+    @Test func supabaseFailure_stillDeletesLocally() async {
+        repo.shouldThrowOnRemoteDelete = true
+        let payment = Payment.make(syncStatus: .synced)
+        repo.payments = [payment]
+
+        let result = await sut.execute(paymentId: payment.id)
+
+        // Offline-first: local delete must succeed even if Supabase is unreachable
+        if case .failure(let error) = result { Issue.record("Expected success, got \(error)") }
+        #expect(!repo.payments.contains { $0.id == payment.id }, "Should have deleted locally despite Supabase failure")
+        #expect(bus.lastEvent(ofType: PaymentDeletedEvent.self)?.paymentId == payment.id)
     }
 }
 

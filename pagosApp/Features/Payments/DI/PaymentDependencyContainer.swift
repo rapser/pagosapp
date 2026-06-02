@@ -130,6 +130,7 @@ final class PaymentDependencyContainer {
         return DeletePaymentUseCase(
             paymentRepository: makePaymentRepository(),
             eventBus: eventBus,
+            log: log,
             syncCalendarUseCase: syncCalendarUseCase,
             scheduleNotificationsUseCase: scheduleNotificationsUseCase
         )
@@ -244,6 +245,10 @@ final class PaymentDependencyContainer {
         return EditPaymentViewModel(
             payment: payment,
             otherPayment: otherPayment,
+            createPaymentUseCase: makeCreatePaymentUseCase(
+                calendarEventDataSource: calendarEventDataSource,
+                notificationDataSource: notificationDataSource
+            ),
             updatePaymentUseCase: makeUpdatePaymentUseCase(
                 calendarEventDataSource: calendarEventDataSource,
                 notificationDataSource: notificationDataSource

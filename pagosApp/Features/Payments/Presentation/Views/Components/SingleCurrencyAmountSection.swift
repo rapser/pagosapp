@@ -11,10 +11,10 @@ struct SingleCurrencyAmountSection: View {
                 Text(L10n.Payments.Amounts.dollars).tag(Currency.usd)
             }
 
-            HStack {
+            HStack(spacing: 4) {
                 Text(currency.symbol)
-                TextField("Monto", text: $amount)
-                    .keyboardType(.decimalPad)
+                    .foregroundColor(.secondary)
+                CurrencyTextField(amount: $amount)
             }
         }
     }

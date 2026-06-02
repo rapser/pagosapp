@@ -49,8 +49,6 @@
 		};
 		464D597E2E6B405A00DE10FF /* pagosAppTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = pagosAppTests;
 			sourceTree = "<group>";
 		};

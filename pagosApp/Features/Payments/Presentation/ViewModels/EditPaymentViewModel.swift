@@ -15,8 +15,8 @@ final class EditPaymentViewModel: BaseViewModel {
     // MARK: - Observable Properties (UI State)
 
     var name: String
-    var amount: String
-    var amountUSD: String  // For dual-currency credit cards
+    var amount: String      // Always PEN field
+    var amountUSD: String   // Always USD field
     var currency: Currency
     var dueDate: Date
     var category: PaymentCategory
@@ -26,6 +26,7 @@ final class EditPaymentViewModel: BaseViewModel {
 
     private let paymentUI: PaymentUI
     private let otherPaymentUI: PaymentUI?  // The other payment in the group (PEN or USD)
+    private let createPaymentUseCase: CreatePaymentUseCase
     private let updatePaymentUseCase: UpdatePaymentUseCase
     private let togglePaymentStatusUseCase: TogglePaymentStatusUseCase
     private let mapper: PaymentUIMapping
@@ -35,13 +36,18 @@ final class EditPaymentViewModel: BaseViewModel {
 
     // MARK: - Computed Properties
 
-    /// Check if this is a dual-currency grouped payment
+    /// True if this is a credit card payment — always shows dual-currency fields
     var isDualCurrencyPayment: Bool {
+        category == .tarjetaCredito
+    }
+
+    /// True if this payment already has a linked sibling (fully grouped dual-currency)
+    var isGroupedDualCurrency: Bool {
         otherPaymentUI != nil && category == .tarjetaCredito
     }
 
     // MARK: - Validation
-    
+
     /// UI-level validation for immediate user feedback
     /// Note: This is separate from PaymentValidator in Use Cases.
     /// - ViewModel validation: Fast, UI-focused, for enabling/disabling buttons
@@ -49,14 +55,13 @@ final class EditPaymentViewModel: BaseViewModel {
     /// Both validations serve different purposes and are intentionally duplicated.
     var isValid: Bool {
         guard !name.isEmpty else { return false }
-        
+
         if isDualCurrencyPayment {
             // For credit cards, need at least one amount
             let hasPEN = !amount.isEmpty && (Double(amount) ?? 0) > 0
             let hasUSD = !amountUSD.isEmpty && (Double(amountUSD) ?? 0) > 0
             return hasPEN || hasUSD
         } else {
-            // For other categories, require primary amount
             return !amount.isEmpty && (Double(amount) ?? 0) > 0
         }
     }
@@ -74,17 +79,27 @@ final class EditPaymentViewModel: BaseViewModel {
         let dateChanged = !Calendar.current.isDate(dueDate, inSameDayAs: paymentUI.dueDate)
         let categoryChanged = category != paymentUI.category
         let paidChanged = isPaid != paymentUI.isPaid
-        
-        if isDualCurrencyPayment, let otherPayment = otherPaymentUI {
-            // For dual-currency, check both amounts
-            // Always compare amount with PEN payment and amountUSD with USD payment
+
+        if isGroupedDualCurrency, let otherPayment = otherPaymentUI {
+            // Already grouped: compare both amounts against their respective payments
             let penPayment = paymentUI.currency == .pen ? paymentUI : otherPayment
             let usdPayment = paymentUI.currency == .usd ? paymentUI : otherPayment
             let penChanged = amountValue != penPayment.amount
             let usdChanged = amountUSDValue != usdPayment.amount
             return nameChanged || penChanged || usdChanged || dateChanged || categoryChanged || paidChanged
+        } else if isDualCurrencyPayment {
+            // Single TC: detect if user modified existing amount or added a second currency
+            if paymentUI.currency == .pen {
+                let penChanged = amountValue != paymentUI.amount
+                let newUSDAdded = (Double(amountUSD) ?? 0) > 0
+                return nameChanged || penChanged || newUSDAdded || dateChanged || categoryChanged || paidChanged
+            } else {
+                let usdChanged = amountUSDValue != paymentUI.amount
+                let newPENAdded = (Double(amount) ?? 0) > 0
+                return nameChanged || usdChanged || newPENAdded || dateChanged || categoryChanged || paidChanged
+            }
         } else {
-            // For single currency
+            // Non-TC single currency
             let amountChanged = amountValue != paymentUI.amount
             let currencyChanged = currency != paymentUI.currency
             return nameChanged || amountChanged || currencyChanged || dateChanged || categoryChanged || paidChanged
@@ -96,33 +111,41 @@ final class EditPaymentViewModel: BaseViewModel {
     init(
         payment: PaymentUI,
         otherPayment: PaymentUI? = nil,
+        createPaymentUseCase: CreatePaymentUseCase,
         updatePaymentUseCase: UpdatePaymentUseCase,
         togglePaymentStatusUseCase: TogglePaymentStatusUseCase,
         mapper: PaymentUIMapping
     ) {
         self.paymentUI = payment
         self.otherPaymentUI = otherPayment
+        self.createPaymentUseCase = createPaymentUseCase
         self.updatePaymentUseCase = updatePaymentUseCase
         self.togglePaymentStatusUseCase = togglePaymentStatusUseCase
         self.mapper = mapper
 
-        // Initialize with current payment values
         self.name = payment.name
         self.currency = payment.currency
-        
-        // For dual-currency payments, initialize both amounts
-        // Always use amount for PEN and amountUSD for USD, regardless of which payment is primary
+
         if let otherPayment = otherPayment, payment.category == .tarjetaCredito {
+            // Already grouped dual-currency: map PEN→amount, USD→amountUSD
             let penPayment = payment.currency == .pen ? payment : otherPayment
             let usdPayment = payment.currency == .usd ? payment : otherPayment
             self.amount = String(format: "%.2f", penPayment.amount)
             self.amountUSD = String(format: "%.2f", usdPayment.amount)
+        } else if payment.category == .tarjetaCredito {
+            // Single TC: show each currency in its correct field, leave other empty
+            if payment.currency == .pen {
+                self.amount = String(format: "%.2f", payment.amount)
+                self.amountUSD = ""
+            } else {
+                self.amount = ""
+                self.amountUSD = String(format: "%.2f", payment.amount)
+            }
         } else {
-            // Single currency payment
             self.amount = String(format: "%.2f", payment.amount)
             self.amountUSD = ""
         }
-        
+
         self.dueDate = payment.dueDate
         self.category = payment.category
         self.isPaid = payment.isPaid
@@ -132,7 +155,6 @@ final class EditPaymentViewModel: BaseViewModel {
     // MARK: - Actions
 
     func saveChanges(onSuccess: (() -> Void)? = nil) async {
-        // Validate
         guard isValid else {
             setValidationError(L10n.Payments.Validation.completeFields)
             return
@@ -143,27 +165,55 @@ final class EditPaymentViewModel: BaseViewModel {
         isLoading = true
         defer { isLoading = false }
 
-        // Check if dual-currency payment (credit card with both PEN and USD)
-        if isDualCurrencyPayment, let otherPayment = otherPaymentUI {
+        if isGroupedDualCurrency, let otherPayment = otherPaymentUI {
+            // Already grouped: update both payments
             await saveDualCurrencyPayment(otherPayment: otherPayment, onSuccess: onSuccess)
+        } else if isDualCurrencyPayment {
+            let hasPEN = (amountValue ?? 0) > 0
+            let hasUSD = (amountUSDValue ?? 0) > 0
+            if hasPEN && hasUSD {
+                // User added a second currency: upgrade to grouped
+                await saveUpgradingToGrouped(onSuccess: onSuccess)
+            } else {
+                // Only one currency filled: update existing single payment
+                await saveSinglePayment(onSuccess: onSuccess)
+            }
         } else {
             await saveSinglePayment(onSuccess: onSuccess)
         }
     }
 
-    /// Save single currency payment
+    /// Save single-currency payment (non-TC or TC with only one amount)
     private func saveSinglePayment(onSuccess: (() -> Void)?) async {
-        guard let amountValue = amountValue else {
-            setValidationError(L10n.Payments.Validation.amountGreaterZero)
-            return
+        let finalAmount: Double
+        let finalCurrency: Currency
+
+        if isDualCurrencyPayment && !isGroupedDualCurrency {
+            // TC single: use the field that has a value
+            if let penAmt = amountValue, penAmt > 0 {
+                finalAmount = penAmt
+                finalCurrency = .pen
+            } else if let usdAmt = amountUSDValue, usdAmt > 0 {
+                finalAmount = usdAmt
+                finalCurrency = .usd
+            } else {
+                setValidationError(L10n.Payments.Validation.amountGreaterZero)
+                return
+            }
+        } else {
+            guard let amt = amountValue else {
+                setValidationError(L10n.Payments.Validation.amountGreaterZero)
+                return
+            }
+            finalAmount = amt
+            finalCurrency = currency
         }
 
-        // Create updated payment UI model
         let updatedPaymentUI = PaymentUI(
             id: paymentUI.id,
             name: name,
-            amount: amountValue,
-            currency: currency,
+            amount: finalAmount,
+            currency: finalCurrency,
             dueDate: dueDate,
             isPaid: isPaid,
             category: category,
@@ -173,7 +223,6 @@ final class EditPaymentViewModel: BaseViewModel {
             groupId: paymentUI.groupId
         )
 
-        // Convert to Domain and delegate to Use Case
         let result = await updatePaymentUseCase.execute(mapper.toDomain(updatedPaymentUI))
 
         switch result {
@@ -187,7 +236,7 @@ final class EditPaymentViewModel: BaseViewModel {
         }
     }
 
-    /// Save dual-currency grouped payment (PEN + USD)
+    /// Save dual-currency grouped payment (PEN + USD) — both already exist
     private func saveDualCurrencyPayment(otherPayment: PaymentUI, onSuccess: (() -> Void)?) async {
         // amount is always PEN, amountUSD is always USD
         guard let penAmountValue = amountValue, penAmountValue > 0,
@@ -196,11 +245,9 @@ final class EditPaymentViewModel: BaseViewModel {
             return
         }
 
-        // Determine which payment is PEN and which is USD
         let penPayment = paymentUI.currency == .pen ? paymentUI : otherPayment
         let usdPayment = paymentUI.currency == .usd ? paymentUI : otherPayment
 
-        // Create updated payment UI models
         let updatedPENPayment = PaymentUI(
             id: penPayment.id,
             name: name,
@@ -229,7 +276,6 @@ final class EditPaymentViewModel: BaseViewModel {
             groupId: paymentUI.groupId
         )
 
-        // Convert to Domain and save both payments
         let resultPEN = await updatePaymentUseCase.execute(mapper.toDomain(updatedPENPayment))
         let resultUSD = await updatePaymentUseCase.execute(mapper.toDomain(updatedUSDPayment))
 
@@ -244,24 +290,90 @@ final class EditPaymentViewModel: BaseViewModel {
         }
     }
 
+    /// Upgrade a single-currency TC payment to a grouped dual-currency payment
+    /// by creating a new sibling record and linking both via a shared groupId.
+    private func saveUpgradingToGrouped(onSuccess: (() -> Void)?) async {
+        guard let penAmt = amountValue, penAmt > 0,
+              let usdAmt = amountUSDValue, usdAmt > 0 else { return }
+
+        let sharedGroupId = UUID()
+
+        // Update existing payment: assign groupId and refresh shared fields
+        let existingAmount = paymentUI.currency == .pen ? penAmt : usdAmt
+        let updatedExisting = PaymentUI(
+            id: paymentUI.id,
+            name: name,
+            amount: existingAmount,
+            currency: paymentUI.currency,
+            dueDate: dueDate,
+            isPaid: isPaid,
+            category: category,
+            eventIdentifier: paymentUI.eventIdentifier,
+            syncStatus: paymentUI.syncStatus,
+            lastSyncedAt: paymentUI.lastSyncedAt,
+            groupId: sharedGroupId
+        )
+
+        // Create new payment for the other currency
+        let newCurrency: Currency = paymentUI.currency == .pen ? .usd : .pen
+        let newAmount = newCurrency == .usd ? usdAmt : penAmt
+        let newPayment = PaymentUI(
+            id: UUID(),
+            name: name,
+            amount: newAmount,
+            currency: newCurrency,
+            dueDate: dueDate,
+            isPaid: isPaid,
+            category: category,
+            eventIdentifier: nil,
+            syncStatus: .local,
+            lastSyncedAt: nil,
+            groupId: sharedGroupId
+        )
+
+        let updateResult = await updatePaymentUseCase.execute(mapper.toDomain(updatedExisting))
+        switch updateResult {
+        case .failure(let error):
+            logDebug("Failed to update existing payment when upgrading to group: \(error.errorCode)")
+            setError(PaymentErrorMessageMapper.message(for: error))
+            return
+        case .success:
+            break
+        }
+
+        let createResult = await createPaymentUseCase.execute(mapper.toDomain(newPayment))
+        switch createResult {
+        case .success:
+            onPaymentUpdated?()
+            onSuccess?()
+        case .failure(let error):
+            logDebug("Failed to create sibling payment when upgrading to group: \(error.errorCode)")
+            setError(PaymentErrorMessageMapper.message(for: error))
+        }
+    }
+
     func resetChanges() {
-        // Reset to original payment values
         self.name = paymentUI.name
         self.currency = paymentUI.currency
-        
-        // For dual-currency payments, reset both amounts
-        // Always use amount for PEN and amountUSD for USD, regardless of which payment is primary
+
         if let otherPayment = otherPaymentUI, category == .tarjetaCredito {
             let penPayment = paymentUI.currency == .pen ? paymentUI : otherPayment
             let usdPayment = paymentUI.currency == .usd ? paymentUI : otherPayment
             self.amount = String(format: "%.2f", penPayment.amount)
             self.amountUSD = String(format: "%.2f", usdPayment.amount)
+        } else if category == .tarjetaCredito {
+            if paymentUI.currency == .pen {
+                self.amount = String(format: "%.2f", paymentUI.amount)
+                self.amountUSD = ""
+            } else {
+                self.amount = ""
+                self.amountUSD = String(format: "%.2f", paymentUI.amount)
+            }
         } else {
-            // Single currency payment
             self.amount = String(format: "%.2f", paymentUI.amount)
             self.amountUSD = ""
         }
-        
+
         self.dueDate = paymentUI.dueDate
         self.category = paymentUI.category
         self.isPaid = paymentUI.isPaid
@@ -271,7 +383,6 @@ final class EditPaymentViewModel: BaseViewModel {
         isLoading = true
         defer { isLoading = false }
 
-        // Create current payment UI with current values
         let currentPaymentUI = PaymentUI(
             id: paymentUI.id,
             name: name,
@@ -286,7 +397,6 @@ final class EditPaymentViewModel: BaseViewModel {
             groupId: paymentUI.groupId
         )
 
-        // Convert to Domain and delegate to Use Case
         let result = await togglePaymentStatusUseCase.execute(mapper.toDomain(currentPaymentUI))
 
         switch result {
