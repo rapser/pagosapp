@@ -29,12 +29,7 @@ struct DualCurrencyAmountSection: View {
                     Label("Soles (S/)", systemImage: "banknote")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
-                    TextField("0.00", text: $amountPEN)
-                        .keyboardType(.decimalPad)
-                        .font(.title3)
-                        .padding()
-                        .background(Color(.systemGray6))
-                        .cornerRadius(8)
+                    CurrencyTextField(amount: $amountPEN)
                 }
 
                 // USD Card
@@ -42,12 +37,7 @@ struct DualCurrencyAmountSection: View {
                     Label("Dólares ($)", systemImage: "dollarsign.circle")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
-                    TextField("0.00", text: $amountUSD)
-                        .keyboardType(.decimalPad)
-                        .font(.title3)
-                        .padding()
-                        .background(Color(.systemGray6))
-                        .cornerRadius(8)
+                    CurrencyTextField(amount: $amountUSD)
                 }
 
                 Text(hint)
