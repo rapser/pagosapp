@@ -59,6 +59,9 @@
 "payments.list.title" = "Mis Pagos";
 "payments.list.filter" = "Filtrar";
 "payments.list.syncing" = "Sincronizando...";
+"payments.list.deleteConfirmTitle" = "¿Eliminar este pago?";
+"payments.list.deleteConfirmMessage" = "Esta acción no se puede deshacer.";
+"payments.list.deleteGroupConfirmMessage" = "Se borrarán los montos en S/ y $.";
 "payments.add.title" = "Nuevo Pago";
 "payments.add.cancel" = "Cancelar";
 "payments.edit.title" = "Editar Pago";

@@ -59,6 +59,9 @@
 "payments.list.title" = "My Payments";
 "payments.list.filter" = "Filter";
 "payments.list.syncing" = "Syncing...";
+"payments.list.deleteConfirmTitle" = "Delete this payment?";
+"payments.list.deleteConfirmMessage" = "This action cannot be undone.";
+"payments.list.deleteGroupConfirmMessage" = "The S/ and $ amounts will both be removed.";
 "payments.add.title" = "New Payment";
 "payments.add.cancel" = "Cancel";
 "payments.edit.title" = "Edit Payment";

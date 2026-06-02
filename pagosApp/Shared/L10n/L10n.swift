@@ -89,6 +89,9 @@ enum L10n {
             static let title = tr("payments.list.title")
             static let filter = tr("payments.list.filter")
             static let syncing = tr("payments.list.syncing")
+            static let deleteConfirmTitle = tr("payments.list.deleteConfirmTitle")
+            static let deleteConfirmMessage = tr("payments.list.deleteConfirmMessage")
+            static let deleteGroupConfirmMessage = tr("payments.list.deleteGroupConfirmMessage")
         }
         enum Add {
             static let title = tr("payments.add.title")
