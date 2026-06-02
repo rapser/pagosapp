@@ -30,6 +30,9 @@ struct DualCurrencyAmountSection: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     CurrencyTextField(amount: $amountPEN)
+                        .padding(.horizontal, 12)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(8)
                 }
 
                 // USD Card
@@ -38,6 +41,9 @@ struct DualCurrencyAmountSection: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     CurrencyTextField(amount: $amountUSD)
+                        .padding(.horizontal, 12)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(8)
                 }
 
                 Text(hint)
