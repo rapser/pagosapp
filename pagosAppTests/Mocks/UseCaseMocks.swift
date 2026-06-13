@@ -105,7 +105,13 @@ final class MockPaymentSyncRepository: PaymentSyncRepositoryProtocol, @unchecked
         uploadCount += 1
     }
 
-    func downloadPayments(userId: UUID) async throws -> [Payment] { [] }
+    var remotePaymentsToReturn: [Payment] = []
+    var shouldThrowOnDownload = false
+
+    func downloadPayments(userId: UUID) async throws -> [Payment] {
+        if shouldThrowOnDownload { throw PaymentSyncError.downloadFailed("mock") }
+        return remotePaymentsToReturn
+    }
     func syncDeletion(paymentId: UUID) async throws {}
 
     @MainActor func getPendingPayments() async throws -> [Payment] { pendingPayments }
@@ -246,6 +252,29 @@ extension Payment {
         groupId: UUID? = nil
     ) -> Payment {
         Payment(
+            id: id, name: name, amount: amount, currency: currency,
+            dueDate: dueDate, isPaid: isPaid, category: category,
+            eventIdentifier: eventIdentifier, syncStatus: syncStatus,
+            lastSyncedAt: lastSyncedAt, groupId: groupId
+        )
+    }
+}
+
+extension PaymentUI {
+    static func make(
+        id: UUID = UUID(),
+        name: String = "Test Payment",
+        amount: Double = 100.0,
+        currency: Currency = .pen,
+        dueDate: Date = Date(),
+        isPaid: Bool = false,
+        category: PaymentCategory = .servicios,
+        eventIdentifier: String? = nil,
+        syncStatus: SyncStatus = .local,
+        lastSyncedAt: Date? = nil,
+        groupId: UUID? = nil
+    ) -> PaymentUI {
+        PaymentUI(
             id: id, name: name, amount: amount, currency: currency,
             dueDate: dueDate, isPaid: isPaid, category: category,
             eventIdentifier: eventIdentifier, syncStatus: syncStatus,
