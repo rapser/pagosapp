@@ -15,7 +15,7 @@
 - **Calendario, historial y estadísticas**: calendario unificado, historial de pagos y gráficos de gastos; parte del contenido vive bajo **Ajustes** según el diseño de navegación.
 - **Cuenta**: autenticación con Supabase, biometría opcional, perfil, sincronización manual desde **Ajustes**.
 - **Técnico**: capas **Domain / Data / Presentation** por *feature*, casos de uso, repositorios, **EventBus** tipado, **Swift 6** y **iOS 26+** en los targets de la app y de tests. Apariencia global UIKit (barra de navegación al estilo del sistema, acento **AppPrimary** en títulos) centralizada en `AppGlobalAppearance`.
-- **Calidad**: tests unitarios (Swift Testing) en validadores, mappers y mapeo de errores; **SwiftLint**; **CI** en PRs a `develop` con build, **tests** y lint. Guías en [`docs/testing.md`](docs/testing.md) y [`docs/test-priority-inventory.md`](docs/test-priority-inventory.md).
+- **Calidad**: tests unitarios (Swift Testing) con ~140 tests distribuidos en todas las capas — validadores, mappers, use cases (payments, reminders, sync, statistics), **ViewModels** (PaymentsListVM, AddPaymentVM, EditPaymentVM, RemindersListVM) y orquestadores de sync; mocks para repositorios, EventBus, Calendar y Notifications. **SwiftLint**; **CI** en PRs a `develop` con build, **tests** y lint. Guías en [`docs/testing.md`](docs/testing.md) y [`docs/test-priority-inventory.md`](docs/test-priority-inventory.md).
 
 Detalle de funcionalidades: [`docs/product-overview.md`](docs/product-overview.md). Arquitectura y patrones: [`docs/architecture.md`](docs/architecture.md).
 

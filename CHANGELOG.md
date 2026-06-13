@@ -24,6 +24,26 @@ El contenido de este fichero describe la **versión publicada** y el **alcance**
 
 - Nuevos casos en `DeletePaymentUseCaseTests`: `syncedPayment_deletesFromSupabaseAndLocal`, `modifiedPayment_deletesFromSupabaseAndLocal`, `localPayment_deletesOnlyFromLocal`, `supabaseFailure_stillDeletesLocally`. `MockPaymentRepository` expone `remoteDeletedIds` y `shouldThrowOnRemoteDelete`.
 
+**Cobertura ampliada — rama `feature/use-case-coverage` (~140 tests total, +32 nuevos):**
+
+- **Nuevos mocks de plataforma** (`PlatformMocks.swift`): `MockCalendarEventDataSource` (trackea `addedEvents`, `updatedEvents`, `removedEventIds`) y `MockNotificationDataSource` (trackea `scheduledPaymentIds`, `scheduledReminderIds`, `cancelledPaymentIds`). `MockPaymentSyncRepository` añade `remotePaymentsToReturn` y `shouldThrowOnDownload`. `PaymentUI.make(...)` factory extension para tests de ViewModel.
+
+- **Gaps de use cases cubiertos**:
+  - `GetAllPaymentsUseCaseTests` (3 tests): repo vacío, múltiples pagos.
+  - `GetPaymentUseCaseTests` (3 tests): encontrado, no encontrado, repo vacío.
+  - `DownloadRemoteChangesUseCaseTests` (8 tests): nuevo remoto guardado, synced actualizado desde remoto, `.local` / `.modified` / `.error` preservados (server-wins con protección de pendientes), auth failure, download failure, múltiples remotos.
+  - `DeleteReminderUseCaseTests` (3 tests), `GetAllRemindersUseCaseTests` (2 tests), `GetPendingReminderSyncCountUseCaseTests` (3 tests).
+
+- **Orquestadores de sync** (`SyncUseCaseTests.swift`):
+  - `SyncPaymentsUseCaseTests` (5 tests): ambos succeed, upload falla sin ejecutar download, download falla, sin pendientes aún descarga, upload + download en secuencia.
+  - `SyncRemindersUseCaseTests` (4 tests): success, upload falla sin ejecutar download, descarga remoto, reminder `.modified` no sobreescrito tras sync.
+
+- **Primera cobertura de capa de ViewModel** (`ViewModels/`):
+  - `PaymentsListViewModelTests` (6 tests): carga lista, repo vacío, delete optimista, revert en fallo con error, toggle isPaid en repo y en UI.
+  - `AddPaymentViewModelTests` (8 tests): validaciones (nombre vacío, TC sin monto, TC solo PEN), save single, save dual genera groupId compartido en ambos pagos, clearForm tras éxito, error de repo.
+  - `EditPaymentViewModelTests` (8 tests): TC single vs grouped (isDualCurrency / isGrouped), detección de cambios por nombre, detección al agregar segunda moneda, sin cambios hasChanges=false, resetChanges restaura valores, save single llama update, upgrade a grouped crea dos pagos con groupId compartido.
+  - `RemindersListViewModelTests` (5 tests): carga lista, repo vacío, deleteReminder, toggleCompletion a true y a false.
+
 ## [1.0.0] – Build 20
 
 ### Producto
