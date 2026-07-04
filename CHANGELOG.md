@@ -12,6 +12,8 @@ El contenido de este fichero describe la **versión publicada** y el **alcance**
 - **Hint contextual en edición TC**: el texto de ayuda bajo los campos de monto cambia dinámicamente según la moneda que está vacía ("Puedes agregar un monto en dólares" / "...en soles") cuando se edita un pago TC con una sola moneda registrada.
 - **Entrada de montos estilo banca** (`CurrencyTextField`): los campos de monto en pagos de TC (soles y dólares) y en pagos de moneda única usan una entrada shift-derecha similar a apps bancarias — se escribe solo dígitos y el punto decimal se posiciona automáticamente: `5` → `0.05`, `50` → `0.50`, `500` → `5.00`. El campo muestra `0.00` en gris mientras está vacío y cambia al color normal al escribir el primer dígito.
 - **Confirmación antes de eliminar**: el swipe-to-delete muestra un alert de confirmación antes de borrar ("¿Eliminar este pago?" / "Se borrarán los montos en S/ y $."), evitando eliminaciones accidentales. Localizado en español, inglés y portugués.
+- **Observación compartida de eventos de pagos**: se añadió `PaymentChangeObserver` como helper interno para centralizar la reacción a `PaymentCreatedEvent`, `PaymentUpdatedEvent`, `PaymentDeletedEvent` y `PaymentStatusToggledEvent` sin cambiar la API pública de `EventBus`.
+- **Base compartida para sync coordinators**: se añadió `BaseSyncCoordinator` con patrón `Template Method` para encapsular `isSyncing`, `lastSyncDate`, `pendingSyncCount`, persistencia del último sync, retries y limpieza de estado.
 
 ### Fixed
 
@@ -20,9 +22,18 @@ El contenido de este fichero describe la **versión publicada** y el **alcance**
 - **TestFlight / GitHub Actions**: el workflow ya no empaqueta placeholders de Supabase como si fueran una URL válida; `AppConfiguration` exige `https`, host y clave configurables, y el cliente demo solo se usa cuando la configuración real no es válida. El workflow `testflight-develop.yml` genera `pagosApp/Config/Secrets.xcconfig` desde los secretos del repositorio `SUPABASE_URL` y `SUPABASE_ANON_KEY` (con escape `://` → `:/$()/` para `.xcconfig`).
 - **Login**: `LoginView` usa `@Environment(AppDependencies.self)` como el resto de la app, alineado con la inyección del bootstrap.
 
+### Changed
+
+- **Refactor clean de ViewModels**: `PaymentsListViewModel`, `PaymentHistoryViewModel` y `SettingsViewModel` eliminaron sus suscripciones repetidas al `EventBus` y ahora comparten una sola entrada reusable para refrescos disparados por eventos de pagos.
+- **Refactor clean de coordinación de sync**: `PaymentSyncCoordinator` y `ReminderSyncCoordinator` quedaron como especializaciones sobre una base interna común. Se mantiene el comportamiento observable existente: pagos sigue publicando `PaymentsSyncedEvent` y recordatorios sigue reprogramando notificaciones tras sync exitoso.
+- **Rendimiento en estadísticas**: `StatisticsViewModel` ahora usa `async let` para cargar categorías, meses, totales y disponibilidad de moneda en paralelo cuando las operaciones son independientes, manteniendo el mismo contrato observable y el mismo resultado funcional.
+
 ### Tests
 
 - Nuevos casos en `DeletePaymentUseCaseTests`: `syncedPayment_deletesFromSupabaseAndLocal`, `modifiedPayment_deletesFromSupabaseAndLocal`, `localPayment_deletesOnlyFromLocal`, `supabaseFailure_stillDeletesLocally`. `MockPaymentRepository` expone `remoteDeletedIds` y `shouldThrowOnRemoteDelete`.
+- Nuevas suites y dobles para cubrir el refactor de arquitectura: `PaymentHistoryViewModelTests`, `SettingsViewModelTests`, `StatisticsViewModelTests` y `SyncCoordinatorTests`. `SpyEventBus` pasó a ser un bus asíncrono en memoria capaz de verificar refrescos disparados por eventos reales.
+- `PaymentViewModelTests` añade cobertura de refresco silencioso por evento en `PaymentsListViewModel`.
+- La suite de pruebas queda en **156 tests** y la regresión completa (`xcodebuild test -project pagosApp.xcodeproj -scheme pagosApp -destination 'platform=iOS Simulator,name=iPhone 17,OS=26.2'`) pasa en esta rama.
 
 **Cobertura ampliada — rama `feature/use-case-coverage` (~140 tests total, +32 nuevos):**
 

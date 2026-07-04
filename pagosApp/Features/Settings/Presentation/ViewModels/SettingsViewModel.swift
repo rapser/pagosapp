@@ -29,6 +29,7 @@ final class SettingsViewModel: BaseViewModel {
     private let logoutUseCase: LogoutUseCase
     private let unlinkDeviceUseCase: UnlinkDeviceUseCase
     private let eventBus: EventBus
+    private let paymentChangeObserver: PaymentChangeObserver
 
     // MARK: - Initialization
 
@@ -48,6 +49,7 @@ final class SettingsViewModel: BaseViewModel {
         self.logoutUseCase = logoutUseCase
         self.unlinkDeviceUseCase = unlinkDeviceUseCase
         self.eventBus = eventBus
+        self.paymentChangeObserver = PaymentChangeObserver()
         super.init(category: "SettingsViewModel")
 
         setupEventListeners()
@@ -57,34 +59,11 @@ final class SettingsViewModel: BaseViewModel {
 
     /// Setup event listeners for domain events
     private func setupEventListeners() {
-        Task { @MainActor [weak self] in
-            for await _ in self?.eventBus.subscribe(to: PaymentsSyncedEvent.self) ?? AsyncStream.never {
-                await self?.updatePendingSyncCount()
-            }
+        paymentChangeObserver.observePaymentChanges(eventBus: eventBus) { [weak self] in
+            await self?.updatePendingSyncCount()
         }
-
-        Task { @MainActor [weak self] in
-            for await _ in self?.eventBus.subscribe(to: PaymentCreatedEvent.self) ?? AsyncStream.never {
-                await self?.updatePendingSyncCount()
-            }
-        }
-
-        Task { @MainActor [weak self] in
-            for await _ in self?.eventBus.subscribe(to: PaymentUpdatedEvent.self) ?? AsyncStream.never {
-                await self?.updatePendingSyncCount()
-            }
-        }
-
-        Task { @MainActor [weak self] in
-            for await _ in self?.eventBus.subscribe(to: PaymentDeletedEvent.self) ?? AsyncStream.never {
-                await self?.updatePendingSyncCount()
-            }
-        }
-
-        Task { @MainActor [weak self] in
-            for await _ in self?.eventBus.subscribe(to: PaymentStatusToggledEvent.self) ?? AsyncStream.never {
-                await self?.updatePendingSyncCount()
-            }
+        paymentChangeObserver.observe(eventBus: eventBus, eventType: PaymentsSyncedEvent.self) { [weak self] in
+            await self?.updatePendingSyncCount()
         }
     }
 

@@ -94,6 +94,19 @@ struct PaymentsListViewModelTests {
 
         #expect(sut.payments.first { $0.id == payment.id }?.isPaid == true)
     }
+
+    @Test func paymentEvent_triggersSilentRefresh() async {
+        repo.payments = [Payment.make(name: "Netflix")]
+        await sut.fetchPayments()
+        #expect(sut.payments.count == 1)
+
+        await Task.yield()
+        repo.payments.append(Payment.make(name: "Spotify"))
+        bus.publish(PaymentCreatedEvent(paymentId: UUID()))
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        #expect(sut.payments.count == 2)
+    }
 }
 
 // MARK: - AddPaymentViewModel
