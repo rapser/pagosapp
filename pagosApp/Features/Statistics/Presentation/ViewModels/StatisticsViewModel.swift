@@ -58,13 +58,18 @@ final class StatisticsViewModel: BaseViewModel {
 
     /// Carga completa: categorías, mensual, totales de ambas monedas y disponibilidad de monedas.
     func loadStatistics() async {
-        await loadCategoryStats()
-        await loadMonthlyStats()
-        await loadBothTotals()
-        if !hasCheckedCurrencies {
-            await loadAvailableCurrencies()
-            hasCheckedCurrencies = true
+        async let categoryLoad: Void = loadCategoryStats()
+        async let monthlyLoad: Void = loadMonthlyStats()
+        async let totalsLoad: Void = loadBothTotals()
+
+        if hasCheckedCurrencies {
+            _ = await (categoryLoad, monthlyLoad, totalsLoad)
+            return
         }
+
+        async let currencyLoad: Void = loadAvailableCurrencies()
+        _ = await (categoryLoad, monthlyLoad, totalsLoad, currencyLoad)
+        hasCheckedCurrencies = true
     }
 
     /// Carga los totales de PEN y USD para el filtro activo (aprovecha el cache del repositorio).
@@ -77,8 +82,10 @@ final class StatisticsViewModel: BaseViewModel {
 
     /// Verifica qué monedas tienen pagos. Solo se llama una vez por ciclo de vida del ViewModel.
     func loadAvailableCurrencies() async {
-        hasPENPayments = await checkPaymentsByCurrencyUseCase.execute(currency: .pen)
-        hasUSDPayments = await checkPaymentsByCurrencyUseCase.execute(currency: .usd)
+        async let penPayments = checkPaymentsByCurrencyUseCase.execute(currency: .pen)
+        async let usdPayments = checkPaymentsByCurrencyUseCase.execute(currency: .usd)
+        hasPENPayments = await penPayments
+        hasUSDPayments = await usdPayments
     }
 
     func loadCategoryStats() async {
@@ -114,9 +121,10 @@ final class StatisticsViewModel: BaseViewModel {
     /// Cambia el filtro de período y recarga stats + ambos totales. Las monedas disponibles no cambian.
     func updateFilter(_ newFilter: StatsFilter) async {
         selectedFilter = newFilter
-        await loadCategoryStats()
-        await loadMonthlyStats()
-        await loadBothTotals()
+        async let categoryLoad: Void = loadCategoryStats()
+        async let monthlyLoad: Void = loadMonthlyStats()
+        async let totalsLoad: Void = loadBothTotals()
+        _ = await (categoryLoad, monthlyLoad, totalsLoad)
     }
 
     /// Cambia la moneda activa. Los totales ya están cargados para ambas monedas, solo recarga las charts.
@@ -124,8 +132,9 @@ final class StatisticsViewModel: BaseViewModel {
         selectedCurrency = newCurrency
         categoryStats = []
         monthlyStats = []
-        await loadCategoryStats()
-        await loadMonthlyStats()
+        async let categoryLoad: Void = loadCategoryStats()
+        async let monthlyLoad: Void = loadMonthlyStats()
+        _ = await (categoryLoad, monthlyLoad)
     }
 
     func refresh() async {

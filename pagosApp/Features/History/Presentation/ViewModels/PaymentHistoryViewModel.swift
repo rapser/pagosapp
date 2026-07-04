@@ -12,6 +12,7 @@ final class PaymentHistoryViewModel: BaseViewModel {
     private let eventBus: EventBus
     private let mapper: PaymentUIMapping
     private let searchService: PaymentSearchService
+    private let paymentChangeObserver: PaymentChangeObserver
 
     // MARK: - Computed Properties
     
@@ -33,38 +34,14 @@ final class PaymentHistoryViewModel: BaseViewModel {
         self.eventBus = eventBus
         self.mapper = mapper
         self.searchService = searchService
+        self.paymentChangeObserver = PaymentChangeObserver()
         super.init(category: "PaymentHistoryViewModel")
         setupEventListeners()
     }
 
     private func setupEventListeners() {
-        // Listen to any payment changes and refresh history
-        Task { @MainActor [weak self] in
-            for await _ in self?.eventBus.subscribe(to: PaymentCreatedEvent.self) ?? AsyncStream.never {
-                self?.logDebug("Received PaymentCreatedEvent")
-                await self?.fetchPayments()
-            }
-        }
-
-        Task { @MainActor [weak self] in
-            for await _ in self?.eventBus.subscribe(to: PaymentUpdatedEvent.self) ?? AsyncStream.never {
-                self?.logDebug("Received PaymentUpdatedEvent")
-                await self?.fetchPayments()
-            }
-        }
-
-        Task { @MainActor [weak self] in
-            for await _ in self?.eventBus.subscribe(to: PaymentDeletedEvent.self) ?? AsyncStream.never {
-                self?.logDebug("Received PaymentDeletedEvent")
-                await self?.fetchPayments()
-            }
-        }
-
-        Task { @MainActor [weak self] in
-            for await _ in self?.eventBus.subscribe(to: PaymentStatusToggledEvent.self) ?? AsyncStream.never {
-                self?.logDebug("Received PaymentStatusToggledEvent")
-                await self?.fetchPayments()
-            }
+        paymentChangeObserver.observePaymentChanges(eventBus: eventBus) { [weak self] in
+            await self?.fetchPayments()
         }
     }
 

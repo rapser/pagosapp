@@ -14,7 +14,7 @@ import Observation
 /// Maintains @Observable state for UI and delegates to Use Cases
 @MainActor
 @Observable
-final class PaymentSyncCoordinator {
+final class PaymentSyncCoordinator: BaseSyncCoordinator<PaymentSyncError> {
     // MARK: - Dependencies (Use Cases)
 
     private let syncPaymentsUseCase: SyncPaymentsUseCase
@@ -24,15 +24,6 @@ final class PaymentSyncCoordinator {
     private let paymentRepository: PaymentRepositoryProtocol
     private let syncRepository: PaymentSyncRepositoryProtocol
     private let eventBus: EventBus
-
-    // MARK: - Observable State (for UI)
-
-    var isSyncing = false
-    var lastSyncDate: Date?
-    var pendingSyncCount = 0
-    var syncError: Error?
-
-    private let lastSyncKey = "lastPaymentSyncDate"
 
     // MARK: - Initialization
 
@@ -52,13 +43,12 @@ final class PaymentSyncCoordinator {
         self.paymentRepository = paymentRepository
         self.syncRepository = syncRepository
         self.eventBus = eventBus
-
-        self.lastSyncDate = UserDefaults.standard.object(forKey: lastSyncKey) as? Date
+        super.init(lastSyncKey: "lastPaymentSyncDate")
     }
 
     // MARK: - Sync Operations (Delegate to Use Cases)
 
-    private func shouldRetry(_ error: PaymentSyncError) -> Bool {
+    override func shouldRetry(after error: PaymentSyncError) -> Bool {
         switch error {
         case .notAuthenticated, .sessionExpired, .conflictError:
             return false
@@ -69,46 +59,20 @@ final class PaymentSyncCoordinator {
         }
     }
 
-    /// Perform full synchronization (upload + download)
-    func performSync() async throws {
-        guard !isSyncing else { return }
+    override func executeSyncAttempt() async -> Result<Void, PaymentSyncError> {
+        await syncPaymentsUseCase.execute()
+    }
 
-        isSyncing = true
-        syncError = nil
-        defer { isSyncing = false }
-
-        for attempt in 1...SyncRetryPolicy.maxAttempts {
-            let result = await syncPaymentsUseCase.execute()
-
-            switch result {
-            case .success:
-                lastSyncDate = Date()
-                UserDefaults.standard.set(lastSyncDate, forKey: lastSyncKey)
-                syncError = nil
-                await updatePendingSyncCount()
-                eventBus.publish(PaymentsSyncedEvent(syncedCount: 0))
-                return
-
-            case .failure(let syncError):
-                self.syncError = syncError
-
-                let isLastAttempt = attempt == SyncRetryPolicy.maxAttempts
-                if !isLastAttempt, shouldRetry(syncError) {
-                    await SyncRetryPolicy.sleepBeforeRetry(forAttempt: attempt)
-                    continue
-                }
-
-                let error = NSError(
-                    domain: "PaymentSyncCoordinator",
-                    code: 503,
-                    userInfo: [
-                        NSLocalizedDescriptionKey: L10n.Sync.cannotSync,
-                        NSLocalizedRecoverySuggestionErrorKey: L10n.Sync.recoverySuggestion
-                    ]
-                )
-                throw error
-            }
-        }
+    override func terminalError(for error: PaymentSyncError) -> Error {
+        _ = error
+        return NSError(
+            domain: "PaymentSyncCoordinator",
+            code: 503,
+            userInfo: [
+                NSLocalizedDescriptionKey: L10n.Sync.cannotSync,
+                NSLocalizedRecoverySuggestionErrorKey: L10n.Sync.recoverySuggestion
+            ]
+        )
     }
 
     /// Perform initial sync if local database is empty
@@ -121,8 +85,8 @@ final class PaymentSyncCoordinator {
         } catch {}
     }
 
-    func updatePendingSyncCount() async {
-        pendingSyncCount = await getPendingSyncCountUseCase.execute()
+    override func fetchPendingSyncCount() async -> Int {
+        await getPendingSyncCountUseCase.execute()
     }
 
     /// Check if there are pending payments to sync
@@ -133,25 +97,21 @@ final class PaymentSyncCoordinator {
 
     // MARK: - Database Management
 
-    /// Clear all local payments
-    /// - Parameter force: If true, clears even if there are pending syncs
-    /// - Returns: True if cleared successfully
-    @discardableResult
-    func clearLocalDatabase(force: Bool = false) async -> Bool {
-        if !force {
-            let hasPending = await hasPendingSyncPayments()
-            if hasPending { return false }
-        }
+    override func performLocalDatabaseClear() async -> Bool {
         do {
             try await paymentRepository.clearAllLocalPayments()
-            pendingSyncCount = 0
-            lastSyncDate = nil
-            UserDefaults.standard.removeObject(forKey: lastSyncKey)
-            eventBus.publish(PaymentsSyncedEvent(syncedCount: 0))
             return true
         } catch {
             return false
         }
+    }
+
+    override func didCompleteSyncSuccessfully() async {
+        eventBus.publish(PaymentsSyncedEvent(syncedCount: 0))
+    }
+
+    override func didClearLocalDatabase() async {
+        eventBus.publish(PaymentsSyncedEvent(syncedCount: 0))
     }
 }
 
