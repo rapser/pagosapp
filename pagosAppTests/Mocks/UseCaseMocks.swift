@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import LocalAuthentication
 @testable import pagosApp
 
 // MARK: - NullLog
@@ -22,13 +23,49 @@ struct NullLog: DomainLogWriter {
 @MainActor
 final class SpyEventBus: EventBus {
     private(set) var publishedEvents: [any DomainEvent] = []
+    private var continuations: [String: [any Continuation]] = [:]
+
+    private protocol Continuation: AnyObject {
+        func yield(_ event: any DomainEvent)
+    }
+
+    private final class TypedContinuation<T: DomainEvent>: Continuation, @unchecked Sendable {
+        let continuation: AsyncStream<T>.Continuation
+
+        init(continuation: AsyncStream<T>.Continuation) {
+            self.continuation = continuation
+        }
+
+        func yield(_ event: any DomainEvent) {
+            guard let typedEvent = event as? T else { return }
+            continuation.yield(typedEvent)
+        }
+    }
 
     func publish<T: DomainEvent>(_ event: T) {
         publishedEvents.append(event)
+
+        let typeName = String(describing: T.self)
+        continuations[typeName]?.forEach { $0.yield(event) }
     }
 
     func subscribe<T: DomainEvent>(to eventType: T.Type) -> AsyncStream<T> {
-        AsyncStream { _ in }
+        let typeName = String(describing: eventType)
+
+        return AsyncStream { continuation in
+            let wrapper = TypedContinuation(continuation: continuation)
+            continuations[typeName, default: []].append(wrapper)
+
+            continuation.onTermination = { [weak self] _ in
+                guard let self else { return }
+                Task { @MainActor in
+                    self.continuations[typeName]?.removeAll { $0 === wrapper }
+                    if self.continuations[typeName]?.isEmpty == true {
+                        self.continuations.removeValue(forKey: typeName)
+                    }
+                }
+            }
+        }
     }
 
     func lastEvent<T: DomainEvent>(ofType type: T.Type) -> T? {
@@ -105,7 +142,13 @@ final class MockPaymentSyncRepository: PaymentSyncRepositoryProtocol, @unchecked
         uploadCount += 1
     }
 
-    func downloadPayments(userId: UUID) async throws -> [Payment] { [] }
+    var remotePaymentsToReturn: [Payment] = []
+    var shouldThrowOnDownload = false
+
+    func downloadPayments(userId: UUID) async throws -> [Payment] {
+        if shouldThrowOnDownload { throw PaymentSyncError.downloadFailed("mock") }
+        return remotePaymentsToReturn
+    }
     func syncDeletion(paymentId: UUID) async throws {}
 
     @MainActor func getPendingPayments() async throws -> [Payment] { pendingPayments }
@@ -215,18 +258,151 @@ final class MockStatisticsRepository: StatisticsRepositoryProtocol {
     var filteredPayments: [Payment] = []
     var monthlyPayments: [Payment] = []
     var shouldFail = false
+    var shouldFailAllPayments = false
+    var shouldFailFilteredPayments = false
+    var shouldFailMonthlyPayments = false
 
     func getAllPayments() async -> Result<[Payment], PaymentError> {
-        shouldFail ? .failure(.notFound) : .success(allPayments)
+        shouldFail || shouldFailAllPayments ? .failure(.notFound) : .success(allPayments)
     }
 
     func getFilteredPayments(filter: StatsFilter, currency: Currency) async -> Result<[Payment], PaymentError> {
-        shouldFail ? .failure(.notFound) : .success(filteredPayments)
+        shouldFail || shouldFailFilteredPayments ? .failure(.notFound) : .success(filteredPayments)
     }
 
     func getPaymentsForLastMonths(count: Int, currency: Currency) async -> Result<[Payment], PaymentError> {
-        shouldFail ? .failure(.notFound) : .success(monthlyPayments)
+        shouldFail || shouldFailMonthlyPayments ? .failure(.notFound) : .success(monthlyPayments)
     }
+}
+
+// MARK: - MockSettingsSyncRepository
+
+@MainActor
+final class MockSettingsSyncRepository: SettingsSyncRepositoryProtocol {
+    var performSyncCallCount = 0
+    var clearLocalDatabaseCallCount = 0
+    var updatePendingSyncCountCallCount = 0
+    var pendingSyncCount = 0
+    var syncError: Error?
+    var shouldThrowOnPerformSync = false
+    var clearLocalDatabaseResult = true
+
+    func performSync() async throws {
+        performSyncCallCount += 1
+        if shouldThrowOnPerformSync {
+            throw PaymentSyncError.networkError
+        }
+    }
+
+    func clearLocalDatabase(force: Bool) async -> Bool {
+        _ = force
+        clearLocalDatabaseCallCount += 1
+        return clearLocalDatabaseResult
+    }
+
+    func updatePendingSyncCount() async {
+        updatePendingSyncCountCallCount += 1
+    }
+}
+
+// MARK: - MockAuthSessionRepository
+
+@MainActor
+final class MockAuthSessionRepository: AuthSessionRepositoryProtocol {
+    var signOutResult: Result<Void, AuthError> = .success(())
+
+    func signUp(credentials: RegistrationCredentials) async -> Result<AuthSession, AuthError> {
+        _ = credentials
+        return .failure(.unknown("unused"))
+    }
+
+    func signIn(credentials: LoginCredentials) async -> Result<AuthSession, AuthError> {
+        _ = credentials
+        return .failure(.unknown("unused"))
+    }
+
+    func signOut() async -> Result<Void, AuthError> {
+        signOutResult
+    }
+
+    func getCurrentSession() async -> AuthSession? { nil }
+
+    func refreshSession(refreshToken: String) async -> Result<AuthSession, AuthError> {
+        _ = refreshToken
+        return .failure(.unknown("unused"))
+    }
+
+    func getCurrentUserId() async -> UUID? { nil }
+}
+
+// MARK: - MockSessionRepository
+
+@MainActor
+final class MockSessionRepository: SessionRepositoryProtocol {
+    var hasActiveSession = false
+    var lastActiveTimestamp: Date?
+    var isSessionExpiredSync = false
+
+    func startSession() async {}
+    func endSession() async {}
+    func clearSession() async {}
+    func updateLastActiveTimestamp() async {}
+    func isSessionExpired() async -> Bool { false }
+    func sessionTimeRemaining() async -> TimeInterval { 0 }
+    func validateSession() async -> Result<Bool, AuthError> { .success(true) }
+}
+
+// MARK: - MockUserProfileRepository
+
+final class MockUserProfileRepository: UserProfileRepositoryProtocol, @unchecked Sendable {
+    nonisolated func fetchProfile(userId: UUID) async -> Result<UserProfile, UserProfileError> {
+        _ = userId
+        return .failure(.profileNotFound)
+    }
+
+    nonisolated func updateProfile(_ profile: UserProfile) async -> Result<UserProfile, UserProfileError> {
+        .success(profile)
+    }
+
+    @MainActor
+    func getLocalProfile() async -> Result<UserProfile?, UserProfileError> {
+        .success(nil)
+    }
+
+    @MainActor
+    func saveLocalProfile(_ profile: UserProfile) async -> Result<Void, UserProfileError> {
+        _ = profile
+        return .success(())
+    }
+
+    @MainActor
+    func deleteLocalProfile() async -> Result<Void, UserProfileError> {
+        .success(())
+    }
+}
+
+// MARK: - MockBiometricCredentialsDataSource
+
+final class MockBiometricCredentialsDataSource: BiometricCredentialsDataSource {
+    func saveCredentials(email: String, password: String) -> Bool {
+        _ = email
+        _ = password
+        return true
+    }
+
+    func retrieveCredentials(context: LAContext?) -> (email: String, password: String)? {
+        _ = context
+        return nil
+    }
+
+    func deleteCredentials() -> Bool { true }
+    func hasStoredCredentials() -> Bool { false }
+    func setHasLoggedIn(_ value: Bool) -> Bool {
+        _ = value
+        return true
+    }
+    func getHasLoggedIn() -> Bool { false }
+    func deleteHasLoggedIn() -> Bool { true }
 }
 
 // MARK: - Test Fixtures
@@ -246,6 +422,29 @@ extension Payment {
         groupId: UUID? = nil
     ) -> Payment {
         Payment(
+            id: id, name: name, amount: amount, currency: currency,
+            dueDate: dueDate, isPaid: isPaid, category: category,
+            eventIdentifier: eventIdentifier, syncStatus: syncStatus,
+            lastSyncedAt: lastSyncedAt, groupId: groupId
+        )
+    }
+}
+
+extension PaymentUI {
+    static func make(
+        id: UUID = UUID(),
+        name: String = "Test Payment",
+        amount: Double = 100.0,
+        currency: Currency = .pen,
+        dueDate: Date = Date(),
+        isPaid: Bool = false,
+        category: PaymentCategory = .servicios,
+        eventIdentifier: String? = nil,
+        syncStatus: SyncStatus = .local,
+        lastSyncedAt: Date? = nil,
+        groupId: UUID? = nil
+    ) -> PaymentUI {
+        PaymentUI(
             id: id, name: name, amount: amount, currency: currency,
             dueDate: dueDate, isPaid: isPaid, category: category,
             eventIdentifier: eventIdentifier, syncStatus: syncStatus,

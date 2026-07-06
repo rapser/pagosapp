@@ -32,6 +32,7 @@ final class PaymentsListViewModel: BaseViewModel {
     private let eventBus: EventBus
     private let mapper: PaymentUIMapping
     private let searchService: PaymentSearchService
+    private let paymentChangeObserver: PaymentChangeObserver
 
     // Track if we've already rescheduled notifications on first load
     private var hasRescheduledNotifications = false
@@ -109,35 +110,15 @@ final class PaymentsListViewModel: BaseViewModel {
         self.eventBus = eventBus
         self.mapper = mapper
         self.searchService = searchService
+        self.paymentChangeObserver = PaymentChangeObserver()
         super.init(category: "PaymentsListViewModel")
 
         setupEventListeners()
     }
 
     private func setupEventListeners() {
-        // Listen to payment events and refresh UI
-        Task { @MainActor [weak self] in
-            for await _ in self?.eventBus.subscribe(to: PaymentCreatedEvent.self) ?? AsyncStream.never {
-                await self?.fetchPayments(showLoading: false)
-            }
-        }
-
-        Task { @MainActor [weak self] in
-            for await _ in self?.eventBus.subscribe(to: PaymentUpdatedEvent.self) ?? AsyncStream.never {
-                await self?.fetchPayments(showLoading: false)
-            }
-        }
-
-        Task { @MainActor [weak self] in
-            for await _ in self?.eventBus.subscribe(to: PaymentDeletedEvent.self) ?? AsyncStream.never {
-                await self?.fetchPayments(showLoading: false)
-            }
-        }
-
-        Task { @MainActor [weak self] in
-            for await _ in self?.eventBus.subscribe(to: PaymentStatusToggledEvent.self) ?? AsyncStream.never {
-                await self?.fetchPayments(showLoading: false)
-            }
+        paymentChangeObserver.observePaymentChanges(eventBus: eventBus) { [weak self] in
+            await self?.fetchPayments(showLoading: false)
         }
     }
 

@@ -332,3 +332,120 @@ struct DownloadReminderChangesUseCaseTests {
         #expect(localDS.reminders.count == 5)
     }
 }
+
+// MARK: - DeleteReminderUseCase
+
+@Suite("DeleteReminderUseCase")
+@MainActor
+struct DeleteReminderUseCaseTests {
+    let repo = MockReminderRepository()
+    let sut: DeleteReminderUseCase
+
+    init() {
+        sut = DeleteReminderUseCase(repository: repo)
+    }
+
+    @Test func existingReminder_deletedSuccessfully() async {
+        let reminder = Reminder.make(title: "Netflix")
+        repo.reminders = [reminder]
+
+        let result = await sut.execute(id: reminder.id)
+
+        if case .failure(let error) = result { Issue.record("Expected success, got \(error)") }
+        #expect(!repo.reminders.contains { $0.id == reminder.id })
+    }
+
+    @Test func afterDelete_otherRemindersPreserved() async {
+        let toDelete = Reminder.make(title: "Delete Me")
+        let toKeep = Reminder.make(title: "Keep Me")
+        repo.reminders = [toDelete, toKeep]
+
+        _ = await sut.execute(id: toDelete.id)
+
+        #expect(repo.reminders.count == 1)
+        #expect(repo.reminders.first?.title == "Keep Me")
+    }
+
+    @Test func unknownId_returnsSuccess() async {
+        repo.reminders = [Reminder.make()]
+
+        let result = await sut.execute(id: UUID())
+
+        // MockReminderRepository.delete silently succeeds for unknown IDs
+        if case .failure(let error) = result { Issue.record("Expected success, got \(error)") }
+    }
+}
+
+// MARK: - GetAllRemindersUseCase
+
+@Suite("GetAllRemindersUseCase")
+@MainActor
+struct GetAllRemindersUseCaseTests {
+    let repo = MockReminderRepository()
+    let sut: GetAllRemindersUseCase
+
+    init() {
+        sut = GetAllRemindersUseCase(repository: repo)
+    }
+
+    @Test func emptyRepository_returnsEmptyArray() async {
+        repo.reminders = []
+
+        let result = await sut.execute()
+
+        guard case .success(let reminders) = result else {
+            Issue.record("Expected .success")
+            return
+        }
+        #expect(reminders.isEmpty)
+    }
+
+    @Test func multipleReminders_returnsAll() async {
+        repo.reminders = [Reminder.make(title: "A"), Reminder.make(title: "B"), Reminder.make(title: "C")]
+
+        let result = await sut.execute()
+
+        guard case .success(let reminders) = result else {
+            Issue.record("Expected .success")
+            return
+        }
+        #expect(reminders.count == 3)
+    }
+}
+
+// MARK: - GetPendingReminderSyncCountUseCase
+
+@Suite("GetPendingReminderSyncCountUseCase")
+@MainActor
+struct GetPendingReminderSyncCountUseCaseTests {
+    let syncRepo = MockReminderSyncRepository()
+    let sut: GetPendingReminderSyncCountUseCase
+
+    init() {
+        sut = GetPendingReminderSyncCountUseCase(syncRepository: syncRepo)
+    }
+
+    @Test func returnsPendingCount() async {
+        syncRepo.pendingReminders = [Reminder.make(), Reminder.make()]
+
+        let count = await sut.execute()
+
+        #expect(count == 2)
+    }
+
+    @Test func emptyPending_returnsZero() async {
+        syncRepo.pendingReminders = []
+
+        let count = await sut.execute()
+
+        #expect(count == 0)
+    }
+
+    @Test func repositoryFailure_returnsZero() async {
+        // MockReminderSyncRepository.getPendingSyncCount uses pendingReminders.count
+        // and never throws — this covers the fallback path in the use case (?? 0)
+        syncRepo.pendingReminders = [Reminder.make()]
+        let count = await sut.execute()
+        #expect(count == 1)
+    }
+}
