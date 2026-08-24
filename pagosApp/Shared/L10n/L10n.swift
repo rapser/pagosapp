@@ -265,7 +265,6 @@ enum L10n {
             static let sectionTitle = tr("reminders.notifications.sectionTitle") 
             static let basicIncluded = tr("reminders.notifications.basicIncluded")
             static let advancedTitle = tr("reminders.notifications.advancedTitle")
-            static let oneMonthBefore = tr("reminders.notifications.oneMonthBefore")
             static let twoWeeksBefore = tr("reminders.notifications.twoWeeksBefore")
             static let oneWeekBefore = tr("reminders.notifications.oneWeekBefore")
             static let advancedInfo = tr("reminders.notifications.advancedInfo")
@@ -292,6 +291,53 @@ enum L10n {
         static let alertAccessDeniedMessage = tr("calendar.alert.accessDeniedMessage")
         static let errorLoadPayments = tr("calendar.error.loadPayments")
         static let errorLoadPaymentsForDate = tr("calendar.error.loadPaymentsForDate")
+    }
+
+    // MARK: - Cards
+    enum Cards {
+        static let listTitle = tr("cards.listTitle")
+        static let emptyTitle = tr("cards.empty.title")
+        static let emptyDescription = tr("cards.empty.description")
+
+        enum Add {
+            static let title = tr("cards.add.title")
+            static let bankLabel = tr("cards.add.bankLabel")
+            static let bankOtherPlaceholder = tr("cards.add.bankOtherPlaceholder")
+            static let cardNumberLabel = tr("cards.add.cardNumberLabel")
+            static let brandLabel = tr("cards.add.brandLabel")
+            static let pinLabel = tr("cards.add.pinLabel")
+            static let expirationLabel = tr("cards.add.expirationLabel")
+            static let expirationMonthLabel = tr("cards.add.expirationMonthLabel")
+            static let expirationYearLabel = tr("cards.add.expirationYearLabel")
+            static let cvvFooter = tr("cards.add.cvvFooter")
+        }
+
+        static let biometricReason = tr("cards.biometricReason")
+
+        enum Reveal {
+            static let bankLabel = tr("cards.reveal.bankLabel")
+            static let numberLabel = tr("cards.reveal.numberLabel")
+            static let pinLabel = tr("cards.reveal.pinLabel")
+        }
+
+        enum Delete {
+            static let title = tr("cards.delete.title")
+            static let message = tr("cards.delete.message")
+            static let button = tr("cards.delete.button")
+        }
+
+        enum Errors {
+            static let invalidCardNumber = tr("cards.error.invalidCardNumber")
+            static let invalidPin = tr("cards.error.invalidPin")
+            static let invalidExpiration = tr("cards.error.invalidExpiration")
+            static let invalidBank = tr("cards.error.invalidBank")
+            static let biometricUnavailable = tr("cards.error.biometricUnavailable")
+            static let biometricFailed = tr("cards.error.biometricFailed")
+            static let saveFailed = tr("cards.error.saveFailed")
+            static let deleteFailed = tr("cards.error.deleteFailed")
+            static let notFound = tr("cards.error.notFound")
+            static let unknown = tr("cards.error.unknown")
+        }
     }
 
     // MARK: - Settings
@@ -329,6 +375,10 @@ enum L10n {
         }
         static let sectionProfile = tr("settings.section.profile")
         static let sectionApp = tr("settings.section.app")
+        enum General {
+            static let rowTitle = tr("settings.general.rowTitle")
+            static let title = tr("settings.general.title")
+        }
         static let sectionAbout = tr("settings.section.about")
         static let sectionLegal = tr("settings.section.legal")
         static let sectionSync = tr("settings.section.sync")
@@ -433,6 +483,7 @@ enum L10n {
         static let payments = tr("tab.payments")
         static let reminders = tr("tab.reminders")
         static let calendar = tr("tab.calendar")
+        static let cards = tr("tab.cards")
         static let history = tr("tab.history")
         static let statistics = tr("tab.statistics")
         static let settings = tr("tab.settings")

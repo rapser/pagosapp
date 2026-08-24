@@ -13,8 +13,10 @@ struct PaymentsListView: View {
 // MARK: - Content Wrapper (handles initialization)
 private struct PaymentsListContentWrapper: View {
     @Environment(AppDependencies.self) private var dependencies
+    @Environment(AlertManager.self) private var alertManager
     @State private var viewModel: PaymentsListViewModel?
     @Binding var showingAddPaymentSheet: Bool
+    @State private var showingCalendarSheet = false
 
     var body: some View {
         NavigationStack {
@@ -30,6 +32,9 @@ private struct PaymentsListContentWrapper: View {
             }
             .navigationTitle(L10n.Payments.List.title)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    CalendarButton(action: { showingCalendarSheet = true })
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     AddButton(action: { showingAddPaymentSheet = true })
                 }
@@ -45,6 +50,10 @@ private struct PaymentsListContentWrapper: View {
         }
         .sheet(isPresented: $showingAddPaymentSheet) {
             AddPaymentView()
+        }
+        .sheet(isPresented: $showingCalendarSheet) {
+            CalendarPaymentsView()
+                .environment(alertManager)
         }
         .onChange(of: showingAddPaymentSheet) { _, isPresented in
             // Refresh when sheet is dismissed
@@ -200,6 +209,29 @@ private struct AddButton: View {
             Image(systemName: "plus")
                 .foregroundColor(primaryColor)
         }
+    }
+
+    private var primaryColor: Color {
+        Color(uiColor: UIColor { traitCollection in
+            if traitCollection.userInterfaceStyle == .dark {
+                return .white
+            } else {
+                return UIColor(named: "AppPrimary") ?? .systemBlue
+            }
+        })
+    }
+}
+
+// MARK: - Calendar Button
+private struct CalendarButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "calendar")
+                .foregroundColor(primaryColor)
+        }
+        .accessibilityLabel(L10n.Tab.calendar)
     }
 
     private var primaryColor: Color {

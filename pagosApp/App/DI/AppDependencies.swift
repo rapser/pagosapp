@@ -37,6 +37,7 @@ final class AppDependencies {
     let historyDependencyContainer: HistoryDependencyContainer
     let reminderDependencyContainer: ReminderDependencyContainer
     let settingsDependencyContainer: SettingsDependencyContainer
+    let cardDependencyContainer: CardDependencyContainer
 
     // MARK: - Coordinators (Created by Containers)
 
@@ -104,6 +105,11 @@ final class AppDependencies {
             log: domainLog
         )
 
+        self.cardDependencyContainer = CardDependencyContainer(
+            modelContext: modelContext,
+            log: domainLog
+        )
+
         // Coordinators (Created by feature containers)
         self.paymentSyncCoordinator = paymentDependencyContainer.makePaymentSyncCoordinator()
         self.reminderSyncCoordinator = reminderDependencyContainer.makeReminderSyncCoordinator()
@@ -141,7 +147,7 @@ final class AppDependencies {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container: ModelContainer
         do {
-            container = try ModelContainer(for: PaymentLocalDTO.self, UserProfileLocalDTO.self, ReminderLocalDTO.self, configurations: config)
+            container = try ModelContainer(for: PaymentLocalDTO.self, UserProfileLocalDTO.self, ReminderLocalDTO.self, CreditCardLocalDTO.self, configurations: config)
         } catch {
             fatalError("AppDependencies.mock: ModelContainer failed (\(error)). Fix the SwiftData schema used for previews/tests.")
         }

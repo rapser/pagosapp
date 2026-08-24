@@ -180,7 +180,6 @@
 "reminders.notifications.sectionTitle" = "Configuración";
 "reminders.notifications.basicIncluded" = "Notificaciones básicas incluidas";
 "reminders.notifications.advancedTitle" = "Notificaciones anticipadas";
-"reminders.notifications.oneMonthBefore" = "1 mes antes";
 "reminders.notifications.twoWeeksBefore" = "2 semanas antes";
 "reminders.notifications.oneWeekBefore" = "1 semana antes";
 "reminders.notifications.advancedInfo" = "Recibirás notificaciones anticipadas adicionales";
@@ -204,6 +203,38 @@
 "calendar.alert.accessDeniedMessage" = "Por favor, habilita el acceso al calendario en Ajustes.";
 "calendar.error.loadPayments" = "Error al cargar pagos";
 "calendar.error.loadPaymentsForDate" = "Error al cargar pagos para la fecha seleccionada";
+
+// MARK: - Cards
+"cards.listTitle" = "Tarjetas";
+"cards.empty.title" = "Sin tarjetas registradas";
+"cards.empty.description" = "Agrega una tarjeta de crédito para verla aquí";
+"cards.add.title" = "Nueva tarjeta";
+"cards.add.bankLabel" = "Banco";
+"cards.add.bankOtherPlaceholder" = "Nombre del banco";
+"cards.add.cardNumberLabel" = "Número de tarjeta";
+"cards.add.brandLabel" = "Marca";
+"cards.add.pinLabel" = "Clave PIN";
+"cards.add.expirationLabel" = "Vencimiento";
+"cards.add.expirationMonthLabel" = "Mes";
+"cards.add.expirationYearLabel" = "Año";
+"cards.add.cvvFooter" = "Por seguridad, nunca te pediremos el CVV.";
+"cards.biometricReason" = "Autentícate para ver los datos de tu tarjeta";
+"cards.reveal.bankLabel" = "Banco";
+"cards.reveal.numberLabel" = "Número";
+"cards.reveal.pinLabel" = "PIN";
+"cards.delete.title" = "Eliminar tarjeta";
+"cards.delete.message" = "Esta acción no se puede deshacer. ¿Deseas eliminar esta tarjeta?";
+"cards.delete.button" = "Eliminar";
+"cards.error.invalidCardNumber" = "Ingresa un número de tarjeta válido";
+"cards.error.invalidPin" = "El PIN debe tener entre 4 y 6 dígitos";
+"cards.error.invalidExpiration" = "Selecciona una fecha de vencimiento válida";
+"cards.error.invalidBank" = "Selecciona un banco";
+"cards.error.biometricUnavailable" = "Activa Face ID o Touch ID en este dispositivo para registrar tarjetas";
+"cards.error.biometricFailed" = "No se pudo verificar tu identidad";
+"cards.error.saveFailed" = "No se pudo guardar la tarjeta";
+"cards.error.deleteFailed" = "No se pudo eliminar la tarjeta";
+"cards.error.notFound" = "Tarjeta no encontrada";
+"cards.error.unknown" = "Ocurrió un error inesperado";
 
 // MARK: - Settings
 "settings.title" = "Ajustes";
@@ -230,6 +261,8 @@
 "settings.unlink.warning" = "Esta acción eliminará TODOS tus datos locales (pagos, recordatorios, perfil y notificaciones) de este dispositivo de forma permanente.\n\nTus datos en la nube están seguros y podrás descargarlos nuevamente al iniciar sesión en otro dispositivo.\n\n¿Estás seguro?";
 "settings.section.profile" = "Perfil";
 "settings.section.app" = "App";
+"settings.general.rowTitle" = "General";
+"settings.general.title" = "General";
 "settings.section.about" = "Acerca de";
 "settings.section.legal" = "Legal";
 "settings.section.sync" = "Sincronización";
@@ -391,6 +424,7 @@
 "tab.payments" = "Pagos";
 "tab.reminders" = "Recordatorios";
 "tab.calendar" = "Calendario";
+"tab.cards" = "Tarjetas";
 "tab.history" = "Historial";
 "tab.statistics" = "Estadísticas";
 "tab.settings" = "Ajustes";

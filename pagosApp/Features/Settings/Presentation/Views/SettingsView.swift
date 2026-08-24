@@ -16,7 +16,7 @@ struct SettingsView: View {
                 // Perfil del usuario
                 ProfileSectionView()
 
-                // Historial y Estadísticas (acceso desde Ajustes)
+                // Historial, Estadísticas y Calendario (acceso desde Ajustes)
                 Section {
                     NavigationLink(L10n.History.navTitle) {
                         PaymentHistoryView()
@@ -26,12 +26,12 @@ struct SettingsView: View {
                             viewModel: dependencies.statisticsDependencyContainer.makeStatisticsViewModel()
                         )
                     }
+                    NavigationLink(L10n.Tab.calendar) {
+                        CalendarPaymentsView()
+                    }
                 } header: {
                     Text(L10n.Settings.sectionApp)
                 }
-
-                // Seguridad (Biometría)
-                SecuritySectionView()
 
                 // Sincronización
                 SyncSectionView(
@@ -40,14 +40,12 @@ struct SettingsView: View {
                     onDatabaseResetTapped: showDatabaseResetAlert
                 )
 
-                // Legal (Políticas, Términos)
-                LegalSectionView()
-
-                // Acerca de la app
-                AboutSectionView()
-
-                // Datos del dispositivo (Desvincular - PELIGROSO)
-                DataSectionView(onUnlinkDeviceTapped: showUnlinkDeviceAlert)
+                // General (Seguridad, Legal, Acerca de, Datos) - agrupado en una subpantalla
+                Section {
+                    NavigationLink(L10n.Settings.General.rowTitle) {
+                        SettingsGeneralView(onUnlinkDeviceTapped: showUnlinkDeviceAlert)
+                    }
+                }
 
                 // Debug (Solo en builds de desarrollo)
                 #if DEBUG
