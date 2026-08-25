@@ -15,7 +15,6 @@ struct ReminderDomainMapperTests {
         let last = Date(timeIntervalSince1970: 1_800_000_3600)
 
         let settings = NotificationSettings(
-            oneMonthBefore: true,
             twoWeeksBefore: false,
             oneWeekBefore: false
         )

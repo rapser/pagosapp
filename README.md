@@ -55,6 +55,24 @@ La guía larga (producto, arquitectura, stack, instalación, estructura, **tests
 
 > El workflow de **CI** no sube a TestFlight. La subida a **TestFlight** la gestiona el workflow dedicado o Fastlane en local, con los secretos de App Store Connect configurados en el repositorio.
 
+### Subir a TestFlight en local (Fastlane)
+
+Con Fastlane ya instalado (ver [`fastlane/SETUP.md`](fastlane/SETUP.md) si es la primera vez), desde una terminal en la raíz del repo:
+
+```bash
+bundle exec fastlane menu
+```
+
+Abre un menú numerado para elegir entre generar solo el IPA o hacer archive + subida a TestFlight. Si prefieres saltarte el menú, las lanes más usadas son:
+
+```bash
+bundle exec fastlane release_app_store_connect     # archive + subida (flujo completo ASC/TestFlight)
+bundle exec fastlane release_testflight_internal   # archive + subida (solo testers internos)
+bundle exec fastlane upload_testflight             # sube el último IPA ya generado en build/
+```
+
+Requiere `fastlane/.env` con la API Key de App Store Connect (`APP_STORE_CONNECT_API_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`, `APP_STORE_CONNECT_P8_PATH`); plantilla en [`fastlane/.env.example`](fastlane/.env.example). Lista completa de lanes: [`fastlane/README.md`](fastlane/README.md).
+
 **TestFlight desde Actions:** además de la API Key de App Store Connect y la firma (`.p12` + perfil), hace falta configurar en GitHub **`SUPABASE_URL`** y **`SUPABASE_ANON_KEY`**. El job genera `pagosApp/Config/Secrets.xcconfig` en el runner (escapando la URL para `.xcconfig`). Sin esos secretos el job falla a propósito para no publicar un IPA que abriría con cliente Supabase inválido. Detalle: [`.github/GITHUB_ACTIONS_TESTFLIGHT.md`](.github/GITHUB_ACTIONS_TESTFLIGHT.md).
 
 ## Changelog y versión

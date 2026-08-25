@@ -21,7 +21,7 @@ enum ModelContainerFactory {
 
     /// Creates a configured ModelContainer for the app's data models (pagos, perfil, recordatorios).
     static func create(log: DomainLogWriter) -> ModelContainerCreationResult {
-        let schema = Schema([PaymentLocalDTO.self, UserProfileLocalDTO.self, ReminderLocalDTO.self])
+        let schema = Schema([PaymentLocalDTO.self, UserProfileLocalDTO.self, ReminderLocalDTO.self, CreditCardLocalDTO.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {
