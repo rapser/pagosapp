@@ -9,6 +9,9 @@ El contenido de este fichero describe la **versión publicada** y el **alcance**
 ### Added
 
 - **Tarjetas de crédito (nuevo tab)**: registro de tarjetas (banco, número, PIN, vencimiento — nunca CVV) en un grid de 2 columnas que muestra solo marca, últimos 4 dígitos y banco. El número completo y el PIN están protegidos con Face ID/Touch ID y se guardan solo en Keychain (`.biometryCurrentSet`); la metadata no sensible vive en SwiftData. Totalmente local, sin sincronización remota.
+- **Editar y eliminar tarjetas**: el menú contextual de una tarjeta ahora permite "Editar" (pide Face ID para revelar y precargar el número/PIN actuales en el formulario) y "Eliminar" (a la confirmación por alert existente se suma una segunda confirmación con Face ID/Touch ID antes de borrar).
+- **Celda de tarjeta**: se muestra la fecha de vencimiento (`MM/YY`) junto al banco, y los bancos reconocibles (BCP, BBVA, Interbank, Scotiabank, Falabella, Ripley) usan su color de marca real en vez del gradiente genérico por marca de tarjeta.
+- **Auto-ocultado del PIN revelado**: el bottom sheet de ver tarjeta ahora muestra el número y PIN completos de inmediato (ya no hace falta un ojito, el Face ID de entrada ya es el gate) y se cierra solo a los 3 minutos, con un banner inferior que muestra la cuenta regresiva.
 - **Ajustes → Sincronización agrupada**: la sección de sync (pendientes, última sincronización, sincronizar ahora, reintentar, reparar BD) se movió a su propia subpantalla; en Ajustes queda una sola fila con un badge del número de pendientes.
 - **Edición de TC bimoneda**: al editar un pago de tarjeta de crédito registrado con una sola moneda (solo soles o solo dólares), ahora se muestra la sección `DualCurrencyAmountSection` con ambos campos. Si el usuario ingresa un monto en la moneda faltante y guarda, el sistema crea automáticamente el registro hermano y vincula ambos pagos con un `groupId` compartido — sin necesidad de crear un segundo pago manualmente.
 - **Hint contextual en edición TC**: el texto de ayuda bajo los campos de monto cambia dinámicamente según la moneda que está vacía ("Puedes agregar un monto en dólares" / "...en soles") cuando se edita un pago TC con una sola moneda registrada.
@@ -19,6 +22,7 @@ El contenido de este fichero describe la **versión publicada** y el **alcance**
 
 ### Fixed
 
+- **El formulario de tarjeta perdía cambios sin avisar**: el sheet de crear/editar tarjeta se cerraba aunque el guardado fallara (p. ej. error de Keychain), sin mostrar ningún error. Ahora solo se cierra si el guardado fue exitoso.
 - **Face ID pedía autenticación 3 veces al ver el PIN de una tarjeta**: la lectura del número y del PIN en Keychain evaluaban biometría cada una por su cuenta, sumadas al gate explícito de la app. Ahora se reutiliza el mismo `LAContext` ya autenticado para ambas lecturas — queda en una sola solicitud de Face ID/Touch ID.
 - **Eliminación sincronizada con Supabase**: `DeletePaymentUseCase` ahora comprueba el `syncStatus` antes de borrar. Si el pago es `.synced` o `.modified` elimina primero de Supabase y luego de SwiftData; si es `.local` solo limpia el almacenamiento local. Si Supabase no está disponible el borrado local procede igualmente (offline-first).
 - **groupId no se persistía al actualizar un pago**: `PaymentSwiftDataDataSource.save()` y `saveAll()` no incluían `groupId` en los campos actualizables. Al agregar la segunda moneda a un pago TC single-currency, el pago original nunca recibía el nuevo `groupId` en disco, lo que hacía que ambos aparecieran como entradas separadas en la lista.

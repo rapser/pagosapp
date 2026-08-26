@@ -12,7 +12,7 @@
 
 - **Pagos**: recurrentes, multi-moneda (PEN/USD), pagos agrupados de tarjeta bimoneda, notificaciones y sincronización con el calendario del sistema.
 - **Recordatorios**: eventos no monetarios (renovaciones, impuestos, etc.) con notificaciones propias.
-- **Tarjetas**: guarda tarjetas de crédito; número completo y PIN protegidos con Face ID/Touch ID, solo en Keychain.
+- **Tarjetas**: crea, edita y elimina tarjetas de crédito; número completo y PIN protegidos con Face ID/Touch ID, solo en Keychain.
 - **Calendario, historial y estadísticas**: vista unificada, accesibles desde Inicio y Ajustes.
 - **Cuenta**: login con Supabase, biometría, sincronización manual desde Ajustes.
 
