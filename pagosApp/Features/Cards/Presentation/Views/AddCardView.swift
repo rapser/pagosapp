@@ -2,10 +2,12 @@ import SwiftUI
 
 struct AddCardView: View {
     @Environment(AppDependencies.self) private var dependencies
-    var onCardCreated: (() -> Void)?
+    var cardToEdit: CreditCard?
+    var sensitiveDataToEdit: CreditCardSensitiveData?
+    var onCardSaved: (() -> Void)?
 
     var body: some View {
-        AddCardContentWrapper(onCardCreated: onCardCreated)
+        AddCardContentWrapper(cardToEdit: cardToEdit, sensitiveDataToEdit: sensitiveDataToEdit, onCardSaved: onCardSaved)
             .environment(dependencies)
     }
 }
@@ -15,7 +17,9 @@ private struct AddCardContentWrapper: View {
     @Environment(\.dismiss) var dismiss
     @Environment(AppDependencies.self) private var dependencies
     @State private var viewModel: AddCardViewModel?
-    let onCardCreated: (() -> Void)?
+    let cardToEdit: CreditCard?
+    let sensitiveDataToEdit: CreditCardSensitiveData?
+    let onCardSaved: (() -> Void)?
 
     var body: some View {
         NavigationStack {
@@ -29,8 +33,12 @@ private struct AddCardContentWrapper: View {
         }
         .task {
             guard viewModel == nil else { return }
-            viewModel = dependencies.cardDependencyContainer.makeAddCardViewModel()
-            viewModel?.onCardCreated = onCardCreated
+            let newViewModel = dependencies.cardDependencyContainer.makeAddCardViewModel()
+            if let cardToEdit, let sensitiveDataToEdit {
+                newViewModel.loadForEditing(cardToEdit, sensitiveData: sensitiveDataToEdit)
+            }
+            newViewModel.onCardSaved = onCardSaved
+            viewModel = newViewModel
         }
     }
 }
@@ -40,10 +48,14 @@ private struct AddCardForm: View {
     @Bindable var viewModel: AddCardViewModel
     let dismiss: DismissAction
 
-    private let years: [Int] = {
+    /// Includes the card's current expiration year even if it's already in the past,
+    /// so editing an older card doesn't silently snap its year picker to another value.
+    private var years: [Int] {
         let currentYear = Calendar.current.component(.year, from: Date())
-        return Array(currentYear...(currentYear + 15))
-    }()
+        let start = min(currentYear, viewModel.expirationYear)
+        let end = max(currentYear + 15, viewModel.expirationYear)
+        return Array(start...end)
+    }
 
     var body: some View {
         Form {
@@ -93,7 +105,7 @@ private struct AddCardForm: View {
                 Text(L10n.Cards.Add.cvvFooter)
             }
         }
-        .navigationTitle(L10n.Cards.Add.title)
+        .navigationTitle(viewModel.isEditing ? L10n.Cards.Edit.title : L10n.Cards.Add.title)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button(L10n.General.cancel) { dismiss() }
@@ -102,7 +114,9 @@ private struct AddCardForm: View {
                 Button(L10n.General.save) {
                     Task {
                         await viewModel.saveCard()
-                        dismiss()
+                        if !viewModel.showError {
+                            dismiss()
+                        }
                     }
                 }
                 .disabled(!viewModel.isValid)
@@ -117,6 +131,15 @@ private struct AddCardForm: View {
                     .cornerRadius(10)
                     .shadow(radius: 10)
             }
+        }
+        .alert(
+            viewModel.errorMessage ?? "",
+            isPresented: Binding(
+                get: { viewModel.showError },
+                set: { viewModel.showError = $0 }
+            )
+        ) {
+            Button(L10n.General.ok, role: .cancel) {}
         }
     }
 }

@@ -27,6 +27,11 @@ struct CardsListView: View {
                                         Task { await viewModel.revealCard(card) }
                                     }
                                     .contextMenu {
+                                        Button {
+                                            Task { await viewModel.startEditingCard(card) }
+                                        } label: {
+                                            Label(L10n.Cards.Edit.button, systemImage: "pencil")
+                                        }
                                         Button(role: .destructive) {
                                             cardPendingDelete = card
                                         } label: {
@@ -54,7 +59,7 @@ struct CardsListView: View {
                 await viewModel.fetchCards()
             }
             .sheet(isPresented: $showingAddCardSheet) {
-                AddCardView(onCardCreated: {
+                AddCardView(onCardSaved: {
                     Task { await viewModel.fetchCards() }
                 })
             }
@@ -68,6 +73,22 @@ struct CardsListView: View {
             .onChange(of: viewModel.showingRevealSheet) { _, isPresented in
                 if !isPresented {
                     viewModel.dismissRevealSheet()
+                }
+            }
+            .sheet(isPresented: $viewModel.showingEditSheet) {
+                if let card = viewModel.editingCard, let data = viewModel.editingSensitiveData {
+                    AddCardView(
+                        cardToEdit: card,
+                        sensitiveDataToEdit: data,
+                        onCardSaved: {
+                            Task { await viewModel.fetchCards() }
+                        }
+                    )
+                }
+            }
+            .onChange(of: viewModel.showingEditSheet) { _, isPresented in
+                if !isPresented {
+                    viewModel.dismissEditSheet()
                 }
             }
             .alert(

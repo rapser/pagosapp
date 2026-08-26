@@ -2,9 +2,18 @@ import SwiftUI
 
 /// Bottom sheet shown after a successful Face ID/Touch ID check, revealing the
 /// card's bank name, full number, and PIN. CVV is never part of this view.
+/// Both are shown in full - the Face ID check that unlocked this sheet is the
+/// gate; masking them again behind an eye icon here would add no protection.
+/// The sheet auto-dismisses after `autoDismissDuration` so sensitive data doesn't
+/// stay on screen indefinitely if the user walks away.
 struct CardRevealSheetView: View {
+    private static let autoDismissDuration: TimeInterval = 180
+
     let card: CreditCard
     let data: CreditCardSensitiveData
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var revealStart = Date()
 
     var body: some View {
         VStack(spacing: 24) {
@@ -29,8 +38,35 @@ struct CardRevealSheetView: View {
             .padding(.horizontal)
 
             Spacer()
+
+            autoHideBanner
         }
         .padding()
+        .task {
+            do {
+                try await Task.sleep(for: .seconds(Self.autoDismissDuration))
+                dismiss()
+            } catch {
+                // Cancelled because the sheet was already dismissed manually.
+            }
+        }
+    }
+
+    private var autoHideBanner: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "lock.shield.fill")
+                .foregroundStyle(.blue)
+            (
+                Text(L10n.Cards.Reveal.autoHideBanner) + Text(" ")
+                    + Text(timerInterval: revealStart...revealStart.addingTimeInterval(Self.autoDismissDuration), countsDown: true)
+                        .monospacedDigit()
+            )
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private var formattedNumber: String {

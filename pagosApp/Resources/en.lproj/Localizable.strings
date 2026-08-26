@@ -219,12 +219,17 @@
 "cards.add.expirationYearLabel" = "Year";
 "cards.add.cvvFooter" = "For your security, we will never ask for your CVV.";
 "cards.biometricReason" = "Authenticate to view your card details";
+"cards.edit.title" = "Edit card";
+"cards.edit.button" = "Edit";
+"cards.edit.biometricReason" = "Authenticate to edit this card";
 "cards.reveal.bankLabel" = "Bank";
 "cards.reveal.numberLabel" = "Number";
 "cards.reveal.pinLabel" = "PIN";
+"cards.reveal.autoHideBanner" = "For your security, this information will hide in";
 "cards.delete.title" = "Delete Card";
 "cards.delete.message" = "This action cannot be undone. Do you want to delete this card?";
 "cards.delete.button" = "Delete";
+"cards.delete.biometricReason" = "Authenticate to delete this card";
 "cards.error.invalidCardNumber" = "Enter a valid card number";
 "cards.error.invalidPin" = "PIN must be 4 to 6 digits";
 "cards.error.invalidExpiration" = "Select a valid expiration date";
