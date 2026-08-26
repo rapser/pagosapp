@@ -8,6 +8,8 @@ El contenido de este fichero describe la **versión publicada** y el **alcance**
 
 ### Added
 
+- **Tarjetas de crédito (nuevo tab)**: registro de tarjetas (banco, número, PIN, vencimiento — nunca CVV) en un grid de 2 columnas que muestra solo marca, últimos 4 dígitos y banco. El número completo y el PIN están protegidos con Face ID/Touch ID y se guardan solo en Keychain (`.biometryCurrentSet`); la metadata no sensible vive en SwiftData. Totalmente local, sin sincronización remota.
+- **Ajustes → Sincronización agrupada**: la sección de sync (pendientes, última sincronización, sincronizar ahora, reintentar, reparar BD) se movió a su propia subpantalla; en Ajustes queda una sola fila con un badge del número de pendientes.
 - **Edición de TC bimoneda**: al editar un pago de tarjeta de crédito registrado con una sola moneda (solo soles o solo dólares), ahora se muestra la sección `DualCurrencyAmountSection` con ambos campos. Si el usuario ingresa un monto en la moneda faltante y guarda, el sistema crea automáticamente el registro hermano y vincula ambos pagos con un `groupId` compartido — sin necesidad de crear un segundo pago manualmente.
 - **Hint contextual en edición TC**: el texto de ayuda bajo los campos de monto cambia dinámicamente según la moneda que está vacía ("Puedes agregar un monto en dólares" / "...en soles") cuando se edita un pago TC con una sola moneda registrada.
 - **Entrada de montos estilo banca** (`CurrencyTextField`): los campos de monto en pagos de TC (soles y dólares) y en pagos de moneda única usan una entrada shift-derecha similar a apps bancarias — se escribe solo dígitos y el punto decimal se posiciona automáticamente: `5` → `0.05`, `50` → `0.50`, `500` → `5.00`. El campo muestra `0.00` en gris mientras está vacío y cambia al color normal al escribir el primer dígito.
@@ -17,6 +19,7 @@ El contenido de este fichero describe la **versión publicada** y el **alcance**
 
 ### Fixed
 
+- **Face ID pedía autenticación 3 veces al ver el PIN de una tarjeta**: la lectura del número y del PIN en Keychain evaluaban biometría cada una por su cuenta, sumadas al gate explícito de la app. Ahora se reutiliza el mismo `LAContext` ya autenticado para ambas lecturas — queda en una sola solicitud de Face ID/Touch ID.
 - **Eliminación sincronizada con Supabase**: `DeletePaymentUseCase` ahora comprueba el `syncStatus` antes de borrar. Si el pago es `.synced` o `.modified` elimina primero de Supabase y luego de SwiftData; si es `.local` solo limpia el almacenamiento local. Si Supabase no está disponible el borrado local procede igualmente (offline-first).
 - **groupId no se persistía al actualizar un pago**: `PaymentSwiftDataDataSource.save()` y `saveAll()` no incluían `groupId` en los campos actualizables. Al agregar la segunda moneda a un pago TC single-currency, el pago original nunca recibía el nuevo `groupId` en disco, lo que hacía que ambos aparecieran como entradas separadas en la lista.
 - **TestFlight / GitHub Actions**: el workflow ya no empaqueta placeholders de Supabase como si fueran una URL válida; `AppConfiguration` exige `https`, host y clave configurables, y el cliente demo solo se usa cuando la configuración real no es válida. El workflow `testflight-develop.yml` genera `pagosApp/Config/Secrets.xcconfig` desde los secretos del repositorio `SUPABASE_URL` y `SUPABASE_ANON_KEY` (con escape `://` → `:/$()/` para `.xcconfig`).
@@ -24,6 +27,9 @@ El contenido de este fichero describe la **versión publicada** y el **alcance**
 
 ### Changed
 
+- **Calendario fuera del tab bar**: reemplazado por el nuevo tab Tarjetas; ahora se accede desde un botón en la barra de Inicio y desde una fila en Ajustes → General.
+- **Ajustes reorganizado**: Seguridad, Legal, Acerca de y Datos se agruparon bajo una fila "General" para descongestionar la lista principal.
+- **Recordatorios**: se quitó la opción de aviso "1 mes antes"; quedan alertas de 1 y 2 semanas, desactivadas por defecto en todos los tipos (las notificaciones estándar de 3/2/1/0 días no cambian).
 - **Refactor clean de ViewModels**: `PaymentsListViewModel`, `PaymentHistoryViewModel` y `SettingsViewModel` eliminaron sus suscripciones repetidas al `EventBus` y ahora comparten una sola entrada reusable para refrescos disparados por eventos de pagos.
 - **Refactor clean de coordinación de sync**: `PaymentSyncCoordinator` y `ReminderSyncCoordinator` quedaron como especializaciones sobre una base interna común. Se mantiene el comportamiento observable existente: pagos sigue publicando `PaymentsSyncedEvent` y recordatorios sigue reprogramando notificaciones tras sync exitoso.
 - **Rendimiento en estadísticas**: `StatisticsViewModel` ahora usa `async let` para cargar categorías, meses, totales y disponibilidad de moneda en paralelo cuando las operaciones son independientes, manteniendo el mismo contrato observable y el mismo resultado funcional.
