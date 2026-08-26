@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import LocalAuthentication
 
 /// Protocol defining biometric authentication operations
 @MainActor
@@ -25,6 +26,14 @@ protocol BiometricRepositoryProtocol {
     /// - Parameter reason: Reason to show to user
     /// - Returns: Result with Bool (success) or AuthError
     func authenticateWithBiometric(reason: String) async -> Result<Bool, AuthError>
+
+    /// Request biometric authentication and return the authenticated `LAContext`.
+    /// Pass the returned context into a subsequent Keychain read (`kSecUseAuthenticationContext`)
+    /// on a `.biometryCurrentSet`-protected item so the OS reuses this authentication instead
+    /// of prompting Face ID/Touch ID again.
+    /// - Parameter reason: Reason to show to user
+    /// - Returns: Result with the authenticated LAContext or AuthError
+    func authenticateWithBiometricContext(reason: String) async -> Result<LAContext, AuthError>
 
     /// Check if user can use biometric authentication
     /// - Returns: true if biometric is enrolled and available

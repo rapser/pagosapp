@@ -4,6 +4,7 @@ struct SettingsView: View {
     @Environment(AlertManager.self) private var alertManager
     @Environment(AppDependencies.self) private var dependencies
     @Environment(SettingsStore.self) private var settingsStore
+    @Environment(AppSyncManager.self) private var syncManager
     @State private var viewModel: SettingsViewModel
 
     init(viewModel: SettingsViewModel) {
@@ -33,12 +34,30 @@ struct SettingsView: View {
                     Text(L10n.Settings.sectionApp)
                 }
 
-                // Sincronización
-                SyncSectionView(
-                    onSyncTapped: handleSyncTapped,
-                    onRetrySyncTapped: handleRetrySyncTapped,
-                    onDatabaseResetTapped: showDatabaseResetAlert
-                )
+                // Sincronización - agrupada en una subpantalla
+                Section {
+                    NavigationLink {
+                        SettingsSyncView(
+                            onSyncTapped: handleSyncTapped,
+                            onRetrySyncTapped: handleRetrySyncTapped,
+                            onDatabaseResetTapped: showDatabaseResetAlert
+                        )
+                    } label: {
+                        HStack {
+                            Text(L10n.Settings.sectionSync)
+                            Spacer()
+                            if syncManager.pendingSyncCount > 0 {
+                                Text("\(syncManager.pendingSyncCount)")
+                                    .font(.footnote.weight(.semibold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 2)
+                                    .background(Color("AppPrimary"))
+                                    .clipShape(Capsule())
+                            }
+                        }
+                    }
+                }
 
                 // General (Seguridad, Legal, Acerca de, Datos) - agrupado en una subpantalla
                 Section {

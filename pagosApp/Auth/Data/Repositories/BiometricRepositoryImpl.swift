@@ -61,6 +61,15 @@ final class BiometricRepositoryImpl: BiometricRepositoryProtocol {
     // MARK: - Biometric Operations
 
     func authenticateWithBiometric(reason: String) async -> Result<Bool, AuthError> {
+        switch await authenticateWithBiometricContext(reason: reason) {
+        case .success:
+            return .success(true)
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
+
+    func authenticateWithBiometricContext(reason: String) async -> Result<LAContext, AuthError> {
         // Check if biometric is available
         guard await isBiometricAvailable else {
             log.warning("⚠️ Biometric authentication not available", category: Self.logCategory)
@@ -75,7 +84,7 @@ final class BiometricRepositoryImpl: BiometricRepositoryProtocol {
                 Task { @MainActor in
                     if success {
                         self.log.info("✅ Biometric authentication successful", category: Self.logCategory)
-                        continuation.resume(returning: .success(true))
+                        continuation.resume(returning: .success(authContext))
                     } else {
                         self.log.warning("❌ Biometric authentication failed", category: Self.logCategory)
 
