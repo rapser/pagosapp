@@ -53,16 +53,18 @@ struct CardRevealSheetView: View {
     }
 
     private var autoHideBanner: some View {
-        HStack(alignment: .top, spacing: 10) {
+        let countdown = Text(
+            timerInterval: revealStart...revealStart.addingTimeInterval(Self.autoDismissDuration),
+            countsDown: true
+        )
+        .monospacedDigit()
+
+        return HStack(alignment: .top, spacing: 10) {
             Image(systemName: "lock.shield.fill")
                 .foregroundStyle(.blue)
-            (
-                Text(L10n.Cards.Reveal.autoHideBanner) + Text(" ")
-                    + Text(timerInterval: revealStart...revealStart.addingTimeInterval(Self.autoDismissDuration), countsDown: true)
-                        .monospacedDigit()
-            )
-            .font(.footnote)
-            .foregroundStyle(.secondary)
+            Text("\(L10n.Cards.Reveal.autoHideBanner) \(countdown)")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
