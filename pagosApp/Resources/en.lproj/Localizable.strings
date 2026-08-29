@@ -180,7 +180,6 @@
 "reminders.notifications.sectionTitle" = "Settings";
 "reminders.notifications.basicIncluded" = "Basic notifications included";
 "reminders.notifications.advancedTitle" = "Advanced notifications";
-"reminders.notifications.oneMonthBefore" = "1 month before";
 "reminders.notifications.twoWeeksBefore" = "2 weeks before";
 "reminders.notifications.oneWeekBefore" = "1 week before";
 "reminders.notifications.advancedInfo" = "You will receive additional advanced notifications";
@@ -204,6 +203,43 @@
 "calendar.alert.accessDeniedMessage" = "Please enable calendar access in Settings.";
 "calendar.error.loadPayments" = "Could not load payments";
 "calendar.error.loadPaymentsForDate" = "Could not load payments for the selected date";
+
+// MARK: - Cards
+"cards.listTitle" = "Cards";
+"cards.empty.title" = "No cards yet";
+"cards.empty.description" = "Add a credit card to see it here";
+"cards.add.title" = "New Card";
+"cards.add.bankLabel" = "Bank";
+"cards.add.bankOtherPlaceholder" = "Bank name";
+"cards.add.cardNumberLabel" = "Card number";
+"cards.add.brandLabel" = "Brand";
+"cards.add.pinLabel" = "PIN";
+"cards.add.expirationLabel" = "Expiration";
+"cards.add.expirationMonthLabel" = "Month";
+"cards.add.expirationYearLabel" = "Year";
+"cards.add.cvvFooter" = "For your security, we will never ask for your CVV.";
+"cards.biometricReason" = "Authenticate to view your card details";
+"cards.edit.title" = "Edit card";
+"cards.edit.button" = "Edit";
+"cards.edit.biometricReason" = "Authenticate to edit this card";
+"cards.reveal.bankLabel" = "Bank";
+"cards.reveal.numberLabel" = "Number";
+"cards.reveal.pinLabel" = "PIN";
+"cards.reveal.autoHideBanner" = "For your security, this information will hide in";
+"cards.delete.title" = "Delete Card";
+"cards.delete.message" = "This action cannot be undone. Do you want to delete this card?";
+"cards.delete.button" = "Delete";
+"cards.delete.biometricReason" = "Authenticate to delete this card";
+"cards.error.invalidCardNumber" = "Enter a valid card number";
+"cards.error.invalidPin" = "PIN must be 4 to 6 digits";
+"cards.error.invalidExpiration" = "Select a valid expiration date";
+"cards.error.invalidBank" = "Select a bank";
+"cards.error.biometricUnavailable" = "Enable Face ID or Touch ID on this device to register cards";
+"cards.error.biometricFailed" = "We couldn't verify your identity";
+"cards.error.saveFailed" = "Could not save the card";
+"cards.error.deleteFailed" = "Could not delete the card";
+"cards.error.notFound" = "Card not found";
+"cards.error.unknown" = "An unexpected error occurred";
 
 // MARK: - Settings
 "settings.title" = "Settings";
@@ -230,6 +266,8 @@
 "settings.unlink.warning" = "This will permanently delete ALL your local data (payments, reminders, profile, notifications) on this device.\n\nYour cloud data is safe and you can download it again when you sign in on another device.\n\nAre you sure?";
 "settings.section.profile" = "Profile";
 "settings.section.app" = "App";
+"settings.general.rowTitle" = "General";
+"settings.general.title" = "General";
 "settings.section.about" = "About";
 "settings.section.legal" = "Legal";
 "settings.section.sync" = "Sync";
@@ -391,6 +429,7 @@
 "tab.payments" = "Payments";
 "tab.reminders" = "Reminders";
 "tab.calendar" = "Calendar";
+"tab.cards" = "Cards";
 "tab.history" = "History";
 "tab.statistics" = "Statistics";
 "tab.settings" = "Settings";

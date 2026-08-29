@@ -4,6 +4,7 @@ struct SettingsView: View {
     @Environment(AlertManager.self) private var alertManager
     @Environment(AppDependencies.self) private var dependencies
     @Environment(SettingsStore.self) private var settingsStore
+    @Environment(AppSyncManager.self) private var syncManager
     @State private var viewModel: SettingsViewModel
 
     init(viewModel: SettingsViewModel) {
@@ -16,7 +17,7 @@ struct SettingsView: View {
                 // Perfil del usuario
                 ProfileSectionView()
 
-                // Historial y Estadísticas (acceso desde Ajustes)
+                // Historial, Estadísticas y Calendario (acceso desde Ajustes)
                 Section {
                     NavigationLink(L10n.History.navTitle) {
                         PaymentHistoryView()
@@ -26,28 +27,44 @@ struct SettingsView: View {
                             viewModel: dependencies.statisticsDependencyContainer.makeStatisticsViewModel()
                         )
                     }
+                    NavigationLink(L10n.Tab.calendar) {
+                        CalendarPaymentsView()
+                    }
                 } header: {
                     Text(L10n.Settings.sectionApp)
                 }
 
-                // Seguridad (Biometría)
-                SecuritySectionView()
+                // Sincronización - agrupada en una subpantalla
+                Section {
+                    NavigationLink {
+                        SettingsSyncView(
+                            onSyncTapped: handleSyncTapped,
+                            onRetrySyncTapped: handleRetrySyncTapped,
+                            onDatabaseResetTapped: showDatabaseResetAlert
+                        )
+                    } label: {
+                        HStack {
+                            Text(L10n.Settings.sectionSync)
+                            Spacer()
+                            if syncManager.pendingSyncCount > 0 {
+                                Text("\(syncManager.pendingSyncCount)")
+                                    .font(.footnote.weight(.semibold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 2)
+                                    .background(Color("AppPrimary"))
+                                    .clipShape(Capsule())
+                            }
+                        }
+                    }
+                }
 
-                // Sincronización
-                SyncSectionView(
-                    onSyncTapped: handleSyncTapped,
-                    onRetrySyncTapped: handleRetrySyncTapped,
-                    onDatabaseResetTapped: showDatabaseResetAlert
-                )
-
-                // Legal (Políticas, Términos)
-                LegalSectionView()
-
-                // Acerca de la app
-                AboutSectionView()
-
-                // Datos del dispositivo (Desvincular - PELIGROSO)
-                DataSectionView(onUnlinkDeviceTapped: showUnlinkDeviceAlert)
+                // General (Seguridad, Legal, Acerca de, Datos) - agrupado en una subpantalla
+                Section {
+                    NavigationLink(L10n.Settings.General.rowTitle) {
+                        SettingsGeneralView(onUnlinkDeviceTapped: showUnlinkDeviceAlert)
+                    }
+                }
 
                 // Debug (Solo en builds de desarrollo)
                 #if DEBUG

@@ -59,7 +59,7 @@ struct CreateReminderUseCaseTests {
     }
 
     @Test func customNotificationSettings_preserved() async {
-        let settings = NotificationSettings(oneMonthBefore: true, twoWeeksBefore: false, oneWeekBefore: true)
+        let settings = NotificationSettings(twoWeeksBefore: false, oneWeekBefore: true)
         let result = await sut.execute(
             type: .other, title: "Reminder", description: "", dueDate: Date(),
             notificationSettings: settings
@@ -69,7 +69,6 @@ struct CreateReminderUseCaseTests {
             Issue.record("Expected .success")
             return
         }
-        #expect(reminder.notificationSettings.oneMonthBefore == true)
         #expect(reminder.notificationSettings.twoWeeksBefore == false)
         #expect(reminder.notificationSettings.oneWeekBefore == true)
     }
@@ -82,8 +81,10 @@ struct CreateReminderUseCaseTests {
             return
         }
         let recommended = NotificationSettings.recommended(for: .cardRenewal)
-        #expect(reminder.notificationSettings.oneMonthBefore == recommended.oneMonthBefore)
         #expect(reminder.notificationSettings.twoWeeksBefore == recommended.twoWeeksBefore)
+        #expect(reminder.notificationSettings.oneWeekBefore == recommended.oneWeekBefore)
+        #expect(reminder.notificationSettings.twoWeeksBefore == false)
+        #expect(reminder.notificationSettings.oneWeekBefore == false)
     }
 }
 

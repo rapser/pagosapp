@@ -30,9 +30,6 @@ struct NotificationSettingsView: View {
                 }
 
                 VStack(spacing: 20) {
-                    Toggle(L10n.Reminders.Notifications.oneMonthBefore, isOn: $notificationSettings.oneMonthBefore)
-                        .toggleStyle(SwitchToggleStyle(tint: .orange))
-
                     Toggle(L10n.Reminders.Notifications.twoWeeksBefore, isOn: $notificationSettings.twoWeeksBefore)
                         .toggleStyle(SwitchToggleStyle(tint: .orange))
 

@@ -61,6 +61,15 @@ final class BiometricRepositoryImpl: BiometricRepositoryProtocol {
     // MARK: - Biometric Operations
 
     func authenticateWithBiometric(reason: String) async -> Result<Bool, AuthError> {
+        switch await authenticateWithBiometricContext(reason: reason) {
+        case .success:
+            return .success(true)
+        case .failure(let error):
+            return .failure(error)
+        }
+    }
+
+    func authenticateWithBiometricContext(reason: String) async -> Result<LAContext, AuthError> {
         // Check if biometric is available
         guard await isBiometricAvailable else {
             log.warning("⚠️ Biometric authentication not available", category: Self.logCategory)
@@ -70,25 +79,39 @@ final class BiometricRepositoryImpl: BiometricRepositoryProtocol {
         // Create new context for authentication
         let authContext = LAContext()
 
-        return await withCheckedContinuation { continuation in
+        // The evaluatePolicy callback runs off the main actor, so it can only hand
+        // back Sendable values. We resume with a plain outcome and keep the
+        // non-Sendable LAContext on the main actor, returning it after the await.
+        let outcome: BiometricOutcome = await withCheckedContinuation { continuation in
             authContext.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, error in
-                Task { @MainActor in
-                    if success {
-                        self.log.info("✅ Biometric authentication successful", category: Self.logCategory)
-                        continuation.resume(returning: .success(true))
-                    } else {
-                        self.log.warning("❌ Biometric authentication failed", category: Self.logCategory)
-
-                        if let error = error as? LAError {
-                            let authError = self.mapBiometricError(error)
-                            continuation.resume(returning: .failure(authError))
-                        } else {
-                            continuation.resume(returning: .failure(.unknown("Biometric authentication failed")))
-                        }
-                    }
+                if success {
+                    continuation.resume(returning: .success)
+                } else if let laError = error as? LAError {
+                    continuation.resume(returning: .failure(code: laError.code, description: laError.localizedDescription))
+                } else {
+                    continuation.resume(returning: .failureUnknown)
                 }
             }
         }
+
+        switch outcome {
+        case .success:
+            log.info("✅ Biometric authentication successful", category: Self.logCategory)
+            return .success(authContext)
+        case .failure(let code, let description):
+            log.warning("❌ Biometric authentication failed", category: Self.logCategory)
+            return .failure(mapBiometricError(code, description: description))
+        case .failureUnknown:
+            log.warning("❌ Biometric authentication failed", category: Self.logCategory)
+            return .failure(.unknown("Biometric authentication failed"))
+        }
+    }
+
+    /// Sendable result of a biometric evaluation, safe to pass across actors.
+    private enum BiometricOutcome: Sendable {
+        case success
+        case failure(code: LAError.Code, description: String)
+        case failureUnknown
     }
 
     func canUseBiometrics() async -> Bool {
@@ -97,10 +120,10 @@ final class BiometricRepositoryImpl: BiometricRepositoryProtocol {
 
     // MARK: - Error Mapping
 
-    private func mapBiometricError(_ error: LAError) -> AuthError {
-        log.error("Biometric error: \(error.localizedDescription)", category: Self.logCategory)
+    private func mapBiometricError(_ code: LAError.Code, description: String) -> AuthError {
+        log.error("Biometric error: \(description)", category: Self.logCategory)
 
-        switch error.code {
+        switch code {
         case .authenticationFailed:
             return .invalidCredentials
         case .userCancel, .userFallback, .systemCancel:
@@ -112,7 +135,7 @@ final class BiometricRepositoryImpl: BiometricRepositoryProtocol {
         case .biometryLockout:
             return .unknown("Biometry locked out")
         default:
-            return .unknown(error.localizedDescription)
+            return .unknown(description)
         }
     }
 }

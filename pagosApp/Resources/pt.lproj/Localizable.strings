@@ -180,7 +180,6 @@
 "reminders.notifications.sectionTitle" = "Configuração";
 "reminders.notifications.basicIncluded" = "Notificações básicas incluídas";
 "reminders.notifications.advancedTitle" = "Notificações avançadas";
-"reminders.notifications.oneMonthBefore" = "1 mês antes";
 "reminders.notifications.twoWeeksBefore" = "2 semanas antes";
 "reminders.notifications.oneWeekBefore" = "1 semana antes";
 "reminders.notifications.advancedInfo" = "Você receberá notificações antecipadas adicionais";
@@ -204,6 +203,43 @@
 "calendar.alert.accessDeniedMessage" = "Por favor, habilite o acesso ao calendário em Ajustes.";
 "calendar.error.loadPayments" = "Erro ao carregar pagamentos";
 "calendar.error.loadPaymentsForDate" = "Erro ao carregar pagamentos para a data selecionada";
+
+// MARK: - Cards
+"cards.listTitle" = "Cartões";
+"cards.empty.title" = "Nenhum cartão cadastrado";
+"cards.empty.description" = "Adicione um cartão de crédito para vê-lo aqui";
+"cards.add.title" = "Novo cartão";
+"cards.add.bankLabel" = "Banco";
+"cards.add.bankOtherPlaceholder" = "Nome do banco";
+"cards.add.cardNumberLabel" = "Número do cartão";
+"cards.add.brandLabel" = "Bandeira";
+"cards.add.pinLabel" = "PIN";
+"cards.add.expirationLabel" = "Validade";
+"cards.add.expirationMonthLabel" = "Mês";
+"cards.add.expirationYearLabel" = "Ano";
+"cards.add.cvvFooter" = "Por segurança, nunca pediremos o CVV.";
+"cards.biometricReason" = "Autentique-se para ver os dados do seu cartão";
+"cards.edit.title" = "Editar cartão";
+"cards.edit.button" = "Editar";
+"cards.edit.biometricReason" = "Autentique-se para editar este cartão";
+"cards.reveal.bankLabel" = "Banco";
+"cards.reveal.numberLabel" = "Número";
+"cards.reveal.pinLabel" = "PIN";
+"cards.reveal.autoHideBanner" = "Por sua segurança, esta informação será ocultada em";
+"cards.delete.title" = "Excluir cartão";
+"cards.delete.message" = "Esta ação não pode ser desfeita. Deseja excluir este cartão?";
+"cards.delete.button" = "Excluir";
+"cards.delete.biometricReason" = "Autentique-se para excluir este cartão";
+"cards.error.invalidCardNumber" = "Digite um número de cartão válido";
+"cards.error.invalidPin" = "O PIN deve ter de 4 a 6 dígitos";
+"cards.error.invalidExpiration" = "Selecione uma data de validade válida";
+"cards.error.invalidBank" = "Selecione um banco";
+"cards.error.biometricUnavailable" = "Ative o Face ID ou Touch ID neste dispositivo para cadastrar cartões";
+"cards.error.biometricFailed" = "Não foi possível verificar sua identidade";
+"cards.error.saveFailed" = "Não foi possível salvar o cartão";
+"cards.error.deleteFailed" = "Não foi possível excluir o cartão";
+"cards.error.notFound" = "Cartão não encontrado";
+"cards.error.unknown" = "Ocorreu um erro inesperado";
 
 // MARK: - Settings
 "settings.title" = "Ajustes";
@@ -230,6 +266,8 @@
 "settings.unlink.warning" = "Esta ação excluirá permanentemente TODOS os seus dados locais (pagamentos, lembretes, perfil e notificações) neste dispositivo.\n\nSeus dados na nuvem estão seguros e você poderá baixá-los novamente ao entrar em outro dispositivo.\n\nTem certeza?";
 "settings.section.profile" = "Perfil";
 "settings.section.app" = "App";
+"settings.general.rowTitle" = "Geral";
+"settings.general.title" = "Geral";
 "settings.section.about" = "Sobre";
 "settings.section.legal" = "Legal";
 "settings.section.sync" = "Sincronização";
@@ -391,6 +429,7 @@
 "tab.payments" = "Pagamentos";
 "tab.reminders" = "Lembretes";
 "tab.calendar" = "Calendário";
+"tab.cards" = "Cartões";
 "tab.history" = "Histórico";
 "tab.statistics" = "Estatísticas";
 "tab.settings" = "Ajustes";

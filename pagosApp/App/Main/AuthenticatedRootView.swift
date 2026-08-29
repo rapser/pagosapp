@@ -17,10 +17,12 @@ struct AuthenticatedRootView: View {
                     Label(L10n.Tab.reminders, systemImage: "bell.badge")
                 }
 
-            CalendarPaymentsView()
+            CardsListView(
+                viewModel: dependencies.cardDependencyContainer.makeCardsListViewModel()
+            )
                 .environment(alertManager)
                 .tabItem {
-                    Label(L10n.Tab.calendar, systemImage: "calendar")
+                    Label(L10n.Tab.cards, systemImage: "creditcard.fill")
                 }
 
             SettingsView(
