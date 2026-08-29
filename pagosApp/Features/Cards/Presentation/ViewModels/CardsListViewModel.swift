@@ -16,6 +16,10 @@ final class CardsListViewModel: BaseViewModel {
     var revealedCard: CreditCard?
     var showingRevealSheet = false
 
+    var editingCard: CreditCard?
+    var editingSensitiveData: CreditCardSensitiveData?
+    var showingEditSheet = false
+
     private let getAllCardsUseCase: GetAllCreditCardsUseCase
     private let deleteCardUseCase: DeleteCreditCardUseCase
     private let revealSensitiveDataUseCase: RevealCreditCardSensitiveDataUseCase
@@ -75,15 +79,38 @@ final class CardsListViewModel: BaseViewModel {
         revealedCard = nil
     }
 
-    func deleteCard(_ card: CreditCard) async {
-        cards.removeAll { $0.id == card.id }
+    /// Requests Face ID/Touch ID, and on success shows the edit form pre-filled with
+    /// the card's current secrets. On failure/cancel, the editor never opens.
+    func startEditingCard(_ card: CreditCard) async {
+        let result = await revealSensitiveDataUseCase.execute(
+            cardId: card.id,
+            reason: L10n.Cards.Edit.biometricReason
+        )
 
-        let result = await deleteCardUseCase.execute(cardId: card.id)
+        switch result {
+        case .success(let data):
+            editingCard = card
+            editingSensitiveData = data
+            showingEditSheet = true
+        case .failure(let error):
+            setError(CardErrorMessageMapper.message(for: error))
+        }
+    }
+
+    func dismissEditSheet() {
+        showingEditSheet = false
+        editingCard = nil
+        editingSensitiveData = nil
+    }
+
+    /// Requires a Face ID/Touch ID confirmation (enforced inside the use case) before
+    /// the card is actually removed.
+    func deleteCard(_ card: CreditCard) async {
+        let result = await deleteCardUseCase.execute(cardId: card.id, reason: L10n.Cards.Delete.biometricReason)
         switch result {
         case .success:
-            break
+            cards.removeAll { $0.id == card.id }
         case .failure(let error):
-            cards.append(card)
             setError(CardErrorMessageMapper.message(for: error))
         }
     }

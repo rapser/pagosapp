@@ -20,15 +20,22 @@ final class AddCardViewModel: BaseViewModel {
     var expirationYear: Int = Calendar.current.component(.year, from: Date())
 
     private let createCardUseCase: CreateCreditCardUseCase
+    private let updateCardUseCase: UpdateCreditCardUseCase
 
-    var onCardCreated: (() -> Void)?
+    /// The card being edited, if any. `nil` means this form is creating a new card.
+    private(set) var editingCard: CreditCard?
 
-    init(createCardUseCase: CreateCreditCardUseCase) {
+    var onCardSaved: (() -> Void)?
+
+    init(createCardUseCase: CreateCreditCardUseCase, updateCardUseCase: UpdateCreditCardUseCase) {
         self.createCardUseCase = createCardUseCase
+        self.updateCardUseCase = updateCardUseCase
         super.init(category: "AddCardViewModel")
     }
 
     // MARK: - Computed Properties
+
+    var isEditing: Bool { editingCard != nil }
 
     /// Live brand preview as the user types the card number.
     var detectedBrand: CardBrand {
@@ -48,6 +55,19 @@ final class AddCardViewModel: BaseViewModel {
 
     // MARK: - Actions
 
+    /// Pre-fills the form with an existing card's data, switching this VM into edit mode.
+    /// `sensitiveData` must come from a already-successful biometric reveal - this VM
+    /// never triggers Face ID itself.
+    func loadForEditing(_ card: CreditCard, sensitiveData: CreditCardSensitiveData) {
+        editingCard = card
+        bank = card.bank
+        customBankName = card.customBankName ?? ""
+        cardNumber = sensitiveData.cardNumber
+        pin = sensitiveData.pin
+        expirationMonth = card.expirationMonth
+        expirationYear = card.expirationYear
+    }
+
     func saveCard() async {
         guard isValid else {
             setValidationError(L10n.Cards.Errors.invalidCardNumber)
@@ -56,14 +76,28 @@ final class AddCardViewModel: BaseViewModel {
 
         await withLoadingAndErrorHandling(
             operation: {
-                let result = await self.createCardUseCase.execute(
-                    bank: self.bank,
-                    customBankName: self.bank == .other ? self.customBankName : nil,
-                    cardNumber: self.cardNumber,
-                    pin: self.pin,
-                    expirationMonth: self.expirationMonth,
-                    expirationYear: self.expirationYear
-                )
+                let result: Result<CreditCard, CardError>
+                if let editingCard = self.editingCard {
+                    result = await self.updateCardUseCase.execute(
+                        cardId: editingCard.id,
+                        createdAt: editingCard.createdAt,
+                        bank: self.bank,
+                        customBankName: self.bank == .other ? self.customBankName : nil,
+                        cardNumber: self.cardNumber,
+                        pin: self.pin,
+                        expirationMonth: self.expirationMonth,
+                        expirationYear: self.expirationYear
+                    )
+                } else {
+                    result = await self.createCardUseCase.execute(
+                        bank: self.bank,
+                        customBankName: self.bank == .other ? self.customBankName : nil,
+                        cardNumber: self.cardNumber,
+                        pin: self.pin,
+                        expirationMonth: self.expirationMonth,
+                        expirationYear: self.expirationYear
+                    )
+                }
                 if case .failure(let error) = result {
                     throw error
                 }
@@ -71,7 +105,7 @@ final class AddCardViewModel: BaseViewModel {
             },
             onSuccess: { _ in
                 self.clearForm()
-                self.onCardCreated?()
+                self.onCardSaved?()
             },
             onError: { error in
                 if let cardError = error as? CardError {
@@ -82,6 +116,7 @@ final class AddCardViewModel: BaseViewModel {
     }
 
     func clearForm() {
+        editingCard = nil
         bank = .bcp
         customBankName = ""
         cardNumber = ""

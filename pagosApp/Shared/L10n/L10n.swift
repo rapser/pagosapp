@@ -318,12 +318,20 @@ enum L10n {
             static let bankLabel = tr("cards.reveal.bankLabel")
             static let numberLabel = tr("cards.reveal.numberLabel")
             static let pinLabel = tr("cards.reveal.pinLabel")
+            static let autoHideBanner = tr("cards.reveal.autoHideBanner")
+        }
+
+        enum Edit {
+            static let title = tr("cards.edit.title")
+            static let button = tr("cards.edit.button")
+            static let biometricReason = tr("cards.edit.biometricReason")
         }
 
         enum Delete {
             static let title = tr("cards.delete.title")
             static let message = tr("cards.delete.message")
             static let button = tr("cards.delete.button")
+            static let biometricReason = tr("cards.delete.biometricReason")
         }
 
         enum Errors {

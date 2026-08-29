@@ -60,8 +60,16 @@ final class CardDependencyContainer {
         GetAllCreditCardsUseCase(cardRepository: makeCardRepository(), log: log)
     }
 
+    func makeUpdateCreditCardUseCase() -> UpdateCreditCardUseCase {
+        UpdateCreditCardUseCase(cardRepository: makeCardRepository(), log: log)
+    }
+
     func makeDeleteCreditCardUseCase() -> DeleteCreditCardUseCase {
-        DeleteCreditCardUseCase(cardRepository: makeCardRepository(), log: log)
+        DeleteCreditCardUseCase(
+            cardRepository: makeCardRepository(),
+            biometricRepository: biometricRepository,
+            log: log
+        )
     }
 
     func makeRevealCreditCardSensitiveDataUseCase() -> RevealCreditCardSensitiveDataUseCase {
@@ -83,6 +91,9 @@ final class CardDependencyContainer {
     }
 
     func makeAddCardViewModel() -> AddCardViewModel {
-        AddCardViewModel(createCardUseCase: makeCreateCreditCardUseCase())
+        AddCardViewModel(
+            createCardUseCase: makeCreateCreditCardUseCase(),
+            updateCardUseCase: makeUpdateCreditCardUseCase()
+        )
     }
 }

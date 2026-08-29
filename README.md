@@ -1,6 +1,6 @@
 # PagosApp
 
-> Aplicación iOS para **pagos recurrentes** y **recordatorios**, con **Clean Architecture**, **Supabase**, **SwiftData** y enfoque **offline-first** con sincronización en la nube.
+> App iOS para **pagos recurrentes**, **recordatorios** y **tarjetas de crédito**, con Clean Architecture, Supabase, SwiftData y enfoque offline-first.
 
 [![iOS](https://img.shields.io/badge/iOS-26.0%2B-blue.svg)](https://www.apple.com/ios/)
 [![Swift](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
@@ -8,77 +8,35 @@
 [![Architecture](https://img.shields.io/badge/Architecture-Clean-green.svg)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 [![Version](https://img.shields.io/badge/Version-1.0.0(20)-blue.svg)](CHANGELOG.md)
 
-## Qué incluye el proyecto
+## Qué hace
 
-- **Pagos**: gestión de pagos recurrentes, categorías, PEN/USD, filtros, pagos agrupados (tarjeta bimoneda), notificaciones locales y sincronización con el **calendario del sistema**. Al editar un pago de TC con una sola moneda es posible agregar la segunda moneda directamente desde la pantalla de edición. Los campos de monto usan entrada estilo banca (shift automático de centavos, sin necesidad de escribir el punto decimal). El swipe-to-delete solicita confirmación antes de borrar y elimina el registro de Supabase cuando el pago está sincronizado.
-- **Recordatorios**: eventos no monetarios (renovaciones, impuestos, etc.) con notificaciones y sync **Supabase**, en paralelo al flujo de pagos.
-- **Calendario, historial y estadísticas**: calendario unificado, historial de pagos y gráficos de gastos; parte del contenido vive bajo **Ajustes** según el diseño de navegación.
-- **Cuenta**: autenticación con Supabase, biometría opcional, perfil, sincronización manual desde **Ajustes**.
-- **Técnico**: capas **Domain / Data / Presentation** por *feature*, casos de uso, repositorios, **EventBus** tipado, helpers internos de observación de eventos, coordinadores de sync compartiendo una base común, **Swift 6** y **iOS 26+** en los targets de la app y de tests. Apariencia global UIKit (barra de navegación al estilo del sistema, acento **AppPrimary** en títulos) centralizada en `AppGlobalAppearance`.
-- **Calidad**: tests unitarios (Swift Testing) con **156 tests** distribuidos en todas las capas — validadores, mappers, use cases (payments, reminders, sync, statistics), **ViewModels** (PaymentsListVM, PaymentHistoryVM, SettingsVM, StatisticsVM, AddPaymentVM, EditPaymentVM, RemindersListVM) y coordinadores de sync; mocks para repositorios, EventBus, Calendar y Notifications. **SwiftLint**; **CI** en PRs a `develop` con build, **tests** y lint. Guías en [`docs/testing.md`](docs/testing.md) y [`docs/test-priority-inventory.md`](docs/test-priority-inventory.md).
+- **Pagos**: recurrentes, multi-moneda (PEN/USD), pagos agrupados de tarjeta bimoneda, notificaciones y sincronización con el calendario del sistema.
+- **Recordatorios**: eventos no monetarios (renovaciones, impuestos, etc.) con notificaciones propias.
+- **Tarjetas**: crea, edita y elimina tarjetas de crédito; número completo y PIN protegidos con Face ID/Touch ID, solo en Keychain.
+- **Calendario, historial y estadísticas**: vista unificada, accesibles desde Inicio y Ajustes.
+- **Cuenta**: login con Supabase, biometría, sincronización manual desde Ajustes.
 
-Detalle de funcionalidades: [`docs/product-overview.md`](docs/product-overview.md). Arquitectura y patrones: [`docs/architecture.md`](docs/architecture.md).
+Detalle completo de funcionalidades: [`docs/product-overview.md`](docs/product-overview.md).
 
-## Estado actual de la arquitectura
+## Empezar
 
-- La app mantiene **Clean Architecture por feature**: `Domain` concentra entidades, contratos y use cases; `Data` implementa repositorios, data sources y mappers; `Presentation` contiene ViewModels, coordinadores y vistas.
-- La comunicación transversal sigue usando el contrato público de **`EventBus`** con eventos de dominio tipados. La reacción a cambios de pagos quedó centralizada en un helper interno reutilizable, evitando listeners duplicados en múltiples ViewModels.
-- La sincronización de pagos y recordatorios conserva sus responsabilidades separadas, pero ahora comparte una base interna con patrón **Template Method** para estado observable, persistencia de `lastSyncDate`, retries, conteos pendientes y limpieza local.
-- `PaymentSyncCoordinator` sigue publicando `PaymentsSyncedEvent` al completar sync o limpiar datos; `ReminderSyncCoordinator` sigue reprogramando notificaciones después de un sync exitoso.
-- `StatisticsViewModel` mantiene el mismo contrato observable, pero ahora usa **concurrencia estructurada** con `async let` para ejecutar cargas independientes en paralelo cuando no cambia la semántica.
-- Los contratos públicos de dominio no cambiaron en este refactor: `EventBus`, repositorios, coordinadores expuestos y use cases conservan su interfaz externa.
+1. Clona el repo y entra en la raíz (debes ver `pagosApp/`, `Config/`, `pagosApp.xcodeproj`).
+2. Copia credenciales: `cp Config/Secrets.template.xcconfig pagosApp/Config/Secrets.xcconfig` y agrega tu URL y anon key de Supabase (en `.xcconfig` usa `https:/$()/tu-proyecto.supabase.co` para escapar el `//`).
+3. `open pagosApp.xcodeproj` y **⌘R**.
 
-## Inicio rápido
-
-1. Clona el repositorio y entra en la raíz (debes ver `pagosApp/`, `Config/`, `pagosApp.xcodeproj`).
-2. Copia credenciales: `cp Config/Secrets.template.xcconfig pagosApp/Config/Secrets.xcconfig` y edítalo con tu URL y anon key de Supabase. En `.xcconfig`, `//` inicia comentario: para la URL usa el truco `https:/$()/tu-proyecto.supabase.co` (expansión vacía de `$()`) en lugar de escribir `https://` a puro.
-3. Abre el proyecto: `open pagosApp.xcodeproj`.
-4. Comprueba en el target **pagosApp** que **Debug** / **Release** heredan `SharedApp.xcconfig` (que incluye `Secrets.xcconfig`); si partes del template del repo, suele estar ya enlazado.
-5. **⌘R** para compilar y ejecutar.
-
-**Opcional:** `brew install swiftlint` y `swiftlint lint` (misma lógica que en CI; umbral de línea/archivo en [`.swiftlint.yml`](.swiftlint.yml)).
+Requisitos, SwiftLint y detalle de instalación: [`docs/setup.md`](docs/setup.md).
 
 ## Documentación
 
-La guía larga (producto, arquitectura, stack, instalación, estructura, **tests y Definition of Done**, seguridad y contribución) está en **[`docs/README.md`](docs/README.md)**. Los requisitos de **Swift** e **iOS** de los badges coinciden con el target de Xcode (`SWIFT_VERSION`, `IPHONEOS_DEPLOYMENT_TARGET`); **Supabase Swift** se fija vía Swift Package Manager (ver `Package.resolved`).
+Arquitectura, stack, estructura del repo, testing, CI y seguridad están indexados en **[`docs/README.md`](docs/README.md)**.
 
-## CI, Fastlane y secretos
-
-| Recurso | Ubicación |
-|---------|-----------|
-| CI (build + **unit tests** + SwiftLint en PR a `develop`) | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
-| TestFlight en push a `develop` (paths concretos) | [`.github/workflows/testflight-develop.yml`](.github/workflows/testflight-develop.yml) |
-| Secretos y firma en GitHub Actions | [`.github/GITHUB_ACTIONS_TESTFLIGHT.md`](.github/GITHUB_ACTIONS_TESTFLIGHT.md) |
-| Fastlane (menú, lanes, variables) | [`fastlane/README.md`](fastlane/README.md), [`fastlane/SETUP.md`](fastlane/SETUP.md) |
-| Plantilla de variables Fastlane | [`fastlane/.env.example`](fastlane/.env.example) |
-| Configuración de credenciales locales | [`Config/README.md`](Config/README.md) |
-
-> El workflow de **CI** no sube a TestFlight. La subida a **TestFlight** la gestiona el workflow dedicado o Fastlane en local, con los secretos de App Store Connect configurados en el repositorio.
-
-### Subir a TestFlight en local (Fastlane)
-
-Con Fastlane ya instalado (ver [`fastlane/SETUP.md`](fastlane/SETUP.md) si es la primera vez), desde una terminal en la raíz del repo:
-
-```bash
-bundle exec fastlane menu
-```
-
-Abre un menú numerado para elegir entre generar solo el IPA o hacer archive + subida a TestFlight. Si prefieres saltarte el menú, las lanes más usadas son:
-
-```bash
-bundle exec fastlane release_app_store_connect     # archive + subida (flujo completo ASC/TestFlight)
-bundle exec fastlane release_testflight_internal   # archive + subida (solo testers internos)
-bundle exec fastlane upload_testflight             # sube el último IPA ya generado en build/
-```
-
-Requiere `fastlane/.env` con la API Key de App Store Connect (`APP_STORE_CONNECT_API_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`, `APP_STORE_CONNECT_P8_PATH`); plantilla en [`fastlane/.env.example`](fastlane/.env.example). Lista completa de lanes: [`fastlane/README.md`](fastlane/README.md).
-
-**TestFlight desde Actions:** además de la API Key de App Store Connect y la firma (`.p12` + perfil), hace falta configurar en GitHub **`SUPABASE_URL`** y **`SUPABASE_ANON_KEY`**. El job genera `pagosApp/Config/Secrets.xcconfig` en el runner (escapando la URL para `.xcconfig`). Sin esos secretos el job falla a propósito para no publicar un IPA que abriría con cliente Supabase inválido. Detalle: [`.github/GITHUB_ACTIONS_TESTFLIGHT.md`](.github/GITHUB_ACTIONS_TESTFLIGHT.md).
-
-## Changelog y versión
-
-Resumen de la versión publicada, alcance del producto y stack: [`CHANGELOG.md`](CHANGELOG.md).
+| Necesito... | Dónde |
+|---|---|
+| Subir una build a TestFlight | `bundle exec fastlane menu` desde la raíz — guía completa en [`fastlane/SETUP.md`](fastlane/SETUP.md) |
+| Entender la arquitectura | [`docs/architecture.md`](docs/architecture.md) |
+| Correr los tests | [`docs/testing.md`](docs/testing.md) |
+| Ver qué cambió | [`CHANGELOG.md`](CHANGELOG.md) |
 
 ## Licencia y autor
 
-MIT (detalle en el repositorio si existe el archivo `LICENSE`). Autor: **[@rapser](https://github.com/rapser)**.
+MIT (ver `LICENSE` si está en el repositorio). Autor: [@rapser](https://github.com/rapser).

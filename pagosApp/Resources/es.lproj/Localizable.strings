@@ -219,12 +219,17 @@
 "cards.add.expirationYearLabel" = "Año";
 "cards.add.cvvFooter" = "Por seguridad, nunca te pediremos el CVV.";
 "cards.biometricReason" = "Autentícate para ver los datos de tu tarjeta";
+"cards.edit.title" = "Editar tarjeta";
+"cards.edit.button" = "Editar";
+"cards.edit.biometricReason" = "Autentícate para editar esta tarjeta";
 "cards.reveal.bankLabel" = "Banco";
 "cards.reveal.numberLabel" = "Número";
 "cards.reveal.pinLabel" = "PIN";
+"cards.reveal.autoHideBanner" = "Por tu seguridad, esta información se ocultará en";
 "cards.delete.title" = "Eliminar tarjeta";
 "cards.delete.message" = "Esta acción no se puede deshacer. ¿Deseas eliminar esta tarjeta?";
 "cards.delete.button" = "Eliminar";
+"cards.delete.biometricReason" = "Autentícate para eliminar esta tarjeta";
 "cards.error.invalidCardNumber" = "Ingresa un número de tarjeta válido";
 "cards.error.invalidPin" = "El PIN debe tener entre 4 y 6 dígitos";
 "cards.error.invalidExpiration" = "Selecciona una fecha de vencimiento válida";
