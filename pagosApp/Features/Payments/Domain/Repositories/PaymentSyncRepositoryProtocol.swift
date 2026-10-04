@@ -23,6 +23,14 @@ protocol PaymentSyncRepositoryProtocol: Sendable {
     /// Sync single payment deletion to remote
     func syncDeletion(paymentId: UUID) async throws
 
+    /// IDs of payments deleted locally whose remote deletion is still pending
+    @MainActor
+    func getPendingDeletionIds() async throws -> [UUID]
+
+    /// Delete payments from remote and then purge their local tombstones
+    @MainActor
+    func uploadDeletions(_ ids: [UUID]) async throws
+
     @MainActor
     func getPendingPayments() async throws -> [Payment]
 

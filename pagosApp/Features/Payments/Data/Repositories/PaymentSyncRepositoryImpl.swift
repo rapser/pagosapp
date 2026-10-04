@@ -75,7 +75,25 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol, @unchecked
         try await remoteDataSource.delete(id: paymentId)
     }
 
+    @MainActor
+    func uploadDeletions(_ ids: [UUID]) async throws {
+        guard !ids.isEmpty else { return }
+        try await remoteDataSource.deleteAll(ids: ids)
+        var tombstones: [Payment] = []
+        for id in ids {
+            if let payment = try await localDataSource.fetch(id: id) {
+                tombstones.append(payment)
+            }
+        }
+        try await localDataSource.deleteAll(tombstones)
+    }
+
     // MARK: - Local queries
+
+    @MainActor
+    func getPendingDeletionIds() async throws -> [UUID] {
+        try await localDataSource.fetchPendingDeletionIds()
+    }
 
     @MainActor
     func getPendingPayments() async throws -> [Payment] {
@@ -90,7 +108,8 @@ final class PaymentSyncRepositoryImpl: PaymentSyncRepositoryProtocol, @unchecked
     @MainActor
     func getPendingSyncCount() async throws -> Int {
         let pending = try await getPendingPayments()
-        return pending.count
+        let pendingDeletions = try await getPendingDeletionIds()
+        return pending.count + pendingDeletions.count
     }
 
     @MainActor

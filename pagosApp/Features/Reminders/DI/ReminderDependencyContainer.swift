@@ -78,7 +78,7 @@ final class ReminderDependencyContainer {
     }
 
     func makeDeleteReminderUseCase() -> DeleteReminderUseCase {
-        DeleteReminderUseCase(repository: repository)
+        DeleteReminderUseCase(repository: repository, syncRepository: syncRepository, log: log)
     }
 
     func makeRemindersListViewModel() -> RemindersListViewModel {

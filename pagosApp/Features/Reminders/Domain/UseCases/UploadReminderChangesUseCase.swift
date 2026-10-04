@@ -24,6 +24,14 @@ final class UploadReminderChangesUseCase {
         log.info("📤 Uploading local reminder changes", category: Self.logCategory)
         do {
             let userId = try await syncRepository.getCurrentUserId()
+
+            // Deletions first, so a later download can't bring deleted reminders back
+            let pendingDeletionIds = try await syncRepository.getPendingDeletionIds()
+            if !pendingDeletionIds.isEmpty {
+                try await syncRepository.uploadDeletions(pendingDeletionIds)
+                log.info("🗑 Deleted \(pendingDeletionIds.count) reminders from remote", category: Self.logCategory)
+            }
+
             let pending = try await syncRepository.getPendingReminders()
             log.info("Found \(pending.count) reminders to upload", category: Self.logCategory)
             guard !pending.isEmpty else {

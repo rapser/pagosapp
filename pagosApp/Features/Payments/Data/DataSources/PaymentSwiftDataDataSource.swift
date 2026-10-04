@@ -5,6 +5,8 @@ import SwiftData
 final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
     private static let logCategory = "PaymentSwiftDataDataSource"
 
+    private static let pendingDeletionRawValue = SyncStatus.pendingDeletion.rawValue
+
     private let modelContext: ModelContext
     private let log: DomainLogWriter
 
@@ -13,8 +15,13 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
         self.log = log
     }
 
+    /// Excludes tombstones (payments deleted locally but not yet removed from Supabase).
     func fetchAll() async throws -> [Payment] {
+        let pendingDeletion = Self.pendingDeletionRawValue
         let descriptor = FetchDescriptor<PaymentLocalDTO>(
+            predicate: #Predicate<PaymentLocalDTO> { dto in
+                dto.syncStatusRawValue != pendingDeletion
+            },
             sortBy: [SortDescriptor(\PaymentLocalDTO.dueDate, order: .forward)]
         )
         do {
@@ -139,5 +146,26 @@ final class PaymentSwiftDataDataSource: PaymentLocalDataSource {
             modelContext.delete(payment)
         }
         try modelContext.save()
+    }
+
+    func markPendingDeletion(id: UUID) async throws {
+        let predicate = #Predicate<PaymentLocalDTO> { dto in
+            dto.id == id
+        }
+        var descriptor = FetchDescriptor<PaymentLocalDTO>(predicate: predicate)
+        descriptor.fetchLimit = 1
+
+        guard let existing = try modelContext.fetch(descriptor).first else { return }
+
+        existing.syncStatus = .pendingDeletion
+        try modelContext.save()
+    }
+
+    func fetchPendingDeletionIds() async throws -> [UUID] {
+        let pendingDeletion = Self.pendingDeletionRawValue
+        let descriptor = FetchDescriptor<PaymentLocalDTO>(predicate: #Predicate<PaymentLocalDTO> { dto in
+            dto.syncStatusRawValue == pendingDeletion
+        })
+        return try modelContext.fetch(descriptor).map(\.id)
     }
 }

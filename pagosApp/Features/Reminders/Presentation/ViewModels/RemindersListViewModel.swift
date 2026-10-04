@@ -24,6 +24,9 @@ final class RemindersListViewModel: BaseViewModel {
         searchService.filter(allReminders, by: ReminderSearchService.ReminderFilter.from(selectedFilter))
     }
 
+    /// Delete waits a few seconds so the user can undo it
+    let undoableDeletion = UndoableDeletion()
+
     private let getAllRemindersUseCase: GetAllRemindersUseCase
     private let deleteReminderUseCase: DeleteReminderUseCase
     private let updateReminderUseCase: UpdateReminderUseCase
@@ -66,6 +69,8 @@ final class RemindersListViewModel: BaseViewModel {
     }
 
     func loadReminders() async {
+        // A reload would bring back a reminder still waiting in the undo window
+        await undoableDeletion.commitPending()
         await withLoadingAndErrorHandling(
             operation: {
                 let result = await self.getAllRemindersUseCase.execute()
@@ -94,14 +99,30 @@ final class RemindersListViewModel: BaseViewModel {
         )
     }
 
+    /// Hides the reminder right away; the delete use case runs when the undo window closes.
     func deleteReminder(id: UUID) async {
-        switch await deleteReminderUseCase.execute(id: id) {
-        case .success:
-            allReminders.removeAll { $0.id == id }
-        case .failure(let error):
+        guard let reminder = allReminders.first(where: { $0.id == id }) else { return }
+        allReminders.removeAll { $0.id == id }
+
+        await undoableDeletion.schedule(
+            message: L10n.Reminders.deletedMessage,
+            onUndo: { [weak self] in self?.restore(reminder) },
+            commit: { [weak self] in await self?.performDelete(reminder) }
+        )
+    }
+
+    private func performDelete(_ reminder: Reminder) async {
+        if case .failure(let error) = await deleteReminderUseCase.execute(id: reminder.id) {
+            restore(reminder)
             logError(error)
             setError(reminderErrorMessage(for: error))
         }
+    }
+
+    private func restore(_ reminder: Reminder) {
+        guard !allReminders.contains(where: { $0.id == reminder.id }) else { return }
+        allReminders.append(reminder)
+        allReminders.sort { $0.dueDate < $1.dueDate }
     }
 
     private func reminderErrorMessage(for error: ReminderError) -> String {
