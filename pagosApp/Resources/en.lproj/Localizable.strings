@@ -8,6 +8,7 @@
 "general.cancel" = "Cancel";
 "general.save" = "Save";
 "general.delete" = "Delete";
+"general.undo" = "Undo";
 "general.edit" = "Edit";
 "general.retry" = "Retry";
 "general.error" = "Error";
@@ -62,6 +63,7 @@
 "payments.list.deleteConfirmTitle" = "Delete this payment?";
 "payments.list.deleteConfirmMessage" = "This action cannot be undone.";
 "payments.list.deleteGroupConfirmMessage" = "The S/ and $ amounts will both be removed.";
+"payments.list.deletedMessage" = "Payment deleted";
 "payments.add.title" = "New Payment";
 "payments.add.cancel" = "Cancel";
 "payments.edit.title" = "Edit Payment";
@@ -140,6 +142,7 @@
 
 // MARK: - Reminders
 "reminders.listTitle" = "Reminders";
+"reminders.deletedMessage" = "Reminder deleted";
 "reminders.placeholder.comingSoon" = "Coming soon";
 "reminders.filter" = "Filter";
 "reminders.filter.currentMonth" = "Upcoming";

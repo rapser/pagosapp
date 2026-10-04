@@ -21,6 +21,7 @@ enum L10n {
         static let cancel = tr("general.cancel")
         static let save = tr("general.save")
         static let delete = tr("general.delete")
+        static let undo = tr("general.undo")
         static let edit = tr("general.edit")
         static let retry = tr("general.retry")
         static let error = tr("general.error")
@@ -92,6 +93,7 @@ enum L10n {
             static let deleteConfirmTitle = tr("payments.list.deleteConfirmTitle")
             static let deleteConfirmMessage = tr("payments.list.deleteConfirmMessage")
             static let deleteGroupConfirmMessage = tr("payments.list.deleteGroupConfirmMessage")
+            static let deletedMessage = tr("payments.list.deletedMessage")
         }
         enum Add {
             static let title = tr("payments.add.title")
@@ -209,6 +211,7 @@ enum L10n {
     // MARK: - Reminders
     enum Reminders {
         static let listTitle = tr("reminders.listTitle")
+        static let deletedMessage = tr("reminders.deletedMessage")
         static let filter = tr("reminders.filter")
         static let emptyTitle = tr("reminders.emptyTitle")
         static let emptyDescription = tr("reminders.emptyDescription")

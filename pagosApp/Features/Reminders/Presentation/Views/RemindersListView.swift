@@ -86,6 +86,8 @@ private struct RemindersListContent: View {
                 RemindersList(viewModel: viewModel, dependencies: dependencies)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .undoBanner(viewModel.undoableDeletion)
     }
 }
 
