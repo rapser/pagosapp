@@ -14,4 +14,5 @@ enum ReminderSyncStatus: String, Sendable {
     case synced   // Successfully synced with Supabase
     case modified // Exists in Supabase but was modified locally
     case error    // Sync failed
+    case pendingDeletion // Deleted locally; removal from Supabase still pending (tombstone)
 }

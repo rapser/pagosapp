@@ -102,4 +102,16 @@ final class ReminderRepositoryImpl: ReminderRepositoryProtocol, @unchecked Senda
             return .failure(.deleteFailed(error.localizedDescription))
         }
     }
+
+    @MainActor
+    func markForDeletion(id: UUID) async -> Result<Void, ReminderError> {
+        do {
+            notificationDataSource.cancelReminderNotifications(reminderId: id)
+            try await localDataSource.markPendingDeletion(id: id)
+            return .success(())
+        } catch {
+            log.error("❌ Failed to mark reminder for deletion: \(error.localizedDescription)", category: Self.logCategory)
+            return .failure(.deleteFailed(error.localizedDescription))
+        }
+    }
 }

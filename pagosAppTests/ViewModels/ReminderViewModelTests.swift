@@ -19,7 +19,7 @@ struct RemindersListViewModelTests {
 
     init() {
         let getAllUseCase = GetAllRemindersUseCase(repository: repo)
-        let deleteUseCase = DeleteReminderUseCase(repository: repo)
+        let deleteUseCase = DeleteReminderUseCase(repository: repo, syncRepository: MockReminderSyncRepository(), log: NullLog())
         let updateUseCase = UpdateReminderUseCase(repository: repo)
         sut = RemindersListViewModel(
             getAllRemindersUseCase: getAllUseCase,

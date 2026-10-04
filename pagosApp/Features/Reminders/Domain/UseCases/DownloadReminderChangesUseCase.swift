@@ -38,11 +38,15 @@ final class DownloadReminderChangesUseCase {
             // O(1) lookup instead of O(n) linear search per item
             let localById = Dictionary(uniqueKeysWithValues: local.map { ($0.id, $0) })
             let remoteIds = Set(remote.map { $0.id })
+            // Tombstones: deleted locally but still on the server — never resurrect them
+            let pendingDeletionIds = Set(try await localDataSource.fetchPendingDeletionIds())
 
             // Merge policy: server-wins unless local has pending changes
             var toSave: [Reminder] = []
             for reminder in remote {
-                if let existing = localById[reminder.id] {
+                if pendingDeletionIds.contains(reminder.id) {
+                    log.info("Skipped \(reminder.title) - pending deletion", category: Self.logCategory)
+                } else if let existing = localById[reminder.id] {
                     if keepLocalWhenPendingSyncStatuses.contains(existing.syncStatus) {
                         log.info("Skipped updating \(reminder.title) - has local modifications", category: Self.logCategory)
                     } else {

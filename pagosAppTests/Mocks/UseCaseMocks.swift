@@ -190,6 +190,14 @@ final class MockReminderRepository: ReminderRepositoryProtocol, @unchecked Senda
         reminders.removeAll { $0.id == id }
         return .success(())
     }
+
+    private(set) var markedForDeletionIds: [UUID] = []
+
+    @MainActor func markForDeletion(id: UUID) async -> Result<Void, ReminderError> {
+        reminders.removeAll { $0.id == id }
+        markedForDeletionIds.append(id)
+        return .success(())
+    }
 }
 
 // MARK: - MockReminderSyncRepository
@@ -211,10 +219,24 @@ final class MockReminderSyncRepository: ReminderSyncRepositoryProtocol, @uncheck
     }
 
     func downloadReminders(userId: UUID) async throws -> [Reminder] { remoteReminders }
-    func syncDeletion(reminderId: UUID) async throws {}
+    var pendingDeletionIds: [UUID] = []
+    var shouldThrowOnSyncDeletion = false
+    private(set) var remoteDeletedIds: [UUID] = []
+
+    func syncDeletion(reminderId: UUID) async throws {
+        if shouldThrowOnSyncDeletion { throw ReminderSyncError.uploadFailed("offline") }
+        remoteDeletedIds.append(reminderId)
+    }
+
+    @MainActor func getPendingDeletionIds() async throws -> [UUID] { pendingDeletionIds }
+
+    @MainActor func uploadDeletions(_ ids: [UUID]) async throws {
+        remoteDeletedIds.append(contentsOf: ids)
+        pendingDeletionIds.removeAll { ids.contains($0) }
+    }
 
     @MainActor func getPendingReminders() async throws -> [Reminder] { pendingReminders }
-    @MainActor func getPendingSyncCount() async throws -> Int { pendingReminders.count }
+    @MainActor func getPendingSyncCount() async throws -> Int { pendingReminders.count + pendingDeletionIds.count }
     @MainActor func updateSyncStatus(reminderId: UUID, status: ReminderSyncStatus) async throws {}
 }
 
@@ -248,6 +270,15 @@ final class MockReminderLocalDataSource: ReminderLocalDataSource {
         reminders.removeAll { $0.id == id }
         deletedIds.append(id)
     }
+
+    var pendingDeletionIds: [UUID] = []
+
+    func markPendingDeletion(id: UUID) async throws {
+        reminders.removeAll { $0.id == id }
+        pendingDeletionIds.append(id)
+    }
+
+    func fetchPendingDeletionIds() async throws -> [UUID] { pendingDeletionIds }
 }
 
 // MARK: - MockStatisticsRepository

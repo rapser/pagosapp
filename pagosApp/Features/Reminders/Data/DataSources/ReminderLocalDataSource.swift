@@ -18,11 +18,16 @@ protocol ReminderLocalDataSource: AnyObject {
     func save(_ reminder: Reminder) async throws
     func saveAll(_ reminders: [Reminder]) async throws
     func delete(id: UUID) async throws
+    /// Hides a reminder from all fetches while keeping a tombstone so the deletion can be pushed to Supabase later.
+    func markPendingDeletion(id: UUID) async throws
+    func fetchPendingDeletionIds() async throws -> [UUID]
 }
 
 @MainActor
 final class ReminderSwiftDataDataSource: ReminderLocalDataSource {
     private static let logCategory = "ReminderSwiftDataDataSource"
+
+    private static let pendingDeletionRawValue = ReminderSyncStatus.pendingDeletion.rawValue
 
     private let modelContext: ModelContext
     private let log: DomainLogWriter
@@ -32,8 +37,16 @@ final class ReminderSwiftDataDataSource: ReminderLocalDataSource {
         self.log = log
     }
 
+    /// Excludes tombstones (reminders deleted locally but not yet removed from Supabase).
+    private static var visiblePredicate: Predicate<ReminderLocalDTO> {
+        let pendingDeletion = pendingDeletionRawValue
+        return #Predicate<ReminderLocalDTO> { dto in
+            dto.syncStatusRawValue != pendingDeletion
+        }
+    }
+
     func fetchAll() async throws -> [Reminder] {
-        let descriptor = FetchDescriptor<ReminderLocalDTO>(sortBy: [SortDescriptor(\.dueDate)])
+        let descriptor = FetchDescriptor<ReminderLocalDTO>(predicate: Self.visiblePredicate, sortBy: [SortDescriptor(\.dueDate)])
         do {
             let dtos = try modelContext.fetch(descriptor)
             return dtos.map { ReminderDomainMapper.toDomain($0) }
@@ -44,7 +57,7 @@ final class ReminderSwiftDataDataSource: ReminderLocalDataSource {
     }
     
     func fetchPaginated(page: Int, pageSize: Int) async throws -> [Reminder] {
-        var descriptor = FetchDescriptor<ReminderLocalDTO>(sortBy: [SortDescriptor(\.dueDate)])
+        var descriptor = FetchDescriptor<ReminderLocalDTO>(predicate: Self.visiblePredicate, sortBy: [SortDescriptor(\.dueDate)])
         descriptor.fetchOffset = (page - 1) * pageSize
         descriptor.fetchLimit = pageSize
         
@@ -58,7 +71,7 @@ final class ReminderSwiftDataDataSource: ReminderLocalDataSource {
     }
     
     func fetchCount() async throws -> Int {
-        let descriptor = FetchDescriptor<ReminderLocalDTO>()
+        let descriptor = FetchDescriptor<ReminderLocalDTO>(predicate: Self.visiblePredicate)
         return (try? modelContext.fetchCount(descriptor)) ?? 0
     }
 
@@ -140,5 +153,26 @@ final class ReminderSwiftDataDataSource: ReminderLocalDataSource {
         }
         modelContext.delete(dto)
         try modelContext.save()
+    }
+
+    func markPendingDeletion(id: UUID) async throws {
+        let searchId = id
+        var descriptor = FetchDescriptor<ReminderLocalDTO>(predicate: #Predicate<ReminderLocalDTO> { dto in
+            dto.id == searchId
+        })
+        descriptor.fetchLimit = 1
+        guard let dto = try modelContext.fetch(descriptor).first else {
+            return
+        }
+        dto.syncStatus = .pendingDeletion
+        try modelContext.save()
+    }
+
+    func fetchPendingDeletionIds() async throws -> [UUID] {
+        let pendingDeletion = Self.pendingDeletionRawValue
+        let descriptor = FetchDescriptor<ReminderLocalDTO>(predicate: #Predicate<ReminderLocalDTO> { dto in
+            dto.syncStatusRawValue == pendingDeletion
+        })
+        return try modelContext.fetch(descriptor).map(\.id)
     }
 }
