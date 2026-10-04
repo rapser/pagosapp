@@ -75,13 +75,23 @@ final class PaymentRepositoryImpl: PaymentRepositoryProtocol, @unchecked Sendabl
 
     @MainActor
     func deleteLocalPayments(ids: [UUID]) async throws {
-        let allModels = try await localDataSource.fetchAll()
-        let modelsToDelete = allModels.filter { ids.contains($0.id) }
+        // fetch(id:) also returns tombstones, which fetchAll() hides
+        var modelsToDelete: [Payment] = []
+        for id in ids {
+            if let model = try await localDataSource.fetch(id: id) {
+                modelsToDelete.append(model)
+            }
+        }
         try await localDataSource.deleteAll(modelsToDelete)
     }
 
     @MainActor
     func clearAllLocalPayments() async throws {
         try await localDataSource.clear()
+    }
+
+    @MainActor
+    func markLocalPaymentPendingDeletion(id: UUID) async throws {
+        try await localDataSource.markPendingDeletion(id: id)
     }
 }

@@ -16,4 +16,5 @@ enum SyncStatus: String, Sendable {
     case synced     // Sincronizado correctamente con Supabase
     case modified   // Existe en Supabase pero fue modificado localmente
     case error      // Falló al sincronizar
+    case pendingDeletion // Eliminado localmente; falta eliminarlo en Supabase (tombstone)
 }

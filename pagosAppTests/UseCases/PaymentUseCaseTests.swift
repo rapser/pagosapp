@@ -381,17 +381,28 @@ struct DeletePaymentUseCaseTests {
         #expect(!repo.payments.contains { $0.id == payment.id }, "Should have deleted locally")
     }
 
-    @Test func supabaseFailure_stillDeletesLocally() async {
+    @Test func supabaseFailure_marksForDeletionInsteadOfHardDelete() async {
         repo.shouldThrowOnRemoteDelete = true
         let payment = Payment.make(syncStatus: .synced)
         repo.payments = [payment]
 
         let result = await sut.execute(paymentId: payment.id)
 
-        // Offline-first: local delete must succeed even if Supabase is unreachable
+        // Offline-first: hidden locally, remote delete retried on next sync
         if case .failure(let error) = result { Issue.record("Expected success, got \(error)") }
-        #expect(!repo.payments.contains { $0.id == payment.id }, "Should have deleted locally despite Supabase failure")
+        #expect(!repo.payments.contains { $0.id == payment.id }, "Should be hidden locally despite Supabase failure")
+        #expect(repo.markedForDeletionIds == [payment.id], "Should keep a tombstone for the next sync")
+        #expect(repo.deletedIds.isEmpty, "Should NOT hard-delete while Supabase still has it")
         #expect(bus.lastEvent(ofType: PaymentDeletedEvent.self)?.paymentId == payment.id)
+    }
+
+    @Test func errorStatusPayment_deletesFromSupabase() async {
+        let payment = Payment.make(syncStatus: .error)
+        repo.payments = [payment]
+
+        _ = await sut.execute(paymentId: payment.id)
+
+        #expect(repo.remoteDeletedIds.contains(payment.id), "A payment in .error may already exist in Supabase")
     }
 }
 
@@ -606,6 +617,18 @@ struct DownloadRemoteChangesUseCaseTests {
         }
     }
 
+    @Test func remotePaymentPendingDeletion_notResurrected() async {
+        let remote = Payment.make(name: "Deleted", syncStatus: .synced)
+        syncRepo.remotePaymentsToReturn = [remote]
+        syncRepo.pendingDeletionIds = [remote.id]
+        repo.payments = []
+
+        let result = await sut.execute()
+
+        if case .failure(let error) = result { Issue.record("Expected success, got \(error)") }
+        #expect(repo.payments.isEmpty)
+    }
+
     @Test func multipleRemotePayments_allSavedLocally() async {
         let remotes = (0..<4).map { i in Payment.make(name: "Payment \(i)", syncStatus: .synced) }
         syncRepo.remotePaymentsToReturn = remotes
@@ -648,6 +671,17 @@ struct UploadLocalChangesUseCaseTests {
         #expect(syncRepo.uploadCount == 1)
     }
 
+    @Test func pendingDeletions_deletedRemotely() async {
+        let id = UUID()
+        syncRepo.pendingDeletionIds = [id]
+
+        let result = await sut.execute()
+
+        if case .failure(let error) = result { Issue.record("Expected success, got \(error)") }
+        #expect(syncRepo.remoteDeletedIds == [id])
+        #expect(syncRepo.pendingDeletionIds.isEmpty)
+    }
+
     @Test func notAuthenticated_returnsAuthError() async {
         syncRepo.shouldThrowOnGetUserId = true
         syncRepo.pendingPayments = [Payment.make()]
@@ -680,6 +714,15 @@ struct GetPendingSyncCountUseCaseTests {
         let count = await sut.execute()
 
         #expect(count == 3)
+    }
+
+    @Test func includesPendingDeletions() async {
+        syncRepo.pendingPayments = [Payment.make()]
+        syncRepo.pendingDeletionIds = [UUID()]
+
+        let count = await sut.execute()
+
+        #expect(count == 2)
     }
 
     @Test func repositoryFailure_returnsZero() async {

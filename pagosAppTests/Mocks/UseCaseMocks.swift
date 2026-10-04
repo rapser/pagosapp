@@ -122,6 +122,14 @@ final class MockPaymentRepository: PaymentRepositoryProtocol, @unchecked Sendabl
     }
 
     @MainActor func clearAllLocalPayments() async throws { payments = [] }
+
+    private(set) var markedForDeletionIds: [UUID] = []
+
+    @MainActor func markLocalPaymentPendingDeletion(id: UUID) async throws {
+        if shouldThrowOnDelete { throw PaymentError.deleteFailed("mock") }
+        payments.removeAll { $0.id == id }
+        markedForDeletionIds.append(id)
+    }
 }
 
 // MARK: - MockPaymentSyncRepository
@@ -151,11 +159,21 @@ final class MockPaymentSyncRepository: PaymentSyncRepositoryProtocol, @unchecked
     }
     func syncDeletion(paymentId: UUID) async throws {}
 
+    var pendingDeletionIds: [UUID] = []
+    private(set) var remoteDeletedIds: [UUID] = []
+
+    @MainActor func getPendingDeletionIds() async throws -> [UUID] { pendingDeletionIds }
+
+    @MainActor func uploadDeletions(_ ids: [UUID]) async throws {
+        remoteDeletedIds.append(contentsOf: ids)
+        pendingDeletionIds.removeAll { ids.contains($0) }
+    }
+
     @MainActor func getPendingPayments() async throws -> [Payment] { pendingPayments }
 
     @MainActor func getPendingSyncCount() async throws -> Int {
         if shouldThrowOnGetCount { throw PaymentSyncError.networkError }
-        return pendingPayments.count
+        return pendingPayments.count + pendingDeletionIds.count
     }
 
     @MainActor func updateSyncStatus(paymentId: UUID, status: SyncStatus) async throws {}

@@ -35,9 +35,13 @@ final class DownloadRemoteChangesUseCase {
             let userId = try await syncRepository.getCurrentUserId()
             let remotePayments = try await syncRepository.downloadPayments(userId: userId)
             let localPayments = try await paymentRepository.getAllLocalPayments()
+            // Tombstones: deleted locally but still on the server — never resurrect them
+            let pendingDeletionIds = Set(try await syncRepository.getPendingDeletionIds())
 
             for remotePayment in remotePayments {
-                if let existingPayment = localPayments.first(where: { $0.id == remotePayment.id }) {
+                if pendingDeletionIds.contains(remotePayment.id) {
+                    continue
+                } else if let existingPayment = localPayments.first(where: { $0.id == remotePayment.id }) {
                     // Merge policy: server-wins by default, but preserve any local pending changes.
                     if !keepLocalWhenPendingSyncStatuses.contains(existingPayment.syncStatus) {
                         try await paymentRepository.savePayment(remotePayment)
