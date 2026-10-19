@@ -90,8 +90,9 @@ final class ReminderSyncCoordinator: BaseSyncCoordinator<ReminderSyncError> {
     override func performLocalDatabaseClear() async -> Bool {
         do {
             let all = try await localDataSource.fetchAll()
-            for reminder in all {
-                try await localDataSource.delete(id: reminder.id)
+            let pendingDeletionIds = try await localDataSource.fetchPendingDeletionIds()
+            for id in all.map(\.id) + pendingDeletionIds {
+                try await localDataSource.delete(id: id)
             }
             log.info("✅ Local reminders cleared successfully", category: Self.logCategory)
             return true

@@ -87,6 +87,8 @@ private struct PaymentsListContent: View {
                 PaymentsList(viewModel: viewModel)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .undoBanner(viewModel.undoableDeletion)
     }
 }
 

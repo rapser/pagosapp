@@ -25,6 +25,9 @@ final class PaymentsListViewModel: BaseViewModel {
         }
     }
 
+    /// Delete waits a few seconds so the user can undo it
+    let undoableDeletion = UndoableDeletion()
+
     private let getAllPaymentsUseCase: GetAllPaymentsUseCase
     private let deletePaymentUseCase: DeletePaymentUseCase
     private let togglePaymentStatusUseCase: TogglePaymentStatusUseCase
@@ -127,6 +130,9 @@ final class PaymentsListViewModel: BaseViewModel {
     /// Fetch all payments from repository (reads from local SwiftData - fast)
     /// - Parameter showLoading: Whether to show loading indicator (default: true). Set to false for silent background refreshes.
     func fetchPayments(showLoading: Bool = true) async {
+        // A reload would bring back a payment still waiting in the undo window
+        await undoableDeletion.commitPending()
+
         if !showLoading {
             // For silent refreshes, don't use loading state management
             let result = await getAllPaymentsUseCase.execute()
@@ -175,23 +181,9 @@ final class PaymentsListViewModel: BaseViewModel {
         )
     }
 
-    /// Delete a payment with optimistic UI update
+    /// Delete a payment with optimistic UI update; the delete use case runs when the undo window closes
     func deletePayment(_ payment: PaymentUI) async {
-        // Optimistic update - remove from UI immediately
-        payments.removeAll { $0.id == payment.id }
-
-        // Perform actual delete in background
-        let result = await deletePaymentUseCase.execute(paymentId: payment.id)
-
-        switch result {
-        case .success:
-            break
-
-        case .failure(let error):
-            // Revert optimistic delete on failure - re-add payment
-            payments.append(payment)
-            setError(PaymentErrorMessageMapper.message(for: error))
-        }
+        await scheduleDelete([payment])
     }
 
     /// Toggle payment status with optimistic UI update
@@ -241,15 +233,38 @@ final class PaymentsListViewModel: BaseViewModel {
         }
     }
 
-    /// Delete payment group (both PEN and USD payments)
+    /// Delete payment group (both PEN and USD payments) as a single undoable action
     func deleteGroup(_ group: PaymentGroupUI) async {
-        // Delete all payments in the group
-        if let penPayment = group.penPayment {
-            await deletePayment(penPayment)
+        await scheduleDelete([group.penPayment, group.usdPayment].compactMap { $0 })
+    }
+
+    private func scheduleDelete(_ toDelete: [PaymentUI]) async {
+        guard !toDelete.isEmpty else { return }
+
+        // Optimistic update - remove from UI immediately
+        let ids = Set(toDelete.map(\.id))
+        payments.removeAll { ids.contains($0.id) }
+
+        await undoableDeletion.schedule(
+            message: L10n.Payments.List.deletedMessage,
+            onUndo: { [weak self] in self?.restore(toDelete) },
+            commit: { [weak self] in await self?.performDelete(toDelete) }
+        )
+    }
+
+    private func performDelete(_ toDelete: [PaymentUI]) async {
+        for payment in toDelete {
+            if case .failure(let error) = await deletePaymentUseCase.execute(paymentId: payment.id) {
+                // Revert optimistic delete on failure - re-add payment
+                restore([payment])
+                setError(PaymentErrorMessageMapper.message(for: error))
+            }
         }
-        if let usdPayment = group.usdPayment {
-            await deletePayment(usdPayment)
-        }
+    }
+
+    private func restore(_ toRestore: [PaymentUI]) {
+        let existingIds = Set(payments.map(\.id))
+        payments.append(contentsOf: toRestore.filter { !existingIds.contains($0.id) })
     }
 
     /// Refresh data

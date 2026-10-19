@@ -31,4 +31,7 @@ protocol PaymentRepositoryProtocol: Sendable {
     func deleteLocalPayments(ids: [UUID]) async throws
     @MainActor
     func clearAllLocalPayments() async throws
+    /// Hides the payment locally (tombstone) so its remote deletion can be retried on the next sync.
+    @MainActor
+    func markLocalPaymentPendingDeletion(id: UUID) async throws
 }

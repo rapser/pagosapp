@@ -57,7 +57,38 @@ struct PaymentsListViewModelTests {
         await sut.deletePayment(paymentUI)
 
         #expect(!sut.payments.contains { $0.id == payment.id })
+        #expect(repo.payments.contains { $0.id == payment.id }, "Repo delete waits for the undo window")
+
+        await sut.undoableDeletion.commitPending()
+
         #expect(!repo.payments.contains { $0.id == payment.id })
+    }
+
+    @Test func deletePayment_undo_restoresWithoutDeleting() async {
+        let payment = Payment.make(name: "Netflix")
+        repo.payments = [payment]
+        await sut.fetchPayments()
+
+        await sut.deletePayment(sut.payments.first!)
+        sut.undoableDeletion.undo()
+        await sut.undoableDeletion.commitPending()
+
+        #expect(sut.payments.contains { $0.id == payment.id })
+        #expect(repo.payments.contains { $0.id == payment.id })
+        #expect(sut.undoableDeletion.message == nil)
+    }
+
+    @Test func deletePayment_secondDelete_commitsFirst() async {
+        let first = Payment.make(name: "Netflix")
+        let second = Payment.make(name: "Spotify")
+        repo.payments = [first, second]
+        await sut.fetchPayments()
+
+        await sut.deletePayment(sut.payments.first { $0.id == first.id }!)
+        await sut.deletePayment(sut.payments.first { $0.id == second.id }!)
+
+        #expect(!repo.payments.contains { $0.id == first.id })
+        #expect(repo.payments.contains { $0.id == second.id })
     }
 
     @Test func deletePayment_repoFailure_revertsOptimisticUpdate() async {
@@ -68,6 +99,7 @@ struct PaymentsListViewModelTests {
 
         let paymentUI = sut.payments.first!
         await sut.deletePayment(paymentUI)
+        await sut.undoableDeletion.commitPending()
 
         #expect(sut.payments.contains { $0.id == payment.id })
         #expect(sut.errorMessage != nil)

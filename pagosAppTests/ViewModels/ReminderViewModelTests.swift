@@ -19,7 +19,7 @@ struct RemindersListViewModelTests {
 
     init() {
         let getAllUseCase = GetAllRemindersUseCase(repository: repo)
-        let deleteUseCase = DeleteReminderUseCase(repository: repo)
+        let deleteUseCase = DeleteReminderUseCase(repository: repo, syncRepository: MockReminderSyncRepository(), log: NullLog())
         let updateUseCase = UpdateReminderUseCase(repository: repo)
         sut = RemindersListViewModel(
             getAllRemindersUseCase: getAllUseCase,
@@ -52,6 +52,24 @@ struct RemindersListViewModelTests {
         await sut.deleteReminder(id: reminder.id)
 
         #expect(!sut.reminders.contains { $0.id == reminder.id })
+        #expect(repo.reminders.contains { $0.id == reminder.id }, "Repo delete waits for the undo window")
+
+        await sut.undoableDeletion.commitPending()
+
+        #expect(!repo.reminders.contains { $0.id == reminder.id })
+    }
+
+    @Test func deleteReminder_undo_restoresWithoutDeleting() async {
+        let reminder = Reminder.make(title: "Netflix")
+        repo.reminders = [reminder]
+        await sut.loadReminders()
+
+        await sut.deleteReminder(id: reminder.id)
+        sut.undoableDeletion.undo()
+        await sut.undoableDeletion.commitPending()
+
+        #expect(sut.reminders.contains { $0.id == reminder.id })
+        #expect(repo.reminders.contains { $0.id == reminder.id })
     }
 
     @Test func toggleCompletion_flipsIsCompleted() async {

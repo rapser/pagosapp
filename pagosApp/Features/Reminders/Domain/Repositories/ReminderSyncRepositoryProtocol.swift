@@ -16,6 +16,11 @@ protocol ReminderSyncRepositoryProtocol: Sendable {
     func downloadReminders(userId: UUID) async throws -> [Reminder]
     func syncDeletion(reminderId: UUID) async throws
     @MainActor
+    func getPendingDeletionIds() async throws -> [UUID]
+    /// Deletes the reminders from Supabase and then purges their local tombstones.
+    @MainActor
+    func uploadDeletions(_ ids: [UUID]) async throws
+    @MainActor
     func getPendingReminders() async throws -> [Reminder]
     @MainActor
     func getPendingSyncCount() async throws -> Int

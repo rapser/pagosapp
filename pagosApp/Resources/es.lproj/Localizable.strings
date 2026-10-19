@@ -8,6 +8,7 @@
 "general.cancel" = "Cancelar";
 "general.save" = "Guardar";
 "general.delete" = "Borrar";
+"general.undo" = "Deshacer";
 "general.edit" = "Editar";
 "general.retry" = "Reintentar";
 "general.error" = "Error";
@@ -62,6 +63,7 @@
 "payments.list.deleteConfirmTitle" = "¿Eliminar este pago?";
 "payments.list.deleteConfirmMessage" = "Esta acción no se puede deshacer.";
 "payments.list.deleteGroupConfirmMessage" = "Se borrarán los montos en S/ y $.";
+"payments.list.deletedMessage" = "Pago eliminado";
 "payments.add.title" = "Nuevo Pago";
 "payments.add.cancel" = "Cancelar";
 "payments.edit.title" = "Editar Pago";
@@ -140,6 +142,7 @@
 
 // MARK: - Reminders
 "reminders.listTitle" = "Recordatorios";
+"reminders.deletedMessage" = "Recordatorio eliminado";
 "reminders.placeholder.comingSoon" = "Próximamente";
 "reminders.filter" = "Filtrar";
 "reminders.filter.currentMonth" = "Próximos";

@@ -196,6 +196,17 @@ struct UploadReminderChangesUseCaseTests {
         #expect(syncRepo.uploadCount == 1)
     }
 
+    @Test func pendingDeletions_deletedRemotely() async {
+        let id = UUID()
+        syncRepo.pendingDeletionIds = [id]
+
+        let result = await sut.execute()
+
+        if case .failure(let error) = result { Issue.record("Expected success, got \(error)") }
+        #expect(syncRepo.remoteDeletedIds == [id])
+        #expect(syncRepo.pendingDeletionIds.isEmpty)
+    }
+
     @Test func notAuthenticated_returnsAuthError() async {
         syncRepo.shouldThrowOnGetUserId = true
         syncRepo.pendingReminders = [Reminder.make()]
@@ -308,6 +319,18 @@ struct DownloadReminderChangesUseCaseTests {
         #expect(localDS.reminders.count == 1)
     }
 
+    @Test func remoteReminderPendingDeletion_notResurrected() async {
+        let id = UUID()
+        syncRepo.remoteReminders = [Reminder.make(id: id, title: "Deleted", syncStatus: .synced)]
+        localDS.reminders = []
+        localDS.pendingDeletionIds = [id]
+
+        let result = await sut.execute()
+
+        if case .failure(let error) = result { Issue.record("Expected success, got \(error)") }
+        #expect(!localDS.reminders.contains { $0.id == id })
+    }
+
     @Test func authFailure_returnsDownloadError() async {
         syncRepo.shouldThrowOnGetUserId = true
 
@@ -340,10 +363,54 @@ struct DownloadReminderChangesUseCaseTests {
 @MainActor
 struct DeleteReminderUseCaseTests {
     let repo = MockReminderRepository()
+    let syncRepo = MockReminderSyncRepository()
     let sut: DeleteReminderUseCase
 
     init() {
-        sut = DeleteReminderUseCase(repository: repo)
+        sut = DeleteReminderUseCase(repository: repo, syncRepository: syncRepo, log: NullLog())
+    }
+
+    @Test func syncedReminder_deletedRemotelyAndLocally() async {
+        let reminder = Reminder.make(syncStatus: .synced)
+        repo.reminders = [reminder]
+
+        let result = await sut.execute(id: reminder.id)
+
+        if case .failure(let error) = result { Issue.record("Expected success, got \(error)") }
+        #expect(syncRepo.remoteDeletedIds == [reminder.id])
+        #expect(repo.reminders.isEmpty)
+        #expect(repo.markedForDeletionIds.isEmpty)
+    }
+
+    @Test func modifiedReminder_deletedRemotely() async {
+        let reminder = Reminder.make(syncStatus: .modified)
+        repo.reminders = [reminder]
+
+        _ = await sut.execute(id: reminder.id)
+
+        #expect(syncRepo.remoteDeletedIds == [reminder.id])
+    }
+
+    @Test func localOnlyReminder_skipsRemoteDelete() async {
+        let reminder = Reminder.make(syncStatus: .local)
+        repo.reminders = [reminder]
+
+        _ = await sut.execute(id: reminder.id)
+
+        #expect(syncRepo.remoteDeletedIds.isEmpty)
+        #expect(repo.reminders.isEmpty)
+    }
+
+    @Test func remoteFailure_marksForDeletionInsteadOfHardDelete() async {
+        let reminder = Reminder.make(syncStatus: .synced)
+        repo.reminders = [reminder]
+        syncRepo.shouldThrowOnSyncDeletion = true
+
+        let result = await sut.execute(id: reminder.id)
+
+        if case .failure(let error) = result { Issue.record("Expected success, got \(error)") }
+        #expect(repo.markedForDeletionIds == [reminder.id])
+        #expect(repo.reminders.isEmpty)
     }
 
     @Test func existingReminder_deletedSuccessfully() async {
@@ -428,6 +495,15 @@ struct GetPendingReminderSyncCountUseCaseTests {
 
     @Test func returnsPendingCount() async {
         syncRepo.pendingReminders = [Reminder.make(), Reminder.make()]
+
+        let count = await sut.execute()
+
+        #expect(count == 2)
+    }
+
+    @Test func includesPendingDeletions() async {
+        syncRepo.pendingReminders = [Reminder.make()]
+        syncRepo.pendingDeletionIds = [UUID()]
 
         let count = await sut.execute()
 

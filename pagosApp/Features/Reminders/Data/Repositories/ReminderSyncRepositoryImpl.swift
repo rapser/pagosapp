@@ -67,6 +67,20 @@ final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol, @uncheck
     }
 
     @MainActor
+    func getPendingDeletionIds() async throws -> [UUID] {
+        try await localDataSource.fetchPendingDeletionIds()
+    }
+
+    @MainActor
+    func uploadDeletions(_ ids: [UUID]) async throws {
+        guard !ids.isEmpty else { return }
+        try await remoteDataSource.deleteAll(ids: ids)
+        for id in ids {
+            try await localDataSource.delete(id: id)
+        }
+    }
+
+    @MainActor
     func getPendingReminders() async throws -> [Reminder] {
         let all = try await localDataSource.fetchAll()
         return all.filter { r in
@@ -77,7 +91,8 @@ final class ReminderSyncRepositoryImpl: ReminderSyncRepositoryProtocol, @uncheck
     @MainActor
     func getPendingSyncCount() async throws -> Int {
         let pending = try await getPendingReminders()
-        return pending.count
+        let pendingDeletions = try await getPendingDeletionIds()
+        return pending.count + pendingDeletions.count
     }
 
     @MainActor

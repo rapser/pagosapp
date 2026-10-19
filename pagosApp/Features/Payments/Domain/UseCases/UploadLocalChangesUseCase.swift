@@ -26,6 +26,13 @@ final class UploadLocalChangesUseCase {
     func execute() async -> Result<Void, PaymentSyncError> {
         do {
             let userId = try await syncRepository.getCurrentUserId()
+
+            // Deletions first, so a later download can't bring deleted payments back
+            let pendingDeletionIds = try await syncRepository.getPendingDeletionIds()
+            if !pendingDeletionIds.isEmpty {
+                try await syncRepository.uploadDeletions(pendingDeletionIds)
+            }
+
             let pendingPayments = try await syncRepository.getPendingPayments()
             guard !pendingPayments.isEmpty else { return .success(()) }
             try await syncRepository.uploadPayments(pendingPayments, userId: userId)

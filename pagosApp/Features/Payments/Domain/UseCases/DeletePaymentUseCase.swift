@@ -9,9 +9,10 @@
 import Foundation
 
 /// Use case for deleting a payment.
-/// - Synced payments (`.synced` / `.modified`): deleted from Supabase first, then locally.
-///   If Supabase is unreachable the local delete still proceeds (offline-first).
 /// - Unsynced payments (`.local`): deleted from SwiftData only — they never reached Supabase.
+/// - Otherwise: deleted from Supabase first, then locally. If Supabase is unreachable the payment
+///   is kept as a hidden tombstone (`.pendingDeletion`) so the next sync deletes it remotely
+///   instead of downloading it back.
 @MainActor
 final class DeletePaymentUseCase {
     private static let logCategory = "DeletePaymentUseCase"
@@ -48,25 +49,32 @@ final class DeletePaymentUseCase {
             log.warning("⚠️ Could not fetch payment before delete: \(error.localizedDescription)", category: Self.logCategory)
         }
 
-        // 2. Delete from Supabase if the payment was previously synced
-        let wasSynced = paymentToDelete?.syncStatus == .synced || paymentToDelete?.syncStatus == .modified
-        if wasSynced {
-            log.info("🗑 Payment is synced — deleting from Supabase: \(paymentId)", category: Self.logCategory)
+        // 2. Delete from Supabase unless the payment never left this device
+        let mayExistRemotely = paymentToDelete.map { $0.syncStatus != .local } ?? false
+        var remoteDeleteFailed = false
+        if mayExistRemotely {
+            log.info("🗑 Deleting from Supabase: \(paymentId)", category: Self.logCategory)
             do {
                 try await paymentRepository.deletePayment(paymentId: paymentId)
                 log.info("✅ Deleted from Supabase: \(paymentId)", category: Self.logCategory)
             } catch {
-                // Offline-first: log but do not block the local delete
-                log.warning("⚠️ Supabase delete failed (offline?): \(error.localizedDescription) — proceeding with local delete", category: Self.logCategory)
+                // Offline-first: hide it locally and retry the remote delete on next sync
+                remoteDeleteFailed = true
+                log.warning("⚠️ Supabase delete failed (offline?): \(error.localizedDescription) — marking for deletion on next sync", category: Self.logCategory)
             }
         } else {
             log.info("ℹ️ Payment is local-only — skipping Supabase delete: \(paymentId)", category: Self.logCategory)
         }
 
-        // 3. Delete from SwiftData (always)
+        // 3. Delete from SwiftData (tombstone if Supabase still has it)
         do {
-            try await paymentRepository.deleteLocalPayment(id: paymentId)
-            log.info("✅ Deleted from local storage: \(paymentId)", category: Self.logCategory)
+            if remoteDeleteFailed {
+                try await paymentRepository.markLocalPaymentPendingDeletion(id: paymentId)
+                log.info("🪦 Marked for deletion on next sync: \(paymentId)", category: Self.logCategory)
+            } else {
+                try await paymentRepository.deleteLocalPayment(id: paymentId)
+                log.info("✅ Deleted from local storage: \(paymentId)", category: Self.logCategory)
+            }
 
             // 4. Remove associated calendar event
             if let payment = paymentToDelete, let syncUseCase = syncCalendarUseCase {
