@@ -24,6 +24,7 @@ El contenido de este fichero describe la **versión publicada** y el **alcance**
 
 ### Fixed
 
+- **TestFlight marcaba fallo con upload exitoso**: cuando App Store Connect responde HTTP 5xx al consultar el estado del upload (`GET UPLOAD STATE`) pero altool termina con `UPLOAD SUCCEEDED`, el lane ahora emite un aviso con el número de build a verificar en vez de fallar el job. Cualquier otro error de subida sigue fallando. Ambos lanes de subida usan el nuevo `safe_upload_to_testflight`.
 - **El formulario de tarjeta perdía cambios sin avisar**: el sheet de crear/editar tarjeta se cerraba aunque el guardado fallara (p. ej. error de Keychain), sin mostrar ningún error. Ahora solo se cierra si el guardado fue exitoso.
 - **Face ID pedía autenticación 3 veces al ver el PIN de una tarjeta**: la lectura del número y del PIN en Keychain evaluaban biometría cada una por su cuenta, sumadas al gate explícito de la app. Ahora se reutiliza el mismo `LAContext` ya autenticado para ambas lecturas — queda en una sola solicitud de Face ID/Touch ID.
 - **Eliminación sincronizada con Supabase**: `DeletePaymentUseCase` ahora comprueba el `syncStatus` antes de borrar. Si el pago es `.synced` o `.modified` elimina primero de Supabase y luego de SwiftData; si es `.local` solo limpia el almacenamiento local. Si Supabase no está disponible el borrado local procede igualmente (offline-first).
