@@ -121,7 +121,7 @@ platform :ios do
       profile_name = ENV["CI_PROVISIONING_PROFILE_NAME"].to_s.strip
       if profile_name.empty?
         UI.user_error!(
-          "Falta CI_PROVISIONING_PROFILE_NAME. El workflow testflight-develop.yml debe " \
+          "Falta CI_PROVISIONING_PROFILE_NAME. El workflow testflight.yml debe " \
           "exportarlo al instalar PROVISIONING_PROFILE_BASE64."
         )
       end

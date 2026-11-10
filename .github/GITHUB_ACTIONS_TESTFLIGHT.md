@@ -1,11 +1,13 @@
-# GitHub Actions — TestFlight al mergear en `develop`
+# GitHub Actions — TestFlight al llegar a `main`
 
 ## Cuándo se sube a TestFlight
 
-El workflow **[`testflight-develop.yml`](workflows/testflight-develop.yml)** se ejecuta **solo** en:
+El workflow **[`testflight.yml`](workflows/testflight.yml)** se ejecuta **solo** en:
 
-- **`push` a la rama `develop`** (lo habitual tras **fusionar un PR** hacia `develop`, p. ej. `feature/foo` → `develop`).
-- **`workflow_dispatch`** (ejecución manual desde la pestaña *Actions* → *TestFlight (push a develop)* → *Run workflow*).
+- **`push` a la rama `main`** (lo habitual al **fusionar el PR `develop` → `main`**): un build por release.
+- **`workflow_dispatch`** (ejecución manual desde la pestaña *Actions* → *TestFlight (release a main)* → *Run workflow*). En **Use workflow from** puedes elegir otra rama (p. ej. `develop`) para probar un build en el iPhone sin esperar al release.
+
+Los merges a **`develop`** ya **no** suben nada a TestFlight.
 
 **No** se ejecuta en:
 
@@ -58,11 +60,11 @@ Alternativa profesional: usar [**fastlane match**](https://docs.fastlane.tools/a
 ## Comprobar que funciona
 
 1. Añade los secretos obligatorios (y los de firma).
-2. Haz un cambio trivial en una rama, **PR a `develop`**, espera CI verde y **merge**.
-3. En **Actions** debería aparecer el workflow **TestFlight (push a develop)** en verde.
+2. Lanza el workflow a mano (abajo) o haz el **PR `develop` → `main`** y **merge**.
+3. En **Actions** debería aparecer el workflow **TestFlight (release a main)** en verde.
 4. En **App Store Connect → TestFlight** revisa el nuevo build (puede tardar unos minutos en procesarse).
 
-Ejecución manual: **Actions** → **TestFlight (push a develop)** → **Run workflow** (útil para probar sin nuevo merge).
+Ejecución manual: **Actions** → **TestFlight (release a main)** → **Run workflow** (útil para probar `develop` sin hacer release).
 
 ---
 

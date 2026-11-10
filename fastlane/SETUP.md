@@ -120,9 +120,9 @@ En **CI**, si no quieres fichero en disco, puedes usar **`APP_STORE_CONNECT_API_
 
 ## 7. CI (GitHub Actions u otro)
 
-En este repo el flujo de **TestFlight en GitHub** está descrito en **[`.github/GITHUB_ACTIONS_TESTFLIGHT.md`](../.github/GITHUB_ACTIONS_TESTFLIGHT.md)** y el workflow en **[`.github/workflows/testflight-develop.yml`](../.github/workflows/testflight-develop.yml)**:
+En este repo el flujo de **TestFlight en GitHub** está descrito en **[`.github/GITHUB_ACTIONS_TESTFLIGHT.md`](../.github/GITHUB_ACTIONS_TESTFLIGHT.md)** y el workflow en **[`.github/workflows/testflight.yml`](../.github/workflows/testflight.yml)**:
 
-- Se ejecuta en **`push` a `develop`** (típico tras **merge** de un PR hacia `develop`), **no** en PRs ni en push a `main`.
+- Se ejecuta en **`push` a `main`** (merge de `develop` → `main`, un build por release) o a mano con *Run workflow*; **no** en PRs ni en push a `develop`.
 - Invoca **`bundle exec fastlane release_app_store_connect`** (sin menú).
 - Secretos: API Key en Base64, Key ID, Issuer; y para **firma** en el runner: `.p12` Distribution + perfil App Store en Base64 (o `match` si lo añades al `Fastfile`).
 - Variable útil: `FASTLANE_SKIP_UPDATE_CHECK=1` (ya la pone el workflow).

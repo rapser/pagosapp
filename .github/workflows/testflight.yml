@@ -1,16 +1,15 @@
-# TestFlight en `develop` solo si el push toca app / firma / proyecto (paths).
-# Pushes que solo cambian p. ej. `.github/workflows/ci.yml` u otros paths no listados
-# no disparan este workflow (evita un archive+TestFlight innecesario).
-# Sigue disponible `workflow_dispatch` para lanzar a mano cuando haga falta.
-#
-# develop → main: este archivo NO dispara nada en `main`.
+# TestFlight: un solo build por release, al llegar código a `main` (merge de develop → main),
+# solo si el push toca app / firma / proyecto (paths). Los merges a `develop` NO suben nada
+# (en los PR hacia develop corre solo ci.yml: build + tests + SwiftLint).
+# Para probar algo de `develop` en el iPhone: Actions → este workflow → Run workflow,
+# eligiendo la rama en "Use workflow from".
 
-name: TestFlight (push a develop)
+name: TestFlight (release a main)
 
 on:
   push:
     branches:
-      - develop
+      - main
     paths:
       - "pagosApp/**"
       - "pagosAppTests/**"
@@ -20,12 +19,13 @@ on:
       - "Gemfile"
       - "Gemfile.lock"
       - ".ruby-version"
-      - ".github/workflows/testflight-develop.yml"
+      - ".github/workflows/testflight.yml"
   workflow_dispatch:
 
 concurrency:
-  group: testflight-develop-${{ github.ref }}
-  cancel-in-progress: true
+  group: testflight-${{ github.ref }}
+  # Un release no se cancela si entra otro push: se encola.
+  cancel-in-progress: false
 
 env:
   FASTLANE_SKIP_UPDATE_CHECK: "1"
