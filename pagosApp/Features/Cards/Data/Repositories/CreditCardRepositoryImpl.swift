@@ -57,4 +57,18 @@ final class CreditCardRepositoryImpl: CreditCardRepositoryProtocol {
         }
         return CreditCardSensitiveData(cardNumber: cardNumber, pin: pin)
     }
+
+    func revealCardNumber(cardId: UUID, context: LAContext?) async throws -> String {
+        guard let cardNumber = sensitiveDataSource.retrieveCardNumber(cardId: cardId, context: context) else {
+            throw CardError.notFound
+        }
+        return cardNumber
+    }
+
+    func revealPin(cardId: UUID, context: LAContext?) async throws -> String {
+        guard let pin = sensitiveDataSource.retrievePin(cardId: cardId, context: context) else {
+            throw CardError.notFound
+        }
+        return pin
+    }
 }

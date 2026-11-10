@@ -68,11 +68,19 @@ final class KeychainCreditCardDataSource: CreditCardSensitiveDataSource {
     // MARK: - Retrieve
 
     func retrieve(cardId: UUID, context: LAContext?) -> (cardNumber: String, pin: String)? {
-        guard let cardNumber = retrieveString(account: numberKey(for: cardId), context: context),
-              let pin = retrieveString(account: pinKey(for: cardId), context: context) else {
+        guard let cardNumber = retrieveCardNumber(cardId: cardId, context: context),
+              let pin = retrievePin(cardId: cardId, context: context) else {
             return nil
         }
         return (cardNumber, pin)
+    }
+
+    func retrieveCardNumber(cardId: UUID, context: LAContext?) -> String? {
+        retrieveString(account: numberKey(for: cardId), context: context)
+    }
+
+    func retrievePin(cardId: UUID, context: LAContext?) -> String? {
+        retrieveString(account: pinKey(for: cardId), context: context)
     }
 
     // MARK: - Delete
@@ -150,8 +158,13 @@ final class KeychainCreditCardDataSource: CreditCardSensitiveDataSource {
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
 
-        guard status == errSecSuccess,
-              let data = result as? Data,
+        guard status == errSecSuccess else {
+            let message = SecCopyErrorMessageString(status, nil) as String? ?? "unknown"
+            log.error("Keychain read failed (\(account)): \(status) - \(message)", category: Self.logCategory)
+            return nil
+        }
+
+        guard let data = result as? Data,
               let value = String(data: data, encoding: .utf8) else {
             return nil
         }

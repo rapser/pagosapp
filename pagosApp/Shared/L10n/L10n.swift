@@ -322,6 +322,9 @@ enum L10n {
             static let numberLabel = tr("cards.reveal.numberLabel")
             static let pinLabel = tr("cards.reveal.pinLabel")
             static let autoHideBanner = tr("cards.reveal.autoHideBanner")
+            static let showPin = tr("cards.reveal.showPin")
+            static let hidePin = tr("cards.reveal.hidePin")
+            static let pinBiometricReason = tr("cards.reveal.pinBiometricReason")
         }
 
         enum Edit {
