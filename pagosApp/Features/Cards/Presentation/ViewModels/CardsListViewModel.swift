@@ -12,8 +12,11 @@ import Foundation
 final class CardsListViewModel: BaseViewModel {
     var cards: [CreditCard] = []
 
-    var revealedData: CreditCardSensitiveData?
     var revealedCard: CreditCard?
+    var revealedCardNumber: String?
+    /// Only loaded after a second, dedicated Face ID check (`revealPin`).
+    var revealedPin: String?
+    var isRevealingPin = false
     var showingRevealSheet = false
 
     var editingCard: CreditCard?
@@ -55,28 +58,56 @@ final class CardsListViewModel: BaseViewModel {
         )
     }
 
-    /// Requests Face ID/Touch ID, and on success shows the reveal bottom sheet.
+    /// First Face ID/Touch ID check: on success shows the reveal bottom sheet with the
+    /// card number only. The PIN stays in Keychain (shown as a skeleton) until `revealPin`.
     /// On failure/cancel, no sensitive data is set and no sheet is shown.
     func revealCard(_ card: CreditCard) async {
-        let result = await revealSensitiveDataUseCase.execute(
+        let result = await revealSensitiveDataUseCase.executeCardNumber(
             cardId: card.id,
             reason: L10n.Cards.biometricReason
         )
 
         switch result {
-        case .success(let data):
+        case .success(let cardNumber):
             revealedCard = card
-            revealedData = data
+            revealedCardNumber = cardNumber
+            revealedPin = nil
             showingRevealSheet = true
         case .failure(let error):
             setError(CardErrorMessageMapper.message(for: error))
         }
     }
 
+    /// Second, independent Face ID/Touch ID check that loads the PIN of the card
+    /// currently shown in the reveal sheet. On failure/cancel the PIN stays hidden.
+    func revealPin() async {
+        guard let card = revealedCard, revealedPin == nil, !isRevealingPin else { return }
+
+        isRevealingPin = true
+        defer { isRevealingPin = false }
+
+        let result = await revealSensitiveDataUseCase.executePin(
+            cardId: card.id,
+            reason: L10n.Cards.Reveal.pinBiometricReason
+        )
+
+        // The sheet may have been dismissed (or another card shown) while Face ID was up.
+        guard showingRevealSheet, revealedCard?.id == card.id else { return }
+
+        if case .success(let pin) = result {
+            revealedPin = pin
+        }
+    }
+
+    func hidePin() {
+        revealedPin = nil
+    }
+
     func dismissRevealSheet() {
         showingRevealSheet = false
-        revealedData = nil
         revealedCard = nil
+        revealedCardNumber = nil
+        revealedPin = nil
     }
 
     /// Requests Face ID/Touch ID, and on success shows the edit form pre-filled with

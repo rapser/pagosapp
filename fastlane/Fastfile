@@ -171,6 +171,42 @@ platform :ios do
     end
   end
 
+  # Sube a TestFlight tolerando un fallo conocido de Apple: altool recibe HTTP 5xx al
+  # *consultar el estado* del upload (GET UPLOAD STATE) aunque el IPA se transfiere y
+  # termina con "UPLOAD SUCCEEDED". fastlane trata cualquier línea de error de altool como
+  # fallo, así que si TODOS los errores son de ese tipo lo degradamos a aviso. Cualquier
+  # otro error (firma, versión duplicada, credenciales...) se sigue propagando.
+  private_lane :safe_upload_to_testflight do |options|
+    begin
+      upload_to_testflight(
+        ipa: options[:ipa],
+        skip_waiting_for_build_processing: true,
+        distribute_external: false,
+        notify_external_testers: false
+      )
+    rescue => e
+      error_lines = e.message.lines.map(&:strip).select { |l| l.include?("[Application Loader Error Output]") }
+      transient_only = !error_lines.empty? &&
+        error_lines.all? { |l| l.match?(/GET UPLOAD STATE.*status code 5\d\d/i) }
+      raise unless transient_only
+
+      build = begin
+        project = Xcodeproj::Project.open(File.join(repo_root, PROJECT))
+        target = project.targets.find { |t| t.name == SCHEME }
+        target&.build_configurations&.first&.build_settings&.dig("CURRENT_PROJECT_VERSION") || "?"
+      rescue StandardError
+        "?"
+      end
+
+      UI.important(
+        "⚠️ App Store Connect devolvió errores 5xx al consultar el estado del upload (fallo de Apple), " \
+        "sin otros errores. Normalmente el build SÍ se subió: verifícalo en App Store Connect → TestFlight " \
+        "(build #{build}). Si no aparece en ~30 min, relanza el workflow."
+      )
+      UI.message("Detalle del error original:\n#{e.message}")
+    end
+  end
+
   private_lane :upload_ipa_testflight do |options|
     load_app_store_connect_api_key
 
@@ -184,12 +220,7 @@ platform :ios do
     # "TestFlight solo internos" es sobre todo quién puede instalar y si activas externos / revisión beta en la web.
     internal_only = options[:internal_only] == true
 
-    upload_to_testflight(
-      ipa: ipa_path,
-      skip_waiting_for_build_processing: true,
-      distribute_external: false,
-      notify_external_testers: false
-    )
+    safe_upload_to_testflight(ipa: ipa_path)
 
     if internal_only
       UI.success(
@@ -334,12 +365,7 @@ platform :ios do
     ipa_path = Dir.glob(File.join(OUTPUT_DIR, "#{IPA_NAME_APPSTORE}.ipa")).max_by { |f| File.mtime(f) }
     UI.user_error!("No hay IPA en #{OUTPUT_DIR}. Ejecuta ipa_app_store o release_* antes.") if ipa_path.nil?
 
-    upload_to_testflight(
-      ipa: ipa_path,
-      skip_waiting_for_build_processing: true,
-      distribute_external: false,
-      notify_external_testers: false
-    )
+    safe_upload_to_testflight(ipa: ipa_path)
     print_app_version_summary
   end
 end

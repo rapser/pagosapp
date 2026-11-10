@@ -1,18 +1,24 @@
 import SwiftUI
 
-/// Bottom sheet shown after a successful Face ID/Touch ID check, revealing the
-/// card's bank name, full number, and PIN. CVV is never part of this view.
-/// Both are shown in full - the Face ID check that unlocked this sheet is the
-/// gate; masking them again behind an eye icon here would add no protection.
-/// The sheet auto-dismisses after `autoDismissDuration` so sensitive data doesn't
-/// stay on screen indefinitely if the user walks away.
+/// Bottom sheet shown after a first successful Face ID/Touch ID check, revealing the
+/// card's bank name and full number. CVV is never part of this view.
+/// The PIN is NOT loaded with the sheet: it shows as a skeleton placeholder until the
+/// user taps "Show PIN" and passes a second, independent Face ID/Touch ID check.
+/// The PIN re-hides when the app leaves the foreground (so it never lands in the app
+/// switcher snapshot), and the whole sheet auto-dismisses after `autoDismissDuration`
+/// so sensitive data doesn't stay on screen indefinitely if the user walks away.
 struct CardRevealSheetView: View {
     private static let autoDismissDuration: TimeInterval = 180
 
     let card: CreditCard
-    let data: CreditCardSensitiveData
+    let cardNumber: String
+    let pin: String?
+    let isRevealingPin: Bool
+    let onRevealPin: () -> Void
+    let onHidePin: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @State private var revealStart = Date()
 
     var body: some View {
@@ -33,7 +39,7 @@ struct CardRevealSheetView: View {
             VStack(spacing: 16) {
                 revealRow(title: L10n.Cards.Reveal.bankLabel, value: card.bankDisplayName)
                 revealRow(title: L10n.Cards.Reveal.numberLabel, value: formattedNumber, monospaced: true)
-                revealRow(title: L10n.Cards.Reveal.pinLabel, value: data.pin, monospaced: true)
+                pinRow
             }
             .padding(.horizontal)
 
@@ -50,7 +56,62 @@ struct CardRevealSheetView: View {
                 // Cancelled because the sheet was already dismissed manually.
             }
         }
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active {
+                onHidePin()
+            }
+        }
     }
+
+    // MARK: - PIN
+
+    private var pinRow: some View {
+        VStack(spacing: 10) {
+            HStack {
+                Text(L10n.Cards.Reveal.pinLabel)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                if let pin {
+                    Text(pin)
+                        .font(.body.monospaced())
+                        .transition(.opacity)
+                } else {
+                    PinSkeleton()
+                        .transition(.opacity)
+                }
+            }
+
+            pinToggleButton
+        }
+        .animation(.easeInOut(duration: 0.2), value: pin)
+    }
+
+    @ViewBuilder
+    private var pinToggleButton: some View {
+        if pin != nil {
+            Button(action: onHidePin) {
+                Label(L10n.Cards.Reveal.hidePin, systemImage: "eye.slash")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+        } else {
+            Button(action: onRevealPin) {
+                HStack(spacing: 8) {
+                    if isRevealingPin {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "faceid")
+                    }
+                    Text(L10n.Cards.Reveal.showPin)
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(isRevealingPin)
+        }
+    }
+
+    // MARK: - Helpers
 
     private var autoHideBanner: some View {
         let countdown = Text(
@@ -72,7 +133,7 @@ struct CardRevealSheetView: View {
     }
 
     private var formattedNumber: String {
-        data.cardNumber
+        cardNumber
             .enumerated()
             .map { index, char in index > 0 && index % 4 == 0 ? " \(char)" : String(char) }
             .joined()
@@ -86,5 +147,41 @@ struct CardRevealSheetView: View {
             Text(value)
                 .font(monospaced ? .body.monospaced() : .body)
         }
+    }
+}
+
+/// Shimmering placeholder standing in for the PIN until it's unlocked. It never
+/// contains the real value - the PIN isn't even loaded from Keychain at this point.
+private struct PinSkeleton: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var shimmerPhase: CGFloat = -1
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 6, style: .continuous)
+            .fill(Color.secondary.opacity(0.25))
+            .frame(width: 64, height: 18)
+            .overlay {
+                if !reduceMotion {
+                    GeometryReader { proxy in
+                        LinearGradient(
+                            colors: [.clear, Color.white.opacity(0.45), .clear],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                        .frame(width: proxy.size.width * 0.6)
+                        .offset(x: shimmerPhase * proxy.size.width)
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                }
+            }
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.linear(duration: 1.2).repeatForever(autoreverses: false)) {
+                    shimmerPhase = 1.4
+                }
+            }
+            .accessibilityElement()
+            .accessibilityLabel(L10n.Cards.Reveal.pinLabel)
+            .accessibilityValue(L10n.Cards.Reveal.showPin)
     }
 }

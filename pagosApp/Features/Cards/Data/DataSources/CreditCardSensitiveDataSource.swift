@@ -6,6 +6,8 @@ import LocalAuthentication
 protocol CreditCardSensitiveDataSource {
     func save(cardId: UUID, cardNumber: String, pin: String) -> Bool
     func retrieve(cardId: UUID, context: LAContext?) -> (cardNumber: String, pin: String)?
+    func retrieveCardNumber(cardId: UUID, context: LAContext?) -> String?
+    func retrievePin(cardId: UUID, context: LAContext?) -> String?
     @discardableResult
     func delete(cardId: UUID) -> Bool
 }
