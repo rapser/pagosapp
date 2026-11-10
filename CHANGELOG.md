@@ -8,10 +8,12 @@ El contenido de este fichero describe la **versión publicada** y el **alcance**
 
 ### Added
 
+- **Doble Face ID para ver el PIN de una tarjeta**: el primer Face ID abre el detalle con banco y número; el PIN se muestra como skeleton animado (sin leerlo de Keychain) hasta que el usuario toca "Mostrar clave" y pasa un segundo Face ID independiente (`LAContext` nuevo). Botón "Ocultar clave" y re-ocultado automático cuando la app sale de primer plano. `RevealCreditCardSensitiveDataUseCase` añade `executeCardNumber` / `executePin`; editar tarjeta sigue con un solo Face ID.
+- **Diagnóstico de Keychain**: los fallos de lectura de secretos de tarjeta registran el `OSStatus` y su descripción.
 - **Tarjetas de crédito (nuevo tab)**: registro de tarjetas (banco, número, PIN, vencimiento — nunca CVV) en un grid de 2 columnas que muestra solo marca, últimos 4 dígitos y banco. El número completo y el PIN están protegidos con Face ID/Touch ID y se guardan solo en Keychain (`.biometryCurrentSet`); la metadata no sensible vive en SwiftData. Totalmente local, sin sincronización remota.
 - **Editar y eliminar tarjetas**: el menú contextual de una tarjeta ahora permite "Editar" (pide Face ID para revelar y precargar el número/PIN actuales en el formulario) y "Eliminar" (a la confirmación por alert existente se suma una segunda confirmación con Face ID/Touch ID antes de borrar).
 - **Celda de tarjeta**: se muestra la fecha de vencimiento (`MM/YY`) junto al banco, y los bancos reconocibles (BCP, BBVA, Interbank, Scotiabank, Falabella, Ripley) usan su color de marca real en vez del gradiente genérico por marca de tarjeta.
-- **Auto-ocultado del PIN revelado**: el bottom sheet de ver tarjeta ahora muestra el número y PIN completos de inmediato (ya no hace falta un ojito, el Face ID de entrada ya es el gate) y se cierra solo a los 3 minutos, con un banner inferior que muestra la cuenta regresiva.
+- **Auto-ocultado del PIN revelado**: el bottom sheet de ver tarjeta se cierra solo a los 3 minutos, con un banner inferior que muestra la cuenta regresiva.
 - **Ajustes → Sincronización agrupada**: la sección de sync (pendientes, última sincronización, sincronizar ahora, reintentar, reparar BD) se movió a su propia subpantalla; en Ajustes queda una sola fila con un badge del número de pendientes.
 - **Edición de TC bimoneda**: al editar un pago de tarjeta de crédito registrado con una sola moneda (solo soles o solo dólares), ahora se muestra la sección `DualCurrencyAmountSection` con ambos campos. Si el usuario ingresa un monto en la moneda faltante y guarda, el sistema crea automáticamente el registro hermano y vincula ambos pagos con un `groupId` compartido — sin necesidad de crear un segundo pago manualmente.
 - **Hint contextual en edición TC**: el texto de ayuda bajo los campos de monto cambia dinámicamente según la moneda que está vacía ("Puedes agregar un monto en dólares" / "...en soles") cuando se edita un pago TC con una sola moneda registrada.
@@ -40,6 +42,7 @@ El contenido de este fichero describe la **versión publicada** y el **alcance**
 
 ### Tests
 
+- Nueva suite `RevealCreditCardSensitiveDataUseCaseTests` (6 tests): leer el número no lee el PIN y viceversa, Face ID fallido no toca Keychain, número + PIN requieren dos autenticaciones. Suite total: **176 tests**.
 - Nuevos casos en `DeletePaymentUseCaseTests`: `syncedPayment_deletesFromSupabaseAndLocal`, `modifiedPayment_deletesFromSupabaseAndLocal`, `localPayment_deletesOnlyFromLocal`, `supabaseFailure_stillDeletesLocally`. `MockPaymentRepository` expone `remoteDeletedIds` y `shouldThrowOnRemoteDelete`.
 - Nuevas suites y dobles para cubrir el refactor de arquitectura: `PaymentHistoryViewModelTests`, `SettingsViewModelTests`, `StatisticsViewModelTests` y `SyncCoordinatorTests`. `SpyEventBus` pasó a ser un bus asíncrono en memoria capaz de verificar refrescos disparados por eventos reales.
 - `PaymentViewModelTests` añade cobertura de refresco silencioso por evento en `PaymentsListViewModel`.

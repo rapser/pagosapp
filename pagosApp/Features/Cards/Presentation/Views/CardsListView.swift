@@ -64,8 +64,15 @@ struct CardsListView: View {
                 })
             }
             .sheet(isPresented: $viewModel.showingRevealSheet) {
-                if let card = viewModel.revealedCard, let data = viewModel.revealedData {
-                    CardRevealSheetView(card: card, data: data)
+                if let card = viewModel.revealedCard, let cardNumber = viewModel.revealedCardNumber {
+                    CardRevealSheetView(
+                        card: card,
+                        cardNumber: cardNumber,
+                        pin: viewModel.revealedPin,
+                        isRevealingPin: viewModel.isRevealingPin,
+                        onRevealPin: { Task { await viewModel.revealPin() } },
+                        onHidePin: { viewModel.hidePin() }
+                    )
                         .presentationDetents([.medium])
                         .presentationDragIndicator(.hidden)
                 }

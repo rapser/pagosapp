@@ -229,6 +229,9 @@
 "cards.reveal.numberLabel" = "Número";
 "cards.reveal.pinLabel" = "PIN";
 "cards.reveal.autoHideBanner" = "Por tu seguridad, esta información se ocultará en";
+"cards.reveal.showPin" = "Mostrar clave";
+"cards.reveal.hidePin" = "Ocultar clave";
+"cards.reveal.pinBiometricReason" = "Confirma tu identidad para ver la clave de tu tarjeta";
 "cards.delete.title" = "Eliminar tarjeta";
 "cards.delete.message" = "Esta acción no se puede deshacer. ¿Deseas eliminar esta tarjeta?";
 "cards.delete.button" = "Eliminar";

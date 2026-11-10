@@ -24,4 +24,11 @@ protocol CreditCardRepositoryProtocol {
     /// The Keychain entry itself is `.biometryCurrentSet`-protected, so this read will
     /// prompt Face ID/Touch ID unless `context` already carries a successful evaluation.
     func revealSensitiveData(cardId: UUID, context: LAContext?) async throws -> CreditCardSensitiveData
+
+    /// Reads only the full card number (the PIN stays in Keychain).
+    func revealCardNumber(cardId: UUID, context: LAContext?) async throws -> String
+
+    /// Reads only the PIN. Callers must use a fresh biometric `context` so revealing the
+    /// PIN always requires its own Face ID/Touch ID confirmation.
+    func revealPin(cardId: UUID, context: LAContext?) async throws -> String
 }
