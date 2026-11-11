@@ -39,7 +39,7 @@
 
 ### CI y calidad
 - **GitHub Actions** ([`.github/workflows/ci.yml`](../.github/workflows/ci.yml)): **build** con `xcodebuild` (simulador iOS genérico) + **SwiftLint** en cada push/PR a `main`, `master` o `develop` (runner `macos-15`).
-- **TestFlight en CI** ([`.github/workflows/testflight-develop.yml`](../.github/workflows/testflight-develop.yml)): solo en **`push` a `develop`** (tras merge del PR); no en `main`. Secretos y firma: [`.github/GITHUB_ACTIONS_TESTFLIGHT.md`](../.github/GITHUB_ACTIONS_TESTFLIGHT.md).
+- **TestFlight en CI** ([`.github/workflows/testflight.yml`](../.github/workflows/testflight.yml)): en **`push` a `main`** (un build por release) y a mano con *Run workflow*; no en PRs ni en merges a `develop`. Secretos y firma: [`.github/GITHUB_ACTIONS_TESTFLIGHT.md`](../.github/GITHUB_ACTIONS_TESTFLIGHT.md).
 - **Fastlane**: menú `bundle exec fastlane menu`; guía replicable en [fastlane/SETUP.md](../fastlane/SETUP.md); resumen en [fastlane/README.md](../fastlane/README.md).
 - **SwiftLint**: configuración en [`.swiftlint.yml`](../.swiftlint.yml) en la raíz del repo.
 - **Documentación adicional bajo `docs/`**: [ADR](adr/), [ingeniería](engineering/), [runbooks](runbooks/) *(carpetas opcionales; créalas si las necesitas)*.

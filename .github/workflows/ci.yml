@@ -1,6 +1,6 @@
 # Build + SwiftLint solo en PRs hacia `develop`.
 # `main` / `master`: sin este workflow (merge directo sin checks ni jobs en GitHub Actions).
-# Push a `develop` no dispara CI (checks en el PR a develop); TestFlight: testflight-develop.yml.
+# Push a `develop` no dispara CI (checks en el PR a develop); TestFlight: testflight.yml (solo en `main` o a mano).
 name: CI
 
 on:
@@ -35,13 +35,19 @@ jobs:
 
   swiftlint:
     name: SwiftLint
-    runs-on: macos-26
+    # Linux: no necesita macOS ni Xcode, y evita quedarse en cola esperando un runner macos-26
+    # (el job llegó a cancelarse a los 15 min sin ejecutar ningún paso).
+    # Se usa la imagen oficial de SwiftLint: trae sus librerías (libxml2, etc.), que el runner no garantiza.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SWIFTLINT_VERSION: "0.58.2"
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Install SwiftLint
-        run: brew install swiftlint
-
       - name: Lint
-        run: swiftlint lint --reporter github-actions-logging
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work \
+            "ghcr.io/realm/swiftlint:${SWIFTLINT_VERSION}" \
+            swiftlint lint --reporter github-actions-logging
